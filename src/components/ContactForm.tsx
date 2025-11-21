@@ -5,57 +5,75 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Send } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const ContactForm = () => {
-  const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     projectType: "",
     technologies: "",
     budget: "",
-    message: "",
+    message: "", 
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
     if (!formData.name || !formData.email || !formData.message) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires.",
-        variant: "destructive",
-      });
+      toast.error("Veuillez remplir tous les champs obligatoires.");
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez entrer une adresse email valide.",
-        variant: "destructive",
-      });
+      toast.error("Veuillez entrer une adresse email valide.");
       return;
     }
 
-    toast({
-      title: "Message envoyé !",
-      description: "Nous vous répondrons sous 24h.",
-    });
+    setIsSubmitting(true);
 
-    setFormData({
-      name: "",
-      email: "",
-      projectType: "",
-      technologies: "",
-      budget: "",
-      message: "",
-    });
+    try {
+      console.log("🚀 Sending project request...");
+      console.log("📝 Form data:", formData);
+
+      const { data, error } = await supabase.functions.invoke("send-project-request", {
+        body: formData,
+      });
+
+      console.log("📥 Response:", { data, error });
+
+      if (error) {
+        console.error("❌ Error sending project request:", error);
+        toast.error(`Une erreur est survenue: ${error.message || "Veuillez réessayer."}`);
+      } else if (data?.success) {
+        console.log("✅ Email sent successfully!");
+        toast.success("Message envoyé ! Nous vous répondrons sous 24h.");
+        setFormData({
+          name: "",
+          email: "",
+          projectType: "",
+          technologies: "",
+          budget: "",
+          message: "",
+        });
+      } else {
+        console.error("⚠️ Unexpected response:", data);
+        toast.error("Une erreur est survenue. Veuillez réessayer.");
+      }
+    } catch (error) {
+      console.error("💥 Exception caught:", error);
+      toast.error("Une erreur est survenue. Veuillez réessayer.");
+    } finally {
+      console.log("🏁 Request completed");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -168,9 +186,9 @@ const ContactForm = () => {
                 />
               </div>
 
-              <Button type="submit" size="lg" className="w-full" variant="hero">
+              <Button type="submit" size="lg" className="w-full" variant="hero" disabled={isSubmitting}>
                 <Send className="mr-2 h-5 w-5" />
-                Recevoir mon devis sous 24h
+                {isSubmitting ? "Envoi en cours..." : "Recevoir mon devis sous 24h"}
               </Button>
             </form>
           </CardContent>
