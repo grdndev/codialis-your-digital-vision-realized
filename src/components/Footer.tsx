@@ -1,4 +1,5 @@
 import { Mail, Linkedin, Github, Instagram } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -39,14 +40,14 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/legalmention" className="text-muted-foreground hover:text-primary transition-colors">
                   Mentions légales
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  CGV
-                </a>
+                <Link to="/privatepolicy" className="text-muted-foreground hover:text-primary transition-colors">
+                  Privacy Policy
+                </Link>
               </li>
             </ul>
           </div>
@@ -56,23 +57,23 @@ const Footer = () => {
             <h4 className="font-semibold text-foreground">Nous suivre</h4>
             <div className="flex gap-4">
               <a 
-                href="https://linkedin.com" 
+                href="https://www.linkedin.com/company/codialis/"
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-2 rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-all duration-300"
               >
                 <Linkedin className="h-5 w-5" />
               </a>
-              <a 
+              {/* <a 
                 href="https://github.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-2 rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-all duration-300"
               >
                 <Github className="h-5 w-5" />
-              </a>
+              </a> */}
               <a 
-                href="https://instagram.com" 
+                href="https://www.instagram.com/codialis.dev/"
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-2 rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-all duration-300"

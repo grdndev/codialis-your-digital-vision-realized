@@ -22,12 +22,6 @@ const projects = [
     tags: ["IA", "Productivité", "Mobile"],
   },
   {
-    icon: Workflow,
-    title: "Agent IA onboarding (n8n)",
-    description: "Automatisation de l'intégration des nouveaux utilisateurs",
-    tags: ["n8n", "Automation", "IA"],
-  },
-  {
     icon: CloudIcon,
     title: "Déploiement Cloud souverain",
     description: "Infrastructure cloud sécurisée et conforme aux normes européennes",
