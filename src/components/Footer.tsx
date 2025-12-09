@@ -10,11 +10,15 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-2xl font-bold text-primary">Codialis</h3>
             <p className="text-muted-foreground">
-              Agence de développement sur mesure, spécialisée dans les solutions innovantes et performantes.
+              Agence de développement sur mesure, spécialisée dans les solutions
+              innovantes et performantes.
             </p>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Mail className="h-4 w-4" />
-              <a href="mailto:contact@codialis.com" className="hover:text-primary transition-colors">
+              <a
+                href="mailto:contact@codialis.com"
+                className="hover:text-primary transition-colors"
+              >
                 contact@codialis.com
               </a>
             </div>
@@ -25,27 +29,42 @@ const Footer = () => {
             <h4 className="font-semibold text-foreground">Liens utiles</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#expertises" className="text-muted-foreground hover:text-primary transition-colors">
+                <a
+                  href="#expertise"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Nos expertises
                 </a>
               </li>
               <li>
-                <a href="#realisations" className="text-muted-foreground hover:text-primary transition-colors">
+                <a
+                  href="#realisation"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Réalisations
                 </a>
               </li>
               <li>
-                <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors">
+                <a
+                  href="#contact"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Contact
                 </a>
               </li>
               <li>
-                <Link to="/legalmention" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  to="/legalmention"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Mentions légales
                 </Link>
               </li>
               <li>
-                <Link to="/privatepolicy" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  to="/privatepolicy"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Privacy Policy
                 </Link>
               </li>
@@ -56,9 +75,9 @@ const Footer = () => {
           <div className="space-y-4">
             <h4 className="font-semibold text-foreground">Nous suivre</h4>
             <div className="flex gap-4">
-              <a 
+              <a
                 href="https://www.linkedin.com/company/codialis/"
-                target="_blank" 
+                target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-all duration-300"
               >
@@ -72,9 +91,9 @@ const Footer = () => {
               >
                 <Github className="h-5 w-5" />
               </a> */}
-              <a 
+              <a
                 href="https://www.instagram.com/codialis.dev/"
-                target="_blank" 
+                target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-all duration-300"
               >

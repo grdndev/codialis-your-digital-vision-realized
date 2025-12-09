@@ -67,11 +67,11 @@ const Expertise = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {expertises.map((expertise, index) => (
             <Card
               key={index}
-              className="group hover:shadow-hover transition-all duration-300 hover:-translate-y-2 border-border/50"
+              className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-2 border-border/50"
             >
               <CardHeader>
                 <div
@@ -79,10 +79,12 @@ const Expertise = () => {
                 >
                   <expertise.icon className="h-12 w-12" />
                 </div>
-                <CardTitle className="text-xl">{expertise.title}</CardTitle>
+                <CardTitle className="text-xl text-left">
+                  {expertise.title}
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">
+              <CardContent className="p-6">
+                <CardDescription className="text-base text-left leading-relaxed">
                   {expertise.description}
                 </CardDescription>
               </CardContent>

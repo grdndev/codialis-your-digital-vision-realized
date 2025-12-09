@@ -71,7 +71,7 @@ const Portfolio = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {projects.map((project, index) => (
             <Card
               key={index}
@@ -83,12 +83,12 @@ const Portfolio = () => {
                     <project.icon className="h-10 w-10" />
                   </div>
                 </div>
-                <CardTitle className="text-lg leading-tight">
+                <CardTitle className="text-xl text-left">
                   {project.title}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <CardDescription className="text-sm">
+              <CardContent className="space-y-4 p-6">
+                <CardDescription className="text-base text-left leading-relaxed">
                   {project.description}
                 </CardDescription>
                 <div className="flex flex-wrap gap-2">
