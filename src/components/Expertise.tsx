@@ -1,5 +1,18 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Smartphone, Laptop, Database, Gamepad2, Brain, Cloud } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Smartphone,
+  Laptop,
+  Database,
+  Gamepad2,
+  Brain,
+  Cloud,
+} from "lucide-react";
 
 const expertises = [
   {
@@ -49,18 +62,21 @@ const Expertise = () => {
             Nos expertises
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Des solutions technologiques complètes pour transformer vos idées en réalité
+            Des solutions technologiques complètes pour transformer vos idées en
+            réalité
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {expertises.map((expertise, index) => (
-            <Card 
-              key={index} 
+            <Card
+              key={index}
               className="group hover:shadow-hover transition-all duration-300 hover:-translate-y-2 border-border/50"
             >
               <CardHeader>
-                <div className={`${expertise.color} mb-4 transition-transform group-hover:scale-110 duration-300`}>
+                <div
+                  className={`${expertise.color} mb-4 transition-transform group-hover:scale-110 duration-300`}
+                >
                   <expertise.icon className="h-12 w-12" />
                 </div>
                 <CardTitle className="text-xl">{expertise.title}</CardTitle>

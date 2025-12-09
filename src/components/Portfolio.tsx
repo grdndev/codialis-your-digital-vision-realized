@@ -1,18 +1,34 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Bot, Calendar, Workflow, Cloud as CloudIcon, Heart, Car } from "lucide-react";
+import {
+  ShoppingCart,
+  Bot,
+  Calendar,
+  Workflow,
+  Cloud as CloudIcon,
+  Heart,
+  Car,
+} from "lucide-react";
 
 const projects = [
   {
     icon: ShoppingCart,
     title: "Application e-commerce billets",
-    description: "Plateforme complète de vente de billets avec intégration Stripe",
+    description:
+      "Plateforme complète de vente de billets avec intégration Stripe",
     tags: ["Stripe", "E-commerce", "React"],
   },
   {
     icon: Bot,
     title: "SaaS IA pour e-commerce",
-    description: "Solution d'intelligence artificielle pour optimiser les ventes en ligne",
+    description:
+      "Solution d'intelligence artificielle pour optimiser les ventes en ligne",
     tags: ["IA", "SaaS", "Next.js"],
   },
   {
@@ -24,7 +40,8 @@ const projects = [
   {
     icon: CloudIcon,
     title: "Déploiement Cloud souverain",
-    description: "Infrastructure cloud sécurisée et conforme aux normes européennes",
+    description:
+      "Infrastructure cloud sécurisée et conforme aux normes européennes",
     tags: ["Cloud", "DevOps", "Sécurité"],
   },
   {
@@ -53,10 +70,10 @@ const Portfolio = () => {
             Projets ambitieux, résultats mesurables
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project, index) => (
-            <Card 
+            <Card
               key={index}
               className="group hover:shadow-hover transition-all duration-300 hover:-translate-y-2"
             >
@@ -66,7 +83,9 @@ const Portfolio = () => {
                     <project.icon className="h-10 w-10" />
                   </div>
                 </div>
-                <CardTitle className="text-lg leading-tight">{project.title}</CardTitle>
+                <CardTitle className="text-lg leading-tight">
+                  {project.title}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <CardDescription className="text-sm">
@@ -74,7 +93,11 @@ const Portfolio = () => {
                 </CardDescription>
                 <div className="flex flex-wrap gap-2">
                   {project.tags.map((tag, tagIndex) => (
-                    <Badge key={tagIndex} variant="secondary" className="text-xs">
+                    <Badge
+                      key={tagIndex}
+                      variant="secondary"
+                      className="text-xs"
+                    >
                       {tag}
                     </Badge>
                   ))}

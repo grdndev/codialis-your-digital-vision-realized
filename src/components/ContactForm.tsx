@@ -1,10 +1,22 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,14 +28,14 @@ const ContactForm = () => {
     projectType: "",
     technologies: "",
     budget: "",
-    message: "", 
+    message: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Basic validation
     if (!formData.name || !formData.email || !formData.message) {
       toast.error("Veuillez remplir tous les champs obligatoires.");
@@ -43,15 +55,20 @@ const ContactForm = () => {
       console.log("🚀 Sending project request...");
       console.log("📝 Form data:", formData);
 
-      const { data, error } = await supabase.functions.invoke("send-project-request", {
-        body: formData,
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "send-project-request",
+        {
+          body: formData,
+        }
+      );
 
       console.log("📥 Response:", { data, error });
 
       if (error) {
         console.error("❌ Error sending project request:", error);
-        toast.error(`Une erreur est survenue: ${error.message || "Veuillez réessayer."}`);
+        toast.error(
+          `Une erreur est survenue: ${error.message || "Veuillez réessayer."}`
+        );
       } else if (data?.success) {
         console.log("✅ Email sent successfully!");
         toast.success("Message envoyé ! Nous vous répondrons sous 24h.");
@@ -104,7 +121,9 @@ const ContactForm = () => {
                     id="name"
                     placeholder="Jean Dupont"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -116,7 +135,9 @@ const ContactForm = () => {
                     type="email"
                     placeholder="jean@exemple.com"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -127,18 +148,24 @@ const ContactForm = () => {
                   <Label htmlFor="projectType">Type de projet</Label>
                   <Select
                     value={formData.projectType}
-                    onValueChange={(value) => setFormData({ ...formData, projectType: value })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, projectType: value })
+                    }
                   >
                     <SelectTrigger id="projectType">
                       <SelectValue placeholder="Sélectionnez un type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="app-mobile">Application mobile</SelectItem>
+                      <SelectItem value="app-mobile">
+                        Application mobile
+                      </SelectItem>
                       <SelectItem value="saas">Logiciel SaaS</SelectItem>
                       <SelectItem value="erp-crm">ERP/CRM</SelectItem>
                       <SelectItem value="jeux">Jeux vidéo / VR/AR</SelectItem>
                       <SelectItem value="ia">Intégration IA</SelectItem>
-                      <SelectItem value="cloud">Infrastructure Cloud</SelectItem>
+                      <SelectItem value="cloud">
+                        Infrastructure Cloud
+                      </SelectItem>
                       <SelectItem value="autre">Autre</SelectItem>
                     </SelectContent>
                   </Select>
@@ -148,7 +175,9 @@ const ContactForm = () => {
                   <Label htmlFor="budget">Budget estimé</Label>
                   <Select
                     value={formData.budget}
-                    onValueChange={(value) => setFormData({ ...formData, budget: value })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, budget: value })
+                    }
                   >
                     <SelectTrigger id="budget">
                       <SelectValue placeholder="Sélectionnez une fourchette" />
@@ -165,12 +194,16 @@ const ContactForm = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="technologies">Technologies souhaitées (optionnel)</Label>
+                <Label htmlFor="technologies">
+                  Technologies souhaitées (optionnel)
+                </Label>
                 <Input
                   id="technologies"
                   placeholder="React, Node.js, Python..."
                   value={formData.technologies}
-                  onChange={(e) => setFormData({ ...formData, technologies: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, technologies: e.target.value })
+                  }
                 />
               </div>
 
@@ -181,14 +214,24 @@ const ContactForm = () => {
                   placeholder="Parlez-nous de vos besoins, objectifs et contraintes..."
                   className="min-h-32"
                   value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, message: e.target.value })
+                  }
                   required
                 />
               </div>
 
-              <Button type="submit" size="lg" className="w-full" variant="hero" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                variant="hero"
+                disabled={isSubmitting}
+              >
                 <Send className="mr-2 h-5 w-5" />
-                {isSubmitting ? "Envoi en cours..." : "Recevoir mon devis sous 24h"}
+                {isSubmitting
+                  ? "Envoi en cours..."
+                  : "Recevoir mon devis sous 24h"}
               </Button>
             </form>
           </CardContent>
