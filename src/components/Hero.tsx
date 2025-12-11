@@ -1,69 +1,93 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar } from "lucide-react";
-import heroBackground from "@/assets/hero-background.jpg";
+import { useEffect, useState, useRef } from "react";
 
 const Hero = () => {
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-hero">
-      <div 
-        className="absolute inset-0 z-0 opacity-10"
-        style={{
-          backgroundImage: `url(${heroBackground})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      />
+    <section ref={sectionRef} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 pb-0 text-white">
+      {/* Removed local background glows to use global background */}
       
-      <div className="container mx-auto px-6 py-24 relative z-10">
-        <div className="max-w-4xl mx-auto text-center space-y-8 animate-fade-in">
-          <h1 className="text-5xl md:text-7xl font-bold text-foreground leading-tight">
-            Développement sur mesure.
-            <span className="block text-primary mt-2">Résultats concrets.</span>
+      <div className="container mx-auto px-6 relative z-10">
+        <div className="max-w-5xl mx-auto text-center flex flex-col items-center">
+          
+          {/* Main Heading */}
+          <h1 className={`text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-tight mb-6 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            Développement sur mesure
+            <br />
+            <span className="bg-gradient-to-r from-[#F69292] to-[#0E4272] bg-clip-text text-transparent">Résultats concrets</span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
+          {/* Subheading */}
+          <p className={`text-lg md:text-xl text-[#F69292] max-w-2xl mx-auto mb-10 transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             Apps, SaaS, CRM/ERP, IA, Jeux & Réalité Mixte
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
+          {/* Buttons */}
+          <div className={`flex flex-col sm:flex-row gap-4 justify-center items-center transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <Button 
-              variant="hero" 
               size="lg"
-              className="group"
+              className="bg-[#F69292] text-[#0E4272] hover:bg-[#F69292]/90 rounded-full px-8 h-12 text-base font-medium border-0 transition-all duration-300 hover:shadow-[0_0_20px_rgba(246,146,146,0.3)] hover:-translate-y-1"
               onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
             >
               Demander un devis
-              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Button>
             
             <Button 
-              variant="heroSecondary" 
+              variant="outline" 
               size="lg"
-              className="group"
-              onClick={() => window.open('https://calendly.com/grdndevelopment/consulting', '_blank')}
+              className="bg-white/5 text-white border-white/10 hover:bg-white/10 hover:border-primary/50 backdrop-blur-sm rounded-full px-8 h-12 text-base font-medium transition-all duration-300"
             >
-              <Calendar className="mr-2 h-5 w-5" />
-              Prendre rendez-vous
+              Prendre un rendez-vous
             </Button>
           </div>
           
-          <div className="pt-16 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
-            {[
-              { value: "50+", label: "Projets livrés" },
-              { value: "98%", label: "Satisfaction client" },
-              { value: "7+", label: "Années d'expertise" },
-              { value: "24h", label: "Temps de réponse" },
-            ].map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-primary">{stat.value}</div>
-                <div className="text-sm text-muted-foreground mt-2">{stat.label}</div>
-              </div>
-            ))}
+          {/* Metrics */}
+          <div className={`mt-20 pt-10 flex flex-wrap gap-8 md:gap-16 items-center justify-center transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <div className="text-center">
+              <span className="text-3xl md:text-4xl font-bold text-white block mb-1">50+</span>
+              <p className="text-sm text-[#F69292]/80">Projets livrés</p>
+            </div>
+            <div className="text-center">
+              <span className="text-3xl md:text-4xl font-bold text-white block mb-1">98%</span>
+              <p className="text-sm text-[#F69292]/80">Satisfaction client</p>
+            </div>
+            <div className="text-center">
+              <span className="text-3xl md:text-4xl font-bold text-white block mb-1">7+</span>
+              <p className="text-sm text-[#F69292]/80">Années d'expertise</p>
+            </div>
+            <div className="text-center">
+              <span className="text-3xl md:text-4xl font-bold text-white block mb-1">24h</span>
+              <p className="text-sm text-[#F69292]/80">Temps de réponse</p>
+            </div>
           </div>
         </div>
       </div>
-      
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
+
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) translateX(0px); }
+          25% { transform: translateY(-20px) translateX(10px); }
+          50% { transform: translateY(-10px) translateX(-10px); }
+          75% { transform: translateY(-25px) translateX(5px); }
+        }
+      `}</style>
     </section>
   );
 };

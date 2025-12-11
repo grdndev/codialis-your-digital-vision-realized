@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
 
 const testimonials = [
   {
@@ -30,51 +32,114 @@ const testimonials = [
 ];
 
 const Testimonials = () => {
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section className="py-24 bg-muted/30">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-16 space-y-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-            Avis clients
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            La confiance de nos clients, notre meilleure référence
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((testimonial, index) => (
-            <Card 
-              key={index}
-              className="hover:shadow-hover transition-all duration-300"
+    <section ref={sectionRef} id="temoignages" className="relative py-24 overflow-hidden text-white">
+      <style>
+        {`
+          @keyframes sway {
+            0% { transform: translateX(-50%) rotate(-25deg); }
+            100% { transform: translateX(-50%) rotate(25deg); }
+          }
+        `}
+      </style>
+      
+      <div className="w-full max-w-[95%] mx-auto px-4 relative z-10">
+        <div className={`relative overflow-hidden rounded-[2.5rem] bg-black/40 border border-white/10 backdrop-blur-md p-8 md:p-12 lg:p-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          
+          {/* Ocean Light Effect */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+             {/* Deep ambient glow */}
+             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-primary/30 blur-[120px] opacity-60" />
+             
+             {/* Moving Light Rays */}
+             <div 
+               className="absolute -top-[200px] left-1/2 w-[200%] h-[1200px] bg-[conic-gradient(from_180deg_at_50%_0%,transparent_45%,rgba(255,255,255,0.3)_48%,transparent_50%,rgba(255,255,255,0.3)_52%,transparent_55%)] blur-3xl origin-top"
+               style={{ animation: 'sway 12s ease-in-out infinite alternate' }}
+             />
+             
+             {/* Stronger top highlight */}
+             <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-white/20 via-primary/10 to-transparent blur-2xl" />
+          </div>
+
+          <div className="relative z-10 max-w-7xl mx-auto flex flex-col items-center text-center mb-16 space-y-6">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md shadow-lg">
+               <span className="relative flex h-2 w-2">
+                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+               </span>
+               <span className="text-sm font-medium text-white/90">Témoignages</span>
+            </div>
+
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight">
+              Avis clients
+            </h2>
+            <p className="text-lg md:text-xl text-[#F69292]/70 max-w-2xl mx-auto">
+              La confiance de nos clients, notre meilleure référence
+            </p>
+
+            <Button 
+              size="lg"
+              className="bg-primary hover:bg-primary/90 text-white rounded-full px-8 h-12 shadow-lg shadow-primary/25"
+              onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-12 w-12 bg-primary/10 text-primary">
-                    <AvatarFallback>{testimonial.initials}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="font-semibold text-foreground">{testimonial.name}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+              Prendre rendez-vous
+            </Button>
+          </div>
+        
+          <div className="relative z-10 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+            {testimonials.map((testimonial, index) => (
+              <Card 
+                key={index}
+                className={`bg-white/5 border-white/10 backdrop-blur-sm hover:bg-white/10 hover:border-primary/30 transition-all duration-500 hover:-translate-y-2 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+                style={{ transitionDelay: `${200 + index * 100}ms` }}
+              >
+                <CardContent className="pt-6 space-y-4">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-12 w-12 bg-primary/20 text-primary border border-primary/30">
+                      <AvatarFallback>{testimonial.initials}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-semibold text-white">{testimonial.name}</p>
+                      <p className="text-sm text-[#F69292]/70">{testimonial.role}</p>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex gap-1">
-                  {Array.from({ length: testimonial.rating }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-secondary text-secondary" />
-                  ))}
-                </div>
-                
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  "{testimonial.content}"
-                </p>
-                
-                <p className="text-xs text-muted-foreground">
-                  Évalué le {testimonial.date}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+                  
+                  <div className="flex gap-1">
+                    {Array.from({ length: testimonial.rating }).map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                    ))}
+                  </div>
+                  
+                  <p className="text-sm text-white leading-relaxed">
+                    "{testimonial.content}"
+                  </p>
+                  
+                  <p className="text-xs text-[#F69292]/40">
+                    Évalué le {testimonial.date}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     </section>
