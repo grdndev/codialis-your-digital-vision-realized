@@ -1,0 +1,1087 @@
+<!doctype html>
+<html lang="fr" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Codialis | Agence Digitale Internationale : Paris, La Réunion, Dubaï & Canada</title>
+    <meta name="description" content="Codialis : Agence digitale internationale experte en transformation numérique. Présente à Paris, La Réunion, Dubaï, Irlande, Espagne et Canada. Développement Mobile, SaaS et Cloud.">
+    
+    <!-- JSON-LD Structured Data: LocalBusiness Multi-Location -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "CODIALIS",
+      "url": "https://www.codialis.com",
+      "logo": "https://www.codialis.com/logo.png",
+      "description": "Expert international en transformation numérique, agence digitale à Paris, développement mobile à La Réunion, et présent à Dubaï, Canada, Irlande et Espagne.",
+      "address": [
+        {
+          "@type": "PostalAddress",
+          "streetAddress": "88 Rue du Génie",
+          "addressLocality": "Vitry-sur-Seine",
+          "postalCode": "94400",
+          "addressCountry": "FR"
+        },
+        {
+          "@type": "PostalAddress",
+          "streetAddress": "436 Avenue des Mascareignes",
+          "addressLocality": "Saint-André",
+          "addressRegion": "La Réunion",
+          "postalCode": "97440",
+          "addressCountry": "FR"
+        }
+      ],
+      "contactPoint": [
+        {
+          "@type": "ContactPoint",
+          "telephone": "+330783905717",
+          "contactType": "sales",
+          "areaServed": "FR",
+          "availableLanguage": "French"
+        },
+        {
+          "@type": "ContactPoint",
+          "telephone": "+262693498420",
+          "contactType": "sales",
+          "areaServed": "RE",
+          "availableLanguage": "French"
+        }
+      ],
+      "sameAs": [
+        "https://www.linkedin.com/company/109392264/",
+        "https://www.instagram.com/codialis.dev/"
+      ]
+    }
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Orbitron & Rajdhani for futuristic feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Rajdhani", "sans-serif"],
+              tech: ["Orbitron", "sans-serif"],
+            },
+            colors: {
+              codialis: {
+                dark: "#050b14",
+                light: "#0f172a",
+                cyan: "#06b6d4",
+                purple: "#8b5cf6",
+                accent: "#00f0ff",
+              },
+            },
+            animation: {
+              "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+              float: "float 6s ease-in-out infinite",
+            },
+            keyframes: {
+              float: {
+                "0%, 100%": { transform: "translateY(0)" },
+                "50%": { transform: "translateY(-20px)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      body {
+        background-color: #050b14;
+        color: white;
+        overflow-x: hidden;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #050b14;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #06b6d4;
+        border-radius: 4px;
+      }
+
+      /* Glassmorphism Classes */
+      .glass-card {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(6, 182, 212, 0.1);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+      }
+
+      .glass-card:hover {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(6, 182, 212, 0.5);
+        box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+        transform: translateY(-5px);
+      }
+
+      /* Neon Text Effect */
+      .text-neon {
+        text-shadow:
+          0 0 10px rgba(6, 182, 212, 0.5),
+          0 0 20px rgba(6, 182, 212, 0.3);
+      }
+
+      #canvas-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        opacity: 0.6;
+      }
+
+      .gradient-text {
+        background: linear-gradient(to right, #06b6d4, #8b5cf6);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #06b6d4;
+        border-radius: 10px;
+      }
+    </style>
+  </head>
+  <body class="antialiased">
+    <!-- 3D Background -->
+    <div id="canvas-container"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-white/10">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-20">
+          <div class="flex-shrink-0 flex items-center">
+            <span class="font-tech text-3xl font-bold tracking-wider text-white"
+              >CODIALIS<span class="text-cyan-400">.</span></span
+            >
+          </div>
+          <div class="hidden md:block">
+            <div class="ml-10 flex items-baseline space-x-6">
+              <a
+                href="#home"
+                class="hover:text-cyan-400 px-3 py-2 rounded-md text-lg font-medium transition-colors"
+                >Accueil</a
+              >
+              <a
+                href="#services"
+                class="hover:text-cyan-400 px-3 py-2 rounded-md text-lg font-medium transition-colors"
+                >Services</a
+              >
+              <a
+                href="#expertise"
+                class="hover:text-cyan-400 px-3 py-2 rounded-md text-lg font-medium transition-colors"
+                >Expertise</a
+              >
+              <a
+                href="https://calendly.com/jayan-codialis/30min"
+                target="_blank"
+                class="bg-cyan-500 hover:bg-cyan-600 text-black px-6 py-2 rounded-full text-lg font-bold transition-all shadow-[0_0_15px_rgba(6,182,212,0.5)] flex items-center gap-2"
+              >
+                <i data-lucide="calendar" class="w-5 h-5"></i>
+                Prendre RDV
+              </a>
+            </div>
+          </div>
+          <!-- Mobile menu button -->
+          <div class="-mr-2 flex md:hidden">
+            <button
+              type="button"
+              onclick="
+                document
+                  .getElementById('mobile-menu')
+                  .classList.toggle('hidden')
+              "
+              class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none"
+            >
+              <i data-lucide="menu" class="w-8 h-8"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Mobile Menu -->
+      <div
+        class="hidden md:hidden bg-slate-900 border-t border-gray-700"
+        id="mobile-menu"
+      >
+        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+          <a
+            href="#home"
+            class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+            >Accueil</a
+          >
+          <a
+            href="#services"
+            class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+            >Services</a
+          >
+          <a
+            href="https://calendly.com/jayan-codialis/30min"
+            target="_blank"
+            class="text-cyan-400 font-bold block px-3 py-2 rounded-md text-base"
+            >Prendre RDV</a
+          >
+          <a
+            href="#contact"
+            class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+            >Contact</a
+          >
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section
+      id="home"
+      class="relative min-h-screen flex items-center justify-center pt-20"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
+        <div
+          class="inline-block mb-4 px-4 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 backdrop-blur-sm"
+        >
+          <span
+            class="text-cyan-400 tracking-widest text-sm font-tech uppercase"
+            >Agence Digitale Futuriste</span
+          >
+        </div>
+        <h1
+          class="text-4xl md:text-7xl font-tech font-bold text-white mb-6 leading-tight"
+        >
+          Propulsez votre entreprise vers <br />
+          <span class="gradient-text text-neon">L'EXCELLENCE DIGITALE</span><br>
+          <span class="text-2xl md:text-4xl text-gray-400 block mt-2 uppercase tracking-tighter">Paris • La Réunion • Dubaï • International</span>
+        </h1>
+        <p
+          class="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-gray-300 font-light leading-relaxed"
+        >
+          Expert en <span class="text-white font-bold">Développement d'Applications Mobiles</span> haute performance et solutions <span class="text-white font-bold">SaaS</span> innovantes. 
+          Codialis transforme vos idées en architectures digitales scalables et puissantes.
+        </p>
+        <div
+          class="mt-10 flex flex-col md:flex-row justify-center items-center gap-6"
+        >
+          <a
+            href="https://calendly.com/jayan-codialis/30min"
+            target="_blank"
+            class="w-full md:w-auto group relative px-8 md:px-10 py-4 bg-cyan-500 text-black font-bold text-lg md:text-xl rounded-none hover:bg-cyan-400 transition-all duration-300 clip-path-polygon flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(6,182,212,0.4)]"
+          >
+            <i data-lucide="calendar" class="w-6 h-6"></i>
+            PRENDRE RENDEZ-VOUS
+            <div
+              class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"
+            ></div>
+          </a>
+          <a
+            href="#services"
+            class="w-full md:w-auto px-10 py-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xl border border-white/20 transition-all backdrop-blur-sm flex items-center justify-center gap-3"
+          >
+            EXPLORER NOS SERVICES
+          </a>
+        </div>
+      </div>
+
+      <!-- Scroll Down Indicator -->
+      <div
+        class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce text-cyan-400"
+      >
+        <i data-lucide="chevron-down" class="w-8 h-8"></i>
+      </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="py-24 relative">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl md:text-5xl font-tech font-bold text-white mb-4">
+            Nos <span class="text-cyan-400">Expertises Digitales</span>
+          </h2>
+          <div
+            class="h-1 w-24 bg-gradient-to-r from-cyan-400 to-purple-600 mx-auto rounded-full"
+          ></div>
+          <p class="mt-6 text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            Votre agence de <span class="text-white">transformation numérique internationale</span>. 
+            De <span class="text-white">Paris</span> à <span class="text-white">Dubaï</span>, en passant par <span class="text-white">La Réunion</span>, le <span class="text-white">Canada</span> et l'<span class="text-white">Europe</span>.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- Service 1: ERP/CRM -->
+          <div
+            class="glass-card p-8 rounded-2xl transition-all duration-300 group"
+          >
+            <div
+              class="w-14 h-14 bg-cyan-900/50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-cyan-500 transition-colors"
+            >
+              <i
+                data-lucide="database"
+                class="w-8 h-8 text-cyan-400 group-hover:text-white"
+              ></i>
+            </div>
+            <h3 class="text-2xl font-tech font-bold text-white mb-3">
+              01. ERP / CRM Sur Mesure
+            </h3>
+            <p class="text-gray-400 mb-4 leading-relaxed">
+              Solutions entièrement personnalisées (RH, logistique, finances)
+              intégrées à vos processus internes.
+            </p>
+            <ul class="text-sm text-gray-500 space-y-2">
+              <li class="flex items-center">
+                <i data-lucide="check" class="w-4 h-4 mr-2 text-cyan-500"></i
+                >Gestion commerciale
+              </li>
+              <li class="flex items-center">
+                <i data-lucide="check" class="w-4 h-4 mr-2 text-cyan-500"></i
+                >Suivi de production
+              </li>
+              <li class="flex items-center">
+                <i data-lucide="check" class="w-4 h-4 mr-2 text-cyan-500"></i
+                >Interconnexion API
+              </li>
+            </ul>
+          </div>
+
+          <!-- Service 2: App Dev -->
+          <div
+            class="glass-card p-8 rounded-2xl transition-all duration-300 group"
+          >
+            <div
+              class="w-14 h-14 bg-purple-900/50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-purple-500 transition-colors"
+            >
+              <i
+                data-lucide="smartphone"
+                class="w-8 h-8 text-purple-400 group-hover:text-white"
+              ></i>
+            </div>
+            <h3 class="text-2xl font-tech font-bold text-white mb-3">
+              02. Développement Mobile & Web
+            </h3>
+            <p class="text-gray-400 mb-4 leading-relaxed">
+              Expert en <span class="text-white">développement d'applications mobiles</span> (iOS, Android, Web) pour vos besoins à <span class="text-white">La Réunion</span> et en Métropole.
+            </p>
+            <ul class="text-sm text-gray-500 space-y-2">
+              <li class="flex items-center">
+                <i data-lucide="check" class="w-4 h-4 mr-2 text-purple-500"></i
+                >Design UX/UI Ergonomique
+              </li>
+              <li class="flex items-center">
+                <i data-lucide="check" class="w-4 h-4 mr-2 text-purple-500"></i
+                >Solutions E-commerce
+              </li>
+              <li class="flex items-center">
+                <i data-lucide="check" class="w-4 h-4 mr-2 text-purple-500"></i
+                >Extranets collaboratifs
+              </li>
+            </ul>
+          </div>
+
+          <!-- Service 3: SaaS -->
+          <div
+            class="glass-card p-8 rounded-2xl transition-all duration-300 group"
+          >
+            <div
+              class="w-14 h-14 bg-blue-900/50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-500 transition-colors"
+            >
+              <i
+                data-lucide="code-2"
+                class="w-8 h-8 text-blue-400 group-hover:text-white"
+              ></i>
+            </div>
+            <h3 class="text-2xl font-tech font-bold text-white mb-3">
+              03. Logiciels SaaS
+            </h3>
+            <p class="text-gray-400 mb-4 leading-relaxed">
+              Logiciels métiers accessibles 24/7 en mode SaaS. Hébergement
+              sécurisé et mises à jour auto.
+            </p>
+            <ul class="text-sm text-gray-500 space-y-2">
+              <li class="flex items-center">
+                <i data-lucide="check" class="w-4 h-4 mr-2 text-blue-500"></i
+                >Cloud Sécurisé
+              </li>
+              <li class="flex items-center">
+                <i data-lucide="check" class="w-4 h-4 mr-2 text-blue-500"></i
+                >Maintenance Continue
+              </li>
+              <li class="flex items-center">
+                <i data-lucide="check" class="w-4 h-4 mr-2 text-blue-500"></i
+                >Accessibilité multi-supports
+              </li>
+            </ul>
+          </div>
+
+          <!-- Service 4: Cloud -->
+          <div
+            class="glass-card p-8 rounded-2xl transition-all duration-300 group"
+          >
+            <div
+              class="w-14 h-14 bg-indigo-900/50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-indigo-500 transition-colors"
+            >
+              <i
+                data-lucide="cloud"
+                class="w-8 h-8 text-indigo-400 group-hover:text-white"
+              ></i>
+            </div>
+            <h3 class="text-2xl font-tech font-bold text-white mb-3">
+              04. Transformation Numérique & Cloud
+            </h3>
+            <p class="text-gray-400 mb-4 leading-relaxed">
+              Accompagnez votre <span class="text-white">transformation numérique à Paris</span> via AWS, Azure et Google Cloud. Infrastructures scalables.
+            </p>
+            <ul class="text-sm text-gray-500 space-y-2">
+              <li class="flex items-center">
+                <i data-lucide="check" class="w-4 h-4 mr-2 text-indigo-500"></i
+                >Haute disponibilité
+              </li>
+              <li class="flex items-center">
+                <i data-lucide="check" class="w-4 h-4 mr-2 text-indigo-500"></i
+                >Supervision temps réel
+              </li>
+              <li class="flex items-center">
+                <i data-lucide="check" class="w-4 h-4 mr-2 text-indigo-500"></i
+                >Optimisation des coûts
+              </li>
+            </ul>
+          </div>
+
+          <!-- Service 5: VR/AR -->
+          <div
+            class="glass-card p-8 rounded-2xl md:col-span-2 lg:col-span-2 border-cyan-500/30 bg-gradient-to-r from-slate-900 to-slate-800 relative overflow-hidden group"
+          >
+            <div
+              class="absolute right-0 top-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"
+            ></div>
+
+            <div
+              class="flex flex-col md:flex-row gap-8 items-center relative z-10"
+            >
+              <div class="flex-1">
+                <div
+                  class="w-14 h-14 bg-pink-900/50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-pink-500 transition-colors"
+                >
+                  <i
+                    data-lucide="glasses"
+                    class="w-8 h-8 text-pink-400 group-hover:text-white"
+                  ></i>
+                </div>
+                <h3 class="text-2xl font-tech font-bold text-white mb-3">
+                  05. VR, AR & Jeux Vidéo
+                </h3>
+                <p class="text-gray-400 mb-4 leading-relaxed">
+                  Nous concevons des solutions en Réalité Virtuelle et Augmentée
+                  sur <strong class="text-white">Unity</strong> et
+                  <strong class="text-white">Unreal Engine</strong>. Idéal pour
+                  la formation immersive, les visites virtuelles et la
+                  gamification.
+                </p>
+                <div class="flex flex-wrap gap-2 mt-4">
+                  <span
+                    class="px-3 py-1 bg-white/5 rounded text-xs font-tech text-cyan-300 border border-white/10"
+                    >IMMERSION</span
+                  >
+                  <span
+                    class="px-3 py-1 bg-white/5 rounded text-xs font-tech text-cyan-300 border border-white/10"
+                    >3D INTERACTIVE</span
+                  >
+                  <span
+                    class="px-3 py-1 bg-white/5 rounded text-xs font-tech text-cyan-300 border border-white/10"
+                    >FORMATION</span
+                  >
+                </div>
+              </div>
+              <div class="flex-1 w-full flex justify-center">
+                <!-- Animated Cube CSS Representation -->
+                <div
+                  class="w-32 h-32 border-2 border-pink-500/50 relative animate-float transform rotate-45 flex items-center justify-center"
+                >
+                  <div class="w-20 h-20 border border-cyan-400 absolute"></div>
+                  <div class="w-20 h-20 bg-cyan-500/20 absolute blur-md"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Us Section -->
+    <section class="py-20 bg-slate-900/50 border-y border-white/5">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 class="text-4xl font-tech font-bold text-white mb-6">
+              Pourquoi <span class="text-purple-400">Codialis</span> ?
+            </h2>
+            <p class="text-lg text-gray-300 mb-6">
+              Nous ne créons pas seulement du code, nous bâtissons
+              l'architecture numérique de votre succès.
+            </p>
+            <div class="space-y-6">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <div
+                    class="flex items-center justify-center h-12 w-12 rounded-md bg-cyan-500 text-white"
+                  >
+                    <i data-lucide="zap" class="w-6 h-6"></i>
+                  </div>
+                </div>
+                <div class="ml-4">
+                  <h4
+                    class="text-lg leading-6 font-medium text-white font-tech"
+                  >
+                    Performance
+                  </h4>
+                  <p class="mt-2 text-base text-gray-400">
+                    Architectures optimisées pour la rapidité et la charge.
+                  </p>
+                </div>
+              </div>
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <div
+                    class="flex items-center justify-center h-12 w-12 rounded-md bg-purple-500 text-white"
+                  >
+                    <i data-lucide="lightbulb" class="w-6 h-6"></i>
+                  </div>
+                </div>
+                <div class="ml-4">
+                  <h4
+                    class="text-lg leading-6 font-medium text-white font-tech"
+                  >
+                    Innovation
+                  </h4>
+                  <p class="mt-2 text-base text-gray-400">
+                    Utilisation des dernières technologies (AI, VR, Cloud).
+                  </p>
+                </div>
+              </div>
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <div
+                    class="flex items-center justify-center h-12 w-12 rounded-md bg-pink-500 text-white"
+                  >
+                    <i data-lucide="layout" class="w-6 h-6"></i>
+                  </div>
+                </div>
+                <div class="ml-4">
+                  <h4
+                    class="text-lg leading-6 font-medium text-white font-tech"
+                  >
+                    Simplicité
+                  </h4>
+                  <p class="mt-2 text-base text-gray-400">
+                    Des interfaces claires pour une prise en main immédiate.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="relative h-96 rounded-2xl overflow-hidden glass-card border-none flex items-center justify-center"
+          >
+            <div
+              class="absolute inset-0 bg-gradient-to-br from-cyan-900/20 to-purple-900/20"
+            ></div>
+            <div class="text-center p-8 relative z-10">
+              <i
+                data-lucide="code"
+                class="w-20 h-20 text-white/20 mx-auto mb-4"
+              ></i>
+              <p class="text-2xl font-tech text-white">
+                "L'excellence digitale à portée de main."
+              </p>
+            </div>
+          </div>
+        </div>
+        </div>
+    </section>
+
+    <!-- Testimonials & Authority Section -->
+    <section id="testimonials" class="py-24 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl md:text-5xl font-tech font-bold text-white mb-4">Témoignages & <span class="text-cyan-400">Avis</span></h2>
+            <div class="h-1 w-24 bg-gradient-to-r from-cyan-400 to-purple-600 mx-auto rounded-full mb-12"></div>
+            
+            <div class="glass-card p-12 rounded-3xl max-w-3xl mx-auto border border-cyan-500/20 shadow-[0_0_50px_rgba(6,182,212,0.1)] hover:border-cyan-500/50 transition-all duration-500">
+                <div class="flex flex-col items-center gap-6">
+                    <p class="text-2xl text-gray-300 italic leading-relaxed">
+                        "Expertise technique exceptionnelle et accompagnement stratégique de haut niveau. Codialis a transformé notre vision en réalité."
+                    </p>
+                    
+                    <div class="flex flex-col items-center gap-4">
+                        <span class="text-cyan-400 font-tech text-xl tracking-wider">NOTRE AUTORITÉ</span>
+                        <div class="flex items-center gap-6 p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
+                            <a href="https://www.codeur.com/-grdnd" title="grdnd" target="_blank" class="transform hover:scale-105 transition-transform">
+                              <img src="https://api.codeur.com/widgets/badge.svg?k=ALMkYkoWX7XC2A4p" title="grdnd — Codeur.com" class="h-16 w-auto"/>
+                            </a>
+                        </div>
+                        <a href="https://www.codeur.com/-grdnd" target="_blank" class="text-gray-400 hover:text-cyan-400 transition-colors flex items-center gap-2">
+                             Découvrir mon profil sur Codeur.com 
+                             <i data-lucide="external-link" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-24 relative overflow-hidden">
+      <!-- Decorational elements -->
+      <div
+        class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-500 to-transparent"
+      ></div>
+
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div
+          class="glass-card rounded-3xl p-10 md:p-16 text-center border border-cyan-500/30 shadow-[0_0_50px_rgba(6,182,212,0.15)]"
+        >
+          <h2 class="text-4xl font-tech font-bold text-white mb-8">
+            Démarrer un projet
+          </h2>
+          <p class="text-gray-300 mb-12 text-lg">
+            Prêt à transformer votre entreprise ? Prenons un moment pour discuter de vos besoins spécifiques.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <!-- Contact Card 1: Calendly (Primary) -->
+            <a href="https://calendly.com/jayan-codialis/30min" target="_blank" class="bg-cyan-500/10 p-8 rounded-2xl border border-cyan-500/40 hover:bg-cyan-500 hover:text-black transition-all group flex flex-col items-center gap-4 shadow-[0_0_20px_rgba(6,182,212,0.1)]">
+                 <i data-lucide="calendar" class="w-10 h-10 text-cyan-400 group-hover:text-black transition-colors"></i>
+                 <div class="text-center">
+                     <h3 class="text-xl font-bold mb-1">Prendre RDV (30min)</h3>
+                     <p class="text-sm opacity-70">Choisissez un créneau dans mon calendrier</p>
+                 </div>
+            </a>
+
+            <!-- Contact Card 2: Phone -->
+            <div class="bg-slate-900/50 p-8 rounded-2xl border border-white/5 hover:border-purple-500/50 transition-colors group flex flex-col items-center gap-4">
+                <i data-lucide="phone" class="w-10 h-10 text-purple-400 group-hover:scale-110 transition-transform"></i>
+                <div class="text-center">
+                    <h3 class="text-xl font-bold text-white mb-1">Appelez-nous</h3>
+                    <a href="tel:0693298420" class="block text-xl font-tech text-white hover:text-cyan-400 transition-colors">06 93 29 84 20</a>
+                </div>
+            </div>
+          </div>
+
+          <div class="relative py-8">
+              <div class="absolute inset-x-0 top-1/2 h-px bg-gray-800"></div>
+              <span class="relative bg-slate-950 px-4 text-gray-500 font-tech">OU ENVOYEZ UN MESSAGE</span>
+          </div>
+
+          <form
+            class="space-y-6 text-left max-w-lg mx-auto mt-8"
+            onsubmit="
+              event.preventDefault();
+              alert('Message simulé envoyé !');
+            "
+          >
+            <div>
+              <label
+                for="email"
+                class="block text-sm font-medium text-gray-400 mb-2"
+                >Votre Email</label
+              >
+              <input
+                type="email"
+                id="email"
+                class="w-full bg-slate-900/80 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all placeholder-gray-600"
+                placeholder="vous@entreprise.com"
+              />
+            </div>
+            <div>
+              <label
+                for="message"
+                class="block text-sm font-medium text-gray-400 mb-2"
+                >Votre Projet</label
+              >
+              <textarea
+                id="message"
+                rows="4"
+                class="w-full bg-slate-900/80 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all placeholder-gray-600"
+                placeholder="Décrivez brièvement vos besoins..."
+              ></textarea>
+            </div>
+            <button
+              type="submit"
+              class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-4 rounded-lg transition-all transform hover:scale-[1.02] shadow-lg font-tech tracking-wide"
+            >
+              ENVOYER LE MESSAGE
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black py-16 border-t border-white/10 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                <!-- Branding & Tagline -->
+                <div class="md:col-span-2">
+                    <a href="https://www.linkedin.com/company/109392264/admin/dashboard/" target="_blank" class="font-tech text-3xl font-bold text-white">CODIALIS<span class="text-cyan-500">.</span></a>
+                    <p class="text-gray-400 mt-4 max-w-sm leading-relaxed">
+                        L'excellence digitale au service de votre innovation. 
+                        Solutions sur mesure pour entreprises visionnaires.
+                    </p>
+                    <div class="flex space-x-5 mt-6">
+                        <a href="https://www.linkedin.com/company/109392264/admin/dashboard/" target="_blank" class="text-gray-500 hover:text-cyan-400 transition-colors"><i data-lucide="linkedin" class="w-6 h-6"></i></a>
+                        <a href="https://www.instagram.com/codialis.dev/" target="_blank" class="text-gray-500 hover:text-cyan-400 transition-colors"><i data-lucide="instagram" class="w-6 h-6"></i></a>
+                        <a href="#" class="text-gray-500 hover:text-cyan-400 transition-colors"><i data-lucide="github" class="w-6 h-6"></i></a>
+                    </div>
+                </div>
+
+                <!-- Addresses -->
+                <div>
+                    <h4 class="font-tech font-bold text-white uppercase tracking-wider mb-6 text-sm">Nos Sièges</h4>
+                    <div class="space-y-4 text-gray-400 text-sm">
+                        <p class="flex items-start gap-3">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-cyan-500 shrink-0"></i>
+                            <span>88 rue du génie<br>Vitry-Sur-Seine 94400</span>
+                        </p>
+                        <p class="flex items-start gap-3 border-t border-white/5 pt-4">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-purple-500 shrink-0"></i>
+                            <span>436 Avenue des Mascareignes<br>Saint-André, La Réunion</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Contact -->
+                <div>
+                    <h4 class="font-tech font-bold text-white uppercase tracking-wider mb-6 text-sm">Contact</h4>
+                    <div class="space-y-4 text-gray-400 text-sm font-tech">
+                        <a href="tel:+330783905717" class="flex items-center gap-3 hover:text-white transition-colors">
+                            <i data-lucide="phone" class="w-4 h-4 text-cyan-500"></i>
+                            +33 07 83 90 57 17
+                        </a>
+                        <a href="tel:+262693498420" class="flex items-center gap-3 hover:text-white transition-colors">
+                            <i data-lucide="phone" class="w-4 h-4 text-purple-500"></i>
+                            +262 693 49 84 20
+                        </a>
+                        <a href="mailto:jayan@codialis.com" class="flex items-center gap-3 hover:text-white transition-colors border-t border-white/5 pt-4">
+                            <i data-lucide="mail" class="w-4 h-4 text-cyan-500"></i>
+                            jayan@codialis.com
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Bar -->
+            <div class="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600">
+                <p>© 2026 Codialis. Tous droits réservés.</p>
+                <div class="flex gap-6 uppercase tracking-widest font-tech">
+                    <button onclick="toggleModal('modal-mentions')" class="hover:text-cyan-400 transition-colors cursor-pointer">Mentions Légales</button>
+                    <button onclick="toggleModal('modal-rgpd')" class="hover:text-cyan-400 transition-colors cursor-pointer">RGPD</button>
+                    <a href="https://app.orus.eu/s/a/8wSi-LAQVh-uiXFM7QwyxA" target="_blank" class="hover:text-cyan-400 transition-colors flex items-center gap-1">
+                        Assurance Pro
+                        <i data-lucide="external-link" class="w-3 h-3"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL: MENTIONS LÉGALES -->
+    <div id="modal-mentions" class="fixed inset-0 z-[100] hidden overflow-y-auto">
+        <div class="fixed inset-0 bg-black/90 backdrop-blur-md" onclick="toggleModal('modal-mentions')"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="glass-card w-full max-w-4xl rounded-3xl p-8 md:p-12 relative border-cyan-500/30 overflow-hidden">
+                <button onclick="toggleModal('modal-mentions')" class="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-8 h-8"></i>
+                </button>
+                
+                <h2 class="text-3xl font-tech font-bold text-white mb-8 border-b border-cyan-500/30 pb-4">MENTIONS LÉGALES</h2>
+                
+                <div class="prose prose-invert prose-cyan max-w-none text-gray-300 space-y-8 h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
+                    <section>
+                        <h3 class="text-xl font-bold text-cyan-400 mb-4">1. Informations générales</h3>
+                        <p>Le site internet www.codialis.com est édité par la société : <br><br>
+                        <strong>CODIALIS</strong><br>
+                        Forme juridique : EURL (Entreprise Unipersonnelle à Responsabilité Limitée)<br>
+                        Capital social : 1 000,00 €<br>
+                        Siège social : 88 Rue du Génie, 94400 VITRY-SUR-SEINE – France<br>
+                        SIREN : 991 679 457<br>
+                        SIRET : 991 679 457 00010<br>
+                        RCS : 991 679 457 R.C.S. Créteil<br>
+                        Numéro de TVA intracommunautaire : FR77991679457<br>
+                        Activité : Conseil en systèmes et logiciels informatiques (NAF 62.02A)<br>
+                        Dirigeant et responsable de la publication : M. Jayan GRONDIN<br>
+                        Téléphone : 07 83 90 57 17<br>
+                        E-mail : jayan@codialis.com</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-bold text-cyan-400 mb-4">2. Hébergement</h3>
+                        <p>Le site est hébergé par : <strong>Hostinger</strong><br>
+                        Site web : <a href="https://www.hostinger.fr" class="text-cyan-400 underline">www.hostinger.fr</a></p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-bold text-cyan-400 mb-4">3. Propriété intellectuelle</h3>
+                        <p>Le site ainsi que l’ensemble des éléments le composant (textes, logos, images, vidéos, code source, bases de données, logiciels, etc.) sont la propriété exclusive de CODIALIS, sauf mention contraire.</p>
+                        <p>Toute reproduction, utilisation ou modification sans autorisation est interdite conformément au Code de la propriété intellectuelle.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-bold text-cyan-400 mb-4">4. Services proposés</h3>
+                        <p>CODIALIS propose des prestations de :</p>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li>Développement de solutions ERP / CRM sur mesure</li>
+                            <li>Développement applications web et mobiles</li>
+                            <li>Conception de logiciels d’entreprise et SaaS</li>
+                            <li>Solutions cloud (migration, infrastructure, supervision)</li>
+                            <li>Chatbots & assistants virtuels IA</li>
+                        </ul>
+                        <p>Ces services peuvent faire l’objet de contrats et conditions spécifiques communiqués lors de la commande.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-bold text-cyan-400 mb-4">5. Limitation de responsabilité</h3>
+                        <p>CODIALIS met tout en œuvre pour garantir l’exactitude et la mise à jour des informations.</p>
+                        <p>Elle ne saurait cependant être tenue responsable en cas : d’erreurs techniques, typographiques ou inexactitudes, d’interruption du site, ou de dommages directs/indirects liés à l’utilisation du site.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-bold text-cyan-400 mb-4">6. Assurance Professionnelle</h3>
+                        <p>Responsabilité civile professionnelle : Agence web<br>
+                        Contrat Orus n°RCPH278501790 (Assureur : Hiscox)<br>
+                        Période de validité : Du 03/01/2026 au 02/01/2027<br>
+                        Zone de couverture : Monde entier (hors USA / Canada)</p>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: RGPD -->
+    <div id="modal-rgpd" class="fixed inset-0 z-[100] hidden overflow-y-auto">
+        <div class="fixed inset-0 bg-black/90 backdrop-blur-md" onclick="toggleModal('modal-rgpd')"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="glass-card w-full max-w-4xl rounded-3xl p-8 md:p-12 relative border-purple-500/30 overflow-hidden">
+                <button onclick="toggleModal('modal-rgpd')" class="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-8 h-8"></i>
+                </button>
+                
+                <h2 class="text-3xl font-tech font-bold text-white mb-8 border-b border-purple-500/30 pb-4">POLITIQUE DE CONFIDENTIALITÉ – RGPD</h2>
+                
+                <div class="prose prose-invert prose-purple max-w-none text-gray-300 space-y-8 h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
+                    <p>CODIALIS s’engage à respecter la réglementation relative à la protection des données personnelles, notamment le Règlement (UE) 2016/679 (RGPD) et la Loi Informatique et Libertés.</p>
+
+                    <section>
+                        <h3 class="text-xl font-bold text-purple-400 mb-4">1. Données collectées</h3>
+                        <p>Dans le cadre de l’utilisation du site ou lors de la prise de contact, CODIALIS peut collecter les données suivantes : Nom, prénom, adresse e-mail, téléphone, société, adresses IP et logs techniques. CODIALIS ne collecte aucune donnée sensible sans consentement explicite.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-bold text-purple-400 mb-4">2. Finalités du traitement</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="border-b border-white/10">
+                                        <th class="py-2 pr-4">Finalité</th>
+                                        <th class="py-2">Base légale</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-gray-400">
+                                    <tr class="border-b border-white/5">
+                                        <td class="py-2 pr-4">Réponse aux demandes / contact</td>
+                                        <td class="py-2">Intérêt légitime</td>
+                                    </tr>
+                                    <tr class="border-b border-white/5">
+                                        <td class="py-2 pr-4">Élaboration de devis & contrats</td>
+                                        <td class="py-2">Exécution contractuelle</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 pr-4">Maintenance et sécurité du site</td>
+                                        <td class="py-2">Intérêt légitime</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-bold text-purple-400 mb-4">3. Durée de conservation</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-sm text-gray-400">
+                            <li><strong>Données de contact :</strong> 3 ans après dernier échange</li>
+                            <li><strong>Données contractuelles :</strong> 10 ans (obligation légale)</li>
+                            <li><strong>Logs de connexion :</strong> 12 mois maximum</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-bold text-purple-400 mb-4">4. Destinataires et Sécurité</h3>
+                        <p>Les données sont destinées uniquement à CODIALIS et ne sont jamais vendues. Nous mettons en place des mesures renforcées : cryptage SSL/TLS, serveurs sécurisés et sauvegardes cloud.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-bold text-purple-400 mb-4">5. Vos droits</h3>
+                        <p>Vous disposez d’un droit d’accès, de rectification, d’effacement, d’opposition et de portabilité. Pour exercer ces droits : <a href="mailto:jayan@codialis.com" class="text-purple-400 underline">jayan@codialis.com</a>.</p>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+      // Toggle Modal Function
+      function toggleModal(id) {
+        const modal = document.getElementById(id);
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            // Trigger animation if needed
+        } else {
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+      }
+
+      // Initialize Lucide Icons
+      lucide.createIcons();
+
+      // THREE.JS BACKGROUND ANIMATION
+      const initThreeJS = () => {
+        const container = document.getElementById("canvas-container");
+        const scene = new THREE.Scene();
+
+        // Fog for depth
+        scene.fog = new THREE.FogExp2(0x050b14, 0.002);
+
+        const camera = new THREE.PerspectiveCamera(
+          75,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000,
+        );
+        camera.position.z = 30;
+
+        const renderer = new THREE.WebGLRenderer({
+          alpha: true,
+          antialias: true,
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Particles
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 1500;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for (let i = 0; i < particlesCount * 3; i++) {
+          posArray[i] = (Math.random() - 0.5) * 80; // Spread
+        }
+
+        particlesGeometry.setAttribute(
+          "position",
+          new THREE.BufferAttribute(posArray, 3),
+        );
+
+        // Material
+        const material = new THREE.PointsMaterial({
+          size: 0.15,
+          color: 0x06b6d4, // Cyan
+          transparent: true,
+          opacity: 0.8,
+        });
+
+        // Mesh
+        const particlesMesh = new THREE.Points(particlesGeometry, material);
+        scene.add(particlesMesh);
+
+        // Connecting Lines (Optional - kept simple for performance, using just particles moving)
+        // Let's add a geometric shape wireframe
+        const geoGeometry = new THREE.IcosahedronGeometry(15, 1);
+        const geoMaterial = new THREE.MeshBasicMaterial({
+          color: 0x8b5cf6, // Purple
+          wireframe: true,
+          transparent: true,
+          opacity: 0.05,
+        });
+        const planet = new THREE.Mesh(geoGeometry, geoMaterial);
+        scene.add(planet);
+
+        // Mouse interaction
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+
+        document.addEventListener("mousemove", (event) => {
+          mouseX = event.clientX - windowHalfX;
+          mouseY = event.clientY - windowHalfY;
+        });
+
+        // Animation Loop
+        const animate = () => {
+          requestAnimationFrame(animate);
+
+          targetX = mouseX * 0.001;
+          targetY = mouseY * 0.001;
+
+          // Rotation base
+          particlesMesh.rotation.y += 0.001;
+          particlesMesh.rotation.x += 0.0005;
+
+          planet.rotation.y -= 0.002;
+          planet.rotation.x -= 0.001;
+
+          // Interactive Rotation
+          particlesMesh.rotation.y +=
+            0.05 * (targetX - particlesMesh.rotation.y);
+          particlesMesh.rotation.x +=
+            0.05 * (targetY - particlesMesh.rotation.x);
+
+          renderer.render(scene, camera);
+        };
+
+        animate();
+
+        // Resize Handler
+        window.addEventListener("resize", () => {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+      };
+
+      // Start Animation when DOM is ready
+      document.addEventListener("DOMContentLoaded", initThreeJS);
+    </script>
+  </body>
+</html>
