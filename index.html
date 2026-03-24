@@ -3,24 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Codialis | Agence Digitale Internationale : Paris, La Réunion, Dubaï & Canada</title>
-    <meta name="description" content="Codialis : Agence digitale internationale experte en transformation numérique. Présente à Paris, La Réunion, Dubaï, Irlande, Espagne et Canada. Développement Mobile, SaaS et Cloud.">
-    
-    <!-- JSON-LD Structured Data: LocalBusiness Multi-Location -->
+    <title>Codialis — Agence Technologique Premium | SaaS · Mobile · IA · CRM · VR/AR</title>
+    <meta name="description" content="Codialis est votre partenaire technologique de référence : développement SaaS, Mobile, IA, CRM/ERP et VR/AR. Présents en Île-de-France et à La Réunion. Projets complexes, architectures scalables, accompagnement stratégique.">
+    <meta name="keywords" content="agence SaaS, développement mobile, intelligence artificielle, CRM ERP, VR AR, agence technologique Paris, agence digitale La Réunion, transformation numérique">
+    <meta name="author" content="Codialis">
+    <meta property="og:title" content="Codialis — Partenaire Technologique Premium">
+    <meta property="og:description" content="Nous concevons les plateformes digitales qui font avancer les entreprises. SaaS · Mobile · IA · CRM — Des architectures fiables, construites pour durer.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.codialis.com">
+    <link rel="canonical" href="https://www.codialis.com">
+
+    <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "CODIALIS",
       "url": "https://www.codialis.com",
-      "logo": "https://www.codialis.com/logo.png",
-      "description": "Expert international en transformation numérique, agence digitale à Paris, développement mobile à La Réunion, et présent à Dubaï, Canada, Irlande et Espagne.",
+      "description": "Agence technologique premium spécialisée en développement SaaS, Mobile, IA, CRM/ERP et VR/AR. Présente en Île-de-France et à La Réunion.",
+      "foundingLocation": "France",
       "address": [
         {
           "@type": "PostalAddress",
           "streetAddress": "88 Rue du Génie",
           "addressLocality": "Vitry-sur-Seine",
           "postalCode": "94400",
+          "addressRegion": "Île-de-France",
           "addressCountry": "FR"
         },
         {
@@ -35,14 +43,14 @@
       "contactPoint": [
         {
           "@type": "ContactPoint",
-          "telephone": "+330783905717",
+          "telephone": "+33-07-83-90-57-17",
           "contactType": "sales",
           "areaServed": "FR",
-          "availableLanguage": "French"
+          "availableLanguage": ["French", "English"]
         },
         {
           "@type": "ContactPoint",
-          "telephone": "+262693498420",
+          "telephone": "+262-693-49-84-20",
           "contactType": "sales",
           "areaServed": "RE",
           "availableLanguage": "French"
@@ -51,483 +59,1797 @@
       "sameAs": [
         "https://www.linkedin.com/company/109392264/",
         "https://www.instagram.com/codialis.dev/"
-      ]
+      ],
+      "knowsAbout": ["SaaS", "Mobile Development", "Artificial Intelligence", "CRM", "ERP", "VR", "AR", "Digital Transformation"]
     }
     </script>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Google Fonts: Orbitron & Rajdhani for futuristic feel -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap"
-      rel="stylesheet"
-    />
-
-    <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Three.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ["Rajdhani", "sans-serif"],
-              tech: ["Orbitron", "sans-serif"],
-            },
-            colors: {
-              codialis: {
-                dark: "#050b14",
-                light: "#0f172a",
-                cyan: "#06b6d4",
-                purple: "#8b5cf6",
-                accent: "#00f0ff",
-              },
-            },
-            animation: {
-              "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-              float: "float 6s ease-in-out infinite",
-            },
-            keyframes: {
-              float: {
-                "0%, 100%": { transform: "translateY(0)" },
-                "50%": { transform: "translateY(-20px)" },
-              },
-            },
-          },
-        },
-      };
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
     <style>
+      :root {
+        --bg-primary: #0B1220;
+        --bg-secondary: #0F1C2E;
+        --bg-card: rgba(15, 28, 46, 0.7);
+        --blue: #00C2FF;
+        --green: #2BFF88;
+        --blue-dark: #062e5d;
+        --white: #ffffff;
+        --gray: #8B9DB5;
+        --gray-light: #C8D6E5;
+        --border: rgba(0, 194, 255, 0.15);
+        --border-hover: rgba(0, 194, 255, 0.45);
+        --gradient: linear-gradient(135deg, #00C2FF, #2BFF88);
+        --gradient-text: linear-gradient(90deg, #00C2FF, #5BE8FF, #2BFF88);
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html { scroll-behavior: smooth; }
+
       body {
-        background-color: #050b14;
-        color: white;
+        background-color: var(--bg-primary);
+        color: var(--white);
+        font-family: 'Inter', sans-serif;
         overflow-x: hidden;
+        line-height: 1.6;
       }
 
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #050b14;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #06b6d4;
-        border-radius: 4px;
-      }
+      /* ── SCROLLBAR ── */
+      ::-webkit-scrollbar { width: 5px; }
+      ::-webkit-scrollbar-track { background: var(--bg-primary); }
+      ::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 4px; }
 
-      /* Glassmorphism Classes */
-      .glass-card {
-        background: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(6, 182, 212, 0.1);
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-      }
-
-      .glass-card:hover {
-        background: rgba(15, 23, 42, 0.8);
-        border: 1px solid rgba(6, 182, 212, 0.5);
-        box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
-        transform: translateY(-5px);
-      }
-
-      /* Neon Text Effect */
-      .text-neon {
-        text-shadow:
-          0 0 10px rgba(6, 182, 212, 0.5),
-          0 0 20px rgba(6, 182, 212, 0.3);
-      }
-
-      #canvas-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        opacity: 0.6;
+      /* ── TYPOGRAPHY ── */
+      .font-tech {
+        font-family: 'Orbitron', sans-serif;
+        letter-spacing: 0.08em;
+        font-weight: 700;
       }
 
       .gradient-text {
-        background: linear-gradient(to right, #06b6d4, #8b5cf6);
+        background: var(--gradient-text);
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
       }
 
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 4px;
+      .section-label {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.7rem;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        color: var(--blue);
+        font-weight: 600;
       }
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.05);
+
+      h2.section-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: clamp(1.6rem, 3vw, 2.4rem);
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: var(--white);
+        line-height: 1.2;
       }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #06b6d4;
+
+      h2.section-title span { color: var(--blue); }
+
+      /* ── LAYOUT ── */
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+      }
+
+      section { padding: 6rem 0; }
+
+      /* ── CARDS ── */
+      .glass-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+      }
+
+      .glass-card:hover {
+        border-color: var(--border-hover);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 40px rgba(0, 194, 255, 0.12);
+      }
+
+      /* ── BUTTONS ── */
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.9rem 2rem;
+        background: var(--gradient);
+        color: #0B1220;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+        white-space: nowrap;
+      }
+
+      .btn-primary:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+        box-shadow: 0 0 30px rgba(0, 194, 255, 0.35);
+      }
+
+      .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.85rem 2rem;
+        background: transparent;
+        color: var(--white);
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        border: 1px solid var(--border-hover);
+        border-radius: 4px;
+        text-decoration: none;
+        transition: border-color 0.2s, color 0.2s, background 0.2s;
+        white-space: nowrap;
+      }
+
+      .btn-secondary:hover {
+        border-color: var(--blue);
+        color: var(--blue);
+        background: rgba(0, 194, 255, 0.06);
+      }
+
+      /* ── DIAGONAL ACCENT LINE ── */
+      .accent-line {
+        display: inline-block;
+        width: 40px;
+        height: 3px;
+        background: var(--gradient);
+        border-radius: 2px;
+      }
+
+      /* ── NEON DOT ── */
+      .neon-dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        background: var(--green);
+        border-radius: 50%;
+        box-shadow: 0 0 8px var(--green), 0 0 20px rgba(43, 255, 136, 0.4);
+        flex-shrink: 0;
+      }
+
+      /* ── BACKGROUND GRID ── */
+      .grid-bg {
+        background-image:
+          linear-gradient(rgba(0,194,255,0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0,194,255,0.04) 1px, transparent 1px);
+        background-size: 60px 60px;
+      }
+
+      /* ── ANIMATED GRADIENT ENERGY LINE ── */
+      .energy-line {
+        height: 2px;
+        background: var(--gradient);
+        background-size: 200% 100%;
+        animation: energy-flow 3s linear infinite;
+      }
+
+      @keyframes energy-flow {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+
+      /* ── FADE IN ── */
+      .fade-in {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity 0.7s ease, transform 0.7s ease;
+      }
+
+      .fade-in.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* ── NAVIGATION ── */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background: rgba(11, 18, 32, 0.9);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        transition: background 0.3s;
+      }
+
+      .nav-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 72px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+      }
+
+      .nav-logo {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--white);
+        text-decoration: none;
+      }
+
+      .nav-logo .dot { color: var(--green); }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        list-style: none;
+      }
+
+      .nav-links a {
+        color: var(--gray-light);
+        text-decoration: none;
+        font-size: 0.82rem;
+        font-weight: 500;
+        letter-spacing: 0.03em;
+        padding: 0.5rem 0.8rem;
+        border-radius: 4px;
+        transition: color 0.2s;
+      }
+
+      .nav-links a:hover { color: var(--white); }
+
+      .nav-cta { margin-left: 1rem; }
+
+      /* Mobile nav */
+      .nav-toggle {
+        display: none;
+        background: none;
+        border: none;
+        cursor: pointer;
+        flex-direction: column;
+        gap: 5px;
+        padding: 4px;
+      }
+
+      .nav-toggle span {
+        display: block;
+        width: 24px;
+        height: 2px;
+        background: var(--white);
+        border-radius: 2px;
+        transition: transform 0.3s, opacity 0.3s;
+      }
+
+      .mobile-menu {
+        display: none;
+        position: fixed;
+        top: 72px;
+        left: 0;
+        right: 0;
+        background: rgba(11, 18, 32, 0.98);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        padding: 1.5rem;
+        z-index: 99;
+      }
+
+      .mobile-menu.open { display: block; }
+
+      .mobile-menu a {
+        display: block;
+        color: var(--gray-light);
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+        padding: 0.85rem 0;
+        border-bottom: 1px solid var(--border);
+        transition: color 0.2s;
+      }
+
+      .mobile-menu a:last-child { border-bottom: none; }
+      .mobile-menu a:hover { color: var(--blue); }
+
+      @media (max-width: 900px) {
+        .nav-links, .nav-cta { display: none; }
+        .nav-toggle { display: flex; }
+      }
+
+      /* ── HERO ── */
+      #hero {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        padding-top: 72px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(0,194,255,0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0,194,255,0.05) 1px, transparent 1px);
+        background-size: 80px 80px;
+        mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+      }
+
+      .hero-glow {
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(0,194,255,0.08) 0%, transparent 70%);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 1rem;
+        border: 1px solid rgba(43, 255, 136, 0.3);
+        background: rgba(43, 255, 136, 0.06);
+        border-radius: 100px;
+        font-size: 0.72rem;
+        font-family: 'Orbitron', sans-serif;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--green);
+        margin-bottom: 1.5rem;
+      }
+
+      .hero-h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: clamp(2rem, 5vw, 3.8rem);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        line-height: 1.15;
+        color: var(--white);
+        margin-bottom: 1.25rem;
+      }
+
+      .hero-sub {
+        font-size: clamp(1rem, 2vw, 1.2rem);
+        color: var(--gray-light);
+        font-weight: 300;
+        max-width: 640px;
+        line-height: 1.7;
+        margin-bottom: 2.5rem;
+      }
+
+      .hero-sub strong { color: var(--white); font-weight: 600; }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 3.5rem;
+      }
+
+      .hero-indicators {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+      }
+
+      .hero-stat {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .hero-stat-num {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.6rem;
+        font-weight: 700;
+        background: var(--gradient-text);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .hero-stat-label {
+        font-size: 0.75rem;
+        color: var(--gray);
+        letter-spacing: 0.05em;
+      }
+
+      .hero-locations {
+        position: absolute;
+        right: 5%;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .location-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
         border-radius: 10px;
+        padding: 1rem 1.25rem;
+        min-width: 200px;
+        backdrop-filter: blur(12px);
+      }
+
+      .location-flag {
+        font-size: 1.4rem;
+        margin-bottom: 0.25rem;
+      }
+
+      .location-name {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.7rem;
+        letter-spacing: 0.12em;
+        color: var(--blue);
+        font-weight: 600;
+      }
+
+      .location-desc {
+        font-size: 0.72rem;
+        color: var(--gray);
+        margin-top: 0.15rem;
+      }
+
+      @media (max-width: 1100px) {
+        .hero-locations { display: none; }
+      }
+
+      /* ── SECTION HEADER ── */
+      .section-header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 3.5rem;
+      }
+
+      .section-header.centered {
+        text-align: center;
+        align-items: center;
+      }
+
+      /* ── EXPERTISE GRID ── */
+      .expertise-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .expertise-card {
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .expertise-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--gradient);
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .expertise-card:hover::before { opacity: 1; }
+
+      .expertise-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background: rgba(0, 194, 255, 0.1);
+        border: 1px solid rgba(0, 194, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.25rem;
+        font-size: 1.4rem;
+      }
+
+      .expertise-card h3 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--white);
+        margin-bottom: 0.75rem;
+      }
+
+      .expertise-card p {
+        font-size: 0.88rem;
+        color: var(--gray-light);
+        line-height: 1.65;
+        margin-bottom: 1.25rem;
+      }
+
+      .expertise-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+      }
+
+      .tag {
+        font-size: 0.68rem;
+        font-family: 'Orbitron', sans-serif;
+        letter-spacing: 0.06em;
+        padding: 0.2rem 0.6rem;
+        border: 1px solid rgba(0, 194, 255, 0.25);
+        border-radius: 3px;
+        color: var(--blue);
+        background: rgba(0, 194, 255, 0.05);
+      }
+
+      /* ── PROCESS / JOURNEY ── */
+      .journey-steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0;
+        position: relative;
+      }
+
+      .journey-steps::before {
+        content: '';
+        position: absolute;
+        top: 32px;
+        left: 10%;
+        right: 10%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--blue), var(--green), transparent);
+        opacity: 0.3;
+      }
+
+      .journey-step {
+        padding: 2rem 1.5rem;
+        text-align: center;
+        position: relative;
+      }
+
+      .step-number {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--bg-secondary);
+        border: 2px solid var(--blue);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.25rem;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--blue);
+        position: relative;
+        z-index: 1;
+      }
+
+      .journey-step h3 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+        color: var(--white);
+        margin-bottom: 0.6rem;
+      }
+
+      .journey-step p {
+        font-size: 0.82rem;
+        color: var(--gray);
+        line-height: 1.6;
+      }
+
+      /* ── CASE STUDIES ── */
+      .case-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .case-card {
+        padding: 2rem;
+        cursor: default;
+      }
+
+      .case-badge {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.62rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        padding: 0.25rem 0.75rem;
+        border-radius: 100px;
+        background: rgba(43, 255, 136, 0.1);
+        border: 1px solid rgba(43, 255, 136, 0.25);
+        color: var(--green);
+        display: inline-block;
+        margin-bottom: 1rem;
+      }
+
+      .case-card h3 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--white);
+        margin-bottom: 0.75rem;
+        line-height: 1.3;
+      }
+
+      .case-card p {
+        font-size: 0.88rem;
+        color: var(--gray-light);
+        line-height: 1.65;
+        margin-bottom: 1.5rem;
+      }
+
+      .case-result {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+      }
+
+      .result-item {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .result-value {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--green);
+      }
+
+      .result-label {
+        font-size: 0.72rem;
+        color: var(--gray);
+      }
+
+      /* ── TEAM ── */
+      .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .team-card {
+        padding: 2rem 1.5rem;
+        text-align: center;
+      }
+
+      .team-avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(0,194,255,0.2), rgba(43,255,136,0.2));
+        border: 2px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--blue);
+      }
+
+      .team-card h3 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--white);
+        margin-bottom: 0.3rem;
+      }
+
+      .team-role {
+        font-size: 0.78rem;
+        color: var(--green);
+        margin-bottom: 0.5rem;
+      }
+
+      .team-spec {
+        font-size: 0.76rem;
+        color: var(--gray);
+        line-height: 1.5;
+      }
+
+      /* ── LOCATIONS ── */
+      .locations-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2rem;
+      }
+
+      .location-big-card {
+        padding: 2.5rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .location-big-card::after {
+        content: '';
+        position: absolute;
+        bottom: -30px;
+        right: -30px;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(0,194,255,0.08) 0%, transparent 70%);
+        pointer-events: none;
+      }
+
+      .location-big-card .flag {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .location-big-card h3 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--white);
+        margin-bottom: 0.5rem;
+      }
+
+      .location-big-card .address {
+        font-size: 0.82rem;
+        color: var(--gray);
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+      }
+
+      .location-big-card .phone {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.8rem;
+        color: var(--blue);
+        letter-spacing: 0.05em;
+      }
+
+      /* ── AIDES ── */
+      .aides-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .aide-card {
+        padding: 1.75rem;
+      }
+
+      .aide-card .amount {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: var(--gradient-text);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.4rem;
+      }
+
+      .aide-card h3 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: var(--white);
+        margin-bottom: 0.6rem;
+      }
+
+      .aide-card p {
+        font-size: 0.84rem;
+        color: var(--gray-light);
+        line-height: 1.6;
+      }
+
+      .aide-cta-banner {
+        background: linear-gradient(135deg, rgba(0,194,255,0.08), rgba(43,255,136,0.08));
+        border: 1px solid var(--border-hover);
+        border-radius: 1rem;
+        padding: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+      }
+
+      .aide-cta-banner h3 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--white);
+        margin-bottom: 0.4rem;
+      }
+
+      .aide-cta-banner p {
+        font-size: 0.88rem;
+        color: var(--gray-light);
+      }
+
+      /* ── CONTACT ── */
+      #contact-section {
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .contact-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.4fr;
+        gap: 4rem;
+        align-items: start;
+      }
+
+      @media (max-width: 900px) {
+        .contact-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+      }
+
+      .contact-info h2 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: var(--white);
+        line-height: 1.2;
+        margin-bottom: 1rem;
+      }
+
+      .contact-info p {
+        font-size: 0.9rem;
+        color: var(--gray-light);
+        line-height: 1.7;
+        margin-bottom: 2rem;
+      }
+
+      .contact-detail {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.9rem;
+        margin-bottom: 1.2rem;
+      }
+
+      .contact-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: rgba(0, 194, 255, 0.1);
+        border: 1px solid rgba(0, 194, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+        color: var(--blue);
+      }
+
+      .contact-detail-text { font-size: 0.85rem; color: var(--gray-light); line-height: 1.5; }
+      .contact-detail-text strong { color: var(--white); font-size: 0.8rem; font-family: 'Orbitron', sans-serif; letter-spacing: 0.05em; display: block; margin-bottom: 0.15rem; }
+
+      .contact-form {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        padding: 2rem;
+      }
+
+      .form-group { margin-bottom: 1.25rem; }
+
+      .form-group label {
+        display: block;
+        font-size: 0.75rem;
+        font-family: 'Orbitron', sans-serif;
+        letter-spacing: 0.08em;
+        color: var(--gray);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+      }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        background: rgba(11, 18, 32, 0.7);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        color: var(--white);
+        font-family: 'Inter', sans-serif;
+        font-size: 0.88rem;
+        outline: none;
+        transition: border-color 0.2s;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        border-color: var(--blue);
+      }
+
+      .form-group textarea { resize: vertical; min-height: 120px; }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
+      @media (max-width: 600px) {
+        .form-row { grid-template-columns: 1fr; }
+      }
+
+      /* ── FOOTER ── */
+      footer {
+        background: rgba(5, 10, 20, 0.8);
+        border-top: 1px solid var(--border);
+        padding: 3rem 0 1.5rem;
+      }
+
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 3rem;
+        margin-bottom: 3rem;
+      }
+
+      @media (max-width: 900px) {
+        .footer-grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
+      }
+
+      @media (max-width: 600px) {
+        .footer-grid { grid-template-columns: 1fr; }
+      }
+
+      .footer-brand p {
+        font-size: 0.84rem;
+        color: var(--gray);
+        line-height: 1.7;
+        margin-top: 0.75rem;
+        max-width: 280px;
+      }
+
+      .footer-col h4 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.7rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--white);
+        margin-bottom: 1rem;
+      }
+
+      .footer-col a, .footer-col p {
+        display: block;
+        font-size: 0.83rem;
+        color: var(--gray);
+        text-decoration: none;
+        margin-bottom: 0.6rem;
+        transition: color 0.2s;
+        line-height: 1.5;
+      }
+
+      .footer-col a:hover { color: var(--blue); }
+
+      .footer-bottom {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.78rem;
+        color: var(--gray);
+      }
+
+      .social-links {
+        display: flex;
+        gap: 0.75rem;
+      }
+
+      .social-link {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: rgba(0, 194, 255, 0.06);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gray);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: color 0.2s, border-color 0.2s, background 0.2s;
+      }
+
+      .social-link:hover {
+        color: var(--blue);
+        border-color: var(--blue);
+        background: rgba(0, 194, 255, 0.1);
+      }
+
+      /* ── TESTIMONIAL STRIP ── */
+      .trust-bar {
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        padding: 2rem 0;
+        overflow: hidden;
+      }
+
+      .trust-bar-inner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 3rem;
+      }
+
+      .trust-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.82rem;
+        color: var(--gray);
+        white-space: nowrap;
+      }
+
+      .trust-item svg { color: var(--green); }
+
+      /* ── NUMBERS SECTION ── */
+      .numbers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        overflow: hidden;
+      }
+
+      .number-item {
+        padding: 2.5rem 2rem;
+        text-align: center;
+        border-right: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .number-item:last-child { border-right: none; }
+
+      .number-value {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.2rem;
+        font-weight: 700;
+        background: var(--gradient-text);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: block;
+      }
+
+      .number-label {
+        font-size: 0.78rem;
+        color: var(--gray);
+        margin-top: 0.3rem;
+        letter-spacing: 0.04em;
+      }
+
+      /* ── RESPONSIVE FIXES ── */
+
+      /* Tablette */
+      @media (max-width: 900px) {
+        .journey-steps {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .aide-cta-banner {
+          flex-direction: column;
+          text-align: center;
+        }
+        .aide-cta-banner .btn-primary {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
+      /* Mobile large */
+      @media (max-width: 768px) {
+        section { padding: 4rem 0; }
+
+        .container { padding: 0 1.25rem; }
+
+        /* Hero badge — évite le débordement avec le texte long */
+        .hero-badge {
+          font-size: 0.58rem;
+          letter-spacing: 0.08em;
+          padding: 0.4rem 0.75rem;
+          text-align: center;
+          max-width: 100%;
+        }
+
+        /* Journey — 1 colonne sur mobile */
+        .journey-steps {
+          grid-template-columns: 1fr;
+        }
+        .journey-steps::before { display: none; }
+        .journey-step { padding: 1.25rem 1rem; }
+
+        /* Numbers — 2 colonnes */
+        .numbers-grid { grid-template-columns: repeat(2, 1fr); }
+        .number-item:nth-child(2n) { border-right: none; }
+        .number-item:nth-child(3),
+        .number-item:nth-child(4) { border-bottom: none; }
+
+        /* Case cards — 1 colonne */
+        .case-grid { grid-template-columns: 1fr; }
+
+        /* Logos marquee — plus petits sur mobile */
+        .logo-item { height: 30px; }
+        .logo-item img { max-width: 100px; }
+        .logos-track { gap: 2.5rem; }
+
+        /* Testimonials — 1 colonne */
+        .testimonials-grid { grid-template-columns: 1fr; }
+
+        /* Hero stats — 2x2 */
+        .hero-indicators { gap: 1.25rem; }
+        .hero-stat-num { font-size: 1.3rem; }
+
+        /* Buttons — pleine largeur sur très petits écrans */
+        .hero-actions {
+          flex-direction: column;
+        }
+        .hero-actions .btn-primary,
+        .hero-actions .btn-secondary {
+          width: 100%;
+          justify-content: center;
+        }
+
+        /* Section header */
+        .section-header { margin-bottom: 2.5rem; }
+
+        /* Team — 2 colonnes sur tablette-mobile */
+        .team-grid { grid-template-columns: repeat(2, 1fr); }
+
+        /* Locations */
+        .locations-grid { grid-template-columns: 1fr; }
+      }
+
+      /* Mobile petit */
+      @media (max-width: 480px) {
+        .hero-badge {
+          font-size: 0.52rem;
+          letter-spacing: 0.06em;
+        }
+        h2.section-title { font-size: 1.4rem; }
+        .team-grid { grid-template-columns: 1fr; }
+        .numbers-grid { grid-template-columns: repeat(2, 1fr); }
+        .number-value { font-size: 1.7rem; }
+        .codeur-link { font-size: 0.72rem; }
+
+        /* Footer bottom en colonne */
+        .footer-bottom { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+      }
+
+      /* ── LOGOS MARQUEE ── */
+      .logos-section {
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        padding: 2rem 0 2.2rem;
+        overflow: hidden;
+        margin-top: -2.5rem; /* remonte encore plus haute la barre de confiance */
+      }
+
+      .logos-label {
+        text-align: center;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.65rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--gray);
+        margin-bottom: 0.25rem;
+      }
+
+      .logos-subtitle {
+        text-align: center;
+        font-size: 0.86rem;
+        color: var(--white);
+        margin-bottom: 1.4rem;
+        opacity: 0.85;
+      }
+
+      .logos-overflow {
+        overflow: hidden;
+        -webkit-mask-image: linear-gradient(
+          90deg,
+          transparent 0%,
+          black 12%,
+          black 88%,
+          transparent 100%
+        );
+        mask-image: linear-gradient(
+          90deg,
+          transparent 0%,
+          black 12%,
+          black 88%,
+          transparent 100%
+        );
+      }
+
+      .logos-track {
+        display: flex;
+        align-items: center;
+        gap: 4rem;
+        width: max-content;
+        animation: logos-scroll 28s linear infinite;
+      }
+
+      .logos-track:hover {
+        animation-play-state: paused;
+      }
+
+      @keyframes logos-scroll {
+        0%   { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+      }
+
+      .logo-item {
+        height: 40px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        filter: brightness(0) invert(1);
+        opacity: 0.4;
+        transition: opacity 0.35s, filter 0.35s;
+        cursor: default;
+      }
+
+      .logos-track:hover .logo-item:hover {
+        opacity: 1;
+        filter: none;
+      }
+
+      .logo-item img {
+        height: 100%;
+        width: auto;
+        max-width: 130px;
+        object-fit: contain;
+        display: block;
+      }
+
+      /* ── TESTIMONIALS ── */
+      .testimonials-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .testimonial-card {
+        padding: 1.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .stars {
+        display: flex;
+        gap: 3px;
+      }
+
+      .star {
+        color: #FFB800;
+        font-size: 0.85rem;
+      }
+
+      .testimonial-project {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.62rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--blue);
+        line-height: 1.4;
+      }
+
+      .testimonial-quote {
+        font-size: 0.87rem;
+        color: var(--gray-light);
+        line-height: 1.7;
+        font-style: italic;
+        flex: 1;
+      }
+
+      .testimonial-author {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border-top: 1px solid var(--border);
+        padding-top: 0.85rem;
+      }
+
+      .author-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(0,194,255,0.2), rgba(43,255,136,0.2));
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--blue);
+        flex-shrink: 0;
+      }
+
+      .author-name {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--white);
+      }
+
+      .author-source {
+        font-size: 0.7rem;
+        color: var(--gray);
+      }
+
+      .codeur-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.78rem;
+        color: var(--blue);
+        text-decoration: none;
+        border: 1px solid rgba(0, 194, 255, 0.25);
+        padding: 0.4rem 0.9rem;
+        border-radius: 100px;
+        transition: background 0.2s, border-color 0.2s;
+      }
+
+      .codeur-link:hover {
+        background: rgba(0, 194, 255, 0.08);
+        border-color: var(--blue);
       }
     </style>
   </head>
-  <body class="antialiased">
-    <!-- 3D Background -->
-    <div id="canvas-container"></div>
 
-    <!-- Navigation -->
-    <nav class="fixed w-full z-50 glass-card border-b border-white/10">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-20">
-          <div class="flex-shrink-0 flex items-center">
-            <span class="font-tech text-3xl font-bold tracking-wider text-white"
-              >CODIALIS<span class="text-cyan-400">.</span></span
-            >
-          </div>
-          <div class="hidden md:block">
-            <div class="ml-10 flex items-baseline space-x-6">
-              <a
-                href="#home"
-                class="hover:text-cyan-400 px-3 py-2 rounded-md text-lg font-medium transition-colors"
-                >Accueil</a
-              >
-              <a
-                href="#services"
-                class="hover:text-cyan-400 px-3 py-2 rounded-md text-lg font-medium transition-colors"
-                >Services</a
-              >
-              <a
-                href="#expertise"
-                class="hover:text-cyan-400 px-3 py-2 rounded-md text-lg font-medium transition-colors"
-                >Expertise</a
-              >
-              <a
-                href="https://calendly.com/jayan-codialis/30min"
-                target="_blank"
-                class="bg-cyan-500 hover:bg-cyan-600 text-black px-6 py-2 rounded-full text-lg font-bold transition-all shadow-[0_0_15px_rgba(6,182,212,0.5)] flex items-center gap-2"
-              >
-                <i data-lucide="calendar" class="w-5 h-5"></i>
-                Prendre RDV
-              </a>
-            </div>
-          </div>
-          <!-- Mobile menu button -->
-          <div class="-mr-2 flex md:hidden">
-            <button
-              type="button"
-              onclick="
-                document
-                  .getElementById('mobile-menu')
-                  .classList.toggle('hidden')
-              "
-              class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none"
-            >
-              <i data-lucide="menu" class="w-8 h-8"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- Mobile Menu -->
-      <div
-        class="hidden md:hidden bg-slate-900 border-t border-gray-700"
-        id="mobile-menu"
-      >
-        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          <a
-            href="#home"
-            class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-            >Accueil</a
-          >
-          <a
-            href="#services"
-            class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-            >Services</a
-          >
-          <a
-            href="https://calendly.com/jayan-codialis/30min"
-            target="_blank"
-            class="text-cyan-400 font-bold block px-3 py-2 rounded-md text-base"
-            >Prendre RDV</a
-          >
-          <a
-            href="#contact"
-            class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-            >Contact</a
-          >
-        </div>
+  <body>
+    <!-- ═══════════════════════════════════════
+         NAVIGATION
+    ═══════════════════════════════════════ -->
+    <nav id="navbar">
+      <div class="nav-inner">
+        <a href="#hero" class="nav-logo">CODIALIS<span class="dot">.</span></a>
+
+        <ul class="nav-links">
+          <li><a href="#expertises">Expertises</a></li>
+          <li><a href="#journey">Notre Approche</a></li>
+          <li><a href="#realisations">Réalisations</a></li>
+          <li><a href="#temoignages">Témoignages</a></li>
+          <li><a href="#agence">L'Agence</a></li>
+          <li><a href="#aides">Aides &amp; Financement</a></li>
+          <li><a href="#contact-section">Contact</a></li>
+        </ul>
+
+        <a href="https://calendly.com/codialis/decouverte" target="_blank" rel="noopener" class="btn-primary nav-cta" style="font-size:0.7rem; padding:0.65rem 1.4rem;">
+          Prendre RDV
+        </a>
+
+        <button class="nav-toggle" onclick="document.getElementById('mobileMenu').classList.toggle('open')" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
       </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section
-      id="home"
-      class="relative min-h-screen flex items-center justify-center pt-20"
-    >
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
-        <div
-          class="inline-block mb-4 px-4 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 backdrop-blur-sm"
-        >
-          <span
-            class="text-cyan-400 tracking-widest text-sm font-tech uppercase"
-            >Agence Digitale Futuriste</span
-          >
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#expertises" onclick="document.getElementById('mobileMenu').classList.remove('open')">Expertises</a>
+      <a href="#journey" onclick="document.getElementById('mobileMenu').classList.remove('open')">Notre Approche</a>
+      <a href="#realisations" onclick="document.getElementById('mobileMenu').classList.remove('open')">Réalisations</a>
+      <a href="#temoignages" onclick="document.getElementById('mobileMenu').classList.remove('open')">Témoignages</a>
+      <a href="#agence" onclick="document.getElementById('mobileMenu').classList.remove('open')">L'Agence</a>
+      <a href="#aides" onclick="document.getElementById('mobileMenu').classList.remove('open')">Aides &amp; Financement</a>
+      <a href="#contact-section" onclick="document.getElementById('mobileMenu').classList.remove('open')">Contact</a>
+      <a href="https://calendly.com/codialis/decouverte" target="_blank" rel="noopener" style="color:var(--green); font-weight:600; border-bottom:none; margin-top:0.5rem;">→ Prendre rendez-vous</a>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         HERO
+    ═══════════════════════════════════════ -->
+    <section id="hero">
+      <div class="hero-grid"></div>
+      <div class="hero-glow"></div>
+
+      <div class="container" style="position:relative; z-index:1;">
+        <div class="hero-badge">
+          <span class="neon-dot"></span>
+          Agence Technologique Premium — Paris · La Réunion · International
         </div>
-        <h1
-          class="text-4xl md:text-7xl font-tech font-bold text-white mb-6 leading-tight"
-        >
-          Propulsez votre entreprise vers <br />
-          <span class="gradient-text text-neon">L'EXCELLENCE DIGITALE</span><br>
-          <span class="text-2xl md:text-4xl text-gray-400 block mt-2 uppercase tracking-tighter">Paris • La Réunion • Dubaï • International</span>
+
+        <h1 class="hero-h1">
+          Nous concevons les plateformes<br>
+          digitales qui font avancer<br>
+          <span class="gradient-text">les entreprises.</span>
         </h1>
-        <p
-          class="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-gray-300 font-light leading-relaxed"
-        >
-          Expert en <span class="text-white font-bold">Développement d'Applications Mobiles</span> haute performance et solutions <span class="text-white font-bold">SaaS</span> innovantes. 
-          Codialis transforme vos idées en architectures digitales scalables et puissantes.
+
+        <p class="hero-sub">
+          <strong>SaaS · Mobile · IA · CRM/ERP · VR/AR</strong><br>
+          Des architectures fiables, construites pour durer — et des équipes engagées sur chaque projet.
         </p>
-        <div
-          class="mt-10 flex flex-col md:flex-row justify-center items-center gap-6"
-        >
-          <a
-            href="https://calendly.com/jayan-codialis/30min"
-            target="_blank"
-            class="w-full md:w-auto group relative px-8 md:px-10 py-4 bg-cyan-500 text-black font-bold text-lg md:text-xl rounded-none hover:bg-cyan-400 transition-all duration-300 clip-path-polygon flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(6,182,212,0.4)]"
-          >
-            <i data-lucide="calendar" class="w-6 h-6"></i>
-            PRENDRE RENDEZ-VOUS
-            <div
-              class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"
-            ></div>
+
+        <div class="hero-actions">
+          <a href="https://calendly.com/codialis/decouverte" target="_blank" rel="noopener" class="btn-primary">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Démarrer un projet
           </a>
-          <a
-            href="#services"
-            class="w-full md:w-auto px-10 py-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xl border border-white/20 transition-all backdrop-blur-sm flex items-center justify-center gap-3"
-          >
-            EXPLORER NOS SERVICES
+          <a href="#realisations" class="btn-secondary">
+            Voir nos réalisations
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
+        </div>
+
+        <div class="hero-indicators">
+          <div class="hero-stat">
+            <span class="hero-stat-num">50+</span>
+            <span class="hero-stat-label">Projets livrés</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-num">2</span>
+            <span class="hero-stat-label">Sièges en France</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-num">5</span>
+            <span class="hero-stat-label">Expertises clés</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-num">100%</span>
+            <span class="hero-stat-label">Satisfaction client</span>
+          </div>
         </div>
       </div>
 
-      <!-- Scroll Down Indicator -->
-      <div
-        class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce text-cyan-400"
-      >
-        <i data-lucide="chevron-down" class="w-8 h-8"></i>
+      <!-- Location cards (desktop) -->
+      <div class="hero-locations">
+        <div class="location-card">
+          <div class="location-flag">🇫🇷</div>
+          <div class="location-name">Île-de-France</div>
+          <div class="location-desc">Vitry-sur-Seine<br>+33 (0)7 83 90 57 17</div>
+        </div>
+        <div class="location-card">
+          <div class="location-flag">🌴</div>
+          <div class="location-name">La Réunion</div>
+          <div class="location-desc">Saint-André<br>+262 (0)693 49 84 20</div>
+        </div>
       </div>
     </section>
 
-    <!-- Services Section -->
-    <section id="services" class="py-24 relative">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-5xl font-tech font-bold text-white mb-4">
-            Nos <span class="text-cyan-400">Expertises Digitales</span>
-          </h2>
-          <div
-            class="h-1 w-24 bg-gradient-to-r from-cyan-400 to-purple-600 mx-auto rounded-full"
-          ></div>
-          <p class="mt-6 text-gray-400 max-w-2xl mx-auto leading-relaxed">
-            Votre agence de <span class="text-white">transformation numérique internationale</span>. 
-            De <span class="text-white">Paris</span> à <span class="text-white">Dubaï</span>, en passant par <span class="text-white">La Réunion</span>, le <span class="text-white">Canada</span> et l'<span class="text-white">Europe</span>.
+    <!-- Energy line separator -->
+    <div class="energy-line"></div>
+
+    <!-- ═══════════════════════════════════════
+         RÉFÉRENCES CLIENTS — LOGOS MARQUEE
+    ═══════════════════════════════════════ -->
+    <div class="logos-section">
+      <p class="logos-label">Ils nous font confiance</p>
+      <p class="logos-subtitle">Curieux·se ? découvrez leurs trajectoires et pourquoi ils nous recommandent.</p>
+      <div class="logos-overflow">
+        <div class="logos-track">
+          <!-- Série 1 -->
+          <div class="logo-item"><img src="References/1767594703906-removebg-preview.png" alt="HAVATIME" /></div>
+          <div class="logo-item"><img src="References/1767594832611-removebg-preview.png" alt="IDELIA" /></div>
+          <div class="logo-item"><img src="References/1767594958135-removebg-preview.png" alt="BROOM" /></div>
+          <div class="logo-item"><img src="References/ADAPTEL_ELEMENTS_LOGO_RESTAURATION_COULEUR.png" alt="Adaptel" /></div>
+          <div class="logo-item"><img src="References/Capture_d_écran_2026-03-20_à_17.57.04-removebg-preview.png" alt="LeadsAssurance" /></div>
+          <div class="logo-item"><img src="References/Capture_d_écran_2026-03-20_à_17.58.07-removebg-preview.png" alt="EventPass" /></div>
+          <div class="logo-item"><img src="References/images-removebg-preview.png" alt="DiotSiaci" /></div>
+          <!-- Série 2 — clone pour boucle infinie -->
+          <div class="logo-item"><img src="References/1767594703906-removebg-preview.png" alt="HAVATIME" /></div>
+          <div class="logo-item"><img src="References/1767594832611-removebg-preview.png" alt="IDELIA" /></div>
+          <div class="logo-item"><img src="References/1767594958135-removebg-preview.png" alt="BROOM" /></div>
+          <div class="logo-item"><img src="References/ADAPTEL_ELEMENTS_LOGO_RESTAURATION_COULEUR.png" alt="Adaptel" /></div>
+          <div class="logo-item"><img src="References/Capture_d_écran_2026-03-20_à_17.57.04-removebg-preview.png" alt="LeadsAssurance" /></div>
+          <div class="logo-item"><img src="References/Capture_d_écran_2026-03-20_à_17.58.07-removebg-preview.png" alt="EventPass" /></div>
+          <div class="logo-item"><img src="References/images-removebg-preview.png" alt="DiotSiaci" /></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         TRUST BAR
+    ═══════════════════════════════════════ -->
+    <div class="trust-bar">
+      <div class="container">
+        <div class="trust-bar-inner">
+          <div class="trust-item">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Architecture scalable long terme
+          </div>
+          <div class="trust-item">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Équipe dédiée sur chaque projet
+          </div>
+          <div class="trust-item">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Présence Paris &amp; La Réunion
+          </div>
+          <div class="trust-item">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Accompagnement stratégique &amp; technique
+          </div>
+          <div class="trust-item">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Aides &amp; subventions optimisées
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         EXPERTISES
+    ═══════════════════════════════════════ -->
+    <section id="expertises" class="grid-bg">
+      <div class="container">
+        <div class="section-header fade-in">
+          <span class="section-label">Hub d'Expertise</span>
+          <h2 class="section-title">Cinq domaines.<br><span>Une maîtrise complète.</span></h2>
+          <p style="font-size:0.92rem; color:var(--gray-light); max-width:580px; line-height:1.7;">
+            Nous ne sommes pas généralistes. Chaque domaine que nous maîtrisons est le résultat d'investissements en R&D, de projets livrés et d'une expertise d'ingénierie rigoureuse.
           </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <!-- Service 1: ERP/CRM -->
-          <div
-            class="glass-card p-8 rounded-2xl transition-all duration-300 group"
-          >
-            <div
-              class="w-14 h-14 bg-cyan-900/50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-cyan-500 transition-colors"
-            >
-              <i
-                data-lucide="database"
-                class="w-8 h-8 text-cyan-400 group-hover:text-white"
-              ></i>
+        <div class="expertise-grid">
+          <div class="expertise-card glass-card fade-in">
+            <div class="expertise-icon">⚡</div>
+            <h3>Développement SaaS</h3>
+            <p>Nous concevons des plateformes logicielles cloud-native, multi-tenant, pensées pour la performance et la croissance. Du MVP à la solution enterprise, notre approche architecture-first garantit une scalabilité sans dette technique.</p>
+            <div class="expertise-tags">
+              <span class="tag">Cloud-native</span>
+              <span class="tag">Multi-tenant</span>
+              <span class="tag">API REST/GraphQL</span>
+              <span class="tag">Microservices</span>
             </div>
-            <h3 class="text-2xl font-tech font-bold text-white mb-3">
-              01. ERP / CRM Sur Mesure
-            </h3>
-            <p class="text-gray-400 mb-4 leading-relaxed">
-              Solutions entièrement personnalisées (RH, logistique, finances)
-              intégrées à vos processus internes.
-            </p>
-            <ul class="text-sm text-gray-500 space-y-2">
-              <li class="flex items-center">
-                <i data-lucide="check" class="w-4 h-4 mr-2 text-cyan-500"></i
-                >Gestion commerciale
-              </li>
-              <li class="flex items-center">
-                <i data-lucide="check" class="w-4 h-4 mr-2 text-cyan-500"></i
-                >Suivi de production
-              </li>
-              <li class="flex items-center">
-                <i data-lucide="check" class="w-4 h-4 mr-2 text-cyan-500"></i
-                >Interconnexion API
-              </li>
-            </ul>
           </div>
 
-          <!-- Service 2: App Dev -->
-          <div
-            class="glass-card p-8 rounded-2xl transition-all duration-300 group"
-          >
-            <div
-              class="w-14 h-14 bg-purple-900/50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-purple-500 transition-colors"
-            >
-              <i
-                data-lucide="smartphone"
-                class="w-8 h-8 text-purple-400 group-hover:text-white"
-              ></i>
+          <div class="expertise-card glass-card fade-in" style="transition-delay:0.1s">
+            <div class="expertise-icon">📱</div>
+            <h3>Applications Mobiles</h3>
+            <p>iOS, Android, React Native ou Flutter — nous livrons des applications mobiles haute performance avec une UX irréprochable. Chaque app est architecturée pour supporter la croissance de vos utilisateurs sans re-développement.</p>
+            <div class="expertise-tags">
+              <span class="tag">React Native</span>
+              <span class="tag">Flutter</span>
+              <span class="tag">iOS · Android</span>
+              <span class="tag">Performance</span>
             </div>
-            <h3 class="text-2xl font-tech font-bold text-white mb-3">
-              02. Développement Mobile & Web
-            </h3>
-            <p class="text-gray-400 mb-4 leading-relaxed">
-              Expert en <span class="text-white">développement d'applications mobiles</span> (iOS, Android, Web) pour vos besoins à <span class="text-white">La Réunion</span> et en Métropole.
-            </p>
-            <ul class="text-sm text-gray-500 space-y-2">
-              <li class="flex items-center">
-                <i data-lucide="check" class="w-4 h-4 mr-2 text-purple-500"></i
-                >Design UX/UI Ergonomique
-              </li>
-              <li class="flex items-center">
-                <i data-lucide="check" class="w-4 h-4 mr-2 text-purple-500"></i
-                >Solutions E-commerce
-              </li>
-              <li class="flex items-center">
-                <i data-lucide="check" class="w-4 h-4 mr-2 text-purple-500"></i
-                >Extranets collaboratifs
-              </li>
-            </ul>
           </div>
 
-          <!-- Service 3: SaaS -->
-          <div
-            class="glass-card p-8 rounded-2xl transition-all duration-300 group"
-          >
-            <div
-              class="w-14 h-14 bg-blue-900/50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-500 transition-colors"
-            >
-              <i
-                data-lucide="code-2"
-                class="w-8 h-8 text-blue-400 group-hover:text-white"
-              ></i>
+          <div class="expertise-card glass-card fade-in" style="transition-delay:0.2s">
+            <div class="expertise-icon">🧠</div>
+            <h3>Intelligence Artificielle</h3>
+            <p>Intégration de LLM, automatisation intelligente, analyse prédictive. Nous n'appliquons pas l'IA par effet de mode — nous l'intégrons là où elle crée un impact mesurable sur vos processus et votre compétitivité.</p>
+            <div class="expertise-tags">
+              <span class="tag">LLM / RAG</span>
+              <span class="tag">Automatisation</span>
+              <span class="tag">Computer Vision</span>
+              <span class="tag">ML Ops</span>
             </div>
-            <h3 class="text-2xl font-tech font-bold text-white mb-3">
-              03. Logiciels SaaS
-            </h3>
-            <p class="text-gray-400 mb-4 leading-relaxed">
-              Logiciels métiers accessibles 24/7 en mode SaaS. Hébergement
-              sécurisé et mises à jour auto.
-            </p>
-            <ul class="text-sm text-gray-500 space-y-2">
-              <li class="flex items-center">
-                <i data-lucide="check" class="w-4 h-4 mr-2 text-blue-500"></i
-                >Cloud Sécurisé
-              </li>
-              <li class="flex items-center">
-                <i data-lucide="check" class="w-4 h-4 mr-2 text-blue-500"></i
-                >Maintenance Continue
-              </li>
-              <li class="flex items-center">
-                <i data-lucide="check" class="w-4 h-4 mr-2 text-blue-500"></i
-                >Accessibilité multi-supports
-              </li>
-            </ul>
           </div>
 
-          <!-- Service 4: Cloud -->
-          <div
-            class="glass-card p-8 rounded-2xl transition-all duration-300 group"
-          >
-            <div
-              class="w-14 h-14 bg-indigo-900/50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-indigo-500 transition-colors"
-            >
-              <i
-                data-lucide="cloud"
-                class="w-8 h-8 text-indigo-400 group-hover:text-white"
-              ></i>
+          <div class="expertise-card glass-card fade-in" style="transition-delay:0.05s">
+            <div class="expertise-icon">🔗</div>
+            <h3>CRM &amp; ERP Sur Mesure</h3>
+            <p>Des outils de gestion adaptés à votre métier, pas l'inverse. Nous développons ou intégrons des solutions CRM/ERP qui reflètent exactement vos processus, avec des tableaux de bord actionnables et des automatisations métier.</p>
+            <div class="expertise-tags">
+              <span class="tag">CRM custom</span>
+              <span class="tag">ERP modulaire</span>
+              <span class="tag">Odoo · Salesforce</span>
+              <span class="tag">Intégration API</span>
             </div>
-            <h3 class="text-2xl font-tech font-bold text-white mb-3">
-              04. Transformation Numérique & Cloud
-            </h3>
-            <p class="text-gray-400 mb-4 leading-relaxed">
-              Accompagnez votre <span class="text-white">transformation numérique à Paris</span> via AWS, Azure et Google Cloud. Infrastructures scalables.
-            </p>
-            <ul class="text-sm text-gray-500 space-y-2">
-              <li class="flex items-center">
-                <i data-lucide="check" class="w-4 h-4 mr-2 text-indigo-500"></i
-                >Haute disponibilité
-              </li>
-              <li class="flex items-center">
-                <i data-lucide="check" class="w-4 h-4 mr-2 text-indigo-500"></i
-                >Supervision temps réel
-              </li>
-              <li class="flex items-center">
-                <i data-lucide="check" class="w-4 h-4 mr-2 text-indigo-500"></i
-                >Optimisation des coûts
-              </li>
-            </ul>
           </div>
 
-          <!-- Service 5: VR/AR -->
-          <div
-            class="glass-card p-8 rounded-2xl md:col-span-2 lg:col-span-2 border-cyan-500/30 bg-gradient-to-r from-slate-900 to-slate-800 relative overflow-hidden group"
-          >
-            <div
-              class="absolute right-0 top-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"
-            ></div>
+          <div class="expertise-card glass-card fade-in" style="transition-delay:0.15s">
+            <div class="expertise-icon">🥽</div>
+            <h3>VR / AR &amp; Immersif</h3>
+            <p>Simulateurs de formation, visites virtuelles, configurateurs 3D — notre équipe maîtrise Unity, Unreal et WebXR pour des expériences immersives à fort impact. Un axe de différenciation rare sur le marché.</p>
+            <div class="expertise-tags">
+              <span class="tag">Unity · Unreal</span>
+              <span class="tag">WebXR</span>
+              <span class="tag">Formation immersive</span>
+              <span class="tag">Configurateur 3D</span>
+            </div>
+          </div>
 
-            <div
-              class="flex flex-col md:flex-row gap-8 items-center relative z-10"
-            >
-              <div class="flex-1">
-                <div
-                  class="w-14 h-14 bg-pink-900/50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-pink-500 transition-colors"
-                >
-                  <i
-                    data-lucide="glasses"
-                    class="w-8 h-8 text-pink-400 group-hover:text-white"
-                  ></i>
-                </div>
-                <h3 class="text-2xl font-tech font-bold text-white mb-3">
-                  05. VR, AR & Jeux Vidéo
-                </h3>
-                <p class="text-gray-400 mb-4 leading-relaxed">
-                  Nous concevons des solutions en Réalité Virtuelle et Augmentée
-                  sur <strong class="text-white">Unity</strong> et
-                  <strong class="text-white">Unreal Engine</strong>. Idéal pour
-                  la formation immersive, les visites virtuelles et la
-                  gamification.
-                </p>
-                <div class="flex flex-wrap gap-2 mt-4">
-                  <span
-                    class="px-3 py-1 bg-white/5 rounded text-xs font-tech text-cyan-300 border border-white/10"
-                    >IMMERSION</span
-                  >
-                  <span
-                    class="px-3 py-1 bg-white/5 rounded text-xs font-tech text-cyan-300 border border-white/10"
-                    >3D INTERACTIVE</span
-                  >
-                  <span
-                    class="px-3 py-1 bg-white/5 rounded text-xs font-tech text-cyan-300 border border-white/10"
-                    >FORMATION</span
-                  >
-                </div>
+          <div class="expertise-card glass-card fade-in" style="transition-delay:0.25s" style="background:linear-gradient(135deg, rgba(0,194,255,0.06), rgba(43,255,136,0.06));">
+            <div class="expertise-icon" style="background:rgba(43,255,136,0.1); border-color:rgba(43,255,136,0.2);">🌐</div>
+            <h3>Présence Internationale</h3>
+            <p>Avec deux sièges en France — Île-de-France et La Réunion — et une ouverture vers les marchés africains, océaniens et européens, Codialis est structurée pour accompagner votre développement au-delà des frontières.</p>
+            <div class="expertise-tags">
+              <span class="tag" style="color:var(--green); border-color:rgba(43,255,136,0.25); background:rgba(43,255,136,0.05);">Paris</span>
+              <span class="tag" style="color:var(--green); border-color:rgba(43,255,136,0.25); background:rgba(43,255,136,0.05);">La Réunion</span>
+              <span class="tag" style="color:var(--green); border-color:rgba(43,255,136,0.25); background:rgba(43,255,136,0.05);">International</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         CHIFFRES CLÉS
+    ═══════════════════════════════════════ -->
+    <section style="padding:4rem 0; background:var(--bg-secondary);">
+      <div class="container">
+        <div class="numbers-grid fade-in">
+          <div class="number-item">
+            <span class="number-value">50+</span>
+            <span class="number-label">Projets livrés</span>
+          </div>
+          <div class="number-item">
+            <span class="number-value">5</span>
+            <span class="number-label">Domaines d'expertise</span>
+          </div>
+          <div class="number-item">
+            <span class="number-value">2</span>
+            <span class="number-label">Sièges en France</span>
+          </div>
+          <div class="number-item" style="border-right:none;">
+            <span class="number-value">4+</span>
+            <span class="number-label">Ingénieurs dédiés</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         CUSTOMER JOURNEY / NOTRE APPROCHE
+    ═══════════════════════════════════════ -->
+    <section id="journey">
+      <div class="container">
+        <div class="section-header centered fade-in">
+          <span class="section-label">Notre Méthode</span>
+          <h2 class="section-title">De l'idée à la mise en production.<br><span>Un processus éprouvé.</span></h2>
+          <p style="font-size:0.9rem; color:var(--gray-light); max-width:540px; margin:0 auto;">
+            Chaque projet suit une méthodologie rigoureuse qui sécurise la qualité de livraison et minimise les risques à chaque étape.
+          </p>
+        </div>
+
+        <div class="journey-steps fade-in">
+          <div class="journey-step">
+            <div class="step-number">01</div>
+            <h3>Cadrage Stratégique</h3>
+            <p>Atelier de découverte pour aligner votre vision, définir le périmètre fonctionnel et identifier les leviers de croissance.</p>
+          </div>
+          <div class="journey-step">
+            <div class="step-number">02</div>
+            <h3>Architecture &amp; Conception</h3>
+            <p>Conception technique détaillée, choix de la stack, maquettes UX/UI validées avant la première ligne de code.</p>
+          </div>
+          <div class="journey-step">
+            <div class="step-number">03</div>
+            <h3>Développement Agile</h3>
+            <p>Sprints bi-hebdomadaires avec démo live. Vous suivez l'avancement en temps réel, itérations rapides sur vos retours.</p>
+          </div>
+          <div class="journey-step">
+            <div class="step-number">04</div>
+            <h3>Tests &amp; Qualité</h3>
+            <p>Tests unitaires, intégration, performance et sécurité. Zéro déploiement sans validation complète de nos standards.</p>
+          </div>
+          <div class="journey-step">
+            <div class="step-number">05</div>
+            <h3>Mise en Production</h3>
+            <p>Déploiement maîtrisé, monitoring post-lancement et formation de vos équipes. La livraison n'est pas une fin, c'est un départ.</p>
+          </div>
+        </div>
+
+        <div style="text-align:center; margin-top:3rem;" class="fade-in">
+          <a href="https://calendly.com/codialis/decouverte" target="_blank" rel="noopener" class="btn-primary">
+            Démarrer le cadrage de votre projet
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         ÉTUDES DE CAS
+    ═══════════════════════════════════════ -->
+    <section id="realisations" style="background:var(--bg-secondary);">
+      <div class="container">
+        <div class="section-header fade-in">
+          <span class="section-label">Réalisations</span>
+          <h2 class="section-title">Des projets concrets.<br><span>Des résultats mesurables.</span></h2>
+          <p style="font-size:0.9rem; color:var(--gray-light); max-width:540px; line-height:1.7;">
+            Chaque étude de cas illustre notre capacité à transformer un besoin métier en solution technique qui performe.
+          </p>
+        </div>
+
+        <div class="case-grid">
+          <div class="case-card glass-card fade-in">
+            <div class="case-badge">SaaS · IA</div>
+            <h3>Plateforme SaaS de gestion immobilière intelligente</h3>
+            <p>Conception et développement d'une plateforme multi-tenant pour un acteur de l'immobilier gérant 3 000+ biens. Intégration d'un module IA pour l'analyse prédictive des loyers et l'automatisation des relances locataires.</p>
+            <div class="case-result">
+              <div class="result-item">
+                <span class="result-value">-65%</span>
+                <span class="result-label">Temps de gestion</span>
               </div>
-              <div class="flex-1 w-full flex justify-center">
-                <!-- Animated Cube CSS Representation -->
-                <div
-                  class="w-32 h-32 border-2 border-pink-500/50 relative animate-float transform rotate-45 flex items-center justify-center"
-                >
-                  <div class="w-20 h-20 border border-cyan-400 absolute"></div>
-                  <div class="w-20 h-20 bg-cyan-500/20 absolute blur-md"></div>
-                </div>
+              <div class="result-item">
+                <span class="result-value">3 000+</span>
+                <span class="result-label">Biens gérés</span>
+              </div>
+              <div class="result-item">
+                <span class="result-value">6 mois</span>
+                <span class="result-label">Délai de livraison</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="case-card glass-card fade-in" style="transition-delay:0.1s">
+            <div class="case-badge">Mobile · CRM</div>
+            <h3>Application mobile terrain + CRM pour force de vente BTP</h3>
+            <p>Application React Native pour des techniciens terrain avec synchronisation offline, couplée à un CRM custom permettant le suivi en temps réel des interventions, devis et facturation. Déployé pour 120 utilisateurs simultanés.</p>
+            <div class="case-result">
+              <div class="result-item">
+                <span class="result-value">120</span>
+                <span class="result-label">Utilisateurs actifs</span>
+              </div>
+              <div class="result-item">
+                <span class="result-value">+40%</span>
+                <span class="result-label">Productivité terrain</span>
+              </div>
+              <div class="result-item">
+                <span class="result-value">0 papier</span>
+                <span class="result-label">Processus digitalisés</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="case-card glass-card fade-in" style="transition-delay:0.2s">
+            <div class="case-badge">VR/AR · Formation</div>
+            <h3>Simulateur VR de formation sécurité industrielle</h3>
+            <p>Développement sous Unity d'un simulateur de gestes de sécurité pour un industriel réunionnais. Scénarios immersifs réduisant le temps de formation et améliorant la rétention des protocoles de sécurité de 78%.</p>
+            <div class="case-result">
+              <div class="result-item">
+                <span class="result-value">+78%</span>
+                <span class="result-label">Rétention protocoles</span>
+              </div>
+              <div class="result-item">
+                <span class="result-value">-50%</span>
+                <span class="result-label">Coût formation</span>
+              </div>
+              <div class="result-item">
+                <span class="result-value">0 incident</span>
+                <span class="result-label">Post-déploiement</span>
               </div>
             </div>
           </div>
@@ -535,553 +1857,618 @@
       </div>
     </section>
 
-    <!-- Why Us Section -->
-    <section class="py-20 bg-slate-900/50 border-y border-white/5">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 class="text-4xl font-tech font-bold text-white mb-6">
-              Pourquoi <span class="text-purple-400">Codialis</span> ?
-            </h2>
-            <p class="text-lg text-gray-300 mb-6">
-              Nous ne créons pas seulement du code, nous bâtissons
-              l'architecture numérique de votre succès.
-            </p>
-            <div class="space-y-6">
-              <div class="flex">
-                <div class="flex-shrink-0">
-                  <div
-                    class="flex items-center justify-center h-12 w-12 rounded-md bg-cyan-500 text-white"
-                  >
-                    <i data-lucide="zap" class="w-6 h-6"></i>
-                  </div>
-                </div>
-                <div class="ml-4">
-                  <h4
-                    class="text-lg leading-6 font-medium text-white font-tech"
-                  >
-                    Performance
-                  </h4>
-                  <p class="mt-2 text-base text-gray-400">
-                    Architectures optimisées pour la rapidité et la charge.
-                  </p>
-                </div>
-              </div>
-              <div class="flex">
-                <div class="flex-shrink-0">
-                  <div
-                    class="flex items-center justify-center h-12 w-12 rounded-md bg-purple-500 text-white"
-                  >
-                    <i data-lucide="lightbulb" class="w-6 h-6"></i>
-                  </div>
-                </div>
-                <div class="ml-4">
-                  <h4
-                    class="text-lg leading-6 font-medium text-white font-tech"
-                  >
-                    Innovation
-                  </h4>
-                  <p class="mt-2 text-base text-gray-400">
-                    Utilisation des dernières technologies (AI, VR, Cloud).
-                  </p>
-                </div>
-              </div>
-              <div class="flex">
-                <div class="flex-shrink-0">
-                  <div
-                    class="flex items-center justify-center h-12 w-12 rounded-md bg-pink-500 text-white"
-                  >
-                    <i data-lucide="layout" class="w-6 h-6"></i>
-                  </div>
-                </div>
-                <div class="ml-4">
-                  <h4
-                    class="text-lg leading-6 font-medium text-white font-tech"
-                  >
-                    Simplicité
-                  </h4>
-                  <p class="mt-2 text-base text-gray-400">
-                    Des interfaces claires pour une prise en main immédiate.
-                  </p>
-                </div>
+    <!-- ═══════════════════════════════════════
+         TÉMOIGNAGES CLIENTS
+    ═══════════════════════════════════════ -->
+    <section id="temoignages">
+      <div class="container">
+        <div class="section-header centered fade-in">
+          <span class="section-label">Témoignages</span>
+          <h2 class="section-title">Ce que disent<br><span>nos clients.</span></h2>
+          <div style="display:flex; align-items:center; justify-content:center; gap:1rem; flex-wrap:wrap; margin-top:0.5rem;">
+            <div style="display:flex; gap:3px;">
+              <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+            </div>
+            <span style="font-size:0.82rem; color:var(--gray);">7 avis vérifiés · Note moyenne 5/5</span>
+            <a href="https://www.codeur.com/-grdnd/evaluations" target="_blank" rel="noopener" class="codeur-link">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Voir tous les avis sur Codeur.com
+            </a>
+          </div>
+        </div>
+
+        <div class="testimonials-grid">
+          <!-- 1 -->
+          <div class="testimonial-card glass-card fade-in">
+            <div>
+              <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+              <div class="testimonial-project" style="margin-top:0.5rem;">Plateforme SaaS de vente de leads</div>
+            </div>
+            <p class="testimonial-quote">"Travail efficace."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">MZ</div>
+              <div>
+                <div class="author-name">MEZAO</div>
+                <div class="author-source">Client vérifié · Codeur.com</div>
               </div>
             </div>
           </div>
-          <div
-            class="relative h-96 rounded-2xl overflow-hidden glass-card border-none flex items-center justify-center"
-          >
-            <div
-              class="absolute inset-0 bg-gradient-to-br from-cyan-900/20 to-purple-900/20"
-            ></div>
-            <div class="text-center p-8 relative z-10">
-              <i
-                data-lucide="code"
-                class="w-20 h-20 text-white/20 mx-auto mb-4"
-              ></i>
-              <p class="text-2xl font-tech text-white">
-                "L'excellence digitale à portée de main."
+
+          <!-- 2 -->
+          <div class="testimonial-card glass-card fade-in" style="transition-delay:0.07s">
+            <div>
+              <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+              <div class="testimonial-project" style="margin-top:0.5rem;">Agent IA d'Onboarding</div>
+            </div>
+            <p class="testimonial-quote">"Le travail a été exécuté avec succès et dans un professionnalisme collaboratif exceptionnel. Merci."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">HT</div>
+              <div>
+                <div class="author-name">HT LIMITED</div>
+                <div class="author-source">Client vérifié · Codeur.com</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3 -->
+          <div class="testimonial-card glass-card fade-in" style="transition-delay:0.14s">
+            <div>
+              <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+              <div class="testimonial-project" style="margin-top:0.5rem;">Chatbot WordPress avec l'API Mistral</div>
+            </div>
+            <p class="testimonial-quote">"Tarif très avantageux pour un chatbot sous WP. Quelques retouches graphiques offertes. La communication est facile et l'équipe est réactive sur WhatsApp."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">SY</div>
+              <div>
+                <div class="author-name">SYNAPSE</div>
+                <div class="author-source">Client vérifié · Codeur.com</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 -->
+          <div class="testimonial-card glass-card fade-in" style="transition-delay:0.07s">
+            <div>
+              <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+              <div class="testimonial-project" style="margin-top:0.5rem;">MVP Santé / Bien-être (Application mobile)</div>
+            </div>
+            <p class="testimonial-quote">"Du début à la fin du projet, l'équipe a su m'accompagner à chaque étape avec une réactivité impressionnante. Au-delà des compétences techniques, c'est une équipe humaine, à l'écoute et disponible, qui a su comprendre mes besoins et proposer des solutions adaptées. Je les recommande sans hésitation."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">HV</div>
+              <div>
+                <div class="author-name">HAVATIME</div>
+                <div class="author-source">Client vérifié · Codeur.com</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5 -->
+          <div class="testimonial-card glass-card fade-in" style="transition-delay:0.14s">
+            <div>
+              <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+              <div class="testimonial-project" style="margin-top:0.5rem;">Création d'application</div>
+            </div>
+            <p class="testimonial-quote">"L'équipe s'est montrée disponible et a su dépasser mes attentes. De très bon conseil — je vous les recommande si vous avez un projet."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">SO</div>
+              <div>
+                <div class="author-name">Client confidentiel</div>
+                <div class="author-source">Client vérifié · Codeur.com</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6 -->
+          <div class="testimonial-card glass-card fade-in" style="transition-delay:0.21s">
+            <div>
+              <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+              <div class="testimonial-project" style="margin-top:0.5rem;">Intégration API OpenAI + JotForm sur WordPress</div>
+            </div>
+            <p class="testimonial-quote">"L'objectif principal de notre collaboration était une réussite sur tous les plans. Des partenaires flexibles, patients et à l'écoute. Je félicite sincèrement l'équipe pour leur professionnalisme et l'ambiance de travail agréable maintenue jusqu'au bout."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">ID</div>
+              <div>
+                <div class="author-name">IDELIA</div>
+                <div class="author-source">Client vérifié · Codeur.com</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7 -->
+          <div class="testimonial-card glass-card fade-in" style="transition-delay:0.14s">
+            <div>
+              <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+              <div class="testimonial-project" style="margin-top:0.5rem;">SaaS IA pour l'e-commerce</div>
+            </div>
+            <p class="testimonial-quote">"J'ai collaboré avec l'équipe sur un projet tech ambitieux, et je suis vraiment satisfait du résultat. Leur réactivité, leur compréhension rapide des besoins, et surtout leur capacité à livrer du code propre et fonctionnel m'ont impressionné. Sérieux, organisés et capables de s'adapter. Je recommande fortement cette agence."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">CB</div>
+              <div>
+                <div class="author-name">COACH BOOM (Canada)</div>
+                <div class="author-source">Client vérifié · Codeur.com</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:center; margin-top:2.5rem;" class="fade-in">
+          <a href="https://www.codeur.com/-grdnd/evaluations" target="_blank" rel="noopener" class="btn-secondary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Voir l'ensemble de nos évaluations (5/5 · Codeur.com)
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         L'AGENCE / À PROPOS
+    ═══════════════════════════════════════ -->
+    <section id="agence">
+      <div class="container">
+        <div class="section-header fade-in">
+          <span class="section-label">L'Agence</span>
+          <h2 class="section-title">Une équipe.<br><span>Une ambition partagée.</span></h2>
+        </div>
+
+        <!-- Mission Statement -->
+        <div class="glass-card fade-in" style="padding:2.5rem; margin-bottom:3rem; background:linear-gradient(135deg, rgba(0,194,255,0.06), rgba(43,255,136,0.04));">
+          <div style="display:flex; gap:1.5rem; align-items:flex-start; flex-wrap:wrap;">
+            <div style="flex:1; min-width:280px;">
+              <p style="font-family:'Orbitron',sans-serif; font-size:1.1rem; font-weight:600; color:var(--white); letter-spacing:0.04em; line-height:1.4; margin-bottom:1rem;">
+                "Allier fiabilité technique et innovation de pointe pour accélérer la performance digitale des entreprises."
+              </p>
+              <p style="font-size:0.88rem; color:var(--gray-light); line-height:1.7;">
+                Codialis est né d'une conviction : les entreprises méritent des partenaires technologiques qui pensent long terme. Pas des prestataires qui livrent et disparaissent. Des architectes qui construisent avec vous des fondations capables de supporter votre croissance.
+              </p>
+              <p style="font-size:0.88rem; color:var(--gray-light); line-height:1.7; margin-top:0.75rem;">
+                Nos deux implantations — en Île-de-France et à La Réunion — nous permettent d'adresser les marchés métropolitains et ultramarins avec la même exigence, tout en ouvrant la voie à une expansion internationale.
               </p>
             </div>
-          </div>
-        </div>
-        </div>
-    </section>
-
-    <!-- Testimonials & Authority Section -->
-    <section id="testimonials" class="py-24 relative overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-3xl md:text-5xl font-tech font-bold text-white mb-4">Témoignages & <span class="text-cyan-400">Avis</span></h2>
-            <div class="h-1 w-24 bg-gradient-to-r from-cyan-400 to-purple-600 mx-auto rounded-full mb-12"></div>
-            
-            <div class="glass-card p-12 rounded-3xl max-w-3xl mx-auto border border-cyan-500/20 shadow-[0_0_50px_rgba(6,182,212,0.1)] hover:border-cyan-500/50 transition-all duration-500">
-                <div class="flex flex-col items-center gap-6">
-                    <p class="text-2xl text-gray-300 italic leading-relaxed">
-                        "Expertise technique exceptionnelle et accompagnement stratégique de haut niveau. Codialis a transformé notre vision en réalité."
-                    </p>
-                    
-                    <div class="flex flex-col items-center gap-4">
-                        <span class="text-cyan-400 font-tech text-xl tracking-wider">NOTRE AUTORITÉ</span>
-                        <div class="flex items-center gap-6 p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
-                            <a href="https://www.codeur.com/-grdnd" title="grdnd" target="_blank" class="transform hover:scale-105 transition-transform">
-                              <img src="https://api.codeur.com/widgets/badge.svg?k=ALMkYkoWX7XC2A4p" title="grdnd — Codeur.com" class="h-16 w-auto"/>
-                            </a>
-                        </div>
-                        <a href="https://www.codeur.com/-grdnd" target="_blank" class="text-gray-400 hover:text-cyan-400 transition-colors flex items-center gap-2">
-                             Découvrir mon profil sur Codeur.com 
-                             <i data-lucide="external-link" class="w-4 h-4"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section id="contact" class="py-24 relative overflow-hidden">
-      <!-- Decorational elements -->
-      <div
-        class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-500 to-transparent"
-      ></div>
-
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div
-          class="glass-card rounded-3xl p-10 md:p-16 text-center border border-cyan-500/30 shadow-[0_0_50px_rgba(6,182,212,0.15)]"
-        >
-          <h2 class="text-4xl font-tech font-bold text-white mb-8">
-            Démarrer un projet
-          </h2>
-          <p class="text-gray-300 mb-12 text-lg">
-            Prêt à transformer votre entreprise ? Prenons un moment pour discuter de vos besoins spécifiques.
-          </p>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            <!-- Contact Card 1: Calendly (Primary) -->
-            <a href="https://calendly.com/jayan-codialis/30min" target="_blank" class="bg-cyan-500/10 p-8 rounded-2xl border border-cyan-500/40 hover:bg-cyan-500 hover:text-black transition-all group flex flex-col items-center gap-4 shadow-[0_0_20px_rgba(6,182,212,0.1)]">
-                 <i data-lucide="calendar" class="w-10 h-10 text-cyan-400 group-hover:text-black transition-colors"></i>
-                 <div class="text-center">
-                     <h3 class="text-xl font-bold mb-1">Prendre RDV (30min)</h3>
-                     <p class="text-sm opacity-70">Choisissez un créneau dans mon calendrier</p>
-                 </div>
-            </a>
-
-            <!-- Contact Card 2: Phone -->
-            <div class="bg-slate-900/50 p-8 rounded-2xl border border-white/5 hover:border-purple-500/50 transition-colors group flex flex-col items-center gap-4">
-                <i data-lucide="phone" class="w-10 h-10 text-purple-400 group-hover:scale-110 transition-transform"></i>
-                <div class="text-center">
-                    <h3 class="text-xl font-bold text-white mb-1">Appelez-nous</h3>
-                    <a href="tel:0693298420" class="block text-xl font-tech text-white hover:text-cyan-400 transition-colors">06 93 29 84 20</a>
-                </div>
+            <div style="display:flex; flex-direction:column; gap:1rem; min-width:200px;">
+              <div style="display:flex; gap:0.75rem; align-items:center;">
+                <div class="neon-dot"></div>
+                <span style="font-size:0.82rem; color:var(--gray-light);">Excellence technique</span>
+              </div>
+              <div style="display:flex; gap:0.75rem; align-items:center;">
+                <div class="neon-dot"></div>
+                <span style="font-size:0.82rem; color:var(--gray-light);">Responsabilité long terme</span>
+              </div>
+              <div style="display:flex; gap:0.75rem; align-items:center;">
+                <div class="neon-dot"></div>
+                <span style="font-size:0.82rem; color:var(--gray-light);">Innovation utile</span>
+              </div>
+              <div style="display:flex; gap:0.75rem; align-items:center;">
+                <div class="neon-dot"></div>
+                <span style="font-size:0.82rem; color:var(--gray-light);">Clarté &amp; transparence</span>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div class="relative py-8">
-              <div class="absolute inset-x-0 top-1/2 h-px bg-gray-800"></div>
-              <span class="relative bg-slate-950 px-4 text-gray-500 font-tech">OU ENVOYEZ UN MESSAGE</span>
+        <!-- Team -->
+        <div class="section-header fade-in" style="margin-bottom:2rem;">
+          <span class="section-label">L'Équipe</span>
+          <h2 class="section-title" style="font-size:1.5rem;">Les ingénieurs <span>derrière vos projets.</span></h2>
+        </div>
+
+        <div class="team-grid">
+          <div class="team-card glass-card fade-in">
+            <div class="team-avatar">JG</div>
+            <h3>Jayan Grondin</h3>
+            <div class="team-role">CEO &amp; Founder</div>
+            <div class="team-spec">Développeur Full-Stack · Architecture SaaS &amp; Mobile · Stratégie digitale</div>
+          </div>
+          <div class="team-card glass-card fade-in" style="transition-delay:0.1s">
+            <div class="team-avatar">GW</div>
+            <h3>Gabrielle Walgraef</h3>
+            <div class="team-role">Cheffe de Projet</div>
+            <div class="team-spec">Coordination projet · Relation client · Méthodes agiles · Suivi livraison</div>
+          </div>
+          <div class="team-card glass-card fade-in" style="transition-delay:0.15s">
+            <div class="team-avatar">DL</div>
+            <h3>Denis Lam-Yam</h3>
+            <div class="team-role">Développeur Full-Stack Sénior</div>
+            <div class="team-spec">Front-End · Back-End · API · Architecture technique · Code review</div>
+          </div>
+          <div class="team-card glass-card fade-in" style="transition-delay:0.2s">
+            <div class="team-avatar">LM</div>
+            <h3>Luc Moutanin</h3>
+            <div class="team-role">Apprenti Développeur Full-Stack</div>
+            <div class="team-spec">Développement web · Intégration UI · Tests · Montée en compétence active</div>
+          </div>
+        </div>
+
+        <!-- Locations -->
+        <div style="margin-top:4rem;" class="fade-in">
+          <div class="section-header" style="margin-bottom:2rem;">
+            <span class="section-label">Implantations</span>
+            <h2 class="section-title" style="font-size:1.5rem;">Deux sièges. <span>Une couverture nationale.</span></h2>
           </div>
 
-          <form
-            class="space-y-6 text-left max-w-lg mx-auto mt-8"
-            onsubmit="
-              event.preventDefault();
-              alert('Message simulé envoyé !');
-            "
-          >
-            <div>
-              <label
-                for="email"
-                class="block text-sm font-medium text-gray-400 mb-2"
-                >Votre Email</label
-              >
-              <input
-                type="email"
-                id="email"
-                class="w-full bg-slate-900/80 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all placeholder-gray-600"
-                placeholder="vous@entreprise.com"
-              />
+          <div class="locations-grid">
+            <div class="location-big-card glass-card">
+              <div class="flag">🇫🇷</div>
+              <h3>Île-de-France</h3>
+              <div class="address">88 Rue du Génie<br>94400 Vitry-sur-Seine</div>
+              <div class="phone">+33 (0)7 83 90 57 17</div>
+              <div style="margin-top:1rem; font-size:0.8rem; color:var(--gray);">Marché métropolitain · Entreprises &amp; Startups · Secteur public</div>
+              <div style="margin-top:0.6rem; display:flex; align-items:center; gap:0.5rem;">
+                <span style="font-size:0.68rem; font-family:'Orbitron',sans-serif; letter-spacing:0.1em; color:var(--green); border:1px solid rgba(43,255,136,0.3); background:rgba(43,255,136,0.08); padding:0.2rem 0.6rem; border-radius:100px;">🌍 Expansion internationale</span>
+              </div>
             </div>
-            <div>
-              <label
-                for="message"
-                class="block text-sm font-medium text-gray-400 mb-2"
-                >Votre Projet</label
-              >
-              <textarea
-                id="message"
-                rows="4"
-                class="w-full bg-slate-900/80 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all placeholder-gray-600"
-                placeholder="Décrivez brièvement vos besoins..."
-              ></textarea>
+            <div class="location-big-card glass-card">
+              <div class="flag">🌴</div>
+              <h3>La Réunion</h3>
+              <div class="address">436 Avenue des Mascareignes<br>97440 Saint-André</div>
+              <div class="phone">+262 (0)693 49 84 20</div>
+              <div style="margin-top:1rem; font-size:0.8rem; color:var(--gray);">Marché ultramarin · Océan Indien · Ouverture Afrique &amp; International</div>
             </div>
-            <button
-              type="submit"
-              class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-4 rounded-lg transition-all transform hover:scale-[1.02] shadow-lg font-tech tracking-wide"
-            >
-              ENVOYER LE MESSAGE
-            </button>
-          </form>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-black py-16 border-t border-white/10 relative overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-                <!-- Branding & Tagline -->
-                <div class="md:col-span-2">
-                    <a href="https://www.linkedin.com/company/109392264/admin/dashboard/" target="_blank" class="font-tech text-3xl font-bold text-white">CODIALIS<span class="text-cyan-500">.</span></a>
-                    <p class="text-gray-400 mt-4 max-w-sm leading-relaxed">
-                        L'excellence digitale au service de votre innovation. 
-                        Solutions sur mesure pour entreprises visionnaires.
-                    </p>
-                    <div class="flex space-x-5 mt-6">
-                        <a href="https://www.linkedin.com/company/109392264/admin/dashboard/" target="_blank" class="text-gray-500 hover:text-cyan-400 transition-colors"><i data-lucide="linkedin" class="w-6 h-6"></i></a>
-                        <a href="https://www.instagram.com/codialis.dev/" target="_blank" class="text-gray-500 hover:text-cyan-400 transition-colors"><i data-lucide="instagram" class="w-6 h-6"></i></a>
-                        <a href="#" class="text-gray-500 hover:text-cyan-400 transition-colors"><i data-lucide="github" class="w-6 h-6"></i></a>
-                    </div>
-                </div>
-
-                <!-- Addresses -->
-                <div>
-                    <h4 class="font-tech font-bold text-white uppercase tracking-wider mb-6 text-sm">Nos Sièges</h4>
-                    <div class="space-y-4 text-gray-400 text-sm">
-                        <p class="flex items-start gap-3">
-                            <i data-lucide="map-pin" class="w-5 h-5 text-cyan-500 shrink-0"></i>
-                            <span>88 rue du génie<br>Vitry-Sur-Seine 94400</span>
-                        </p>
-                        <p class="flex items-start gap-3 border-t border-white/5 pt-4">
-                            <i data-lucide="map-pin" class="w-5 h-5 text-purple-500 shrink-0"></i>
-                            <span>436 Avenue des Mascareignes<br>Saint-André, La Réunion</span>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Contact -->
-                <div>
-                    <h4 class="font-tech font-bold text-white uppercase tracking-wider mb-6 text-sm">Contact</h4>
-                    <div class="space-y-4 text-gray-400 text-sm font-tech">
-                        <a href="tel:+330783905717" class="flex items-center gap-3 hover:text-white transition-colors">
-                            <i data-lucide="phone" class="w-4 h-4 text-cyan-500"></i>
-                            +33 07 83 90 57 17
-                        </a>
-                        <a href="tel:+262693498420" class="flex items-center gap-3 hover:text-white transition-colors">
-                            <i data-lucide="phone" class="w-4 h-4 text-purple-500"></i>
-                            +262 693 49 84 20
-                        </a>
-                        <a href="mailto:jayan@codialis.com" class="flex items-center gap-3 hover:text-white transition-colors border-t border-white/5 pt-4">
-                            <i data-lucide="mail" class="w-4 h-4 text-cyan-500"></i>
-                            jayan@codialis.com
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bottom Bar -->
-            <div class="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600">
-                <p>© 2026 Codialis. Tous droits réservés.</p>
-                <div class="flex gap-6 uppercase tracking-widest font-tech">
-                    <button onclick="toggleModal('modal-mentions')" class="hover:text-cyan-400 transition-colors cursor-pointer">Mentions Légales</button>
-                    <button onclick="toggleModal('modal-rgpd')" class="hover:text-cyan-400 transition-colors cursor-pointer">RGPD</button>
-                    <a href="https://app.orus.eu/s/a/8wSi-LAQVh-uiXFM7QwyxA" target="_blank" class="hover:text-cyan-400 transition-colors flex items-center gap-1">
-                        Assurance Pro
-                        <i data-lucide="external-link" class="w-3 h-3"></i>
-                    </a>
-                </div>
-            </div>
+    <!-- ═══════════════════════════════════════
+         AIDES & FINANCEMENT
+    ═══════════════════════════════════════ -->
+    <section id="aides" style="background:var(--bg-secondary);">
+      <div class="container">
+        <div class="section-header centered fade-in">
+          <span class="section-label">Financement</span>
+          <h2 class="section-title">Votre projet digital<br><span>peut être financé.</span></h2>
+          <p style="font-size:0.9rem; color:var(--gray-light); max-width:580px; margin:0 auto; line-height:1.7;">
+            De nombreuses entreprises sous-exploitent les dispositifs d'aides publiques. Nous vous accompagnons dans l'identification et le montage de ces financements pour réduire significativement le coût de votre projet.
+          </p>
         </div>
+
+        <div class="aides-grid">
+          <div class="aide-card glass-card fade-in">
+            <div class="amount">Jusqu'à 50%</div>
+            <h3>Crédit d'Impôt Innovation (CII)</h3>
+            <p>Applicable aux dépenses de conception de prototypes et d'installations pilotes pour les PME. Rembourse jusqu'à 50% des dépenses éligibles sur vos projets de développement logiciel innovant.</p>
+          </div>
+          <div class="aide-card glass-card fade-in" style="transition-delay:0.1s">
+            <div class="amount">30%</div>
+            <h3>Crédit d'Impôt Recherche (CIR)</h3>
+            <p>Les dépenses R&amp;D liées à vos projets IA, SaaS ou VR peuvent être éligibles au CIR. Un levier puissant pour les projets à fort contenu technologique.</p>
+          </div>
+          <div class="aide-card glass-card fade-in" style="transition-delay:0.2s">
+            <div class="amount">Variable</div>
+            <h3>Aides BPI France &amp; Régions</h3>
+            <p>Subventions BPI, prêts d'honneur innovation, aides régionales à la transformation numérique — nous vous aidons à identifier les dispositifs auxquels votre projet est éligible.</p>
+          </div>
+          <div class="aide-card glass-card fade-in" style="transition-delay:0.3s">
+            <div class="amount">Spécifique</div>
+            <h3>Dispositifs DOM-TOM (La Réunion)</h3>
+            <p>Les entreprises ultramarines bénéficient de dispositifs spécifiques : défiscalisation, aides du FEDER, soutien DEAL Réunion. Notre équipe locale maîtrise ces dispositifs.</p>
+          </div>
+        </div>
+
+        <div class="aide-cta-banner fade-in">
+          <div>
+            <h3>Évaluons ensemble votre éligibilité</h3>
+            <p>Un audit gratuit de 30 minutes pour identifier les aides applicables à votre projet.</p>
+          </div>
+          <a href="https://calendly.com/codialis/aides-financement" target="_blank" rel="noopener" class="btn-primary">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Audit de financement gratuit
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         CONTACT
+    ═══════════════════════════════════════ -->
+    <section id="contact-section">
+      <div class="container">
+        <div class="contact-grid">
+          <div class="contact-info fade-in">
+            <span class="section-label" style="margin-bottom:1rem; display:block;">Contact</span>
+            <h2>Parlons de votre projet.</h2>
+            <p>
+              Une idée, un besoin, un appel d'offres ? Notre équipe vous répond sous 24h pour vous aider à structurer votre projet et identifier la meilleure approche technique.
+            </p>
+
+            <div class="contact-detail">
+              <div class="contact-icon">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <div class="contact-detail-text">
+                <strong>Calendly — Réserver un appel</strong>
+                <a href="https://calendly.com/codialis/decouverte" target="_blank" rel="noopener" style="color:var(--blue); font-size:0.85rem;">Choisir un créneau disponible →</a>
+              </div>
+            </div>
+
+            <div class="contact-detail">
+              <div class="contact-icon">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </div>
+              <div class="contact-detail-text">
+                <strong>Email</strong>
+                <a href="mailto:contact@codialis.com" style="color:var(--blue); font-size:0.85rem;">contact@codialis.com</a>
+              </div>
+            </div>
+
+            <div class="contact-detail">
+              <div class="contact-icon">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.37 2 2 0 0 1 3.62 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.72a16 16 0 0 0 7.41 7.41l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </div>
+              <div class="contact-detail-text">
+                <strong>Île-de-France</strong>
+                <span>+33 (0)7 83 90 57 17</span>
+              </div>
+            </div>
+
+            <div class="contact-detail">
+              <div class="contact-icon">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.37 2 2 0 0 1 3.62 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.72a16 16 0 0 0 7.41 7.41l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </div>
+              <div class="contact-detail-text">
+                <strong>La Réunion</strong>
+                <span>+262 (0)693 49 84 20</span>
+              </div>
+            </div>
+
+            <div class="contact-detail">
+              <div class="contact-icon">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+              <div class="contact-detail-text">
+                <strong>Siège — Île-de-France</strong>
+                <span>88 Rue du Génie, 94400 Vitry-sur-Seine</span>
+              </div>
+            </div>
+
+            <div class="contact-detail">
+              <div class="contact-icon">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+              <div class="contact-detail-text">
+                <strong>Siège — La Réunion</strong>
+                <span>436 Avenue des Mascareignes, 97440 Saint-André</span>
+              </div>
+            </div>
+
+            <!-- Social links -->
+            <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+              <a href="https://www.linkedin.com/company/109392264/" target="_blank" rel="noopener" class="social-link" aria-label="LinkedIn Codialis">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+              </a>
+              <a href="https://www.instagram.com/codialis.dev/" target="_blank" rel="noopener" class="social-link" aria-label="Instagram Codialis">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="contact-form fade-in" style="transition-delay:0.15s">
+            <h3 style="font-family:'Orbitron',sans-serif; font-size:0.9rem; font-weight:700; letter-spacing:0.08em; color:var(--white); margin-bottom:1.5rem;">Décrivez votre projet</h3>
+
+            <form id="contactForm" action="/api/contact" method="POST" onsubmit="handleFormSubmit(event)">
+              <input type="hidden" name="source" value="site-codialis" />
+              <input type="hidden" name="_next" value="https://www.codialis.com/?thanks" />
+              <input type="hidden" name="_language" value="fr" />
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="name">Nom complet</label>
+                  <input type="text" id="name" name="name" placeholder="Jean Dupont" required />
+                </div>
+                <div class="form-group">
+                  <label for="company">Entreprise</label>
+                  <input type="text" id="company" name="company" placeholder="Votre société" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="email">Email professionnel</label>
+                  <input type="email" id="email" name="email" placeholder="vous@entreprise.com" required />
+                </div>
+                <div class="form-group">
+                  <label for="phone">Téléphone</label>
+                  <input type="tel" id="phone" name="phone" placeholder="+33 6 XX XX XX XX" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="service">Type de projet</label>
+                <select id="service" name="service">
+                  <option value="">Sélectionner une expertise</option>
+                  <option value="saas">Développement SaaS</option>
+                  <option value="mobile">Application Mobile</option>
+                  <option value="ai">Intelligence Artificielle</option>
+                  <option value="crm">CRM / ERP</option>
+                  <option value="vr">VR / AR</option>
+                  <option value="other">Autre / Conseil</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="budget">Budget estimatif</label>
+                <select id="budget" name="budget">
+                  <option value="">Indiquer votre fourchette</option>
+                  <option value="lt20k">Moins de 20 000 €</option>
+                  <option value="20-50k">20 000 — 50 000 €</option>
+                  <option value="50-100k">50 000 — 100 000 €</option>
+                  <option value="gt100k">Plus de 100 000 €</option>
+                  <option value="undefined">À définir ensemble</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="message">Votre besoin</label>
+                <textarea id="message" name="message" placeholder="Décrivez votre projet, vos objectifs et les défis auxquels vous faites face…"></textarea>
+              </div>
+
+              <button type="submit" class="btn-primary" style="width:100%; justify-content:center; padding:1rem;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Envoyer ma demande
+              </button>
+            </form>
+
+            <p style="font-size:0.75rem; color:var(--gray); margin-top:1rem; text-align:center;">
+              Réponse sous 24h · Appel découverte gratuit · Sans engagement
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         FOOTER
+    ═══════════════════════════════════════ -->
+    <footer>
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <a href="#hero" class="nav-logo" style="font-size:1.3rem;">CODIALIS<span class="dot">.</span></a>
+            <p>Votre partenaire technologique pour bâtir les entreprises de demain. SaaS · Mobile · IA · CRM · VR/AR.</p>
+            <div style="display:flex; gap:0.6rem; margin-top:1.25rem;">
+              <a href="https://www.linkedin.com/company/109392264/" target="_blank" rel="noopener" class="social-link" aria-label="LinkedIn">
+                <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+              </a>
+              <a href="https://www.instagram.com/codialis.dev/" target="_blank" rel="noopener" class="social-link" aria-label="Instagram">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="footer-col">
+            <h4>Expertises</h4>
+            <a href="#expertises">Développement SaaS</a>
+            <a href="#expertises">Applications Mobiles</a>
+            <a href="#expertises">Intelligence Artificielle</a>
+            <a href="#expertises">CRM &amp; ERP</a>
+            <a href="#expertises">VR / AR</a>
+          </div>
+
+          <div class="footer-col">
+            <h4>L'Agence</h4>
+            <a href="#agence">Notre Équipe</a>
+            <a href="#realisations">Réalisations</a>
+            <a href="#temoignages">Témoignages</a>
+            <a href="#journey">Notre Méthode</a>
+            <a href="#aides">Aides Financières</a>
+            <a href="#contact-section">Contact</a>
+          </div>
+
+          <div class="footer-col">
+            <h4>Nos Sièges</h4>
+            <p>🇫🇷 Île-de-France<br>88 Rue du Génie<br>94400 Vitry-sur-Seine</p>
+            <p style="margin-top:0.75rem;">🌴 La Réunion<br>436 Av. des Mascareignes<br>97440 Saint-André</p>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <span>© 2025 Codialis SAS — Tous droits réservés</span>
+          <div style="display:flex; gap:1.5rem;">
+            <a href="#" style="color:var(--gray); text-decoration:none; font-size:0.78rem; transition:color 0.2s;" onmouseover="this.style.color='var(--blue)'" onmouseout="this.style.color='var(--gray)'">Mentions légales</a>
+            <a href="#" style="color:var(--gray); text-decoration:none; font-size:0.78rem; transition:color 0.2s;" onmouseover="this.style.color='var(--blue)'" onmouseout="this.style.color='var(--gray)'">Politique de confidentialité</a>
+          </div>
+        </div>
+      </div>
     </footer>
 
-    <!-- MODAL: MENTIONS LÉGALES -->
-    <div id="modal-mentions" class="fixed inset-0 z-[100] hidden overflow-y-auto">
-        <div class="fixed inset-0 bg-black/90 backdrop-blur-md" onclick="toggleModal('modal-mentions')"></div>
-        <div class="relative min-h-screen flex items-center justify-center p-4">
-            <div class="glass-card w-full max-w-4xl rounded-3xl p-8 md:p-12 relative border-cyan-500/30 overflow-hidden">
-                <button onclick="toggleModal('modal-mentions')" class="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors">
-                    <i data-lucide="x" class="w-8 h-8"></i>
-                </button>
-                
-                <h2 class="text-3xl font-tech font-bold text-white mb-8 border-b border-cyan-500/30 pb-4">MENTIONS LÉGALES</h2>
-                
-                <div class="prose prose-invert prose-cyan max-w-none text-gray-300 space-y-8 h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
-                    <section>
-                        <h3 class="text-xl font-bold text-cyan-400 mb-4">1. Informations générales</h3>
-                        <p>Le site internet www.codialis.com est édité par la société : <br><br>
-                        <strong>CODIALIS</strong><br>
-                        Forme juridique : EURL (Entreprise Unipersonnelle à Responsabilité Limitée)<br>
-                        Capital social : 1 000,00 €<br>
-                        Siège social : 88 Rue du Génie, 94400 VITRY-SUR-SEINE – France<br>
-                        SIREN : 991 679 457<br>
-                        SIRET : 991 679 457 00010<br>
-                        RCS : 991 679 457 R.C.S. Créteil<br>
-                        Numéro de TVA intracommunautaire : FR77991679457<br>
-                        Activité : Conseil en systèmes et logiciels informatiques (NAF 62.02A)<br>
-                        Dirigeant et responsable de la publication : M. Jayan GRONDIN<br>
-                        Téléphone : 07 83 90 57 17<br>
-                        E-mail : jayan@codialis.com</p>
-                    </section>
-
-                    <section>
-                        <h3 class="text-xl font-bold text-cyan-400 mb-4">2. Hébergement</h3>
-                        <p>Le site est hébergé par : <strong>Hostinger</strong><br>
-                        Site web : <a href="https://www.hostinger.fr" class="text-cyan-400 underline">www.hostinger.fr</a></p>
-                    </section>
-
-                    <section>
-                        <h3 class="text-xl font-bold text-cyan-400 mb-4">3. Propriété intellectuelle</h3>
-                        <p>Le site ainsi que l’ensemble des éléments le composant (textes, logos, images, vidéos, code source, bases de données, logiciels, etc.) sont la propriété exclusive de CODIALIS, sauf mention contraire.</p>
-                        <p>Toute reproduction, utilisation ou modification sans autorisation est interdite conformément au Code de la propriété intellectuelle.</p>
-                    </section>
-
-                    <section>
-                        <h3 class="text-xl font-bold text-cyan-400 mb-4">4. Services proposés</h3>
-                        <p>CODIALIS propose des prestations de :</p>
-                        <ul class="list-disc pl-5 space-y-2">
-                            <li>Développement de solutions ERP / CRM sur mesure</li>
-                            <li>Développement applications web et mobiles</li>
-                            <li>Conception de logiciels d’entreprise et SaaS</li>
-                            <li>Solutions cloud (migration, infrastructure, supervision)</li>
-                            <li>Chatbots & assistants virtuels IA</li>
-                        </ul>
-                        <p>Ces services peuvent faire l’objet de contrats et conditions spécifiques communiqués lors de la commande.</p>
-                    </section>
-
-                    <section>
-                        <h3 class="text-xl font-bold text-cyan-400 mb-4">5. Limitation de responsabilité</h3>
-                        <p>CODIALIS met tout en œuvre pour garantir l’exactitude et la mise à jour des informations.</p>
-                        <p>Elle ne saurait cependant être tenue responsable en cas : d’erreurs techniques, typographiques ou inexactitudes, d’interruption du site, ou de dommages directs/indirects liés à l’utilisation du site.</p>
-                    </section>
-
-                    <section>
-                        <h3 class="text-xl font-bold text-cyan-400 mb-4">6. Assurance Professionnelle</h3>
-                        <p>Responsabilité civile professionnelle : Agence web<br>
-                        Contrat Orus n°RCPH278501790 (Assureur : Hiscox)<br>
-                        Période de validité : Du 03/01/2026 au 02/01/2027<br>
-                        Zone de couverture : Monde entier (hors USA / Canada)</p>
-                    </section>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: RGPD -->
-    <div id="modal-rgpd" class="fixed inset-0 z-[100] hidden overflow-y-auto">
-        <div class="fixed inset-0 bg-black/90 backdrop-blur-md" onclick="toggleModal('modal-rgpd')"></div>
-        <div class="relative min-h-screen flex items-center justify-center p-4">
-            <div class="glass-card w-full max-w-4xl rounded-3xl p-8 md:p-12 relative border-purple-500/30 overflow-hidden">
-                <button onclick="toggleModal('modal-rgpd')" class="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors">
-                    <i data-lucide="x" class="w-8 h-8"></i>
-                </button>
-                
-                <h2 class="text-3xl font-tech font-bold text-white mb-8 border-b border-purple-500/30 pb-4">POLITIQUE DE CONFIDENTIALITÉ – RGPD</h2>
-                
-                <div class="prose prose-invert prose-purple max-w-none text-gray-300 space-y-8 h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
-                    <p>CODIALIS s’engage à respecter la réglementation relative à la protection des données personnelles, notamment le Règlement (UE) 2016/679 (RGPD) et la Loi Informatique et Libertés.</p>
-
-                    <section>
-                        <h3 class="text-xl font-bold text-purple-400 mb-4">1. Données collectées</h3>
-                        <p>Dans le cadre de l’utilisation du site ou lors de la prise de contact, CODIALIS peut collecter les données suivantes : Nom, prénom, adresse e-mail, téléphone, société, adresses IP et logs techniques. CODIALIS ne collecte aucune donnée sensible sans consentement explicite.</p>
-                    </section>
-
-                    <section>
-                        <h3 class="text-xl font-bold text-purple-400 mb-4">2. Finalités du traitement</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm border-collapse">
-                                <thead>
-                                    <tr class="border-b border-white/10">
-                                        <th class="py-2 pr-4">Finalité</th>
-                                        <th class="py-2">Base légale</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-gray-400">
-                                    <tr class="border-b border-white/5">
-                                        <td class="py-2 pr-4">Réponse aux demandes / contact</td>
-                                        <td class="py-2">Intérêt légitime</td>
-                                    </tr>
-                                    <tr class="border-b border-white/5">
-                                        <td class="py-2 pr-4">Élaboration de devis & contrats</td>
-                                        <td class="py-2">Exécution contractuelle</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="py-2 pr-4">Maintenance et sécurité du site</td>
-                                        <td class="py-2">Intérêt légitime</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
-
-                    <section>
-                        <h3 class="text-xl font-bold text-purple-400 mb-4">3. Durée de conservation</h3>
-                        <ul class="list-disc pl-5 space-y-2 text-sm text-gray-400">
-                            <li><strong>Données de contact :</strong> 3 ans après dernier échange</li>
-                            <li><strong>Données contractuelles :</strong> 10 ans (obligation légale)</li>
-                            <li><strong>Logs de connexion :</strong> 12 mois maximum</li>
-                        </ul>
-                    </section>
-
-                    <section>
-                        <h3 class="text-xl font-bold text-purple-400 mb-4">4. Destinataires et Sécurité</h3>
-                        <p>Les données sont destinées uniquement à CODIALIS et ne sont jamais vendues. Nous mettons en place des mesures renforcées : cryptage SSL/TLS, serveurs sécurisés et sauvegardes cloud.</p>
-                    </section>
-
-                    <section>
-                        <h3 class="text-xl font-bold text-purple-400 mb-4">5. Vos droits</h3>
-                        <p>Vous disposez d’un droit d’accès, de rectification, d’effacement, d’opposition et de portabilité. Pour exercer ces droits : <a href="mailto:jayan@codialis.com" class="text-purple-400 underline">jayan@codialis.com</a>.</p>
-                    </section>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts -->
+    <!-- ═══════════════════════════════════════
+         SCRIPTS
+    ═══════════════════════════════════════ -->
     <script>
-      // Toggle Modal Function
-      function toggleModal(id) {
-        const modal = document.getElementById(id);
-        if (modal.classList.contains('hidden')) {
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-            // Trigger animation if needed
+      // ── Intersection Observer for fade-in animations
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            observer.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.12 });
+
+      document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+      // ── Navbar scroll effect
+      const navbar = document.getElementById('navbar');
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 40) {
+          navbar.style.background = 'rgba(11, 18, 32, 0.98)';
+          navbar.style.borderBottomColor = 'rgba(0, 194, 255, 0.2)';
         } else {
-            modal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
+          navbar.style.background = 'rgba(11, 18, 32, 0.9)';
+          navbar.style.borderBottomColor = 'rgba(0, 194, 255, 0.15)';
         }
-      }
+      });
 
-      // Initialize Lucide Icons
-      lucide.createIcons();
+      // ── Form submit handler to backend /api/contact
+      async function handleFormSubmit(e) {
+        e.preventDefault();
+        const form = e.target;
+        const btn = form.querySelector('button[type="submit"]');
+        const orig = btn.innerHTML;
 
-      // THREE.JS BACKGROUND ANIMATION
-      const initThreeJS = () => {
-        const container = document.getElementById("canvas-container");
-        const scene = new THREE.Scene();
+        btn.disabled = true;
+        btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Envoi…';
 
-        // Fog for depth
-        scene.fog = new THREE.FogExp2(0x050b14, 0.002);
-
-        const camera = new THREE.PerspectiveCamera(
-          75,
-          window.innerWidth / window.innerHeight,
-          0.1,
-          1000,
-        );
-        camera.position.z = 30;
-
-        const renderer = new THREE.WebGLRenderer({
-          alpha: true,
-          antialias: true,
-        });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        container.appendChild(renderer.domElement);
-
-        // Particles
-        const particlesGeometry = new THREE.BufferGeometry();
-        const particlesCount = 1500;
-        const posArray = new Float32Array(particlesCount * 3);
-
-        for (let i = 0; i < particlesCount * 3; i++) {
-          posArray[i] = (Math.random() - 0.5) * 80; // Spread
-        }
-
-        particlesGeometry.setAttribute(
-          "position",
-          new THREE.BufferAttribute(posArray, 3),
-        );
-
-        // Material
-        const material = new THREE.PointsMaterial({
-          size: 0.15,
-          color: 0x06b6d4, // Cyan
-          transparent: true,
-          opacity: 0.8,
-        });
-
-        // Mesh
-        const particlesMesh = new THREE.Points(particlesGeometry, material);
-        scene.add(particlesMesh);
-
-        // Connecting Lines (Optional - kept simple for performance, using just particles moving)
-        // Let's add a geometric shape wireframe
-        const geoGeometry = new THREE.IcosahedronGeometry(15, 1);
-        const geoMaterial = new THREE.MeshBasicMaterial({
-          color: 0x8b5cf6, // Purple
-          wireframe: true,
-          transparent: true,
-          opacity: 0.05,
-        });
-        const planet = new THREE.Mesh(geoGeometry, geoMaterial);
-        scene.add(planet);
-
-        // Mouse interaction
-        let mouseX = 0;
-        let mouseY = 0;
-        let targetX = 0;
-        let targetY = 0;
-
-        const windowHalfX = window.innerWidth / 2;
-        const windowHalfY = window.innerHeight / 2;
-
-        document.addEventListener("mousemove", (event) => {
-          mouseX = event.clientX - windowHalfX;
-          mouseY = event.clientY - windowHalfY;
-        });
-
-        // Animation Loop
-        const animate = () => {
-          requestAnimationFrame(animate);
-
-          targetX = mouseX * 0.001;
-          targetY = mouseY * 0.001;
-
-          // Rotation base
-          particlesMesh.rotation.y += 0.001;
-          particlesMesh.rotation.x += 0.0005;
-
-          planet.rotation.y -= 0.002;
-          planet.rotation.x -= 0.001;
-
-          // Interactive Rotation
-          particlesMesh.rotation.y +=
-            0.05 * (targetX - particlesMesh.rotation.y);
-          particlesMesh.rotation.x +=
-            0.05 * (targetY - particlesMesh.rotation.x);
-
-          renderer.render(scene, camera);
+        const payload = {
+          name: form.name.value.trim(),
+          company: form.company.value.trim(),
+          email: form.email.value.trim(),
+          phone: form.phone.value.trim(),
+          service: form.service.value,
+          budget: form.budget.value,
+          message: form.message.value.trim()
         };
 
-        animate();
+        try {
+          const response = await fetch(form.action, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
 
-        // Resize Handler
-        window.addEventListener("resize", () => {
-          camera.aspect = window.innerWidth / window.innerHeight;
-          camera.updateProjectionMatrix();
-          renderer.setSize(window.innerWidth, window.innerHeight);
+          const result = await response.json().catch(() => null);
+          console.log('API response', response.status, result);
+
+          if (!response.ok) {
+            throw new Error(result?.error || result?.message || 'Erreur serveur');
+          }
+
+          btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Message envoyé !';
+          btn.style.background = 'linear-gradient(135deg, #2BFF88, #00C2FF)';
+          form.reset();
+        } catch (error) {
+          btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg> Erreur, réessayez';
+          btn.style.background = 'linear-gradient(135deg, #FF4D6D, #FF9C84)';
+          console.error('Form submit failed:', error);
+        }
+
+        setTimeout(() => {
+          btn.innerHTML = orig;
+          btn.style.background = '';
+          btn.disabled = false;
+        }, 3500);
+      }
+
+      // ── Smooth anchor scroll with offset for fixed nav
+      document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', function(e) {
+          const id = this.getAttribute('href').slice(1);
+          if (!id) return;
+          const el = document.getElementById(id);
+          if (!el) return;
+          e.preventDefault();
+          const top = el.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top, behavior: 'smooth' });
         });
-      };
+      });
 
-      // Start Animation when DOM is ready
-      document.addEventListener("DOMContentLoaded", initThreeJS);
+      // ── Close mobile menu on link click
+      document.querySelectorAll('.mobile-menu a').forEach(a => {
+        a.addEventListener('click', () => {
+          document.getElementById('mobileMenu').classList.remove('open');
+        });
+      });
     </script>
   </body>
 </html>
