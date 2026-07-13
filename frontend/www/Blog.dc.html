@@ -1,0 +1,1265 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+    <script src="./responsive.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin=""
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap"
+          rel="stylesheet"
+        />
+        <style>
+          * {
+            box-sizing: border-box;
+          }
+          html {
+            scroll-behavior: smooth;
+          }
+          body {
+            margin: 0;
+            background: #0e1626;
+            color: #eaf0f7;
+            font-family: "IBM Plex Sans", sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+          }
+          a {
+            color: #2fed7f;
+            text-decoration: none;
+          }
+          a:hover {
+            color: #7ff2b3;
+          }
+          ::selection {
+            background: #2fed7f;
+            color: #08111e;
+          }
+          input::placeholder {
+            color: #66768c;
+          }
+          @keyframes cod-rise {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: none;
+            }
+          }
+          @keyframes cod-neon {
+            0%,
+            100% {
+              text-shadow:
+                0 0 9px rgba(47, 237, 127, 0.45),
+                0 0 24px rgba(47, 237, 127, 0.28);
+            }
+            50% {
+              text-shadow:
+                0 0 18px rgba(47, 237, 127, 0.85),
+                0 0 46px rgba(47, 237, 127, 0.5);
+            }
+          }
+        </style>
+        <script src="image-slot.js"></script>
+      </helmet>
+
+      <div style="position: relative; width: 100%; max-width: 100%">
+        <!-- NAV -->
+        <nav
+          id="cod-nav"
+          style="
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: clamp(14px, 2vw, 28px);
+            padding: 9px 9px 9px 22px;
+            border-radius: 100px;
+            background: rgba(16, 24, 40, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(18px) saturate(140%);
+            -webkit-backdrop-filter: blur(18px) saturate(140%);
+            box-shadow:
+              0 18px 50px -18px rgba(0, 0, 0, 0.65),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            max-width: calc(100vw - 32px);
+            transition:
+              box-shadow 0.4s,
+              background 0.4s;
+          "
+        >
+          <a
+            href="index.html"
+            style="
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              flex-shrink: 0;
+            "
+          >
+            <img
+              src="assets/codialis-white.png"
+              alt="Codialis"
+              style="height: 26px; width: auto; display: block"
+            />
+          </a>
+          <div
+            class="cod-navlinks"
+            style="
+              display: flex;
+              align-items: center;
+              gap: clamp(6px, 1vw, 12px);
+              padding: 0 clamp(4px, 1vw, 10px);
+              border-left: 1px solid rgba(255, 255, 255, 0.1);
+              border-right: 1px solid rgba(255, 255, 255, 0.1);
+            "
+          >
+            <sc-for list="{{ navLinks }}" as="lk" hint-placeholder-count="5">
+              <a
+                href="{{ lk.href }}"
+                style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:14.5px;letter-spacing:.01em;color:{{ lk.color }};padding:8px 12px;border-radius:100px;transition:color .25s,background .25s;"
+                style-hover="color:#fff;background:rgba(255,255,255,.07);"
+                >{{ lk.label }}</a
+              >
+            </sc-for>
+          </div>
+          <div
+            class="cod-navtoggle"
+            style="
+              display: flex;
+              align-items: center;
+              background: rgba(255, 255, 255, 0.06);
+              border-radius: 100px;
+              padding: 3px;
+              flex-shrink: 0;
+            "
+          >
+            <button
+              type="button"
+              onClick="{{ setLangFr }}"
+              style="border:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;padding:5px 11px;border-radius:100px;transition:background .25s,color .25s;background:{{ frBg }};color:{{ frColor }};"
+            >
+              FR
+            </button>
+            <button
+              type="button"
+              onClick="{{ setLangEn }}"
+              style="border:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;padding:5px 11px;border-radius:100px;transition:background .25s,color .25s;background:{{ enBg }};color:{{ enColor }};"
+            >
+              EN
+            </button>
+          </div>
+          <a
+            href="/contact"
+            style="
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              padding: 11px 20px;
+              border-radius: 100px;
+              background: #2fed7f;
+              color: #08111e;
+              font-family: &quot;Space Grotesk&quot;, sans-serif;
+              font-weight: 600;
+              font-size: 14.5px;
+              flex-shrink: 0;
+              transition:
+                transform 0.25s,
+                box-shadow 0.25s;
+            "
+            style-hover="transform:translateY(-1px);box-shadow:0 12px 26px -8px rgba(47,237,127,.6);"
+            >{{ cta }}<span style="display: inline-block; font-size: 15px"
+              >→</span
+            ></a
+          >
+        </nav>
+
+        <!-- HERO -->
+        <header
+          data-screen-label="Blog — Hero"
+          style="
+            position: relative;
+            overflow: hidden;
+            padding: clamp(140px, 19vh, 220px) clamp(20px, 5vw, 64px)
+              clamp(48px, 6vw, 72px);
+            background:
+              radial-gradient(
+                120% 90% at 50% 0%,
+                rgba(47, 237, 127, 0.14),
+                rgba(14, 22, 38, 0) 55%
+              ),
+              #0e1626;
+          "
+        >
+          <div
+            style="
+              position: relative;
+              z-index: 1;
+              max-width: 1120px;
+              margin: 0 auto;
+            "
+          >
+            <div
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 20px;
+                animation: cod-rise 0.7s ease both;
+              "
+            >
+              <span
+                style="width: 26px; height: 1px; background: #2fed7f"
+              ></span>
+              <span
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 13px;
+                  letter-spacing: 0.2em;
+                  text-transform: uppercase;
+                  color: #2fed7f;
+                "
+                >{{ heroKicker }}</span
+              >
+            </div>
+            <h1
+              style="
+                font-family: &quot;Space Grotesk&quot;, sans-serif;
+                font-weight: 600;
+                font-size: clamp(38px, 6vw, 72px);
+                line-height: 1.04;
+                letter-spacing: -0.02em;
+                margin: 0 0 24px;
+                max-width: 18ch;
+                color: #edf3f7;
+                animation: cod-rise 0.8s ease both;
+                animation-delay: 0.08s;
+              "
+            >
+              {{ heroLead }}
+              <span style="color: #2fed7f">{{ heroAccent }}</span>
+            </h1>
+            <p
+              style="
+                font-size: 18px;
+                line-height: 1.7;
+                color: #a6b3c6;
+                margin: 0;
+                max-width: 60ch;
+                animation: cod-rise 0.8s ease both;
+                animation-delay: 0.16s;
+              "
+            >
+              {{ heroSub }}
+            </p>
+          </div>
+        </header>
+
+        <!-- FEATURED -->
+        <sc-if value="{{ featuredVisible }}" hint-placeholder-val="{{ true }}">
+          <section
+            data-screen-label="Blog — À la une"
+            style="
+              position: relative;
+              padding: clamp(8px, 2vw, 24px) clamp(20px, 5vw, 64px)
+                clamp(28px, 4vw, 44px);
+              background: #0e1626;
+            "
+          >
+            <a
+              href="/contact"
+              data-reveal=""
+              style="
+                opacity: 0;
+                transform: translateY(28px);
+                transition:
+                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  border-color 0.35s,
+                  box-shadow 0.35s;
+                display: block;
+                max-width: 1200px;
+                margin: 0 auto;
+                border-radius: 24px;
+                overflow: hidden;
+                border: 1px solid rgba(47, 237, 127, 0.24);
+                background: linear-gradient(
+                  160deg,
+                  rgba(47, 237, 127, 0.07),
+                  rgba(255, 255, 255, 0.015)
+                );
+                color: inherit;
+              "
+              style-hover="border-color:rgba(47,237,127,.55);box-shadow:0 34px 60px -30px rgba(0,0,0,.75);transform:translateY(-3px);"
+            >
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                "
+              >
+                <div
+                  style="
+                    position: relative;
+                    min-height: 320px;
+                    aspect-ratio: 16/11;
+                    border-right: 1px solid rgba(255, 255, 255, 0.06);
+                  "
+                >
+                  <sc-if
+                    value="{{ featured.image }}"
+                    hint-placeholder-val="{{ false }}"
+                  >
+                    <div
+                      class="cod-img"
+                      data-img="{{ featured.image }}"
+                      style="
+                        position: absolute;
+                        inset: 0;
+                        background-size: cover;
+                        background-position: center;
+                      "
+                    ></div>
+                  </sc-if>
+                  <sc-if
+                    value="{{ featured.noImage }}"
+                    hint-placeholder-val="{{ true }}"
+                  >
+                    <image-slot
+                      id="{{ featured.slot }}"
+                      shape="rect"
+                      placeholder="Déposez l'illustration de l'article à la une"
+                    ></image-slot>
+                  </sc-if>
+                  <span
+                    style="
+                      position: absolute;
+                      top: 16px;
+                      left: 16px;
+                      z-index: 2;
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 11px;
+                      letter-spacing: 0.16em;
+                      text-transform: uppercase;
+                      color: #08111e;
+                      background: #2fed7f;
+                      padding: 5px 12px;
+                      border-radius: 100px;
+                    "
+                    >{{ featuredBadge }}</span
+                  >
+                </div>
+                <div
+                  style="
+                    padding: clamp(30px, 4vw, 52px);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                  "
+                >
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 12px;
+                      margin-bottom: 16px;
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 12px;
+                      letter-spacing: 0.05em;
+                      color: #5c6b80;
+                    "
+                  >
+                    <span style="color: #2fed7f">{{ featured.catLabel }}</span>
+                    <span
+                      style="
+                        width: 3px;
+                        height: 3px;
+                        border-radius: 50%;
+                        background: #5c6b80;
+                      "
+                    ></span>
+                    <span>{{ featured.date }}</span>
+                    <span
+                      style="
+                        width: 3px;
+                        height: 3px;
+                        border-radius: 50%;
+                        background: #5c6b80;
+                      "
+                    ></span>
+                    <span>{{ featured.read }} {{ readSuffix }}</span>
+                  </div>
+                  <h2
+                    style="
+                      font-family: &quot;Space Grotesk&quot;, sans-serif;
+                      font-weight: 600;
+                      font-size: clamp(26px, 3.4vw, 38px);
+                      line-height: 1.1;
+                      letter-spacing: -0.015em;
+                      margin: 0 0 16px;
+                      color: #fff;
+                    "
+                  >
+                    {{ featured.title }}
+                  </h2>
+                  <p
+                    style="
+                      font-size: 16px;
+                      line-height: 1.7;
+                      color: #98a6ba;
+                      margin: 0 0 26px;
+                    "
+                  >
+                    {{ featured.excerpt }}
+                  </p>
+                  <span
+                    style="
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 10px;
+                      font-family: &quot;Space Grotesk&quot;, sans-serif;
+                      font-weight: 600;
+                      font-size: 15px;
+                      color: #2fed7f;
+                    "
+                    >{{ readLabel }}<span
+                      style="
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 26px;
+                        height: 26px;
+                        border-radius: 50%;
+                        background: rgba(47, 237, 127, 0.14);
+                        font-size: 13px;
+                      "
+                      >→</span
+                    ></span
+                  >
+                </div>
+              </div>
+            </a>
+          </section>
+        </sc-if>
+
+        <!-- TOOLBAR : recherche + filtres -->
+        <section
+          data-screen-label="Blog — Articles"
+          style="
+            position: relative;
+            padding: clamp(20px, 3vw, 32px) clamp(20px, 5vw, 64px)
+              clamp(80px, 10vw, 130px);
+            background: #0a101e;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+          "
+        >
+          <div style="max-width: 1200px; margin: 0 auto">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 18px;
+                margin: clamp(28px, 4vw, 48px) 0 clamp(22px, 3vw, 32px);
+              "
+            >
+              <h2
+                style="
+                  font-family: &quot;Space Grotesk&quot;, sans-serif;
+                  font-weight: 600;
+                  font-size: clamp(24px, 3vw, 34px);
+                  line-height: 1.08;
+                  letter-spacing: -0.015em;
+                  margin: 0;
+                  color: #fff;
+                "
+              >
+                {{ listHeading }}
+              </h2>
+              <div
+                style="
+                  position: relative;
+                  display: flex;
+                  align-items: center;
+                  min-width: min(320px, 100%);
+                  flex: 0 1 320px;
+                "
+              >
+                <span
+                  style="
+                    position: absolute;
+                    left: 14px;
+                    font-size: 15px;
+                    color: #66768c;
+                    pointer-events: none;
+                  "
+                  >⌕</span
+                >
+                <input
+                  type="text"
+                  value="{{ query }}"
+                  onChange="{{ onSearch }}"
+                  placeholder="{{ searchPlaceholder }}"
+                  style="
+                    width: 100%;
+                    padding: 12px 14px 12px 38px;
+                    border-radius: 100px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    color: #eaf0f7;
+                    font-family: &quot;IBM Plex Sans&quot;, sans-serif;
+                    font-size: 14.5px;
+                    outline: none;
+                    transition:
+                      border-color 0.25s,
+                      background 0.25s;
+                  "
+                  style-focus="border-color:rgba(47,237,127,.55);background:rgba(255,255,255,.08);"
+                />
+              </div>
+            </div>
+
+            <div
+              style="
+                display: flex;
+                flex-wrap: wrap;
+                gap: 9px;
+                margin-bottom: clamp(26px, 3vw, 36px);
+              "
+            >
+              <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6">
+                <button
+                  type="button"
+                  onClick="{{ c.onClick }}"
+                  style="{{ c.style }}"
+                >
+                  {{ c.label }}
+                </button>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+                  gap: 22px;
+                "
+              >
+                <sc-for list="{{ articles }}" as="a" hint-placeholder-count="6">
+                  <a
+                    href="/contact"
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      border-radius: 18px;
+                      overflow: hidden;
+                      background: linear-gradient(
+                        160deg,
+                        rgba(255, 255, 255, 0.05),
+                        rgba(255, 255, 255, 0.012)
+                      );
+                      border: 1px solid rgba(255, 255, 255, 0.1);
+                      color: inherit;
+                      transition:
+                        transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1),
+                        border-color 0.35s,
+                        box-shadow 0.35s;
+                    "
+                    style-hover="border-color:rgba(47,237,127,.5);box-shadow:0 30px 55px -26px rgba(0,0,0,.7);transform:translateY(-4px);"
+                  >
+                    <div
+                      style="
+                        position: relative;
+                        aspect-ratio: 16/10;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                      "
+                    >
+                      <sc-if
+                        value="{{ a.image }}"
+                        hint-placeholder-val="{{ false }}"
+                      >
+                        <div
+                          class="cod-img"
+                          data-img="{{ a.image }}"
+                          style="
+                            position: absolute;
+                            inset: 0;
+                            background-size: cover;
+                            background-position: center;
+                          "
+                        ></div>
+                      </sc-if>
+                      <sc-if
+                        value="{{ a.noImage }}"
+                        hint-placeholder-val="{{ true }}"
+                      >
+                        <image-slot
+                          id="{{ a.slot }}"
+                          shape="rect"
+                          placeholder="Illustration"
+                        ></image-slot>
+                      </sc-if>
+                      <span
+                        style="
+                          position: absolute;
+                          top: 12px;
+                          left: 12px;
+                          z-index: 2;
+                          font-family: &quot;IBM Plex Mono&quot;, monospace;
+                          font-size: 11px;
+                          letter-spacing: 0.06em;
+                          color: #08111e;
+                          background: #2fed7f;
+                          padding: 4px 10px;
+                          border-radius: 100px;
+                          pointer-events: none;
+                        "
+                        >{{ a.catLabel }}</span
+                      >
+                    </div>
+                    <div
+                      style="
+                        padding: 24px 24px 26px;
+                        display: flex;
+                        flex-direction: column;
+                        flex: 1;
+                      "
+                    >
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 10px;
+                          margin-bottom: 12px;
+                          font-family: &quot;IBM Plex Mono&quot;, monospace;
+                          font-size: 11.5px;
+                          letter-spacing: 0.04em;
+                          color: #66768c;
+                        "
+                      >
+                        <span>{{ a.date }}</span>
+                        <span
+                          style="
+                            width: 3px;
+                            height: 3px;
+                            border-radius: 50%;
+                            background: #3a4658;
+                          "
+                        ></span>
+                        <span>{{ a.read }} {{ readSuffix }}</span>
+                      </div>
+                      <h3
+                        style="
+                          font-family: &quot;Space Grotesk&quot;, sans-serif;
+                          font-weight: 600;
+                          font-size: 20px;
+                          line-height: 1.22;
+                          color: #fff;
+                          margin: 0 0 12px;
+                        "
+                      >
+                        {{ a.title }}
+                      </h3>
+                      <p
+                        style="
+                          font-size: 14.5px;
+                          line-height: 1.6;
+                          color: #98a6ba;
+                          margin: 0 0 20px;
+                          flex: 1;
+                        "
+                      >
+                        {{ a.excerpt }}
+                      </p>
+                      <span
+                        style="
+                          display: inline-flex;
+                          align-items: center;
+                          gap: 8px;
+                          font-family: &quot;Space Grotesk&quot;, sans-serif;
+                          font-weight: 600;
+                          font-size: 14px;
+                          color: #2fed7f;
+                        "
+                        >{{ readLabel }}<span style="font-size: 14px"
+                          >→</span
+                        ></span
+                      >
+                    </div>
+                  </a>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ showPagination }}" hint-placeholder-val="{{ false }}">
+              <nav
+                aria-label="Pagination"
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  flex-wrap: wrap;
+                  gap: 8px;
+                  margin-top: clamp(32px, 4vw, 48px);
+                "
+              >
+                <button
+                  type="button"
+                  onClick="{{ prevClick }}"
+                  disabled="{{ prevDisabled }}"
+                  style="{{ prevStyle }}"
+                >
+                  ← {{ prevLabel }}
+                </button>
+                <sc-for list="{{ pageItems }}" as="pg" hint-placeholder-count="3">
+                  <button
+                    type="button"
+                    onClick="{{ pg.onClick }}"
+                    style="{{ pg.style }}"
+                  >
+                    {{ pg.label }}
+                  </button>
+                </sc-for>
+                <button
+                  type="button"
+                  onClick="{{ nextClick }}"
+                  disabled="{{ nextDisabled }}"
+                  style="{{ nextStyle }}"
+                >
+                  {{ nextLabel }} →
+                </button>
+              </nav>
+            </sc-if>
+
+            <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+              <div
+                style="
+                  padding: clamp(50px, 8vw, 90px) 20px;
+                  text-align: center;
+                  border: 1px dashed rgba(255, 255, 255, 0.14);
+                  border-radius: 18px;
+                "
+              >
+                <div
+                  style="font-size: 34px; margin-bottom: 14px; color: #3a4658"
+                >
+                  ⌕
+                </div>
+                <p style="font-size: 16px; color: #8fa0b5; margin: 0">
+                  {{ emptyText }}
+                </p>
+              </div>
+            </sc-if>
+          </div>
+        </section>
+
+        <!-- NEWSLETTER -->
+        <section
+          data-screen-label="Blog — Newsletter"
+          style="
+            position: relative;
+            overflow: hidden;
+            padding: clamp(64px, 8vw, 110px) clamp(20px, 5vw, 64px);
+            background: #0e1626;
+          "
+        >
+          <div
+            style="
+              position: absolute;
+              top: -120px;
+              left: 50%;
+              transform: translateX(-50%);
+              width: 640px;
+              height: 420px;
+              z-index: 0;
+              background: radial-gradient(
+                circle,
+                rgba(47, 237, 127, 0.12),
+                transparent 62%
+              );
+              filter: blur(12px);
+              pointer-events: none;
+            "
+          ></div>
+          <div
+            data-reveal=""
+            style="
+              opacity: 0;
+              transform: translateY(28px);
+              transition:
+                opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+              position: relative;
+              z-index: 1;
+              max-width: 640px;
+              margin: 0 auto;
+              text-align: center;
+            "
+          >
+            <div
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 18px;
+              "
+            >
+              <span
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #2fed7f;
+                  background: rgba(47, 237, 127, 0.12);
+                  padding: 5px 12px;
+                  border-radius: 100px;
+                "
+                >{{ nlKicker }}</span
+              >
+            </div>
+            <h2
+              style="
+                font-family: &quot;Space Grotesk&quot;, sans-serif;
+                font-weight: 600;
+                font-size: clamp(28px, 4.2vw, 46px);
+                line-height: 1.08;
+                letter-spacing: -0.02em;
+                margin: 0 0 16px;
+                color: #fff;
+              "
+            >
+              {{ nlTitle }}
+            </h2>
+            <p
+              style="
+                font-size: 16.5px;
+                line-height: 1.7;
+                color: #a6b3c6;
+                margin: 0 auto 34px;
+                max-width: 46ch;
+              "
+            >
+              {{ nlSub }}
+            </p>
+
+            <sc-if
+              value="{{ notSubscribed }}"
+              hint-placeholder-val="{{ true }}"
+            >
+              <form
+                onSubmit="{{ onSubscribe }}"
+                style="
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 10px;
+                  justify-content: center;
+                  max-width: 480px;
+                  margin: 0 auto;
+                "
+              >
+                <input
+                  type="email"
+                  required="required"
+                  placeholder="{{ nlPlaceholder }}"
+                  style="
+                    flex: 1 1 240px;
+                    padding: 15px 20px;
+                    border-radius: 11px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.14);
+                    color: #eaf0f7;
+                    font-family: &quot;IBM Plex Sans&quot;, sans-serif;
+                    font-size: 15px;
+                    outline: none;
+                    transition:
+                      border-color 0.25s,
+                      background 0.25s;
+                  "
+                  style-focus="border-color:rgba(47,237,127,.55);background:rgba(255,255,255,.08);"
+                />
+                <button
+                  type="submit"
+                  style="
+                    flex: 0 0 auto;
+                    padding: 15px 26px;
+                    border-radius: 11px;
+                    border: 0;
+                    cursor: pointer;
+                    background: #2fed7f;
+                    color: #08111e;
+                    font-family: &quot;Space Grotesk&quot;, sans-serif;
+                    font-weight: 600;
+                    font-size: 15px;
+                    transition:
+                      transform 0.25s,
+                      box-shadow 0.25s;
+                  "
+                  style-hover="transform:translateY(-2px);box-shadow:0 16px 36px -12px rgba(47,237,127,.6);"
+                >
+                  {{ nlButton }}
+                </button>
+              </form>
+            </sc-if>
+
+            <sc-if value="{{ subscribed }}" hint-placeholder-val="{{ false }}">
+              <div
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 12px;
+                  padding: 15px 26px;
+                  border-radius: 11px;
+                  background: rgba(47, 237, 127, 0.1);
+                  border: 1px solid rgba(47, 237, 127, 0.35);
+                "
+              >
+                <span
+                  style="
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 26px;
+                    height: 26px;
+                    border-radius: 50%;
+                    background: #2fed7f;
+                    color: #08111e;
+                    font-size: 14px;
+                    font-weight: 700;
+                  "
+                  >✓</span
+                >
+                <span
+                  style="
+                    font-family: &quot;Space Grotesk&quot;, sans-serif;
+                    font-weight: 600;
+                    font-size: 15px;
+                    color: #eaf0f7;
+                  "
+                  >{{ nlThanks }}</span
+                >
+              </div>
+            </sc-if>
+          </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer
+          style="
+            position: relative;
+            padding: 56px clamp(20px, 5vw, 64px) 36px;
+            background: #0a101e;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+          "
+        >
+          <div
+            style="
+              max-width: 1200px;
+              margin: 0 auto;
+              display: flex;
+              flex-wrap: wrap;
+              gap: 22px;
+              align-items: center;
+              justify-content: space-between;
+            "
+          >
+            <a href="index.html"
+              ><img
+                src="assets/codialis-white.png"
+                alt="Codialis"
+                style="height: 26px; width: auto; display: block"
+            /></a>
+            <div style="display: flex; flex-wrap: wrap; gap: 22px">
+              <sc-for list="{{ navLinks }}" as="lk" hint-placeholder-count="5">
+                <a
+                  href="{{ lk.href }}"
+                  style="font-size: 14px; color: #b7c2d2"
+                  style-hover="color:#2FED7F;"
+                  >{{ lk.label }}</a
+                >
+              </sc-for>
+              <a
+                href="/legal"
+                style="font-size: 14px; color: #2fed7f"
+                style-hover="color:#7ff2b3;"
+                >Mentions légales</a
+              >
+            </div>
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 12px;
+                letter-spacing: 0.06em;
+                color: #5c6b80;
+              "
+              >© {{ year }} Codialis</span
+            >
+          </div>
+        </footer>
+
+        <dc-import name="Chatbot" hint-size="1px,1px"></dc-import>
+      </div>
+    </x-dc>
+    <script
+      type="text/x-dc"
+      data-dc-script
+      data-props='{"$preview":{"width":1280,"height":900}}'
+    >
+      class Component extends DCLogic {
+        state = { lang: 'fr', query: '', activeCat: 'all', page: 1, subscribed: false, custom: [] };
+
+        renderVals() {
+          const lang = this.state.lang;
+          const fr = lang === 'fr';
+          const setLang = (l) => () => this.setState({ lang: l });
+          const t = (f, e) => (fr ? f : e);
+
+          const catDefs = [
+            { key: 'all', label: t('Tous', 'All') },
+            { key: 'dev', label: t('Développement', 'Development') },
+            { key: 'ia', label: t('IA', 'AI') },
+            { key: 'saas', label: t('SaaS', 'SaaS') },
+            { key: 'funding', label: t('Financement', 'Funding') },
+            { key: 'design', label: t('Design UX', 'UX Design') },
+          ];
+
+          const defaultFeatured = {
+            cat: 'dev', slot: 'blog-featured', image: '', noImage: true,
+            catLabel: t('Développement', 'Development'),
+            date: t('3 juillet 2026', 'July 3, 2026'), read: 8,
+            title: t('Architecture-first : concevoir avant de coder', 'Architecture-first: designing before you code'),
+            excerpt: t(
+              "Pourquoi les décisions d'architecture prises en amont déterminent la vélocité, le coût et la durée de vie d'une plateforme — et comment nous les cadrons dès le premier atelier.",
+              "Why the architecture decisions made upfront determine a platform's velocity, cost and lifespan — and how we frame them from the very first workshop."
+            ),
+          };
+
+          const posts = [
+            { cat: 'ia', slot: 'blog-1', date: t('28 juin 2026', 'June 28, 2026'), read: 6,
+              title: t('RAG en production : les 5 pièges à éviter', 'RAG in production: 5 pitfalls to avoid'),
+              excerpt: t("La génération augmentée par récupération est simple en démo. En production, la qualité se joue sur le chunking, l'évaluation et la fraîcheur des données.", "Retrieval-augmented generation is easy in a demo. In production, quality comes down to chunking, evaluation and data freshness.") },
+            { cat: 'saas', slot: 'blog-2', date: t('19 juin 2026', 'June 19, 2026'), read: 7,
+              title: t('Multi-tenant : isoler les données sans exploser les coûts', 'Multi-tenant: isolating data without blowing up costs'),
+              excerpt: t("Base partagée, schéma dédié ou base par client ? Un arbitrage structurant qu'il vaut mieux poser avant la première ligne de code.", "Shared database, dedicated schema or database-per-tenant? A structural trade-off best settled before the first line of code.") },
+            { cat: 'funding', slot: 'blog-3', date: t('11 juin 2026', 'June 11, 2026'), read: 5,
+              title: t('CIR & France Num : financer son projet digital en 2026', 'R&D credits & grants: funding your digital project in 2026'),
+              excerpt: t("Crédit Impôt Recherche, subventions France Num, aides régionales : le panorama des dispositifs qui allègent réellement la facture d'un projet sur mesure.", "R&D tax credit, France Num grants, regional aid: the landscape of schemes that genuinely lighten the bill of a custom project.") },
+            { cat: 'dev', slot: 'blog-4', date: t('2 juin 2026', 'June 2, 2026'), read: 6,
+              title: t('Dette technique : la mesurer avant qu\u2019elle ne vous mesure', 'Technical debt: measure it before it measures you'),
+              excerpt: t("La dette technique n'est pas une fatalité, c'est un indicateur. Voici les métriques que nous suivons pour la garder sous contrôle.", "Technical debt isn't a curse, it's a metric. Here are the indicators we track to keep it under control.") },
+            { cat: 'design', slot: 'blog-5', date: t('24 mai 2026', 'May 24, 2026'), read: 5,
+              title: t('Design system : quand vaut-il vraiment le coût ?', 'Design systems: when are they actually worth it?'),
+              excerpt: t("Un design system accélère les équipes mûres et ralentit les jeunes produits. Le vrai critère n'est pas la taille, c'est la répétition.", "A design system speeds up mature teams and slows down young products. The real criterion isn't size, it's repetition.") },
+            { cat: 'ia', slot: 'blog-6', date: t('15 mai 2026', 'May 15, 2026'), read: 7,
+              title: t('LLM internes : héberger ses modèles, bonne idée ?', 'In-house LLMs: is self-hosting worth it?'),
+              excerpt: t("Souveraineté, coût au token, latence : les trois questions à se poser avant d'internaliser un modèle plutôt que d'appeler une API.", "Sovereignty, cost per token, latency: the three questions to ask before internalising a model rather than calling an API.") },
+          ];
+
+          const catLabelOf = (k) => (catDefs.find((c) => c.key === k) || {}).label || k || '';
+
+          // Articles publiés depuis le back-office (localStorage)
+          const custom = (this.state.custom || []).map((p) => ({
+            cat: p.cat || 'dev', slot: p.slot || ('blog-' + p.id),
+            date: p.date || '', read: p.read || '',
+            title: p.title || '', excerpt: p.excerpt || '',
+            image: p.image || '', featured: !!p.featured,
+          }));
+          const customFeatured = custom.find((p) => p.featured);
+          const customPosts = custom.filter((p) => !p.featured);
+
+          const defWithImg = posts.map((p) => ({ ...p, image: '', noImage: true }));
+          const allPosts = [...customPosts, ...defWithImg];
+
+          const activeFeatured = customFeatured
+            ? { ...customFeatured, slot: customFeatured.slot, noImage: !customFeatured.image, catLabel: catLabelOf(customFeatured.cat) }
+            : defaultFeatured;
+
+          const q = (this.state.query || '').trim().toLowerCase();
+          const active = this.state.activeCat;
+          const matches = (p) => {
+            if (active !== 'all' && p.cat !== active) return false;
+            if (q) {
+              const hay = (p.title + ' ' + p.excerpt).toLowerCase();
+              if (hay.indexOf(q) === -1) return false;
+            }
+            return true;
+          };
+          const filtered = allPosts.filter(matches).map((p) => ({ ...p, catLabel: catLabelOf(p.cat), noImage: !p.image }));
+          const featuredVisible = active === 'all' && !q;
+
+          // Pagination
+          const pageSize = 6;
+          const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+          const page = Math.min(Math.max(1, this.state.page || 1), totalPages);
+          const articles = filtered.slice((page - 1) * pageSize, page * pageSize);
+          const goToPage = (n) => () => { this.setState({ page: n }); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+          const pageBtn = (on) => 'font-family:\'Space Grotesk\',sans-serif;font-weight:600;font-size:14px;min-width:40px;height:40px;padding:0 12px;border-radius:100px;cursor:pointer;transition:background .25s,color .25s,border-color .25s;'
+            + (on
+              ? 'background:#2FED7F;color:#08111E;border:1px solid #2FED7F;'
+              : 'background:rgba(255,255,255,.05);color:#B7C2D2;border:1px solid rgba(255,255,255,.12);');
+          const arrowBtn = (disabled) => 'font-family:\'Space Grotesk\',sans-serif;font-weight:600;font-size:14px;height:40px;padding:0 16px;border-radius:100px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);transition:background .25s,color .25s;'
+            + (disabled ? 'color:#3a4658;cursor:not-allowed;opacity:.5;' : 'color:#B7C2D2;cursor:pointer;');
+          const pageItems = [];
+          for (let i = 1; i <= totalPages; i++) {
+            pageItems.push({ label: String(i), style: pageBtn(i === page), onClick: goToPage(i) });
+          }
+          const prevDisabled = page <= 1;
+          const nextDisabled = page >= totalPages;
+
+          // Chips de filtre : catégories intégrées + catégories personnalisées présentes dans les articles.
+          const knownCatKeys = catDefs.map((c) => c.key);
+          const extraCatDefs = [...new Set(allPosts.map((p) => p.cat).filter(Boolean))]
+            .filter((k) => knownCatKeys.indexOf(k) === -1)
+            .map((k) => ({ key: k, label: k }));
+          const cats = [...catDefs, ...extraCatDefs].map((c) => {
+            const on = c.key === active;
+            const style = 'font-family:\'Space Grotesk\',sans-serif;font-weight:500;font-size:13.5px;letter-spacing:.01em;padding:9px 16px;border-radius:100px;cursor:pointer;transition:background .25s,color .25s,border-color .25s;'
+              + (on
+                ? 'background:#2FED7F;color:#08111E;border:1px solid #2FED7F;'
+                : 'background:rgba(255,255,255,.05);color:#B7C2D2;border:1px solid rgba(255,255,255,.12);');
+            return { key: c.key, label: c.label, style, onClick: () => this.setState({ activeCat: c.key, page: 1 }) };
+          });
+
+          const navLinks = [
+            { label: t('Expertise', 'Expertise'), href: 'index.html#expertises', color: '#C4CFDD' },
+            { label: t('Portfolio', 'Portfolio'), href: '/portfolio', color: '#C4CFDD' },
+            { label: 'Blog', href: '/blog', color: '#2FED7F' },
+            { label: t('Financement', 'Funding'), href: '/financement', color: '#C4CFDD' },
+            { label: 'Contact', href: '/contact', color: '#C4CFDD' },
+          ];
+
+          return {
+            year: new Date().getFullYear(),
+            cta: t('Prendre RDV', 'Book a call'),
+            setLangFr: setLang('fr'),
+            setLangEn: setLang('en'),
+            frBg: fr ? '#2FED7F' : 'transparent',
+            frColor: fr ? '#08111E' : '#8FA0B5',
+            enBg: !fr ? '#2FED7F' : 'transparent',
+            enColor: !fr ? '#08111E' : '#8FA0B5',
+            navLinks,
+
+            heroKicker: t('Le blog', 'The blog'),
+            heroLead: t("Idées, retours d'expérience &", 'Ideas, field notes &'),
+            heroAccent: t('signaux faibles.', 'weak signals.'),
+            heroSub: t(
+              "Nos réflexions sur l'ingénierie logicielle, l'IA, le SaaS et le financement de l'innovation — sans jargon inutile.",
+              'Our thinking on software engineering, AI, SaaS and innovation funding — without the needless jargon.'
+            ),
+
+            featured: activeFeatured,
+            featuredVisible,
+            featuredBadge: t('À la une', 'Featured'),
+            readSuffix: t('min de lecture', 'min read'),
+            readLabel: t("Lire l'article", 'Read article'),
+
+            listHeading: t('Tous les articles', 'All articles'),
+            searchPlaceholder: t('Rechercher un article…', 'Search articles…'),
+            query: this.state.query,
+            onSearch: (e) => this.setState({ query: e.target.value, page: 1 }),
+            cats,
+            articles,
+            hasResults: articles.length > 0,
+            isEmpty: articles.length === 0,
+            emptyText: t('Aucun article ne correspond à votre recherche.', 'No article matches your search.'),
+
+            showPagination: totalPages > 1,
+            pageItems,
+            prevClick: goToPage(page - 1),
+            nextClick: goToPage(page + 1),
+            prevDisabled,
+            nextDisabled,
+            prevStyle: arrowBtn(prevDisabled),
+            nextStyle: arrowBtn(nextDisabled),
+            prevLabel: t('Précédent', 'Prev'),
+            nextLabel: t('Suivant', 'Next'),
+
+            nlKicker: 'Newsletter',
+            nlTitle: t('Recevez nos analyses, une fois par mois.', 'Get our insights, once a month.'),
+            nlSub: t(
+              "Pas de spam — juste nos meilleurs articles et retours de terrain, directement dans votre boîte mail.",
+              'No spam — just our best articles and field notes, straight to your inbox.'
+            ),
+            nlPlaceholder: t('votre@email.com', 'you@email.com'),
+            nlButton: t("S'abonner", 'Subscribe'),
+            nlThanks: t('Merci ! Vous êtes bien inscrit·e.', "Thanks! You're subscribed."),
+            onSubscribe: (e) => { e.preventDefault(); this.setState({ subscribed: true }); },
+            notSubscribed: !this.state.subscribed,
+            subscribed: this.state.subscribed,
+          };
+        }
+
+        componentDidMount() {
+          const apiBase = location.port === '3001' ? '' : 'http://localhost:3001';
+          fetch(apiBase + '/api/content/blog')
+            .then((r) => (r.ok ? r.json() : []))
+            .then((list) => { if (Array.isArray(list) && list.length) this.setState({ custom: list }); })
+            .catch(() => {});
+          this.paintImgs();
+          setTimeout(() => this.paintImgs(), 300);
+
+          const nav = document.getElementById('cod-nav');
+          const onScroll = () => {
+            const y = window.scrollY || 0;
+            if (nav) {
+              nav.style.background = y > 24 ? 'rgba(12,19,32,.85)' : 'rgba(16,24,40,.72)';
+              nav.style.boxShadow = y > 24 ? '0 22px 60px -20px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.07)' : '0 18px 50px -18px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.06)';
+            }
+          };
+          let ticking = false;
+          window.addEventListener('scroll', () => { if (!ticking) { requestAnimationFrame(() => { onScroll(); ticking = false; }); ticking = true; } }, { passive: true });
+          onScroll();
+
+          const show = (el) => { el.style.opacity = '1'; el.style.transform = 'none'; el.setAttribute('data-revealed', '1'); };
+          if (!('IntersectionObserver' in window)) {
+            this._observeReveals = () => document.querySelectorAll('[data-reveal]:not([data-revealed])').forEach(show);
+          } else {
+            const io = new IntersectionObserver((entries) => {
+              entries.forEach((e) => { if (e.isIntersecting) { show(e.target); io.unobserve(e.target); } });
+            }, { threshold: 0.12 });
+            this._observeReveals = () => document.querySelectorAll('[data-reveal]:not([data-revealed])').forEach((el) => { el.setAttribute('data-revealed', 'pending'); io.observe(el); });
+          }
+          this._observeReveals();
+          setTimeout(() => this._observeReveals(), 300);
+
+          const applyResponsive = () => {
+            const wrap = document.querySelector('.cod-navlinks');
+            if (wrap) wrap.style.display = window.innerWidth > 900 ? 'flex' : 'none';
+          };
+          applyResponsive();
+          window.addEventListener('resize', applyResponsive);
+        }
+
+        componentDidUpdate() {
+          this.paintImgs();
+          if (this._observeReveals) this._observeReveals();
+        }
+
+        paintImgs() {
+          document.querySelectorAll('.cod-img').forEach((el) => {
+            const v = el.getAttribute('data-img') || '';
+            if (v && v.indexOf('{{') === -1) el.style.backgroundImage = 'url("' + v + '")';
+            else el.style.backgroundImage = 'none';
+          });
+        }
+      }
+    </script>
+  </body>
+</html>

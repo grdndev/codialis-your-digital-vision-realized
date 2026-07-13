@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: codialis-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: codialis
+      POSTGRES_PASSWORD: codialis_dev
+      POSTGRES_DB: codialis
+    ports:
+      - "5433:5432"
+    volumes:
+      - codialis_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codialis -d codialis"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: codialis-server
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    # All config (incl. DATABASE_URL) loaded from backend/.env (gitignored).
+    env_file:
+      - backend/.env
+    ports:
+      - "3001:3001"
+    volumes:
+      # live source reload; anonymous volume keeps node_modules inside container
+      - .:/repo
+      - /repo/backend/node_modules
+
+volumes:
+  codialis_pgdata:

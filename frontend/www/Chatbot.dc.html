@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  @keyframes cb-pop { from { opacity:0; transform:translateY(16px) scale(.96); } to { opacity:1; transform:none; } }
+  @keyframes cb-msg { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  @keyframes cb-ping { 0% { transform:scale(1); opacity:.7; } 70%,100% { transform:scale(2.4); opacity:0; } }
+  @keyframes cb-dot { 0%,60%,100% { transform:translateY(0); opacity:.4; } 30% { transform:translateY(-4px); opacity:1; } }
+  .cb-scroll::-webkit-scrollbar { width:6px; }
+  .cb-scroll::-webkit-scrollbar-thumb { background:rgba(47,237,127,.3); border-radius:10px; }
+</style>
+</helmet>
+
+<div style="position:fixed;bottom:24px;right:24px;z-index:9999;font-family:'IBM Plex Sans',sans-serif;">
+
+  <!-- PANEL -->
+  <sc-if value="{{ open }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;bottom:78px;right:0;width:min(374px,calc(100vw - 32px));height:min(540px,calc(100vh - 130px));display:flex;flex-direction:column;border-radius:20px;overflow:hidden;background:#0E1626;border:1px solid rgba(47,237,127,.22);box-shadow:0 30px 70px -20px rgba(0,0,0,.7);animation:cb-pop .32s cubic-bezier(.2,.8,.2,1) both;">
+
+      <!-- header -->
+      <div style="display:flex;align-items:center;gap:12px;padding:16px 18px;background:linear-gradient(120deg,rgba(47,237,127,.14),rgba(255,255,255,.02));border-bottom:1px solid rgba(255,255,255,.08);">
+        <div style="position:relative;width:38px;height:38px;border-radius:11px;background:#2FED7F;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;color:#08111E;">C
+          <span style="position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-radius:50%;background:#2FED7F;border:2px solid #0E1626;"></span>
+        </div>
+        <div style="flex:1;line-height:1.3;">
+          <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;color:#fff;">Assistant Codialis</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.04em;color:#2FED7F;">En ligne · réponse immédiate</div>
+        </div>
+        <button type="button" onClick="{{ toggle }}" aria-label="Fermer" style="width:32px;height:32px;border:0;border-radius:9px;background:rgba(255,255,255,.06);color:#B7C2D2;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;transition:background .2s;" style-hover="background:rgba(255,255,255,.12);">✕</button>
+      </div>
+
+      <!-- messages -->
+      <div class="cb-scroll" data-cb-scroll="1" style="flex:1;overflow-y:auto;padding:20px 18px;display:flex;flex-direction:column;gap:12px;">
+        <sc-for list="{{ messages }}" as="m" hint-placeholder-count="2">
+          <div style="display:flex;justify-content:{{ m.justify }};animation:cb-msg .3s ease both;">
+            <div style="max-width:82%;padding:11px 15px;border-radius:{{ m.radius }};font-size:14.5px;line-height:1.55;background:{{ m.bg }};color:{{ m.color }};border:{{ m.border }};white-space:pre-line;">{{ m.text }}</div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ typing }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;justify-content:flex-start;">
+            <div style="display:flex;gap:4px;padding:13px 16px;border-radius:14px 14px 14px 4px;background:rgba(255,255,255,.05);">
+              <span style="width:6px;height:6px;border-radius:50%;background:#2FED7F;animation:cb-dot 1.2s infinite;"></span>
+              <span style="width:6px;height:6px;border-radius:50%;background:#2FED7F;animation:cb-dot 1.2s infinite .2s;"></span>
+              <span style="width:6px;height:6px;border-radius:50%;background:#2FED7F;animation:cb-dot 1.2s infinite .4s;"></span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- quick replies -->
+      <div style="padding:14px 16px 16px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-wrap:wrap;gap:8px;">
+        <sc-for list="{{ options }}" as="o" hint-placeholder-count="3">
+          <button type="button" onClick="{{ o.onClick }}" style="cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:13.5px;padding:9px 14px;border-radius:100px;background:{{ o.bg }};color:{{ o.color }};border:1px solid {{ o.borderColor }};transition:background .2s,color .2s,border-color .2s;" style-hover="background:#2FED7F;color:#08111E;border-color:#2FED7F;">{{ o.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- LAUNCHER -->
+  <button type="button" onClick="{{ toggle }}" aria-label="Ouvrir le chat" style="position:relative;width:56px;height:56px;border:0;border-radius:50%;background:#2FED7F;color:#08111E;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px -12px rgba(0,0,0,.55);transition:transform .2s ease,box-shadow .2s ease;float:right;" style-hover="transform:translateY(-2px);box-shadow:0 16px 32px -12px rgba(47,237,127,.5);">
+    <sc-if value="{{ closedIcon }}" hint-placeholder-val="{{ true }}">
+      <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="#08111E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7a8.5 8.5 0 0 1-.9-3.8 8.38 8.38 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z"></path>
+        <circle cx="8.5" cy="11.5" r="1.1" fill="#08111E" stroke="none"></circle>
+        <circle cx="12" cy="11.5" r="1.1" fill="#08111E" stroke="none"></circle>
+        <circle cx="15.5" cy="11.5" r="1.1" fill="#08111E" stroke="none"></circle>
+      </svg>
+    </sc-if>
+    <sc-if value="{{ open }}" hint-placeholder-val="{{ false }}">
+      <span style="font-size:22px;line-height:1;">✕</span>
+    </sc-if>
+  </button>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:420,&quot;height&quot;:620}}">
+class Component extends DCLogic {
+  state = { open: false, messages: [], typing: false, nodeId: null };
+
+  flow() {
+    return {
+      root: {
+        bot: `Bonjour 👋 Je suis l'assistant technique de Codialis. Sur quoi puis-je vous éclairer ?`,
+        options: [
+          { id: 'services', label: 'Vos expertises' },
+          { id: 'methode', label: 'Méthode & délais' },
+          { id: 'financement', label: 'Financement' },
+          { id: 'rdv', label: 'Prendre RDV' },
+        ],
+      },
+      services: {
+        bot: `Nous couvrons 4 pôles techniques. Lequel vous intéresse ?`,
+        options: [
+          { id: 'saas', label: 'Développement SaaS' },
+          { id: 'mobile', label: 'Applications mobiles' },
+          { id: 'ia', label: 'Intelligence artificielle' },
+          { id: 'crm', label: 'CRM & ERP' },
+          { id: 'root', label: '← Menu', back: true },
+        ],
+      },
+      saas: {
+        bot: `Développement SaaS — architectures cloud-native multi-tenant. Stack typique : React/Node, PostgreSQL, API GraphQL/REST, conteneurisation et CI/CD. On vise scalabilité, observabilité et zéro dette technique.`,
+        options: [
+          { id: 'services', label: '← Autres expertises', back: true },
+          { id: 'rdv', label: 'En discuter' },
+        ],
+      },
+      mobile: {
+        bot: `Applications mobiles — iOS & Android en natif, React Native ou Flutter selon le besoin. Architecture offline-first, synchro temps réel et pipelines de publication automatisés sur les stores.`,
+        options: [
+          { id: 'services', label: '← Autres expertises', back: true },
+          { id: 'rdv', label: 'En discuter' },
+        ],
+      },
+      ia: {
+        bot: `Intelligence artificielle — intégration de LLM (RAG, assistants), vision par ordinateur, analyse prédictive et automatisation. On branche l'IA là où elle produit un impact mesurable, avec MLOps à la clé.`,
+        options: [
+          { id: 'services', label: '← Autres expertises', back: true },
+          { id: 'rdv', label: 'En discuter' },
+        ],
+      },
+      crm: {
+        bot: `CRM & ERP sur mesure — outils de gestion qui épousent votre métier : workflows, tableaux de bord actionnables, intégrations SI et automatisations. Solutions dédiées ou basées sur des socles éprouvés.`,
+        options: [
+          { id: 'services', label: '← Autres expertises', back: true },
+          { id: 'rdv', label: 'En discuter' },
+        ],
+      },
+      methode: {
+        bot: `Notre méthode en 4 temps : 1) Cadrage & architecture, 2) Conception & design, 3) Développement itératif (livraisons régulières testées, sans effet tunnel), 4) Déploiement & suivi. Un premier périmètre se cadre généralement en quelques jours.`,
+        options: [
+          { id: 'financement', label: 'Et le financement ?' },
+          { id: 'rdv', label: 'Prendre RDV' },
+          { id: 'root', label: '← Menu', back: true },
+        ],
+      },
+      financement: {
+        bot: `Nous vous aidons à mobiliser CIR/CII (jusqu'à 30% de crédit d'impôt), aides Bpifrance, subventions régionales et France Num — avec possibilité de paiement étalé. La page Financement détaille les dispositifs.`,
+        options: [
+          { id: '__link_financement', label: 'Voir la page Financement', href: '/financement' },
+          { id: 'rdv', label: 'Prendre RDV' },
+          { id: 'root', label: '← Menu', back: true },
+        ],
+      },
+      rdv: {
+        bot: `Avec plaisir. Réponse sous 24h avec une première lecture de votre besoin. Écrivez-nous à contact@codialis.com ou via le formulaire de contact.`,
+        options: [
+          { id: '__link_contact', label: 'Aller au contact', href: '/contact' },
+          { id: 'root', label: '← Menu', back: true },
+        ],
+      },
+    };
+  }
+
+  scrollDown() {
+    requestAnimationFrame(() => {
+      const el = document.querySelector('[data-cb-scroll="1"]');
+      if (el) el.scrollTop = el.scrollHeight;
+    });
+  }
+
+  goToNode(id, opts = {}) {
+    const node = this.flow()[id];
+    if (!node) return;
+    if (!opts.silent && opts.userLabel) {
+      this.setState((s) => ({ messages: [...s.messages, { role: 'user', text: opts.userLabel }] }));
+    }
+    this.setState({ typing: true, nodeId: null });
+    this.scrollDown();
+    setTimeout(() => {
+      this.setState((s) => ({ typing: false, nodeId: id, messages: [...s.messages, { role: 'bot', text: node.bot }] }));
+      this.scrollDown();
+    }, 520);
+  }
+
+  toggle = () => {
+    const opening = !this.state.open;
+    this.setState({ open: opening });
+    if (opening && this.state.messages.length === 0) {
+      setTimeout(() => this.goToNode('root', { silent: true }), 260);
+    }
+  };
+
+  pick(opt) {
+    if (opt.href) { window.location.href = opt.href; return; }
+    this.goToNode(opt.id, { userLabel: opt.back ? null : opt.label });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const node = s.nodeId ? this.flow()[s.nodeId] : null;
+    const messages = s.messages.map((m) => (
+      m.role === 'user'
+        ? { text: m.text, justify: 'flex-end', bg: '#2FED7F', color: '#08111E', radius: '14px 14px 4px 14px', border: 'none' }
+        : { text: m.text, justify: 'flex-start', bg: 'rgba(255,255,255,.05)', color: '#EAF0F7', radius: '14px 14px 14px 4px', border: '1px solid rgba(255,255,255,.07)' }
+    ));
+    const options = (node && !s.typing ? node.options : []).map((o) => ({
+      label: o.label,
+      onClick: () => this.pick(o),
+      bg: o.back ? 'transparent' : 'rgba(47,237,127,.1)',
+      color: o.back ? '#8FA0B5' : '#2FED7F',
+      borderColor: o.back ? 'rgba(255,255,255,.14)' : 'rgba(47,237,127,.4)',
+    }));
+    return {
+      open: s.open,
+      toggle: this.toggle,
+      messages,
+      options,
+      typing: s.typing,
+      icon: s.open ? '✕' : '💬',
+      closedIcon: !s.open,
+    };
+  }
+}
+</script>
+</body>
+</html>

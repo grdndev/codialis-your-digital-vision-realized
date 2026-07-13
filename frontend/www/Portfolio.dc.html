@@ -1,0 +1,1023 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+    <script src="./responsive.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin=""
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap"
+          rel="stylesheet"
+        />
+        <style>
+          * {
+            box-sizing: border-box;
+          }
+          html {
+            scroll-behavior: smooth;
+          }
+          body {
+            margin: 0;
+            background: #0e1626;
+            color: #eaf0f7;
+            font-family: "IBM Plex Sans", sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+          }
+          a {
+            color: #2fed7f;
+            text-decoration: none;
+          }
+          a:hover {
+            color: #7ff2b3;
+          }
+          ::selection {
+            background: #2fed7f;
+            color: #08111e;
+          }
+          @keyframes cod-rise {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: none;
+            }
+          }
+          @keyframes cod-neon {
+            0%,
+            100% {
+              text-shadow:
+                0 0 9px rgba(47, 237, 127, 0.45),
+                0 0 24px rgba(47, 237, 127, 0.28);
+            }
+            50% {
+              text-shadow:
+                0 0 18px rgba(47, 237, 127, 0.85),
+                0 0 46px rgba(47, 237, 127, 0.5);
+            }
+          }
+        </style>
+        <script src="image-slot.js"></script>
+      </helmet>
+
+      <div style="position: relative; width: 100%; max-width: 100%">
+        <!-- NAV -->
+        <nav
+          id="cod-nav"
+          style="
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: clamp(14px, 2vw, 28px);
+            padding: 9px 9px 9px 22px;
+            border-radius: 100px;
+            background: rgba(16, 24, 40, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(18px) saturate(140%);
+            -webkit-backdrop-filter: blur(18px) saturate(140%);
+            box-shadow:
+              0 18px 50px -18px rgba(0, 0, 0, 0.65),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            max-width: calc(100vw - 32px);
+            transition:
+              box-shadow 0.4s,
+              background 0.4s;
+          "
+        >
+          <a
+            href="index.html"
+            style="
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              flex-shrink: 0;
+            "
+          >
+            <img
+              src="assets/codialis-white.png"
+              alt="Codialis"
+              style="height: 26px; width: auto; display: block"
+            />
+          </a>
+          <div
+            class="cod-navlinks"
+            style="
+              display: flex;
+              align-items: center;
+              gap: clamp(6px, 1vw, 12px);
+              padding: 0 clamp(4px, 1vw, 10px);
+              border-left: 1px solid rgba(255, 255, 255, 0.1);
+              border-right: 1px solid rgba(255, 255, 255, 0.1);
+            "
+          >
+            <sc-for list="{{ navLinks }}" as="lk" hint-placeholder-count="4">
+              <a
+                href="{{ lk.href }}"
+                style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:14.5px;letter-spacing:.01em;color:{{ lk.color }};padding:8px 12px;border-radius:100px;transition:color .25s,background .25s;"
+                style-hover="color:#fff;background:rgba(255,255,255,.07);"
+                >{{ lk.label }}</a
+              >
+            </sc-for>
+          </div>
+          <div
+            class="cod-navtoggle"
+            style="
+              display: flex;
+              align-items: center;
+              background: rgba(255, 255, 255, 0.06);
+              border-radius: 100px;
+              padding: 3px;
+              flex-shrink: 0;
+            "
+          >
+            <button
+              type="button"
+              onClick="{{ setLangFr }}"
+              style="border:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;padding:5px 11px;border-radius:100px;transition:background .25s,color .25s;background:{{ frBg }};color:{{ frColor }};"
+            >
+              FR
+            </button>
+            <button
+              type="button"
+              onClick="{{ setLangEn }}"
+              style="border:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;padding:5px 11px;border-radius:100px;transition:background .25s,color .25s;background:{{ enBg }};color:{{ enColor }};"
+            >
+              EN
+            </button>
+          </div>
+          <a
+            href="/contact"
+            style="
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              padding: 11px 20px;
+              border-radius: 100px;
+              background: #2fed7f;
+              color: #08111e;
+              font-family: &quot;Space Grotesk&quot;, sans-serif;
+              font-weight: 600;
+              font-size: 14.5px;
+              flex-shrink: 0;
+              transition:
+                transform 0.25s,
+                box-shadow 0.25s;
+            "
+            style-hover="transform:translateY(-1px);box-shadow:0 12px 26px -8px rgba(47,237,127,.6);"
+            >Prendre RDV<span style="display: inline-block; font-size: 15px"
+              >→</span
+            ></a
+          >
+        </nav>
+
+        <!-- HERO -->
+        <header
+          data-screen-label="Portfolio — Hero"
+          style="
+            position: relative;
+            overflow: hidden;
+            padding: clamp(140px, 19vh, 220px) clamp(20px, 5vw, 64px)
+              clamp(56px, 7vw, 84px);
+            background:
+              radial-gradient(
+                120% 90% at 50% 0%,
+                rgba(47, 237, 127, 0.14),
+                rgba(14, 22, 38, 0) 55%
+              ),
+              #0e1626;
+          "
+        >
+          <div
+            style="
+              position: relative;
+              z-index: 1;
+              max-width: 1120px;
+              margin: 0 auto;
+            "
+          >
+            <div
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 20px;
+                animation: cod-rise 0.7s ease both;
+              "
+            >
+              <span
+                style="width: 26px; height: 1px; background: #2fed7f"
+              ></span>
+              <span
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 13px;
+                  letter-spacing: 0.2em;
+                  text-transform: uppercase;
+                  color: #2fed7f;
+                "
+                >Portfolio</span
+              >
+            </div>
+            <h1
+              style="
+                font-family: &quot;Space Grotesk&quot;, sans-serif;
+                font-weight: 600;
+                font-size: clamp(38px, 6vw, 72px);
+                line-height: 1.04;
+                letter-spacing: -0.02em;
+                margin: 0 0 24px;
+                max-width: 16ch;
+                color: #edf3f7;
+                animation: cod-rise 0.8s ease both;
+                animation-delay: 0.08s;
+              "
+            >
+              {{ heroTitle }}
+              <span style="color: #2fed7f">{{ heroTitleAccent }}</span>
+            </h1>
+            <p
+              style="
+                font-size: 18px;
+                line-height: 1.7;
+                color: #a6b3c6;
+                margin: 0 0 42px;
+                max-width: 56ch;
+                animation: cod-rise 0.8s ease both;
+                animation-delay: 0.16s;
+              "
+            >
+              {{ heroSubtitle }}
+            </p>
+            <div
+              style="
+                display: flex;
+                flex-wrap: wrap;
+                gap: 14px 44px;
+                animation: cod-rise 0.8s ease both;
+                animation-delay: 0.24s;
+              "
+            >
+              <sc-for list="{{ heroStats }}" as="st" hint-placeholder-count="3">
+                <div>
+                  <div style="display: flex; align-items: baseline; gap: 2px">
+                    <span
+                      style="
+                        font-family: &quot;Space Grotesk&quot;, sans-serif;
+                        font-weight: 700;
+                        font-size: clamp(30px, 4vw, 44px);
+                        line-height: 1;
+                        color: #2fed7f;
+                      "
+                      >{{ st.v }}</span
+                    ><span
+                      style="
+                        font-family: &quot;Space Grotesk&quot;, sans-serif;
+                        font-weight: 700;
+                        font-size: 22px;
+                        color: #2fed7f;
+                      "
+                      >{{ st.suffix }}</span
+                    >
+                  </div>
+                  <div style="margin-top: 8px; font-size: 14px; color: #8fa0b5">
+                    {{ st.l }}
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </header>
+
+        <!-- FEATURED CASE -->
+        <section
+          data-screen-label="Portfolio — À la une"
+          style="
+            position: relative;
+            padding: clamp(20px, 4vw, 48px) clamp(20px, 5vw, 64px)
+              clamp(40px, 5vw, 64px);
+            background: #0e1626;
+          "
+        >
+          <div
+            data-reveal=""
+            style="
+              opacity: 0;
+              transform: translateY(28px);
+              transition:
+                opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+              max-width: 1200px;
+              margin: 0 auto;
+              border-radius: 24px;
+              overflow: hidden;
+              border: 1px solid rgba(47, 237, 127, 0.24);
+              background: linear-gradient(
+                160deg,
+                rgba(47, 237, 127, 0.07),
+                rgba(255, 255, 255, 0.015)
+              );
+            "
+          >
+            <div
+              style="
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+              "
+            >
+              <div
+                style="
+                  position: relative;
+                  min-height: 340px;
+                  aspect-ratio: 16/11;
+                "
+              >
+                <sc-if
+                  value="{{ featuredImage }}"
+                  hint-placeholder-val="{{ false }}"
+                >
+                  <div
+                    class="cod-img"
+                    data-img="{{ featuredImage }}"
+                    style="
+                      position: absolute;
+                      inset: 0;
+                      background-size: cover;
+                      background-position: center;
+                    "
+                  ></div>
+                </sc-if>
+                <sc-if
+                  value="{{ featuredNoImage }}"
+                  hint-placeholder-val="{{ true }}"
+                >
+                  <image-slot
+                    id="pf-featured"
+                    shape="rect"
+                    placeholder="Déposez la capture du projet phare"
+                  ></image-slot>
+                </sc-if>
+              </div>
+              <div
+                style="
+                  padding: clamp(32px, 4vw, 56px);
+                  display: flex;
+                  flex-direction: column;
+                  justify-content: center;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    margin-bottom: 18px;
+                  "
+                >
+                  <span
+                    style="
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 11px;
+                      letter-spacing: 0.16em;
+                      text-transform: uppercase;
+                      color: #2fed7f;
+                      background: rgba(47, 237, 127, 0.12);
+                      padding: 5px 11px;
+                      border-radius: 100px;
+                    "
+                    >Projet à la une</span
+                  >
+                  <span
+                    style="
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 12px;
+                      letter-spacing: 0.06em;
+                      color: #5c6b80;
+                    "
+                    >{{ featuredSector }}</span
+                  >
+                </div>
+                <h2
+                  style="
+                    font-family: &quot;Space Grotesk&quot;, sans-serif;
+                    font-weight: 600;
+                    font-size: clamp(26px, 3.4vw, 38px);
+                    line-height: 1.1;
+                    letter-spacing: -0.015em;
+                    margin: 0 0 16px;
+                    color: #fff;
+                  "
+                >
+                  {{ featuredTitle }}
+                </h2>
+                <p
+                  style="
+                    font-size: 16px;
+                    line-height: 1.7;
+                    color: #98a6ba;
+                    margin: 0 0 26px;
+                  "
+                >
+                  {{ featuredDesc }}
+                </p>
+                <div
+                  style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 26px 40px;
+                    margin-bottom: 28px;
+                  "
+                >
+                  <sc-for
+                    list="{{ featuredResults }}"
+                    as="r"
+                    hint-placeholder-count="3"
+                  >
+                    <div>
+                      <div
+                        style="
+                          font-family: &quot;Space Grotesk&quot;, sans-serif;
+                          font-weight: 700;
+                          font-size: 32px;
+                          color: #2fed7f;
+                          line-height: 1;
+                        "
+                      >
+                        {{ r.v }}
+                      </div>
+                      <div
+                        style="margin-top: 6px; font-size: 13px; color: #8fa0b5"
+                      >
+                        {{ r.l }}
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                  <sc-for
+                    list="{{ featuredTech }}"
+                    as="t"
+                    hint-placeholder-count="4"
+                  >
+                    <span
+                      style="
+                        font-family: &quot;IBM Plex Mono&quot;, monospace;
+                        font-size: 11px;
+                        letter-spacing: 0.04em;
+                        color: #b7c2d2;
+                        padding: 5px 10px;
+                        border: 1px solid rgba(255, 255, 255, 0.12);
+                        border-radius: 7px;
+                      "
+                      >{{ t }}</span
+                    >
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CASE GRID -->
+        <section
+          data-screen-label="Portfolio — Projets"
+          style="
+            position: relative;
+            padding: clamp(20px, 3vw, 40px) clamp(20px, 5vw, 64px)
+              clamp(80px, 10vw, 130px);
+            background: #0a101e;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+          "
+        >
+          <div style="max-width: 1200px; margin: 0 auto">
+            <div
+              data-reveal=""
+              style="
+                opacity: 0;
+                transform: translateY(28px);
+                transition:
+                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 16px;
+                margin: clamp(40px, 5vw, 60px) 0 clamp(28px, 3vw, 40px);
+              "
+            >
+              <h2
+                style="
+                  font-family: &quot;Space Grotesk&quot;, sans-serif;
+                  font-weight: 600;
+                  font-size: clamp(26px, 3.4vw, 42px);
+                  line-height: 1.08;
+                  letter-spacing: -0.015em;
+                  margin: 0;
+                  color: #fff;
+                "
+              >
+                Autres réalisations
+              </h2>
+              <span
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 13px;
+                  letter-spacing: 0.06em;
+                  color: #5c6b80;
+                "
+                ><span style="color: #2fed7f">{{ projectCount }}</span> projets
+                livrés</span
+              >
+            </div>
+
+            <div
+              style="
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+                gap: 22px;
+              "
+            >
+              <sc-for list="{{ projects }}" as="p" hint-placeholder-count="6">
+                <article
+                  data-reveal=""
+                  style="
+                    opacity: 0;
+                    transform: translateY(28px);
+                    transition:
+                      opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                      transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1),
+                      border-color 0.35s,
+                      box-shadow 0.35s;
+                    display: flex;
+                    flex-direction: column;
+                    border-radius: 18px;
+                    overflow: hidden;
+                    background: linear-gradient(
+                      160deg,
+                      rgba(255, 255, 255, 0.05),
+                      rgba(255, 255, 255, 0.012)
+                    );
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                  "
+                  style-hover="border-color:rgba(47,237,127,.5);box-shadow:0 30px 55px -26px rgba(0,0,0,.7);transform:translateY(-4px);"
+                >
+                  <div
+                    style="
+                      position: relative;
+                      aspect-ratio: 16/10;
+                      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                    "
+                  >
+                    <sc-if
+                      value="{{ p.image }}"
+                      hint-placeholder-val="{{ false }}"
+                    >
+                      <div
+                        class="cod-img"
+                        data-img="{{ p.image }}"
+                        style="
+                          position: absolute;
+                          inset: 0;
+                          background-size: cover;
+                          background-position: center;
+                        "
+                      ></div>
+                    </sc-if>
+                    <sc-if
+                      value="{{ p.noImage }}"
+                      hint-placeholder-val="{{ true }}"
+                    >
+                      <image-slot
+                        id="{{ p.slot }}"
+                        shape="rect"
+                        placeholder="Déposez une capture"
+                      ></image-slot>
+                    </sc-if>
+                    <div
+                      style="
+                        position: absolute;
+                        top: 12px;
+                        left: 12px;
+                        right: 12px;
+                        z-index: 2;
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 6px;
+                        pointer-events: none;
+                      "
+                    >
+                      <sc-for
+                        list="{{ p.sectors }}"
+                        as="sct"
+                        hint-placeholder-count="1"
+                      >
+                        <span
+                          style="
+                            font-family: &quot;IBM Plex Mono&quot;, monospace;
+                            font-size: 11px;
+                            letter-spacing: 0.06em;
+                            color: #08111e;
+                            background: #2fed7f;
+                            padding: 4px 10px;
+                            border-radius: 100px;
+                          "
+                          >{{ sct }}</span
+                        >
+                      </sc-for>
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      padding: 26px 24px;
+                      display: flex;
+                      flex-direction: column;
+                      flex: 1;
+                    "
+                  >
+                    <h3
+                      style="
+                        font-family: &quot;Space Grotesk&quot;, sans-serif;
+                        font-weight: 600;
+                        font-size: 20px;
+                        line-height: 1.2;
+                        color: #fff;
+                        margin: 0 0 10px;
+                      "
+                    >
+                      {{ p.title }}
+                    </h3>
+                    <p
+                      style="
+                        font-size: 14.5px;
+                        line-height: 1.6;
+                        color: #98a6ba;
+                        margin: 0 0 20px;
+                        flex: 1;
+                      "
+                    >
+                      {{ p.desc }}
+                    </p>
+                    <div
+                      style="
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 24px;
+                        margin-bottom: 20px;
+                      "
+                    >
+                      <sc-for
+                        list="{{ p.results }}"
+                        as="r"
+                        hint-placeholder-count="2"
+                      >
+                        <div>
+                          <div
+                            style="
+                              font-family:
+                                &quot;Space Grotesk&quot;, sans-serif;
+                              font-weight: 700;
+                              font-size: 24px;
+                              color: #2fed7f;
+                              line-height: 1;
+                            "
+                          >
+                            {{ r.v }}
+                          </div>
+                          <div
+                            style="
+                              margin-top: 5px;
+                              font-size: 12.5px;
+                              color: #8fa0b5;
+                            "
+                          >
+                            {{ r.l }}
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 7px">
+                      <sc-for
+                        list="{{ p.tech }}"
+                        as="t"
+                        hint-placeholder-count="3"
+                      >
+                        <span
+                          style="
+                            font-family: &quot;IBM Plex Mono&quot;, monospace;
+                            font-size: 10.5px;
+                            letter-spacing: 0.04em;
+                            color: #b7c2d2;
+                            padding: 4px 9px;
+                            border: 1px solid rgba(255, 255, 255, 0.12);
+                            border-radius: 6px;
+                          "
+                          >{{ t }}</span
+                        >
+                      </sc-for>
+                    </div>
+                  </div>
+                </article>
+              </sc-for>
+            </div>
+          </div>
+        </section>
+
+        <!-- CTA -->
+        <section
+          id="contact"
+          data-screen-label="Portfolio — CTA"
+          style="
+            position: relative;
+            padding: clamp(70px, 9vw, 120px) clamp(20px, 5vw, 64px);
+            overflow: hidden;
+            background: #0e1626;
+          "
+        >
+          <div
+            data-reveal=""
+            style="
+              opacity: 0;
+              transform: translateY(28px);
+              transition:
+                opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+              position: relative;
+              z-index: 1;
+              max-width: 760px;
+              margin: 0 auto;
+              text-align: center;
+            "
+          >
+            <h2
+              style="
+                font-family: &quot;Space Grotesk&quot;, sans-serif;
+                font-weight: 600;
+                font-size: clamp(30px, 4.6vw, 52px);
+                line-height: 1.06;
+                letter-spacing: -0.02em;
+                margin: 0 0 20px;
+                color: #fff;
+              "
+            >
+              Votre projet sera le prochain.
+            </h2>
+            <p
+              style="
+                font-size: 17px;
+                line-height: 1.7;
+                color: #a6b3c6;
+                margin: 0 auto 34px;
+                max-width: 48ch;
+              "
+            >
+              Parlons de vos enjeux — réponse sous 24h avec une première lecture
+              de votre besoin.
+            </p>
+            <a
+              href="/contact"
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                padding: 16px 30px;
+                border-radius: 11px;
+                background: #2fed7f;
+                color: #08111e;
+                font-family: &quot;Space Grotesk&quot;, sans-serif;
+                font-weight: 600;
+                font-size: 16px;
+                transition:
+                  transform 0.25s,
+                  box-shadow 0.25s;
+              "
+              style-hover="transform:translateY(-3px);box-shadow:0 18px 40px -10px rgba(47,237,127,.55);"
+              >Démarrer un projet<span
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  justify-content: center;
+                  width: 28px;
+                  height: 28px;
+                  border-radius: 50%;
+                  background: #08111e;
+                  color: #2fed7f;
+                  font-size: 14px;
+                "
+                >→</span
+              ></a
+            >
+          </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer
+          style="
+            position: relative;
+            padding: 56px clamp(20px, 5vw, 64px) 36px;
+            background: #0a101e;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+          "
+        >
+          <div
+            style="
+              max-width: 1200px;
+              margin: 0 auto;
+              display: flex;
+              flex-wrap: wrap;
+              gap: 22px;
+              align-items: center;
+              justify-content: space-between;
+            "
+          >
+            <a href="index.html"
+              ><img
+                src="assets/codialis-white.png"
+                alt="Codialis"
+                style="height: 26px; width: auto; display: block"
+            /></a>
+            <div style="display: flex; flex-wrap: wrap; gap: 22px">
+              <sc-for list="{{ navLinks }}" as="lk" hint-placeholder-count="4">
+                <a
+                  href="{{ lk.href }}"
+                  style="font-size: 14px; color: #b7c2d2"
+                  style-hover="color:#2FED7F;"
+                  >{{ lk.label }}</a
+                >
+              </sc-for>
+              <a
+                href="/legal"
+                style="font-size: 14px; color: #2fed7f"
+                style-hover="color:#7ff2b3;"
+                >Mentions légales</a
+              >
+            </div>
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 12px;
+                letter-spacing: 0.06em;
+                color: #5c6b80;
+              "
+              >© {{ year }} Codialis</span
+            >
+          </div>
+        </footer>
+
+        <dc-import name="Chatbot" hint-size="1px,1px"></dc-import>
+      </div>
+    </x-dc>
+    <script
+      type="text/x-dc"
+      data-dc-script
+      data-props='{"$preview":{"width":1280,"height":900},"reduceMotion":{"editor":"boolean","default":false,"tsType":"boolean","section":"Accessibilité"}}'
+    >
+      class Component extends DCLogic {
+        state = { lang: 'fr', custom: [], settings: {} };
+        renderVals() {
+          const lang = this.state.lang;
+          const setLang = (l) => () => this.setState({ lang: l });
+          // Page content the patron can edit from /admin. Falls back to the
+          // built-in copy when nothing has been saved yet.
+          const cfg = this.state.settings || {};
+          const hero = cfg.hero || {};
+          const feat = cfg.featured || {};
+          const heroTitle = hero.title || 'Des projets qui parlent';
+          const heroTitleAccent = hero.titleAccent || `d'eux-mêmes.`;
+          const heroSubtitle = hero.subtitle || `Une sélection de plateformes, apps et outils métier que nous avons conçus, développés et mis en production — de l'architecture à la livraison.`;
+          const heroStats = (Array.isArray(hero.stats) && hero.stats.length) ? hero.stats : [
+            { v: '40', suffix: '+', l: 'projets livrés' },
+            { v: '4', suffix: '', l: `domaines d'expertise` },
+            { v: '99,9', suffix: '%', l: 'disponibilité moyenne' },
+          ];
+          const featuredImage = feat.image || '';
+          const featuredSector = feat.sector || 'SaaS · Logistique';
+          const featuredTitle = feat.title || 'Plateforme de pilotage logistique temps réel';
+          const featuredDesc = feat.desc || `Une plateforme multi-tenant qui centralise le suivi des flux, l'affectation des ressources et la facturation. Architecture cloud-native pensée pour absorber les pics d'activité sans dette technique.`;
+          const featuredResults = (Array.isArray(feat.results) && feat.results.length) ? feat.results : [
+            { v: '−38%', l: 'temps de traitement' },
+            { v: '×3', l: 'volume géré' },
+            { v: '99,9%', l: 'disponibilité' },
+          ];
+          const featuredTech = (Array.isArray(feat.tech) && feat.tech.length) ? feat.tech : ['Cloud-native', 'Multi-tenant', 'React · Node', 'PostgreSQL', 'AWS'];
+          const defaults = [
+            { slot: 'pf1', sector: 'Santé · Mobile', title: 'Application de suivi patient', desc: `App mobile iOS/Android pour le suivi à distance des patients chroniques, synchronisée avec le dossier médical.`, results: [{ v: '12k+', l: 'utilisateurs actifs' }, { v: '4,8★', l: 'note stores' }], tech: ['Flutter', 'FHIR', 'Firebase'] },
+            { slot: 'pf2', sector: 'IA · Industrie', title: 'Contrôle qualité par vision', desc: `Détection de défauts en ligne de production par computer vision, intégrée au SI existant.`, results: [{ v: '−72%', l: 'défauts non détectés' }, { v: '<50ms', l: 'inférence' }], tech: ['Python', 'PyTorch', 'Edge'] },
+            { slot: 'pf3', sector: 'SaaS · Finance', title: 'Portail de gestion de trésorerie', desc: `Tableaux de bord temps réel, rapprochement bancaire automatisé et prévisionnel de cash.`, results: [{ v: '×5', l: 'vitesse de clôture' }, { v: '20+', l: 'banques connectées' }], tech: ['React', 'Node', 'GraphQL'] },
+            { slot: 'pf4', sector: 'ERP · Retail', title: 'ERP modulaire multi-boutiques', desc: `Gestion des stocks, achats et ventes unifiée sur un réseau de points de vente.`, results: [{ v: '−30%', l: 'ruptures de stock' }, { v: '48h', l: 'déploiement/site' }], tech: ['Odoo', 'PostgreSQL', 'API'] },
+            { slot: 'pf5', sector: 'SaaS · RH', title: 'Plateforme de gestion des talents', desc: `Recrutement, onboarding et suivi des compétences dans un même outil collaboratif.`, results: [{ v: '−40%', l: 'temps de recrutement' }, { v: '92%', l: 'adoption interne' }], tech: ['Next.js', 'Prisma', 'AWS'] },
+            { slot: 'pf6', sector: 'IA · Support', title: 'Assistant support augmenté', desc: `Assistant RAG connecté à la base de connaissances pour accélérer le support niveau 1.`, results: [{ v: '−55%', l: 'temps de réponse' }, { v: '3 langues', l: 'couvertes' }], tech: ['LLM / RAG', 'Vector DB', 'Node'] },
+          ];
+          // `sector` peut être une chaîne (ancien format, un badge) ou un
+          // tableau (nouveau format /admin, plusieurs badges). On normalise en
+          // tableau pour afficher un badge par entrée.
+          const toSectors = (v) => Array.isArray(v) ? v.filter(Boolean) : (v ? [String(v)] : []);
+          const custom = (this.state.custom || []).map((p) => ({
+            slot: p.slot || ('pf-' + p.id),
+            sectors: toSectors(p.sector), title: p.title, desc: p.desc,
+            results: p.results || [], tech: p.tech || [],
+            image: p.image || '', noImage: !p.image,
+          }));
+          // Once the patron has published real projects from /admin, show only
+          // those. The built-in `defaults` stay as a placeholder while nothing
+          // has been added yet — so the page is never empty and never mixes
+          // real projects with the sample copy.
+          const projects = custom.length ? custom : defaults.map((p) => ({ ...p, sectors: toSectors(p.sector), image: '', noImage: true }));
+          const navLinks = [
+            { label: 'Expertise', href: 'index.html#expertises', color: '#C4CFDD' },
+            { label: 'Portfolio', href: '/portfolio', color: '#2FED7F' },
+            { label: 'Blog', href: '/blog', color: '#C4CFDD' },
+            { label: 'Financement', href: '/financement', color: '#C4CFDD' },
+            { label: 'Contact', href: '/contact', color: '#C4CFDD' },
+          ];
+          return {
+            year: new Date().getFullYear(),
+            setLangFr: setLang('fr'),
+            setLangEn: setLang('en'),
+            frBg: lang === 'fr' ? '#2FED7F' : 'transparent',
+            frColor: lang === 'fr' ? '#08111E' : '#8FA0B5',
+            enBg: lang === 'en' ? '#2FED7F' : 'transparent',
+            enColor: lang === 'en' ? '#08111E' : '#8FA0B5',
+            navLinks,
+            heroTitle, heroTitleAccent, heroSubtitle,
+            heroStats,
+            featuredImage, featuredNoImage: !featuredImage,
+            featuredSector, featuredTitle, featuredDesc, featuredResults, featuredTech,
+            projects,
+            projectCount: projects.length,
+          };
+        }
+        componentDidMount() {
+          const apiBase = location.port === '3001' ? '' : 'http://localhost:3001';
+          fetch(apiBase + '/api/content/portfolio')
+            .then((r) => (r.ok ? r.json() : []))
+            .then((list) => { if (Array.isArray(list) && list.length) this.setState({ custom: list }); })
+            .catch(() => {});
+          fetch(apiBase + '/api/settings/portfolio_page')
+            .then((r) => (r.ok ? r.json() : {}))
+            .then((cfg) => { if (cfg && typeof cfg === 'object') this.setState({ settings: cfg }); })
+            .catch(() => {});
+          this.paintImgs();
+          setTimeout(() => this.paintImgs(), 300);
+          const reduce = this.props.reduceMotion === true;
+          const nav = document.getElementById('cod-nav');
+          const onScroll = () => {
+            const y = window.scrollY || 0;
+            if (nav) {
+              nav.style.background = y > 24 ? 'rgba(12,19,32,.85)' : 'rgba(16,24,40,.72)';
+              nav.style.boxShadow = y > 24 ? '0 22px 60px -20px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.07)' : '0 18px 50px -18px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.06)';
+            }
+          };
+          let ticking = false;
+          window.addEventListener('scroll', () => { if (!ticking) { requestAnimationFrame(() => { onScroll(); ticking = false; }); ticking = true; } }, { passive: true });
+          onScroll();
+
+          const show = (el) => { el.style.opacity = '1'; el.style.transform = 'none'; el.setAttribute('data-revealed', '1'); };
+          if (reduce || !('IntersectionObserver' in window)) {
+            this._observeReveals = () => document.querySelectorAll('[data-reveal]:not([data-revealed])').forEach(show);
+          } else {
+            const io = new IntersectionObserver((entries) => {
+              entries.forEach((e) => { if (e.isIntersecting) { show(e.target); io.unobserve(e.target); } });
+            }, { threshold: 0.12 });
+            this._observeReveals = () => document.querySelectorAll('[data-reveal]:not([data-revealed])').forEach((el) => { el.setAttribute('data-revealed', 'pending'); io.observe(el); });
+          }
+          this._observeReveals();
+          setTimeout(() => this._observeReveals(), 300);
+
+          const applyResponsive = () => {
+            const wrap = document.querySelector('.cod-navlinks');
+            if (wrap) wrap.style.display = window.innerWidth > 860 ? 'flex' : 'none';
+          };
+          applyResponsive();
+          window.addEventListener('resize', applyResponsive);
+        }
+        componentDidUpdate() {
+          this.paintImgs();
+          if (this._observeReveals) this._observeReveals();
+        }
+        paintImgs() {
+          document.querySelectorAll('.cod-img').forEach((el) => {
+            const v = el.getAttribute('data-img') || '';
+            if (v && v.indexOf('{{') === -1) el.style.backgroundImage = 'url("' + v + '")';
+            else el.style.backgroundImage = 'none';
+          });
+        }
+      }
+    </script>
+  </body>
+</html>
