@@ -1,0 +1,6 @@
+{
+  "defaultMode": "acceptEdits",
+  "permissions": {
+    "allow": ["Read", "Write", "Edit", "Bash(*)"]
+  }
+}
