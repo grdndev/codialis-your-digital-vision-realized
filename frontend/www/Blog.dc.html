@@ -281,8 +281,8 @@
               background: #0e1626;
             "
           >
-            <a
-              href="/contact"
+            <div
+              onClick="{{ featured.openModal }}"
               data-reveal=""
               style="
                 opacity: 0;
@@ -304,6 +304,7 @@
                   rgba(255, 255, 255, 0.015)
                 );
                 color: inherit;
+                cursor: pointer;
               "
               style-hover="border-color:rgba(47,237,127,.55);box-shadow:0 34px 60px -30px rgba(0,0,0,.75);transform:translateY(-3px);"
             >
@@ -425,7 +426,7 @@
                       margin: 0 0 26px;
                     "
                   >
-                    {{ featured.excerpt }}
+                    {{ featured.excerptDisplay }}
                   </p>
                   <span
                     style="
@@ -453,7 +454,7 @@
                   >
                 </div>
               </div>
-            </a>
+            </div>
           </section>
         </sc-if>
 
@@ -563,8 +564,8 @@
                 "
               >
                 <sc-for list="{{ articles }}" as="a" hint-placeholder-count="6">
-                  <a
-                    href="/contact"
+                  <article
+                    onClick="{{ a.openModal }}"
                     style="
                       display: flex;
                       flex-direction: column;
@@ -577,6 +578,7 @@
                       );
                       border: 1px solid rgba(255, 255, 255, 0.1);
                       color: inherit;
+                      cursor: pointer;
                       transition:
                         transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1),
                         border-color 0.35s,
@@ -686,7 +688,7 @@
                           flex: 1;
                         "
                       >
-                        {{ a.excerpt }}
+                        {{ a.excerptDisplay }}
                       </p>
                       <span
                         style="
@@ -703,7 +705,7 @@
                         ></span
                       >
                     </div>
-                  </a>
+                  </article>
                 </sc-for>
               </div>
             </sc-if>
@@ -877,6 +879,7 @@
               >
                 <input
                   type="email"
+                  name="email"
                   required="required"
                   placeholder="{{ nlPlaceholder }}"
                   style="
@@ -917,6 +920,11 @@
                   {{ nlButton }}
                 </button>
               </form>
+              <sc-if value="{{ hasNlError }}" hint-placeholder-val="{{ false }}">
+                <p style="margin: 12px 0 0; font-size: 13px; color: #ff8080">
+                  {{ nlError }}
+                </p>
+              </sc-if>
             </sc-if>
 
             <sc-if value="{{ subscribed }}" hint-placeholder-val="{{ false }}">
@@ -1014,6 +1022,123 @@
           </div>
         </footer>
 
+<!-- POPUP ARTICLE (texte complet) -->
+        <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+          <div
+            onClick="{{ closeModal }}"
+            style="
+              position: fixed;
+              inset: 0;
+              z-index: 400;
+              background: rgba(4, 8, 16, 0.72);
+              backdrop-filter: blur(4px);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 20px;
+            "
+          >
+            <div
+              onClick="{{ stopProp }}"
+              style="
+                position: relative;
+                width: 100%;
+                max-width: 640px;
+                max-height: 88vh;
+                overflow-y: auto;
+                box-sizing: border-box;
+                padding: clamp(28px, 4vw, 48px);
+                border-radius: 20px;
+                background: #0e1626;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+              "
+            >
+              <button
+                type="button"
+                onClick="{{ closeModal }}"
+                aria-label="Fermer"
+                style="
+                  position: absolute;
+                  top: 16px;
+                  right: 16px;
+                  width: 38px;
+                  height: 38px;
+                  border-radius: 50%;
+                  border: 1px solid rgba(255, 255, 255, 0.16);
+                  background: rgba(255, 255, 255, 0.04);
+                  color: #eaf0f7;
+                  cursor: pointer;
+                  font-size: 18px;
+                  line-height: 1;
+                "
+                style-hover="background:#2FED7F;border-color:#2FED7F;color:#08111E;"
+              >
+                ✕
+              </button>
+              <div
+                style="
+                  display: flex;
+                  flex-wrap: wrap;
+                  align-items: center;
+                  gap: 12px;
+                  margin-bottom: 16px;
+                  padding-right: 40px;
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.05em;
+                  color: #5c6b80;
+                "
+              >
+                <span
+                  style="
+                    color: #08111e;
+                    background: #2fed7f;
+                    padding: 4px 10px;
+                    border-radius: 100px;
+                  "
+                  >{{ modalCatLabel }}</span
+                >
+                <sc-if value="{{ modalHasMeta }}" hint-placeholder-val="{{ false }}">
+                  <span>{{ modalDate }}</span>
+                  <span
+                    style="
+                      width: 3px;
+                      height: 3px;
+                      border-radius: 50%;
+                      background: #5c6b80;
+                    "
+                  ></span>
+                  <span>{{ modalRead }} {{ readSuffix }}</span>
+                </sc-if>
+              </div>
+              <h3
+                style="
+                  font-family: &quot;Space Grotesk&quot;, sans-serif;
+                  font-weight: 600;
+                  font-size: clamp(22px, 2.6vw, 28px);
+                  line-height: 1.2;
+                  color: #fff;
+                  margin: 0 0 16px;
+                "
+              >
+                {{ modalTitle }}
+              </h3>
+              <p
+                style="
+                  font-size: 15.5px;
+                  line-height: 1.7;
+                  color: #c4cfdd;
+                  margin: 0;
+                  white-space: pre-wrap;
+                "
+              >
+                {{ modalExcerpt }}
+              </p>
+            </div>
+          </div>
+        </sc-if>
+
         <dc-import name="Chatbot" hint-size="1px,1px"></dc-import>
       </div>
     </x-dc>
@@ -1023,7 +1148,7 @@
       data-props='{"$preview":{"width":1280,"height":900}}'
     >
       class Component extends DCLogic {
-        state = { lang: 'fr', query: '', activeCat: 'all', page: 1, subscribed: false, custom: [], settings: {} };
+        state = { lang: 'fr', query: '', activeCat: 'all', page: 1, subscribed: false, nlError: '', nlBusy: false, custom: [], settings: {}, modalPost: null };
 
         renderVals() {
           const lang = this.state.lang;
@@ -1043,43 +1168,25 @@
             { key: 'design', label: t('Design UX', 'UX Design') },
           ];
 
-          const defaultFeatured = {
-            cat: 'dev', slot: 'blog-featured', image: '', noImage: true,
-            catLabel: t('Développement', 'Development'),
-            date: t('3 juillet 2026', 'July 3, 2026'), read: 8,
-            title: t('Architecture-first : concevoir avant de coder', 'Architecture-first: designing before you code'),
-            excerpt: t(
-              "Pourquoi les décisions d'architecture prises en amont déterminent la vélocité, le coût et la durée de vie d'une plateforme — et comment nous les cadrons dès le premier atelier.",
-              "Why the architecture decisions made upfront determine a platform's velocity, cost and lifespan — and how we frame them from the very first workshop."
-            ),
-          };
-
-          const posts = [
-            { cat: 'ia', slot: 'blog-1', date: t('28 juin 2026', 'June 28, 2026'), read: 6,
-              title: t('RAG en production : les 5 pièges à éviter', 'RAG in production: 5 pitfalls to avoid'),
-              excerpt: t("La génération augmentée par récupération est simple en démo. En production, la qualité se joue sur le chunking, l'évaluation et la fraîcheur des données.", "Retrieval-augmented generation is easy in a demo. In production, quality comes down to chunking, evaluation and data freshness.") },
-            { cat: 'saas', slot: 'blog-2', date: t('19 juin 2026', 'June 19, 2026'), read: 7,
-              title: t('Multi-tenant : isoler les données sans exploser les coûts', 'Multi-tenant: isolating data without blowing up costs'),
-              excerpt: t("Base partagée, schéma dédié ou base par client ? Un arbitrage structurant qu'il vaut mieux poser avant la première ligne de code.", "Shared database, dedicated schema or database-per-tenant? A structural trade-off best settled before the first line of code.") },
-            { cat: 'funding', slot: 'blog-3', date: t('11 juin 2026', 'June 11, 2026'), read: 5,
-              title: t('CIR & France Num : financer son projet digital en 2026', 'R&D credits & grants: funding your digital project in 2026'),
-              excerpt: t("Crédit Impôt Recherche, subventions France Num, aides régionales : le panorama des dispositifs qui allègent réellement la facture d'un projet sur mesure.", "R&D tax credit, France Num grants, regional aid: the landscape of schemes that genuinely lighten the bill of a custom project.") },
-            { cat: 'dev', slot: 'blog-4', date: t('2 juin 2026', 'June 2, 2026'), read: 6,
-              title: t('Dette technique : la mesurer avant qu\u2019elle ne vous mesure', 'Technical debt: measure it before it measures you'),
-              excerpt: t("La dette technique n'est pas une fatalité, c'est un indicateur. Voici les métriques que nous suivons pour la garder sous contrôle.", "Technical debt isn't a curse, it's a metric. Here are the indicators we track to keep it under control.") },
-            { cat: 'design', slot: 'blog-5', date: t('24 mai 2026', 'May 24, 2026'), read: 5,
-              title: t('Design system : quand vaut-il vraiment le coût ?', 'Design systems: when are they actually worth it?'),
-              excerpt: t("Un design system accélère les équipes mûres et ralentit les jeunes produits. Le vrai critère n'est pas la taille, c'est la répétition.", "A design system speeds up mature teams and slows down young products. The real criterion isn't size, it's repetition.") },
-            { cat: 'ia', slot: 'blog-6', date: t('15 mai 2026', 'May 15, 2026'), read: 7,
-              title: t('LLM internes : héberger ses modèles, bonne idée ?', 'In-house LLMs: is self-hosting worth it?'),
-              excerpt: t("Souveraineté, coût au token, latence : les trois questions à se poser avant d'internaliser un modèle plutôt que d'appeler une API.", "Sovereignty, cost per token, latency: the three questions to ask before internalising a model rather than calling an API.") },
-          ];
-
           const catLabelOf = (k) => (catDefs.find((c) => c.key === k) || {}).label || k || '';
 
-          // Articles publiés depuis le back-office (localStorage)
+          // Extrait trop long : on tronque avec « … » et un clic ouvre la
+          // pop-up avec le texte complet (même principe que le portfolio).
+          const DESC_CLAMP = 160;
+          const openPost = (p) => () => {
+            this.setState({ modalPost: p });
+            if (p && p.id) fetch(apiBase + '/api/content/blog/' + p.id + '/view', { method: 'POST' }).catch(() => {});
+          };
+          const clampDesc = (txt) => {
+            const s = txt || '';
+            const truncated = s.length > DESC_CLAMP;
+            return { truncated, display: truncated ? s.slice(0, DESC_CLAMP).replace(/\s+\S*$/, '') + ' …' : s };
+          };
+
+          // Seuls les articles publiés depuis /admin sont affichés (plus de
+          // contenu de démonstration).
           const custom = (this.state.custom || []).map((p) => ({
-            cat: p.cat || 'dev', slot: p.slot || ('blog-' + p.id),
+            id: p.id, cat: p.cat || 'dev', slot: p.slot || ('blog-' + p.id),
             date: p.date || '', read: p.read || '',
             title: p.title || '', excerpt: p.excerpt || '',
             image: p.image || '', featured: !!p.featured,
@@ -1087,12 +1194,21 @@
           const customFeatured = custom.find((p) => p.featured);
           const customPosts = custom.filter((p) => !p.featured);
 
-          const defWithImg = posts.map((p) => ({ ...p, image: '', noImage: true }));
-          const allPosts = [...customPosts, ...defWithImg];
+          const allPosts = customPosts;
 
           const activeFeatured = customFeatured
-            ? { ...customFeatured, slot: customFeatured.slot, noImage: !customFeatured.image, catLabel: catLabelOf(customFeatured.cat) }
-            : defaultFeatured;
+            ? (() => {
+                const c = clampDesc(customFeatured.excerpt);
+                const catLabel = catLabelOf(customFeatured.cat);
+                const it = {
+                  ...customFeatured, slot: customFeatured.slot,
+                  noImage: !customFeatured.image, catLabel,
+                  excerptDisplay: c.display, excerptTruncated: c.truncated,
+                };
+                it.openModal = openPost({ id: it.id, title: it.title, excerpt: it.excerpt, catLabel, date: it.date, read: it.read });
+                return it;
+              })()
+            : null;
 
           const q = (this.state.query || '').trim().toLowerCase();
           const active = this.state.activeCat;
@@ -1104,8 +1220,14 @@
             }
             return true;
           };
-          const filtered = allPosts.filter(matches).map((p) => ({ ...p, catLabel: catLabelOf(p.cat), noImage: !p.image }));
-          const featuredVisible = active === 'all' && !q;
+          const filtered = allPosts.filter(matches).map((p) => {
+            const c = clampDesc(p.excerpt);
+            const catLabel = catLabelOf(p.cat);
+            const item = { ...p, catLabel, noImage: !p.image, excerptDisplay: c.display, excerptTruncated: c.truncated };
+            item.openModal = openPost({ id: p.id, title: p.title, excerpt: p.excerpt, catLabel, date: p.date, read: p.read });
+            return item;
+          });
+          const featuredVisible = !!activeFeatured && active === 'all' && !q;
 
           // Pagination
           const pageSize = 6;
@@ -1201,11 +1323,38 @@
               'No spam — just our best articles and field notes, straight to your inbox.'
             ),
             nlPlaceholder: t('votre@email.com', 'you@email.com'),
-            nlButton: t("S'abonner", 'Subscribe'),
+            nlButton: this.state.nlBusy ? t('Envoi…', 'Sending…') : t("S'abonner", 'Subscribe'),
             nlThanks: t('Merci ! Vous êtes bien inscrit·e.', "Thanks! You're subscribed."),
-            onSubscribe: (e) => { e.preventDefault(); this.setState({ subscribed: true }); },
+            onSubscribe: (e) => {
+              e.preventDefault();
+              const form = e.target;
+              let email = '';
+              try { email = new FormData(form).get('email').toString().trim(); } catch (err) {}
+              if (!email) return;
+              this.setState({ nlBusy: true, nlError: '' });
+              const apiBase = location.port === '3001' ? '' : 'http://localhost:3001';
+              fetch(apiBase + '/api/newsletter/subscribe', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ email }),
+              })
+                .then((r) => { if (!r.ok) throw new Error(); this.setState({ subscribed: true, nlBusy: false }); })
+                .catch(() => this.setState({ nlBusy: false, nlError: t('Une erreur est survenue. Réessayez.', 'Something went wrong. Please try again.') }));
+            },
             notSubscribed: !this.state.subscribed,
             subscribed: this.state.subscribed,
+            hasNlError: !!this.state.nlError,
+            nlError: this.state.nlError,
+
+            modalOpen: !!this.state.modalPost,
+            modalTitle: this.state.modalPost ? this.state.modalPost.title : '',
+            modalExcerpt: this.state.modalPost ? this.state.modalPost.excerpt : '',
+            modalCatLabel: this.state.modalPost ? this.state.modalPost.catLabel : '',
+            modalDate: this.state.modalPost ? this.state.modalPost.date : '',
+            modalRead: this.state.modalPost ? this.state.modalPost.read : '',
+            modalHasMeta: !!(this.state.modalPost && (this.state.modalPost.date || this.state.modalPost.read)),
+            closeModal: () => this.setState({ modalPost: null }),
+            stopProp: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
           };
         }
 

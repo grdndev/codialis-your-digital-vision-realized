@@ -105,7 +105,9 @@ router.patch('/:id', requirePatron, async (req, res) => {
   const photo = typeof req.body?.photo === 'string' ? req.body.photo : '';
   const featured = req.body?.featured === true;
   const { rows } = await query(
-    'UPDATE users SET name = $1, prenom = $2, nom = $3, email = $4, poste = $5, role = $6, photo = $7, featured = $8 WHERE id = $9 RETURNING id, name, prenom, nom, email, role, poste, email_verified, photo, featured',
+    `UPDATE users SET name = $1, prenom = $2, nom = $3, email = $4, poste = $5, role = $6, photo = $7, featured = $8
+     WHERE id = $9
+     RETURNING id, name, prenom, nom, email, role, poste, email_verified, photo, featured`,
     [name, prenom, nom, email, poste, role, photo, featured, id],
   );
   res.json(rows[0]);

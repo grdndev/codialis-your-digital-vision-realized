@@ -1,7 +1,7 @@
 // Single-use, expiring tokens for account verification and password reset.
 // The raw token travels only in the emailed link; the DB stores its SHA-256
 // hash, so a database leak can't be replayed against the endpoints.
-import { randomBytes, createHash } from 'node:crypto';
+import { randomBytes, createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { query } from './db.js';
 
 // Lifetimes (minutes). Verification is generous; reset is short-lived.
@@ -45,4 +45,23 @@ export async function peekToken(raw, kind) {
 // Marks a token row as used (single-use enforcement).
 export async function consumeTokenRow(tokenRowId) {
   await query('UPDATE user_tokens SET used_at = now() WHERE id = $1', [tokenRowId]);
+}
+
+// Stateless newsletter-unsubscribe signature: no DB row needed, the emailed
+// link just carries the address plus an HMAC of it so it can't be forged.
+function unsubscribeSecret() {
+  return process.env.JWT_SECRET;
+}
+
+export function signUnsubscribe(email) {
+  return createHmac('sha256', unsubscribeSecret()).update(email.toLowerCase().trim()).digest('hex');
+}
+
+export function verifyUnsubscribe(email, token) {
+  if (!email || !token) return false;
+  const expected = signUnsubscribe(email);
+  const a = Buffer.from(expected);
+  const b = Buffer.from(String(token));
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
 }

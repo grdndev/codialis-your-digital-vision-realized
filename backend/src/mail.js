@@ -2,6 +2,7 @@
 // Node 20 ships a global fetch — no extra dependency needed.
 import 'dotenv/config';
 import { randomBytes } from 'node:crypto';
+import { signUnsubscribe } from './tokens.js';
 
 const BREVO_URL = 'https://api.brevo.com/v3/smtp/email';
 
@@ -14,6 +15,17 @@ function senderEmail() {
 }
 function loginUrl() {
   return process.env.APP_LOGIN_URL || 'https://codialis.fr/admin';
+}
+// Same origin the backend is served on (frontend + API share one Express app).
+function siteOrigin() {
+  try { return new URL(loginUrl()).origin; } catch { return 'https://codialis.fr'; }
+}
+function blogUrl() {
+  return process.env.APP_BLOG_URL || `${siteOrigin()}/blog`;
+}
+function unsubscribeUrl(email) {
+  const token = signUnsubscribe(email);
+  return `${siteOrigin()}/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}&token=${token}`;
 }
 // Optional hosted logo (white wordmark PNG). If unset, the header falls back to
 // an HTML wordmark that renders even when the client blocks remote images.
@@ -182,6 +194,45 @@ export function renderResetEmail({ name, url }) {
   return emailLayout({
     preheader: `Réinitialisez votre mot de passe Codialis.`,
     bodyHtml: body,
+  });
+}
+
+// New-article newsletter email, sent to subscribers when a blog post is published.
+export function renderNewsletterEmail({ title, excerpt, url, email }) {
+  const body = `
+    <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:${BRAND.green}">Nouvel article</p>
+    <h1 style="margin:0 0 18px 0;font-size:24px;line-height:1.3;font-weight:700;color:${BRAND.navy}">${escapeHtml(title)}</h1>
+    <p style="margin:0 0 26px 0;font-size:15px;color:${BRAND.ink}">${escapeHtml(excerpt || '')}</p>
+
+    ${ctaButton("Lire l'article", url)}
+
+    <p style="margin:22px 0 0 0;padding:14px 16px;background:#f4f6f8;border-left:3px solid ${BRAND.green};border-radius:0 8px 8px 0;font-size:13px;color:${BRAND.muted}">
+      Vous recevez cet email car vous êtes inscrit·e à la newsletter Codialis. <a href="${unsubscribeUrl(email)}" style="color:${BRAND.muted};text-decoration:underline">Se désinscrire</a>.
+    </p>`;
+  return emailLayout({
+    preheader: `Nouvel article sur le blog Codialis : ${title}`,
+    bodyHtml: body,
+  });
+}
+
+// Sends the new-article email to one subscriber.
+export async function sendNewsletterEmail({ email, title, excerpt, url }) {
+  return sendEmail({
+    email, name: email,
+    subject: `Nouvel article — ${title}`,
+    htmlContent: renderNewsletterEmail({ title, excerpt, url, email }),
+  });
+}
+
+// Sends the new-article email to every subscriber. Best-effort: one failure
+// doesn't stop the others, and the caller decides whether to await this.
+export async function sendNewsletterToSubscribers(subscribers, { title, excerpt }) {
+  const url = blogUrl();
+  const results = await Promise.allSettled(
+    subscribers.map((s) => sendNewsletterEmail({ email: s.email, title, excerpt, url })),
+  );
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') console.error(`Newsletter send failed for ${subscribers[i].email}:`, r.reason?.message || r.reason);
   });
 }
 

@@ -87,7 +87,7 @@ class Component extends DCLogic {
   flow() {
     return {
       root: {
-        bot: `Bonjour 👋 Je suis l'assistant technique de Codialis. Sur quoi puis-je vous éclairer ?`,
+        bot: `Bonjour, je suis l'assistant technique de Codialis. Sur quoi puis-je vous éclairer ?`,
         options: [
           { id: 'services', label: 'Vos expertises' },
           { id: 'methode', label: 'Méthode & délais' },
@@ -214,7 +214,6 @@ class Component extends DCLogic {
       messages,
       options,
       typing: s.typing,
-      icon: s.open ? '✕' : '💬',
       closedIcon: !s.open,
     };
   }

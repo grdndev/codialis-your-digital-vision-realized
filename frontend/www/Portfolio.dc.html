@@ -1151,7 +1151,10 @@
           // Description trop longue : on tronque avec « … » et un bouton
           // « Lire la suite » ouvre la pop-up (même principe que les témoignages).
           const DESC_CLAMP = 160;
-          const openP = (p) => () => this.setState({ modalProject: p });
+          const openP = (p) => () => {
+            this.setState({ modalProject: p });
+            if (p && p.id) fetch(apiBase + '/api/content/portfolio/' + p.id + '/view', { method: 'POST' }).catch(() => {});
+          };
           const custom = (this.state.custom || []).map((p) => {
             const desc = p.desc || '';
             const truncated = desc.length > DESC_CLAMP;
@@ -1159,14 +1162,15 @@
               ? desc.slice(0, DESC_CLAMP).replace(/\s+\S*$/, '') + ' …'
               : desc;
             const item = {
+              id: p.id,
               slot: p.slot || ('pf-' + p.id),
               sectors: toSectors(p.sector), title: p.title, desc,
               descDisplay, descTruncated: truncated,
               results: p.results || [], tech: p.tech || [],
               image: p.image || '', noImage: !p.image, featured: !!p.featured,
             };
-            item.openModal = truncated ? openP(item) : (() => {});
-            item.descCursor = truncated ? 'pointer' : 'default';
+            item.openModal = openP(item);
+            item.descCursor = 'pointer';
             return item;
           });
           // Projet « à la une » : priorité au projet publié et coché dans /admin.

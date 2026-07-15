@@ -8,8 +8,11 @@ import authRoutes from './routes/auth.js';
 import accountsRoutes from './routes/accounts.js';
 import entriesRoutes from './routes/entries.js';
 import presenceRoutes from './routes/presence.js';
+import recurrencesRoutes from './routes/recurrences.js';
+import absencesRoutes from './routes/absences.js';
 import contentRoutes from './routes/content.js';
 import settingsRoutes from './routes/settings.js';
+import newsletterRoutes from './routes/newsletter.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // New layout: repo/backend/src/index.js -> repo/frontend/{www,assets,public}
@@ -25,8 +28,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/accounts', accountsRoutes);
 app.use('/api/entries', entriesRoutes);
 app.use('/api/presence', presenceRoutes);
+app.use('/api/recurrences', recurrencesRoutes);
+app.use('/api/absences', absencesRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/newsletter', newsletterRoutes);
 
 // Anything else that hit /api is a genuine 404, not a static file.
 app.use('/api', (req, res) => res.status(404).json({ error: 'Route API inconnue' }));
