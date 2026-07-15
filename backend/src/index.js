@@ -13,6 +13,7 @@ import absencesRoutes from './routes/absences.js';
 import contentRoutes from './routes/content.js';
 import settingsRoutes from './routes/settings.js';
 import newsletterRoutes from './routes/newsletter.js';
+import contactRoutes from './routes/contact.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // New layout: repo/backend/src/index.js -> repo/frontend/{www,assets,public}
@@ -33,6 +34,7 @@ app.use('/api/absences', absencesRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/newsletter', newsletterRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Anything else that hit /api is a genuine 404, not a static file.
 app.use('/api', (req, res) => res.status(404).json({ error: 'Route API inconnue' }));

@@ -28,6 +28,20 @@ async function ensureDbReady() {
       await pool.query(`
         UPDATE content SET views = floor(random() * 50 + 10)::bigint WHERE views IS NULL OR views = 0;
       `);
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS contact_requests (
+          id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          name       TEXT NOT NULL DEFAULT '',
+          company    TEXT NOT NULL DEFAULT '',
+          email      TEXT NOT NULL DEFAULT '',
+          phone      TEXT NOT NULL DEFAULT '',
+          project    TEXT NOT NULL DEFAULT '',
+          budget     TEXT NOT NULL DEFAULT '',
+          message    TEXT NOT NULL DEFAULT '',
+          status     TEXT NOT NULL DEFAULT 'nouveau' CHECK (status IN ('nouveau', 'en_cours', 'traite')),
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `);
     } catch (err) {
       console.error('ensureDbReady error:', err.message);
     }

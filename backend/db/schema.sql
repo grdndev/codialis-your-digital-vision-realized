@@ -163,3 +163,20 @@ CREATE TABLE IF NOT EXISTS page_views (
   count      BIGINT NOT NULL DEFAULT 0
 );
 
+-- Demandes de contact (formulaire public sur /contact). Le back-office (patron)
+-- les liste, change leur statut de traitement et peut en supprimer une.
+--   status : nouveau (reçu, non traité) | en_cours (pris en charge) | traite (clos)
+CREATE TABLE IF NOT EXISTS contact_requests (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name       TEXT NOT NULL DEFAULT '',
+  company    TEXT NOT NULL DEFAULT '',
+  email      TEXT NOT NULL DEFAULT '',
+  phone      TEXT NOT NULL DEFAULT '',
+  project    TEXT NOT NULL DEFAULT '',
+  budget     TEXT NOT NULL DEFAULT '',
+  message    TEXT NOT NULL DEFAULT '',
+  status     TEXT NOT NULL DEFAULT 'nouveau' CHECK (status IN ('nouveau', 'en_cours', 'traite')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS contact_requests_created_idx ON contact_requests(created_at DESC);
+

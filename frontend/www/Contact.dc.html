@@ -1524,13 +1524,35 @@
             sentName: this.state.sentName,
             onSubmit: (e) => {
               e.preventDefault();
+              const form = e.target;
+              let payload = {};
               let name = '';
               try {
-                const fd = new FormData(e.target);
-                name = (fd.get('name') || '').toString().trim().split(' ')[0];
+                const fd = new FormData(form);
+                const g = (k) => (fd.get(k) || '').toString().trim();
+                name = g('name').split(' ')[0];
+                payload = {
+                  name: g('name'),
+                  company: g('company'),
+                  email: g('email'),
+                  phone: g('phone'),
+                  project: g('project'),
+                  budget: g('budget'),
+                  message: g('message'),
+                };
               } catch (err) {}
+              // Optimiste : on affiche le remerciement tout de suite, l'envoi
+              // se fait en tâche de fond. La demande atterrit dans le back-office.
               this.setState({ submitted: true, sentName: name });
               try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) {}
+              try {
+                const apiBase = location.port === '3001' ? '' : 'http://localhost:3001';
+                fetch(apiBase + '/api/contact', {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify(payload),
+                }).catch(() => {});
+              } catch (err) {}
             },
             resetForm: () => this.setState({ submitted: false, sentName: '', projectType: '' }),
             offices: [

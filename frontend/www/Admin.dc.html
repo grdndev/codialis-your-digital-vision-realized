@@ -5050,6 +5050,117 @@
                   </sc-if>
                 </div>
               </sc-if>
+
+              <!-- ===================== DEMANDES DE CONTACT (patron) ===================== -->
+              <sc-if
+                value="{{ showContacts }}"
+                hint-placeholder-val="{{ false }}"
+              >
+                <h2
+                  style="
+                    font-family: &quot;Space Grotesk&quot;, sans-serif;
+                    font-weight: 600;
+                    font-size: 19px;
+                    margin: 0 0 16px;
+                    color: #fff;
+                  "
+                >
+                  {{ contactCount }} demande(s)
+                </h2>
+                <div style="position: relative; display: flex; align-items: center; margin-bottom: 16px; max-width: 600px;">
+                  <span style="position: absolute; left: 16px; font-size: 16px; color: #66768c; pointer-events: none;">⌕</span>
+                  <input
+                    type="text"
+                    value="{{ contentSearchQuery }}"
+                    onChange="{{ onContentSearch }}"
+                    placeholder="Rechercher une demande (nom, société, email, message)..."
+                    style="width: 100%; padding: 12px 14px 12px 42px; border-radius: 100px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); color: #eaf0f7; font-family: 'IBM Plex Sans', sans-serif; font-size: 14.5px; outline: none; transition: border-color 0.25s, background 0.25s;"
+                    style-focus="border-color: rgba(47,237,127,.55); background: rgba(255,255,255,.08);"
+                  />
+                </div>
+                <sc-if value="{{ isContactSearchEmpty }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding: 44px 24px; border-radius: 16px; border: 1px dashed rgba(255, 255, 255, 0.14); text-align: center; color: #5c6b80; max-width: 720px;">
+                    <div style="font-size: 24px; margin-bottom: 8px; color: #8fa0b5;">⌕</div>
+                    <div style="font-size: 15px; color: #8fa0b5;">
+                      Aucun résultat ne correspond à votre recherche « {{ contentSearchQuery }} ».
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ contactsEmpty }}" hint-placeholder-val="{{ false }}">
+                  <p style="font-size: 14px; color: #8fa0b5">
+                    Aucune demande pour le moment.
+                  </p>
+                </sc-if>
+                <div style="display: flex; flex-direction: column; gap: 14px; max-width: 720px;">
+                  <sc-for list="{{ contacts }}" as="c" hint-placeholder-count="0">
+                    <div
+                      style="
+                        padding: 18px 20px;
+                        border-radius: 14px;
+                        background: rgba(255, 255, 255, 0.035);
+                        border: 1px solid {{ c.cardBorder }};
+                      "
+                    >
+                      <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+                        <div style="flex: 1; min-width: 0;">
+                          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <span style="font-family: &quot;Space Grotesk&quot;, sans-serif; font-weight: 600; font-size: 16px; color: #fff;">{{ c.name }}</span>
+                            <sc-if value="{{ c.hasCompany }}" hint-placeholder-val="{{ true }}">
+                              <span style="font-size: 13px; color: #8fa0b5;">· {{ c.company }}</span>
+                            </sc-if>
+                            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .05em; padding: 3px 10px; border-radius: 100px; background: {{ c.statusChipBg }}; border: 1px solid {{ c.statusChipBorder }}; color: {{ c.statusColor }};">{{ c.statusLabel }}</span>
+                          </div>
+                          <div style="font-size: 12px; color: #66768c; margin-top: 4px;">Reçu le {{ c.dateLabel }}</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick="{{ c.onDelete }}"
+                          aria-label="Supprimer"
+                          style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px; border: 1px solid rgba(255, 255, 255, 0.14); background: transparent; color: #b7c2d2; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color 0.2s, border-color 0.2s;"
+                          style-hover="border-color:#ff6b6b;color:#ff6b6b;"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"></path>
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <path d="M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14"></path>
+                          </svg>
+                        </button>
+                      </div>
+
+                      <div style="display: flex; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 12px; font-size: 13.5px;">
+                        <a href="mailto:{{ c.email }}" style="color: #2fed7f; text-decoration: none; font-family: 'IBM Plex Mono', monospace;">{{ c.email }}</a>
+                        <sc-if value="{{ c.hasPhone }}" hint-placeholder-val="{{ true }}">
+                          <span style="color: #b7c2d2;">{{ c.phone }}</span>
+                        </sc-if>
+                        <sc-if value="{{ c.hasProject }}" hint-placeholder-val="{{ true }}">
+                          <span style="color: #8fa0b5;">Projet : <span style="color: #eaf0f7;">{{ c.project }}</span></span>
+                        </sc-if>
+                        <sc-if value="{{ c.hasBudget }}" hint-placeholder-val="{{ true }}">
+                          <span style="color: #8fa0b5;">Budget : <span style="color: #eaf0f7;">{{ c.budget }}</span></span>
+                        </sc-if>
+                      </div>
+
+                      <p style="font-size: 14px; line-height: 1.65; color: #c4cfdd; margin: 0 0 14px; white-space: pre-wrap;">{{ c.message }}</p>
+
+                      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #66768c; margin-right: 4px;">Statut</span>
+                        <sc-for list="{{ c.statusBtns }}" as="b" hint-placeholder-count="3">
+                          <button type="button" onClick="{{ b.onClick }}" style="{{ b.style }}">{{ b.label }}</button>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ showContactPagination }}" hint-placeholder-val="{{ false }}">
+                    <nav aria-label="Pagination Demandes" style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 24px;">
+                      <button type="button" onClick="{{ prevContactClick }}" disabled="{{ contactPrevDisabled }}" style="{{ contactPrevStyle }}">← Précédent</button>
+                      <sc-for list="{{ contactPageItems }}" as="pg" hint-placeholder-count="3">
+                        <button type="button" onClick="{{ pg.onClick }}" style="{{ pg.style }}">{{ pg.label }}</button>
+                      </sc-for>
+                      <button type="button" onClick="{{ nextContactClick }}" disabled="{{ contactNextDisabled }}" style="{{ contactNextStyle }}">Suivant →</button>
+                    </nav>
+                  </sc-if>
+                </div>
+              </sc-if>
             </div>
           </div>
         </sc-if>
@@ -5136,7 +5247,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Effacer ce jour
               </button>
               <!-- Poser une demande : onglets Absence / Récupération -->
-              <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7c8aa0;font-family:'IBM Plex Mono',monospace;margin-bottom:9px;">Poser une demande</div>
+              <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7c8aa0;font-family:'IBM Plex Mono',monospace;margin-bottom:9px;">{{ absPanelTitle }}</div>
               <div style="display:flex;gap:5px;padding:4px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);margin-bottom:16px;">
                 <button type="button" onClick="{{ setMenuTabAbsence }}" style="{{ menuTabAbsStyle }}">Absence</button>
                 <button type="button" onClick="{{ setMenuTabRecup }}" style="{{ menuTabRecupStyle }}">Récupération</button>
@@ -5208,7 +5319,7 @@
                     style="width:100%;padding:12px;border-radius:11px;border:none;background:#c9c2f5;color:#08111e;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 5px 16px rgba(201,194,245,0.22);"
                     style-hover="filter:brightness(1.05);"
                   >
-                    Enregistrer l’absence
+                    {{ absSubmitLabel }}
                   </button>
                 </div>
               </sc-if>
@@ -5625,7 +5736,7 @@
         state = {
           accounts: [], session: null,
           loginEmail: '', loginPassword: '', loginError: false, loginErrorMsg: '', loading: true,
-          portfolio: [], blog: [], testimonials: [], team: [], newsletterSubs: [],
+          portfolio: [], blog: [], testimonials: [], team: [], newsletterSubs: [], contactRequests: [], contactPage: 1,
           pageViews: { portfolio: 142, blog: 318 },
           contentSearchQuery: '', portfolioPage: 1, blogPage: 1,
           portfolioSettings: {}, portfolioStats: PORTFOLIO_STAT_DEFAULTS.map((x) => ({ ...x })), statsBusy: false,
@@ -5638,7 +5749,7 @@
           notif: null, confirmDel: null, editEmp: null, editEmpError: '', editEmpBusy: false, editPosteAdding: false,
           weekStart: isoOf(mondayOf(new Date())),
           menu: null, menuHours: '7',
-          absForm: { type: 'conge', start: '', end: '', half: '', motif: '' },
+          absForm: { type: 'conge', start: '', end: '', half: '', motif: '' }, absEditId: null,
           recForm: { empId: '', effect: 'tt', freq: 'weekly', weekday: 4, monthday: 1, half: '', start: '', end: '', motif: '' },
           recSearch: '', recPage: 1,
           // Auth flows: '' | 'forgot' | 'verify' | 'reset'. authToken carries the
@@ -5692,9 +5803,9 @@
             const [entries, presence, absences, recurrences] = await Promise.all([api('/entries'), api('/presence'), api('/absences'), api('/recurrences')]);
             const patch = { entries, presence, absences, recurrences };
             if (role === 'patron') {
-              const [accounts, portfolio, blog, testimonials, portfolioSettings, blogSettings, newsletterSubs, pageViewsData] = await Promise.all([
+              const [accounts, portfolio, blog, testimonials, portfolioSettings, blogSettings, newsletterSubs, contactRequests, pageViewsData] = await Promise.all([
                 api('/accounts'), api('/content/portfolio?admin=1'), api('/content/blog?admin=1'),
-                api('/content/testimonials?admin=1'), api('/settings/portfolio_page'), api('/settings/blog_page'), api('/newsletter'),
+                api('/content/testimonials?admin=1'), api('/settings/portfolio_page'), api('/settings/blog_page'), api('/newsletter'), api('/contact'),
                 api('/content/stats/page-views').catch(() => null),
               ]);
               const heroStats = portfolioSettings && portfolioSettings.hero && Array.isArray(portfolioSettings.hero.stats) && portfolioSettings.hero.stats.length
@@ -5703,7 +5814,7 @@
               const bh = (blogSettings && blogSettings.hero) || {};
               const blogHero = { kicker: bh.kicker || BLOG_HERO_DEFAULTS.kicker, lead: bh.lead || BLOG_HERO_DEFAULTS.lead, accent: bh.accent || BLOG_HERO_DEFAULTS.accent, sub: bh.sub || BLOG_HERO_DEFAULTS.sub };
               const pageViews = pageViewsData ? { portfolio: Number(pageViewsData.portfolio || 0), blog: Number(pageViewsData.blog || 0) } : { portfolio: 142, blog: 318 };
-              Object.assign(patch, { accounts, portfolio, blog, testimonials, portfolioSettings: portfolioSettings || {}, portfolioStats: heroStats, blogSettings: blogSettings || {}, blogHero, newsletterSubs, pageViews });
+              Object.assign(patch, { accounts, portfolio, blog, testimonials, portfolioSettings: portfolioSettings || {}, portfolioStats: heroStats, blogSettings: blogSettings || {}, blogHero, newsletterSubs, contactRequests, pageViews });
             }
             this.setState(patch);
           } catch (e) { /* session likely expired; me() will fail next action */ }
@@ -5744,6 +5855,7 @@
               { key: 'portfolio', label: 'Portfolio', count: s.portfolio.length || '' },
               { key: 'blog', label: 'Blog', count: s.blog.length || '' },
               { key: 'testimonials', label: 'Témoignages', count: s.testimonials.length || '' },
+              { key: 'contacts', label: 'Demandes', count: s.contactRequests.filter((c) => c.status === 'nouveau').length || '' },
               { key: 'newsletter', label: 'Newsletter', count: s.newsletterSubs.length || '' },
             ];
           } else {
@@ -5769,6 +5881,7 @@
             portfolio: { title: 'Gestion du portfolio', sub: 'Projets de la section « Autres réalisations ».' },
             blog: { title: 'Gestion du blog', sub: 'Articles publiés sur la page Blog. Cochez « à la une » pour choisir l\u2019article vedette.' },
             testimonials: { title: 'Gestion des témoignages', sub: 'Témoignages affichés sur la page d\u2019accueil.' },
+            contacts: { title: 'Demandes de contact', sub: 'Messages reçus via le formulaire de la page Contact. Suivez et traitez chaque demande client.' },
             newsletter: { title: 'Newsletter', sub: 'Abonnés inscrits depuis la page Blog. Un email leur est envoyé automatiquement à chaque publication d’article.' },
           }[tab] || { title: '', sub: '' };
 
@@ -5967,6 +6080,44 @@
           const newsletterPageItems = [];
           for (let i = 1; i <= newsletterTotalPages; i++) {
             newsletterPageItems.push({ label: String(i), style: pageBtnStyle(i === newsletterPage), onClick: goToNewsletterPage(i) });
+          }
+
+          // ---- Demandes de contact ----
+          const CONTACT_STATUS = {
+            nouveau: { label: 'Nouveau', color: '#2FED7F', rgb: '47,237,127' },
+            en_cours: { label: 'En cours', color: '#F5C86B', rgb: '245,200,107' },
+            traite: { label: 'Traité', color: '#8FA0B5', rgb: '143,160,181' },
+          };
+          const contactStatusBtn = (active, rgb, color) => "font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;padding:6px 12px;border-radius:100px;cursor:pointer;transition:background .2s,border-color .2s,color .2s;"
+            + (active ? ('background:' + color + ';border:1px solid ' + color + ';color:#08111E;') : ('background:rgba(' + rgb + ',.08);border:1px solid rgba(' + rgb + ',.35);color:' + color + ';'));
+          const rawContacts = s.contactRequests.map((c) => {
+            const st = CONTACT_STATUS[c.status] || CONTACT_STATUS.nouveau;
+            return {
+              id: c.id, name: c.name || '—', company: c.company, hasCompany: !!c.company,
+              email: c.email, phone: c.phone, hasPhone: !!c.phone,
+              project: c.project, hasProject: !!c.project, budget: c.budget, hasBudget: !!c.budget,
+              message: c.message, dateLabel: fmtLong(new Date(c.createdAt)),
+              statusLabel: st.label, statusColor: st.color,
+              statusChipBg: 'rgba(' + st.rgb + ',.14)', statusChipBorder: 'rgba(' + st.rgb + ',.4)',
+              cardBorder: c.status === 'nouveau' ? 'rgba(47,237,127,.35)' : 'rgba(255,255,255,.1)',
+              statusBtns: Object.keys(CONTACT_STATUS).map((k) => ({
+                label: CONTACT_STATUS[k].label,
+                style: contactStatusBtn(c.status === k, CONTACT_STATUS[k].rgb, CONTACT_STATUS[k].color),
+                onClick: () => this.setContactStatus(c.id, k),
+              })),
+              onDelete: () => this.deleteContactRequest(c.id),
+            };
+          });
+          const matchesContact = (c) => !q || (String(c.name || '') + ' ' + String(c.company || '') + ' ' + String(c.email || '') + ' ' + String(c.message || '') + ' ' + String(c.project || '')).toLowerCase().indexOf(q) !== -1;
+          const filteredContacts = rawContacts.filter(matchesContact);
+          const contactPageSize = 5;
+          const contactTotalPages = Math.max(1, Math.ceil(filteredContacts.length / contactPageSize));
+          const contactPage = Math.min(Math.max(1, s.contactPage || 1), contactTotalPages);
+          const contacts = filteredContacts.slice((contactPage - 1) * contactPageSize, contactPage * contactPageSize);
+          const goToContactPage = (n) => () => { this.setState({ contactPage: n }); window.scrollTo({ top: 400, behavior: 'smooth' }); };
+          const contactPageItems = [];
+          for (let i = 1; i <= contactTotalPages; i++) {
+            contactPageItems.push({ label: String(i), style: pageBtnStyle(i === contactPage), onClick: goToContactPage(i) });
           }
 
           // ---- Planning ----
@@ -6209,6 +6360,7 @@
             showEspace: tab === 'espace', showValidation: tab === 'validation',
             showSoldes: tab === 'soldes', showPlanning: tab === 'planning', showContent: isContent,
             showNewsletter: tab === 'newsletter',
+            showContacts: tab === 'contacts',
             tabPortfolio: tab === 'portfolio', tabBlog: tab === 'blog', tabTestimonials: tab === 'testimonials',
             portfolioViews: Number((s.pageViews || {}).portfolio || 142),
             blogViews: Number((s.pageViews || {}).blog || 318),
@@ -6217,7 +6369,7 @@
             onContentSearch: (e) => this.setState({
               contentSearchQuery: e && e.target ? e.target.value : '',
               portfolioPage: 1, blogPage: 1, testimonialsPage: 1,
-              validationPage: 1, soldesPage: 1, newsletterPage: 1,
+              validationPage: 1, soldesPage: 1, newsletterPage: 1, contactPage: 1,
             }),
             searchPlaceholderText: ({
               portfolio: 'Rechercher un projet (titre, technologie, secteur)...',
@@ -6282,6 +6434,18 @@
             newsletterNextDisabled: newsletterPage >= newsletterTotalPages,
             newsletterPrevStyle: arrowBtnStyle(newsletterPage <= 1),
             newsletterNextStyle: arrowBtnStyle(newsletterPage >= newsletterTotalPages),
+
+            // demandes de contact
+            contacts, contactsEmpty: rawContacts.length === 0, contactCount: rawContacts.length,
+            isContactSearchEmpty: rawContacts.length > 0 && filteredContacts.length === 0,
+            showContactPagination: contactTotalPages > 1,
+            contactPageItems,
+            prevContactClick: goToContactPage(contactPage - 1),
+            nextContactClick: goToContactPage(contactPage + 1),
+            contactPrevDisabled: contactPage <= 1,
+            contactNextDisabled: contactPage >= contactTotalPages,
+            contactPrevStyle: arrowBtnStyle(contactPage <= 1),
+            contactNextStyle: arrowBtnStyle(contactPage >= contactTotalPages),
 
             // soldes
             soldesList,
@@ -6360,6 +6524,8 @@
             absTypeHelp: absTypeMetaExt(s.absForm.type).help,
             absNoteLabel: absTypeMetaExt(s.absForm.type).noteLabel,
             absNotePlaceholder: absTypeMetaExt(s.absForm.type).notePlaceholder,
+            absPanelTitle: s.absEditId ? 'Modifier l’absence' : 'Poser une demande',
+            absSubmitLabel: s.absEditId ? 'Enregistrer les modifications' : 'Enregistrer l’absence',
             onAbsType: (e) => this.setState((st) => ({ absForm: { ...st.absForm, type: e.target.value } })),
             onAbsStart: (e) => this.setState((st) => ({ absForm: { ...st.absForm, start: e.target.value, end: (st.absForm.end && st.absForm.end >= e.target.value) ? st.absForm.end : e.target.value } })),
             onAbsEnd: (e) => this.setState((st) => ({ absForm: { ...st.absForm, end: e.target.value } })),
@@ -6671,7 +6837,16 @@
         closeNotif() { this.setState({ notif: null }); }
 
         // ===== PLANNING =====
-        openMenu(empId, date) { this.setState({ menu: { empId, date }, menuTab: 'absence', menuHours: '7', absForm: { type: 'conge', start: date, end: date, half: '', motif: '' } }); }
+        // Une case déjà occupée par une absence pré-remplit le formulaire avec
+        // ses valeurs : « Enregistrer » modifie cette absence au lieu d'en
+        // empiler une nouvelle par-dessus.
+        openMenu(empId, date) {
+          const existing = this.state.absences.find((a) => a.employeeId === empId && a.status !== 'refuse' && date >= a.startDate && date <= a.endDate);
+          const absForm = existing
+            ? { type: existing.type, start: existing.startDate, end: existing.endDate, half: existing.halfDay || '', motif: existing.motif || '' }
+            : { type: 'conge', start: date, end: date, half: '', motif: '' };
+          this.setState({ menu: { empId, date }, menuTab: 'absence', menuHours: '7', absForm, absEditId: existing ? existing.id : null });
+        }
         // Drops any pending recup entry on this employee/day (server + local).
         async dropPendingRecup(empId, date) {
           const pend = this.state.entries.filter((e) => e.employeeId === empId && e.kind === 'recup' && e.date === date && e.status === 'attente');
@@ -6718,10 +6893,16 @@
           const end = f.end || start;
           if (end < start) { this.notify('La date de fin précède le début.', 'Dates invalides', 'error'); return; }
           const single = start === end;
-          const body = { employeeId: m.empId, type: f.type, startDate: start, endDate: end, half_day: single ? (f.half || null) : null, halfDay: single ? (f.half || null) : null, motif: (f.motif || '').trim() };
+          const body = { employeeId: m.empId, type: f.type, startDate: start, endDate: end, halfDay: single ? (f.half || null) : null, motif: (f.motif || '').trim() };
+          const editId = this.state.absEditId;
           try {
-            const abs = await api('/absences', { method: 'POST', body });
-            this.setState((st) => ({ absences: [abs, ...st.absences], menu: null }));
+            const abs = editId
+              ? await api('/absences/' + editId, { method: 'PATCH', body })
+              : await api('/absences', { method: 'POST', body });
+            this.setState((st) => ({
+              absences: editId ? st.absences.map((a) => (a.id === editId ? abs : a)) : [abs, ...st.absences],
+              menu: null,
+            }));
           } catch (err) { this.notify(err.message, 'Erreur', 'error'); }
         }
         async setAbsenceStatus(id, status) {
@@ -6848,6 +7029,14 @@
         async deleteSubscriber(id) {
           try { await api('/newsletter/' + id, { method: 'DELETE' }); } catch (err) { this.notify(err.message, 'Erreur', 'error'); return; }
           this.setState((st) => ({ newsletterSubs: st.newsletterSubs.filter((x) => x.id !== id) }));
+        }
+        async setContactStatus(id, status) {
+          try { await api('/contact/' + id, { method: 'PATCH', body: { status } }); } catch (err) { this.notify(err.message, 'Erreur', 'error'); return; }
+          this.setState((st) => ({ contactRequests: st.contactRequests.map((c) => (c.id === id ? { ...c, status } : c)) }));
+        }
+        async deleteContactRequest(id) {
+          try { await api('/contact/' + id, { method: 'DELETE' }); } catch (err) { this.notify(err.message, 'Erreur', 'error'); return; }
+          this.setState((st) => ({ contactRequests: st.contactRequests.filter((x) => x.id !== id) }));
         }
         // Bascule « à la une » directement depuis la carte projet. Renvoie
         // l'objet complet avec le drapeau inversé ; le serveur applique la

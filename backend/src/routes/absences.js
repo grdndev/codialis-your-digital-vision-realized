@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db.js';
-import { requireAuth, requirePatron } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -63,8 +63,50 @@ router.post('/', async (req, res) => {
   res.status(201).json(rows[0]);
 });
 
-// PATCH /api/absences/:id { status } — patron validates/refuses.
-router.patch('/:id', requirePatron, async (req, res) => {
+// PATCH /api/absences/:id — two shapes:
+//  { status }                        — patron validates/refuses.
+//  { type, startDate, endDate, ... }  — edit an existing absence instead of
+//                                       stacking a new one on the same day.
+//                                       Owner may edit their own while still
+//                                       'attente'; patron may edit anything
+//                                       and it stays/becomes 'valide'.
+router.patch('/:id', async (req, res) => {
+  const { rows: existingRows } = await query('SELECT employee_id, status FROM absences WHERE id = $1', [req.params.id]);
+  if (existingRows.length === 0) return res.status(404).json({ error: 'Absence introuvable' });
+  const existing = existingRows[0];
+  const isPatron = req.user.role === 'patron';
+  const isOwner = existing.employee_id === req.user.id;
+  if (!isPatron && !isOwner) return res.status(403).json({ error: 'Interdit' });
+
+  const isFieldEdit = req.body?.type !== undefined || req.body?.startDate !== undefined;
+
+  if (isFieldEdit) {
+    if (!isPatron && existing.status !== 'attente') {
+      return res.status(403).json({ error: 'Déjà traitée — modification impossible' });
+    }
+    const type = req.body?.type;
+    const startDate = String(req.body?.startDate || '');
+    const endDate = String(req.body?.endDate || startDate);
+    const motif = String(req.body?.motif || '').trim();
+    if (!TYPES.includes(type)) return res.status(400).json({ error: "Type d'absence invalide" });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return res.status(400).json({ error: 'Date de début invalide' });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(endDate)) return res.status(400).json({ error: 'Date de fin invalide' });
+    if (endDate < startDate) return res.status(400).json({ error: 'La date de fin précède le début' });
+    const halfDay = (startDate === endDate && (req.body?.halfDay === 'am' || req.body?.halfDay === 'pm')) ? req.body.halfDay : null;
+    const status = isPatron ? 'valide' : 'attente';
+    const { rows } = await query(
+      `UPDATE absences SET type = $1, start_date = $2, end_date = $3, half_day = $4, motif = $5, status = $6
+       WHERE id = $7
+       RETURNING id, employee_id AS "employeeId", type,
+                 to_char(start_date,'YYYY-MM-DD') AS "startDate",
+                 to_char(end_date,'YYYY-MM-DD') AS "endDate",
+                 half_day AS "halfDay", motif, status`,
+      [type, startDate, endDate, halfDay, motif, status, req.params.id],
+    );
+    return res.json(rows[0]);
+  }
+
+  if (!isPatron) return res.status(403).json({ error: 'Réservé à la direction' });
   const status = req.body?.status;
   if (!['attente', 'valide', 'refuse'].includes(status)) return res.status(400).json({ error: 'Statut invalide' });
   const { rows } = await query(
@@ -75,7 +117,6 @@ router.patch('/:id', requirePatron, async (req, res) => {
                half_day AS "halfDay", motif, status`,
     [status, req.params.id],
   );
-  if (rows.length === 0) return res.status(404).json({ error: 'Absence introuvable' });
   res.json(rows[0]);
 });
 
