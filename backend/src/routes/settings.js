@@ -5,7 +5,7 @@ import { requireAuth, requirePatron } from '../middleware/auth.js';
 const router = Router();
 
 // Allowed singleton keys. Add new page-level blobs here.
-const KEYS = ['portfolio_page'];
+const KEYS = ['portfolio_page', 'blog_page'];
 const validKey = (k) => KEYS.includes(k);
 
 // GET /api/settings/:key — PUBLIC (consumed by public pages).

@@ -305,6 +305,7 @@
         </header>
 
         <!-- FEATURED CASE -->
+        <sc-if value="{{ hasFeatured }}" hint-placeholder-val="{{ true }}">
         <section
           data-screen-label="Portfolio — À la une"
           style="
@@ -426,15 +427,40 @@
                   {{ featuredTitle }}
                 </h2>
                 <p
+                  onClick="{{ openFeatured }}"
+                  title="{{ featuredDesc }}"
                   style="
                     font-size: 16px;
                     line-height: 1.7;
                     color: #98a6ba;
-                    margin: 0 0 26px;
+                    margin: 0 0 14px;
+                    cursor: {{ featuredDescCursor }};
                   "
                 >
-                  {{ featuredDesc }}
+                  {{ featuredDescDisplay }}
                 </p>
+                <sc-if value="{{ featuredTruncated }}" hint-placeholder-val="{{ false }}">
+                  <button
+                    type="button"
+                    onClick="{{ openFeatured }}"
+                    style="
+                      align-self: flex-start;
+                      padding: 0;
+                      margin: 0 0 26px;
+                      border: 0;
+                      background: transparent;
+                      color: #2fed7f;
+                      font-family: &quot;Space Grotesk&quot;, sans-serif;
+                      font-weight: 600;
+                      font-size: 14px;
+                      letter-spacing: 0.02em;
+                      cursor: pointer;
+                    "
+                    style-hover="color:#7ff2b3;"
+                  >
+                    Lire la suite →
+                  </button>
+                </sc-if>
                 <div
                   style="
                     display: flex;
@@ -492,6 +518,7 @@
             </div>
           </div>
         </section>
+        </sc-if>
 
         <!-- CASE GRID -->
         <section
@@ -505,6 +532,7 @@
           "
         >
           <div style="max-width: 1200px; margin: 0 auto">
+            <sc-if value="{{ hasProjects }}" hint-placeholder-val="{{ true }}">
             <div
               data-reveal=""
               style="
@@ -663,16 +691,41 @@
                       {{ p.title }}
                     </h3>
                     <p
+                      onClick="{{ p.openModal }}"
+                      title="{{ p.desc }}"
                       style="
                         font-size: 14.5px;
                         line-height: 1.6;
                         color: #98a6ba;
-                        margin: 0 0 20px;
+                        margin: 0 0 12px;
                         flex: 1;
+                        cursor: {{ p.descCursor }};
                       "
                     >
-                      {{ p.desc }}
+                      {{ p.descDisplay }}
                     </p>
+                    <sc-if value="{{ p.descTruncated }}" hint-placeholder-val="{{ false }}">
+                      <button
+                        type="button"
+                        onClick="{{ p.openModal }}"
+                        style="
+                          align-self: flex-start;
+                          padding: 0;
+                          margin: 0 0 20px;
+                          border: 0;
+                          background: transparent;
+                          color: #2fed7f;
+                          font-family: &quot;Space Grotesk&quot;, sans-serif;
+                          font-weight: 600;
+                          font-size: 13.5px;
+                          letter-spacing: 0.02em;
+                          cursor: pointer;
+                        "
+                        style-hover="color:#7ff2b3;"
+                      >
+                        Lire la suite →
+                      </button>
+                    </sc-if>
                     <div
                       style="
                         display: flex;
@@ -735,6 +788,71 @@
                 </article>
               </sc-for>
             </div>
+            </sc-if>
+
+            <sc-if value="{{ noPortfolio }}" hint-placeholder-val="{{ false }}">
+            <div
+              data-reveal=""
+              style="
+                opacity: 0;
+                transform: translateY(28px);
+                transition:
+                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                margin: clamp(40px, 6vw, 80px) 0;
+                padding: clamp(40px, 6vw, 72px) clamp(24px, 4vw, 48px);
+                text-align: center;
+                border-radius: 20px;
+                border: 1px dashed rgba(47, 237, 127, 0.32);
+                background: linear-gradient(
+                  160deg,
+                  rgba(47, 237, 127, 0.06),
+                  rgba(255, 255, 255, 0.012)
+                );
+              "
+            >
+              <span
+                style="
+                  display: inline-block;
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 11px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #2fed7f;
+                  background: rgba(47, 237, 127, 0.12);
+                  padding: 5px 12px;
+                  border-radius: 100px;
+                  margin-bottom: 18px;
+                "
+                >En cours d'ajout</span
+              >
+              <h2
+                style="
+                  font-family: &quot;Space Grotesk&quot;, sans-serif;
+                  font-weight: 600;
+                  font-size: clamp(22px, 3vw, 34px);
+                  line-height: 1.12;
+                  letter-spacing: -0.015em;
+                  margin: 0 0 12px;
+                  color: #fff;
+                "
+              >
+                Nos réalisations arrivent bientôt.
+              </h2>
+              <p
+                style="
+                  font-size: 15px;
+                  line-height: 1.6;
+                  color: #98a6ba;
+                  margin: 0 auto;
+                  max-width: 520px;
+                "
+              >
+                Nous préparons la sélection de nos projets. Revenez très
+                prochainement — ou contactez-nous pour discuter du vôtre.
+              </p>
+            </div>
+            </sc-if>
           </div>
         </section>
 
@@ -879,6 +997,127 @@
           </div>
         </footer>
 
+        <!-- POPUP PROJET (description complète) -->
+        <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+          <div
+            onClick="{{ closeModal }}"
+            style="
+              position: fixed;
+              inset: 0;
+              z-index: 400;
+              background: rgba(4, 8, 16, 0.72);
+              backdrop-filter: blur(4px);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 20px;
+            "
+          >
+            <div
+              onClick="{{ stopProp }}"
+              style="
+                position: relative;
+                width: 100%;
+                max-width: 640px;
+                max-height: 88vh;
+                overflow-y: auto;
+                box-sizing: border-box;
+                padding: clamp(28px, 4vw, 48px);
+                border-radius: 20px;
+                background: #0e1626;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+              "
+            >
+              <button
+                type="button"
+                onClick="{{ closeModal }}"
+                aria-label="Fermer"
+                style="
+                  position: absolute;
+                  top: 16px;
+                  right: 16px;
+                  width: 38px;
+                  height: 38px;
+                  border-radius: 50%;
+                  border: 1px solid rgba(255, 255, 255, 0.16);
+                  background: rgba(255, 255, 255, 0.04);
+                  color: #eaf0f7;
+                  cursor: pointer;
+                  font-size: 18px;
+                  line-height: 1;
+                "
+                style-hover="background:#2FED7F;border-color:#2FED7F;color:#08111E;"
+              >
+                ✕
+              </button>
+              <div
+                style="
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 6px;
+                  margin-bottom: 16px;
+                  padding-right: 40px;
+                "
+              >
+                <sc-for list="{{ modalSectors }}" as="sct" hint-placeholder-count="1">
+                  <span
+                    style="
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 11px;
+                      letter-spacing: 0.06em;
+                      color: #08111e;
+                      background: #2fed7f;
+                      padding: 4px 10px;
+                      border-radius: 100px;
+                    "
+                    >{{ sct }}</span
+                  >
+                </sc-for>
+              </div>
+              <h3
+                style="
+                  font-family: &quot;Space Grotesk&quot;, sans-serif;
+                  font-weight: 600;
+                  font-size: clamp(22px, 2.6vw, 28px);
+                  line-height: 1.2;
+                  color: #fff;
+                  margin: 0 0 16px;
+                "
+              >
+                {{ modalTitle }}
+              </h3>
+              <p
+                style="
+                  font-size: 15.5px;
+                  line-height: 1.7;
+                  color: #c4cfdd;
+                  margin: 0 0 24px;
+                  white-space: pre-wrap;
+                "
+              >
+                {{ modalDesc }}
+              </p>
+              <div style="display: flex; flex-wrap: wrap; gap: 7px">
+                <sc-for list="{{ modalTech }}" as="t" hint-placeholder-count="3">
+                  <span
+                    style="
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 10.5px;
+                      letter-spacing: 0.04em;
+                      color: #b7c2d2;
+                      padding: 4px 9px;
+                      border: 1px solid rgba(255, 255, 255, 0.12);
+                      border-radius: 6px;
+                    "
+                    >{{ t }}</span
+                  >
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
         <dc-import name="Chatbot" hint-size="1px,1px"></dc-import>
       </div>
     </x-dc>
@@ -888,7 +1127,7 @@
       data-props='{"$preview":{"width":1280,"height":900},"reduceMotion":{"editor":"boolean","default":false,"tsType":"boolean","section":"Accessibilité"}}'
     >
       class Component extends DCLogic {
-        state = { lang: 'fr', custom: [], settings: {} };
+        state = { lang: 'fr', custom: [], settings: {}, modalProject: null };
         renderVals() {
           const lang = this.state.lang;
           const setLang = (l) => () => this.setState({ lang: l });
@@ -905,39 +1144,65 @@
             { v: '4', suffix: '', l: `domaines d'expertise` },
             { v: '99,9', suffix: '%', l: 'disponibilité moyenne' },
           ];
-          const featuredImage = feat.image || '';
-          const featuredSector = feat.sector || 'SaaS · Logistique';
-          const featuredTitle = feat.title || 'Plateforme de pilotage logistique temps réel';
-          const featuredDesc = feat.desc || `Une plateforme multi-tenant qui centralise le suivi des flux, l'affectation des ressources et la facturation. Architecture cloud-native pensée pour absorber les pics d'activité sans dette technique.`;
-          const featuredResults = (Array.isArray(feat.results) && feat.results.length) ? feat.results : [
-            { v: '−38%', l: 'temps de traitement' },
-            { v: '×3', l: 'volume géré' },
-            { v: '99,9%', l: 'disponibilité' },
-          ];
-          const featuredTech = (Array.isArray(feat.tech) && feat.tech.length) ? feat.tech : ['Cloud-native', 'Multi-tenant', 'React · Node', 'PostgreSQL', 'AWS'];
-          const defaults = [
-            { slot: 'pf1', sector: 'Santé · Mobile', title: 'Application de suivi patient', desc: `App mobile iOS/Android pour le suivi à distance des patients chroniques, synchronisée avec le dossier médical.`, results: [{ v: '12k+', l: 'utilisateurs actifs' }, { v: '4,8★', l: 'note stores' }], tech: ['Flutter', 'FHIR', 'Firebase'] },
-            { slot: 'pf2', sector: 'IA · Industrie', title: 'Contrôle qualité par vision', desc: `Détection de défauts en ligne de production par computer vision, intégrée au SI existant.`, results: [{ v: '−72%', l: 'défauts non détectés' }, { v: '<50ms', l: 'inférence' }], tech: ['Python', 'PyTorch', 'Edge'] },
-            { slot: 'pf3', sector: 'SaaS · Finance', title: 'Portail de gestion de trésorerie', desc: `Tableaux de bord temps réel, rapprochement bancaire automatisé et prévisionnel de cash.`, results: [{ v: '×5', l: 'vitesse de clôture' }, { v: '20+', l: 'banques connectées' }], tech: ['React', 'Node', 'GraphQL'] },
-            { slot: 'pf4', sector: 'ERP · Retail', title: 'ERP modulaire multi-boutiques', desc: `Gestion des stocks, achats et ventes unifiée sur un réseau de points de vente.`, results: [{ v: '−30%', l: 'ruptures de stock' }, { v: '48h', l: 'déploiement/site' }], tech: ['Odoo', 'PostgreSQL', 'API'] },
-            { slot: 'pf5', sector: 'SaaS · RH', title: 'Plateforme de gestion des talents', desc: `Recrutement, onboarding et suivi des compétences dans un même outil collaboratif.`, results: [{ v: '−40%', l: 'temps de recrutement' }, { v: '92%', l: 'adoption interne' }], tech: ['Next.js', 'Prisma', 'AWS'] },
-            { slot: 'pf6', sector: 'IA · Support', title: 'Assistant support augmenté', desc: `Assistant RAG connecté à la base de connaissances pour accélérer le support niveau 1.`, results: [{ v: '−55%', l: 'temps de réponse' }, { v: '3 langues', l: 'couvertes' }], tech: ['LLM / RAG', 'Vector DB', 'Node'] },
-          ];
           // `sector` peut être une chaîne (ancien format, un badge) ou un
           // tableau (nouveau format /admin, plusieurs badges). On normalise en
           // tableau pour afficher un badge par entrée.
           const toSectors = (v) => Array.isArray(v) ? v.filter(Boolean) : (v ? [String(v)] : []);
-          const custom = (this.state.custom || []).map((p) => ({
-            slot: p.slot || ('pf-' + p.id),
-            sectors: toSectors(p.sector), title: p.title, desc: p.desc,
-            results: p.results || [], tech: p.tech || [],
-            image: p.image || '', noImage: !p.image,
-          }));
-          // Once the patron has published real projects from /admin, show only
-          // those. The built-in `defaults` stay as a placeholder while nothing
-          // has been added yet — so the page is never empty and never mixes
-          // real projects with the sample copy.
-          const projects = custom.length ? custom : defaults.map((p) => ({ ...p, sectors: toSectors(p.sector), image: '', noImage: true }));
+          // Description trop longue : on tronque avec « … » et un bouton
+          // « Lire la suite » ouvre la pop-up (même principe que les témoignages).
+          const DESC_CLAMP = 160;
+          const openP = (p) => () => this.setState({ modalProject: p });
+          const custom = (this.state.custom || []).map((p) => {
+            const desc = p.desc || '';
+            const truncated = desc.length > DESC_CLAMP;
+            const descDisplay = truncated
+              ? desc.slice(0, DESC_CLAMP).replace(/\s+\S*$/, '') + ' …'
+              : desc;
+            const item = {
+              slot: p.slot || ('pf-' + p.id),
+              sectors: toSectors(p.sector), title: p.title, desc,
+              descDisplay, descTruncated: truncated,
+              results: p.results || [], tech: p.tech || [],
+              image: p.image || '', noImage: !p.image, featured: !!p.featured,
+            };
+            item.openModal = truncated ? openP(item) : (() => {});
+            item.descCursor = truncated ? 'pointer' : 'default';
+            return item;
+          });
+          // Projet « à la une » : priorité au projet publié et coché dans /admin.
+          // À défaut, on retombe sur le contenu éditable (settings).
+          const featItem = custom.find((p) => p.featured) || null;
+          const featuredImage = featItem ? featItem.image : (feat.image || '');
+          const featuredSector = featItem ? (featItem.sectors.join(' · ') || 'Projet') : (feat.sector || '');
+          const featuredTitle = featItem ? featItem.title : (feat.title || '');
+          const featuredDesc = featItem ? featItem.desc : (feat.desc || '');
+          const featuredResults = featItem
+            ? (featItem.results || [])
+            : ((Array.isArray(feat.results) && feat.results.length) ? feat.results : []);
+          const featuredTech = featItem
+            ? (featItem.tech || [])
+            : ((Array.isArray(feat.tech) && feat.tech.length) ? feat.tech : []);
+          // Only real projects published from /admin are shown (minus the
+          // featured one, already shown above).
+          const projects = custom.filter((p) => !p.featured);
+          // Empty states : masquer le bloc « à la une » s'il n'y a pas de projet
+          // phare, et afficher un message « en cours d'ajout » quand le
+          // portfolio est totalement vide.
+          const hasFeatured = !!featuredTitle;
+          const hasProjects = projects.length > 0;
+          const noPortfolio = !hasFeatured && !hasProjects;
+          // Même troncature + pop-up pour la description du projet « à la une ».
+          const featuredTruncated = featuredDesc.length > DESC_CLAMP;
+          const featuredDescDisplay = featuredTruncated
+            ? featuredDesc.slice(0, DESC_CLAMP).replace(/\s+\S*$/, '') + ' …'
+            : featuredDesc;
+          const featuredModalItem = {
+            title: featuredTitle, desc: featuredDesc,
+            sectors: featItem ? featItem.sectors : toSectors(feat.sector),
+            tech: featuredTech,
+          };
+          const openFeatured = featuredTruncated ? openP(featuredModalItem) : (() => {});
+          const featuredDescCursor = featuredTruncated ? 'pointer' : 'default';
           const navLinks = [
             { label: 'Expertise', href: 'index.html#expertises', color: '#C4CFDD' },
             { label: 'Portfolio', href: '/portfolio', color: '#2FED7F' },
@@ -958,8 +1223,17 @@
             heroStats,
             featuredImage, featuredNoImage: !featuredImage,
             featuredSector, featuredTitle, featuredDesc, featuredResults, featuredTech,
+            featuredDescDisplay, featuredTruncated, featuredDescCursor, openFeatured,
             projects,
             projectCount: projects.length,
+            hasFeatured, hasProjects, noPortfolio,
+            modalOpen: !!this.state.modalProject,
+            modalTitle: this.state.modalProject ? this.state.modalProject.title : '',
+            modalDesc: this.state.modalProject ? this.state.modalProject.desc : '',
+            modalSectors: this.state.modalProject ? this.state.modalProject.sectors : [],
+            modalTech: this.state.modalProject ? this.state.modalProject.tech : [],
+            closeModal: () => this.setState({ modalProject: null }),
+            stopProp: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
           };
         }
         componentDidMount() {

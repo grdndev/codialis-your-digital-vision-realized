@@ -4,7 +4,9 @@ import { requireAuth, requirePatron } from '../middleware/auth.js';
 
 const router = Router();
 
-const TYPES = ['portfolio', 'blog', 'testimonials', 'team'];
+// 'team' retiré : les membres de la vitrine viennent désormais des comptes
+// marqués « à la une » (voir GET /api/accounts/featured).
+const TYPES = ['portfolio', 'blog', 'testimonials'];
 const validType = (t) => TYPES.includes(t);
 
 // Returns { id, ...data } — same shape the frontend used from localStorage.
@@ -34,7 +36,7 @@ router.post('/:type', async (req, res) => {
     'INSERT INTO content (type, data) VALUES ($1, $2) RETURNING id, data',
     [type, data],
   );
-  if (type === 'blog' && data.featured) await unfeatureOthers(rows[0].id);
+  if ((type === 'blog' || type === 'portfolio') && data.featured) await unfeatureOthers(rows[0].id, type);
   res.status(201).json(shape(rows[0]));
 });
 
@@ -50,7 +52,7 @@ router.put('/:type/:id', async (req, res) => {
     [data, id, type],
   );
   if (rows.length === 0) return res.status(404).json({ error: 'Introuvable' });
-  if (type === 'blog' && data.featured) await unfeatureOthers(id);
+  if ((type === 'blog' || type === 'portfolio') && data.featured) await unfeatureOthers(id, type);
   res.json(shape(rows[0]));
 });
 
@@ -63,12 +65,12 @@ router.delete('/:type/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
-// Only one blog post may be "à la une".
-async function unfeatureOthers(keepId) {
+// Only one item of a given type may be "à la une" (blog article / portfolio project).
+async function unfeatureOthers(keepId, type) {
   await query(
     `UPDATE content SET data = jsonb_set(data, '{featured}', 'false')
-     WHERE type = 'blog' AND id <> $1 AND (data->>'featured')::boolean IS TRUE`,
-    [keepId],
+     WHERE type = $2 AND id <> $1 AND (data->>'featured')::boolean IS TRUE`,
+    [keepId, type],
   );
 }
 

@@ -25,6 +25,10 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS poste  TEXT NOT NULL DEFAULT '';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified        BOOLEAN NOT NULL DEFAULT true;
 ALTER TABLE users ALTER COLUMN email_verified SET DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password  BOOLEAN NOT NULL DEFAULT false;
+-- Vitrine (page d'accueil) : photo de profil et mise « à la une » du membre.
+-- Les membres à la une remplacent l'ancienne liste content type 'team'.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS photo    TEXT NOT NULL DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT false;
 
 -- Single-use, expiring tokens for account verification and password reset.
 -- Only the SHA-256 hash of the token is stored; the raw token lives only in the

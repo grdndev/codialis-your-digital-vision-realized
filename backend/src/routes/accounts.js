@@ -8,12 +8,23 @@ import { createToken } from '../tokens.js';
 
 const router = Router();
 
+// GET /api/accounts/featured — PUBLIC (consumed by the public site's team
+// section). Only members flagged « à la une » are returned, and only their
+// display fields — never the email. Patron first, then alphabetical.
+router.get('/featured', async (req, res) => {
+  const { rows } = await query(
+    "SELECT id, name, poste, photo FROM users WHERE featured IS TRUE ORDER BY role DESC, name ASC",
+  );
+  res.json(rows.map((r) => ({ id: r.id, name: r.name, role: r.poste, image: r.photo })));
+});
+
+// Everything below requires authentication.
 router.use(requireAuth);
 
 // GET /api/accounts — any authenticated user (no hashes exposed)
 router.get('/', async (req, res) => {
   const { rows } = await query(
-    'SELECT id, name, prenom, nom, email, role, poste, email_verified FROM users ORDER BY role DESC, name ASC',
+    'SELECT id, name, prenom, nom, email, role, poste, email_verified, photo, featured FROM users ORDER BY role DESC, name ASC',
   );
   res.json(rows);
 });
@@ -40,12 +51,14 @@ router.post('/', requirePatron, async (req, res) => {
 
   // Unusable placeholder hash: login can never match it until a real password
   // is set at verification time.
+  const photo = typeof req.body?.photo === 'string' ? req.body.photo : '';
+  const featured = req.body?.featured === true;
   const placeholder = await bcrypt.hash(randomBytes(24).toString('hex'), 12);
   const { rows } = await query(
-    `INSERT INTO users (name, prenom, nom, email, password_hash, role, poste, email_verified, must_change_password)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, false, false)
-     RETURNING id, name, prenom, nom, email, role, poste, email_verified`,
-    [name, prenom, nom, email, placeholder, role, poste],
+    `INSERT INTO users (name, prenom, nom, email, password_hash, role, poste, photo, featured, email_verified, must_change_password)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false, false)
+     RETURNING id, name, prenom, nom, email, role, poste, email_verified, photo, featured`,
+    [name, prenom, nom, email, placeholder, role, poste, photo, featured],
   );
   const user = rows[0];
 
@@ -89,9 +102,11 @@ router.patch('/:id', requirePatron, async (req, res) => {
     if (patrons.rows[0].n <= 1) return res.status(400).json({ error: 'Impossible de rétrograder le dernier patron' });
   }
 
+  const photo = typeof req.body?.photo === 'string' ? req.body.photo : '';
+  const featured = req.body?.featured === true;
   const { rows } = await query(
-    'UPDATE users SET name = $1, prenom = $2, nom = $3, email = $4, poste = $5, role = $6 WHERE id = $7 RETURNING id, name, prenom, nom, email, role, poste, email_verified',
-    [name, prenom, nom, email, poste, role, id],
+    'UPDATE users SET name = $1, prenom = $2, nom = $3, email = $4, poste = $5, role = $6, photo = $7, featured = $8 WHERE id = $9 RETURNING id, name, prenom, nom, email, role, poste, email_verified, photo, featured',
+    [name, prenom, nom, email, poste, role, photo, featured, id],
   );
   res.json(rows[0]);
 });

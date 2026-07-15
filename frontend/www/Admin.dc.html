@@ -1346,16 +1346,28 @@
                             >{{ s.initials }}</span
                           >
                           <div style="flex: 1; min-width: 0">
-                            <div
-                              style="
-                                font-family:
-                                  &quot;Space Grotesk&quot;, sans-serif;
-                                font-weight: 600;
-                                font-size: 15px;
-                                color: #fff;
-                              "
-                            >
-                              {{ s.name }}
+                            <div style="display:flex;align-items:center;gap:8px;">
+                              <div
+                                style="
+                                  font-family:
+                                    &quot;Space Grotesk&quot;, sans-serif;
+                                  font-weight: 600;
+                                  font-size: 15px;
+                                  color: #fff;
+                                "
+                              >
+                                {{ s.name }}
+                              </div>
+                              <sc-if
+                                value="{{ s.featured }}"
+                                hint-placeholder-val="{{ false }}"
+                              >
+                                <span
+                                  title="À la une sur le site"
+                                  style="flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:rgba(245,200,107,0.14);color:#f5c86b;border:1px solid rgba(245,200,107,0.35);"
+                                  >À la une</span
+                                >
+                              </sc-if>
                             </div>
                             <sc-if
                               value="{{ s.hasPoste }}"
@@ -1413,6 +1425,45 @@
                               solde
                             </div>
                           </div>
+                          <button
+                            type="button"
+                            onClick="{{ s.onFeature }}"
+                            aria-label="{{ s.featTitle }}"
+                            title="{{ s.featTitle }}"
+                            style="
+                              width: 32px;
+                              height: 32px;
+                              flex-shrink: 0;
+                              border-radius: 8px;
+                              border: 1px solid {{ s.featBorder }};
+                              background: {{ s.featBg }};
+                              color: {{ s.featColor }};
+                              cursor: pointer;
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              transition:
+                                color 0.2s,
+                                border-color 0.2s,
+                                background 0.2s;
+                            "
+                            style-hover="border-color:#f5c86b;color:#f5c86b;"
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            >
+                              <path
+                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                              ></path>
+                            </svg>
+                          </button>
                           <button
                             type="button"
                             onClick="{{ s.onEdit }}"
@@ -1751,6 +1802,30 @@
                           </div>
                         </sc-if>
                       </label>
+                      <div style="display:flex;gap:14px;align-items:flex-start;">
+                        <label
+                          style="position:relative;flex-shrink:0;width:76px;aspect-ratio:4/5;border-radius:12px;border:1px dashed rgba(255,255,255,0.2);background:rgba(255,255,255,0.03);overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;"
+                          style-hover="border-color:#2FED7F;"
+                        >
+                          <sc-if value="{{ newEmpHasPhoto }}" hint-placeholder-val="{{ false }}">
+                            <div class="cod-img" data-img="{{ newEmpPhoto }}" style="position:absolute;inset:0;background-size:cover;background-position:center;"></div>
+                          </sc-if>
+                          <sc-if value="{{ newEmpNoPhoto }}" hint-placeholder-val="{{ true }}">
+                            <span style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#5c6b80;pointer-events:none;">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
+                              <span style="font-size:11px;">Photo</span>
+                            </span>
+                          </sc-if>
+                          <input type="file" accept="image/*" onChange="{{ onNewEmpFile }}" style="position:absolute;inset:0;opacity:0;cursor:pointer;" />
+                        </label>
+                        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:9px;">
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8fa0b5;">Photo de profil</span>
+                          <span style="font-size:12px;line-height:1.45;color:#5c6b80;">Affichée sur la page d'accueil si le membre est à la une.</span>
+                          <sc-if value="{{ newEmpHasPhoto }}" hint-placeholder-val="{{ false }}">
+                            <button type="button" onClick="{{ onNewEmpClearPhoto }}" style="align-self:flex-start;background:transparent;border:0;color:#8fa0b5;font-size:12.5px;cursor:pointer;padding:0;" style-hover="color:#ff6b6b;">Retirer la photo</button>
+                          </sc-if>
+                        </div>
+                      </div>
                       <label
                         style="display: flex; flex-direction: column; gap: 7px"
                       >
@@ -2069,6 +2144,408 @@
                 value="{{ showContent }}"
                 hint-placeholder-val="{{ false }}"
               >
+                <sc-if
+                  value="{{ tabPortfolio }}"
+                  hint-placeholder-val="{{ true }}"
+                >
+                  <div
+                    style="
+                      padding: clamp(22px, 2.5vw, 28px);
+                      border-radius: 18px;
+                      background: linear-gradient(
+                        160deg,
+                        rgba(255, 255, 255, 0.05),
+                        rgba(255, 255, 255, 0.012)
+                      );
+                      border: 1px solid rgba(255, 255, 255, 0.1);
+                      margin-bottom: clamp(20px, 3vw, 32px);
+                    "
+                  >
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        margin-bottom: 6px;
+                      "
+                    >
+                      <span
+                        style="
+                          width: 30px;
+                          height: 30px;
+                          border-radius: 9px;
+                          background: rgba(47, 237, 127, 0.14);
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          color: #2fed7f;
+                          font-size: 16px;
+                        "
+                        >📊</span
+                      >
+                      <h2
+                        style="
+                          font-family: &quot;Space Grotesk&quot;, sans-serif;
+                          font-weight: 600;
+                          font-size: 19px;
+                          margin: 0;
+                          color: #fff;
+                        "
+                      >
+                        Statistiques de l'en-tête
+                      </h2>
+                    </div>
+                    <p
+                      style="
+                        font-size: 13px;
+                        line-height: 1.55;
+                        color: #8fa0b5;
+                        margin: 0 0 18px 40px;
+                      "
+                    >
+                      Les trois chiffres affichés en tête de la page Portfolio
+                      (ex. « 40+ projets livrés »).
+                    </p>
+                    <div
+                      style="display: flex; flex-direction: column; gap: 12px"
+                    >
+                      <sc-for
+                        list="{{ statRows }}"
+                        as="st"
+                        hint-placeholder-count="3"
+                      >
+                        <div
+                          style="
+                            display: flex;
+                            gap: 8px;
+                            align-items: center;
+                            flex-wrap: wrap;
+                          "
+                        >
+                          <input
+                            type="text"
+                            value="{{ st.v }}"
+                            onInput="{{ st.onV }}"
+                            placeholder="40"
+                            aria-label="Valeur"
+                            style="
+                              width: 88px;
+                              padding: 11px 12px;
+                              border-radius: 10px;
+                              background: rgba(255, 255, 255, 0.04);
+                              border: 1px solid rgba(255, 255, 255, 0.12);
+                              color: #2fed7f;
+                              font-family: &quot;Space Grotesk&quot;, sans-serif;
+                              font-weight: 600;
+                              font-size: 14.5px;
+                              outline: none;
+                              transition: border-color 0.2s;
+                            "
+                            style-focus="border-color:#2FED7F;"
+                          />
+                          <input
+                            type="text"
+                            value="{{ st.suffix }}"
+                            onInput="{{ st.onSuffix }}"
+                            placeholder="+"
+                            aria-label="Suffixe"
+                            style="
+                              width: 60px;
+                              padding: 11px 12px;
+                              border-radius: 10px;
+                              background: rgba(255, 255, 255, 0.04);
+                              border: 1px solid rgba(255, 255, 255, 0.12);
+                              color: #2fed7f;
+                              font-family: &quot;Space Grotesk&quot;, sans-serif;
+                              font-weight: 600;
+                              font-size: 14.5px;
+                              outline: none;
+                              transition: border-color 0.2s;
+                            "
+                            style-focus="border-color:#2FED7F;"
+                          />
+                          <input
+                            type="text"
+                            value="{{ st.l }}"
+                            onInput="{{ st.onL }}"
+                            placeholder="projets livrés"
+                            aria-label="Libellé"
+                            style="
+                              flex: 1;
+                              min-width: 140px;
+                              padding: 11px 12px;
+                              border-radius: 10px;
+                              background: rgba(255, 255, 255, 0.04);
+                              border: 1px solid rgba(255, 255, 255, 0.12);
+                              color: #eaf0f7;
+                              font-family: &quot;IBM Plex Sans&quot;, sans-serif;
+                              font-size: 14px;
+                              outline: none;
+                              transition: border-color 0.2s;
+                            "
+                            style-focus="border-color:#2FED7F;"
+                          />
+                        </div>
+                      </sc-for>
+                    </div>
+                    <button
+                      type="button"
+                      onClick="{{ onSaveStats }}"
+                      disabled="{{ statsBusy }}"
+                      style="
+                        margin-top: 18px;
+                        padding: 11px 20px;
+                        border-radius: 10px;
+                        border: none;
+                        background: #2fed7f;
+                        color: #08111e;
+                        font-family: &quot;Space Grotesk&quot;, sans-serif;
+                        font-weight: 600;
+                        font-size: 14px;
+                        cursor: pointer;
+                      "
+                    >
+                      {{ statsSaveLabel }}
+                    </button>
+                  </div>
+                </sc-if>
+                <sc-if
+                  value="{{ tabBlog }}"
+                  hint-placeholder-val="{{ false }}"
+                >
+                  <div
+                    style="
+                      padding: clamp(22px, 2.5vw, 28px);
+                      border-radius: 18px;
+                      background: linear-gradient(
+                        160deg,
+                        rgba(255, 255, 255, 0.05),
+                        rgba(255, 255, 255, 0.012)
+                      );
+                      border: 1px solid rgba(255, 255, 255, 0.1);
+                      margin-bottom: clamp(20px, 3vw, 32px);
+                    "
+                  >
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        margin-bottom: 6px;
+                      "
+                    >
+                      <span
+                        style="
+                          width: 30px;
+                          height: 30px;
+                          border-radius: 9px;
+                          background: rgba(47, 237, 127, 0.14);
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          color: #2fed7f;
+                          font-size: 16px;
+                        "
+                        >✎</span
+                      >
+                      <h2
+                        style="
+                          font-family: &quot;Space Grotesk&quot;, sans-serif;
+                          font-weight: 600;
+                          font-size: 19px;
+                          margin: 0;
+                          color: #fff;
+                        "
+                      >
+                        En-tête du blog
+                      </h2>
+                    </div>
+                    <p
+                      style="
+                        font-size: 13px;
+                        line-height: 1.55;
+                        color: #8fa0b5;
+                        margin: 0 0 18px 40px;
+                      "
+                    >
+                      Le titre et l'accroche affichés en tête de la page Blog.
+                      Laissez vide pour garder le texte par défaut.
+                    </p>
+                    <div
+                      style="display: flex; flex-direction: column; gap: 14px"
+                    >
+                      <label
+                        style="
+                          display: flex;
+                          flex-direction: column;
+                          gap: 7px;
+                        "
+                      >
+                        <span
+                          style="
+                            font-family: &quot;IBM Plex Mono&quot;, monospace;
+                            font-size: 12px;
+                            letter-spacing: 0.1em;
+                            text-transform: uppercase;
+                            color: #8fa0b5;
+                          "
+                          >Surtitre</span
+                        >
+                        <input
+                          type="text"
+                          value="{{ fBlogKicker }}"
+                          onInput="{{ onBlogKicker }}"
+                          placeholder="Le blog"
+                          style="
+                            width: 100%;
+                            padding: 11px 12px;
+                            border-radius: 10px;
+                            background: rgba(255, 255, 255, 0.04);
+                            border: 1px solid rgba(255, 255, 255, 0.12);
+                            color: #eaf0f7;
+                            font-family: &quot;IBM Plex Sans&quot;, sans-serif;
+                            font-size: 14px;
+                            outline: none;
+                            transition: border-color 0.2s;
+                          "
+                          style-focus="border-color:#2FED7F;"
+                        />
+                      </label>
+                      <label
+                        style="
+                          display: flex;
+                          flex-direction: column;
+                          gap: 7px;
+                        "
+                      >
+                        <span
+                          style="
+                            font-family: &quot;IBM Plex Mono&quot;, monospace;
+                            font-size: 12px;
+                            letter-spacing: 0.1em;
+                            text-transform: uppercase;
+                            color: #8fa0b5;
+                          "
+                          >Titre</span
+                        >
+                        <input
+                          type="text"
+                          value="{{ fBlogLead }}"
+                          onInput="{{ onBlogLead }}"
+                          placeholder="Idées, retours d'expérience &amp;"
+                          style="
+                            width: 100%;
+                            padding: 11px 12px;
+                            border-radius: 10px;
+                            background: rgba(255, 255, 255, 0.04);
+                            border: 1px solid rgba(255, 255, 255, 0.12);
+                            color: #eaf0f7;
+                            font-family: &quot;IBM Plex Sans&quot;, sans-serif;
+                            font-size: 14px;
+                            outline: none;
+                            transition: border-color 0.2s;
+                          "
+                          style-focus="border-color:#2FED7F;"
+                        />
+                      </label>
+                      <label
+                        style="
+                          display: flex;
+                          flex-direction: column;
+                          gap: 7px;
+                        "
+                      >
+                        <span
+                          style="
+                            font-family: &quot;IBM Plex Mono&quot;, monospace;
+                            font-size: 12px;
+                            letter-spacing: 0.1em;
+                            text-transform: uppercase;
+                            color: #8fa0b5;
+                          "
+                          >Titre — partie en vert</span
+                        >
+                        <input
+                          type="text"
+                          value="{{ fBlogAccent }}"
+                          onInput="{{ onBlogAccent }}"
+                          placeholder="signaux faibles."
+                          style="
+                            width: 100%;
+                            padding: 11px 12px;
+                            border-radius: 10px;
+                            background: rgba(255, 255, 255, 0.04);
+                            border: 1px solid rgba(255, 255, 255, 0.12);
+                            color: #2fed7f;
+                            font-family: &quot;IBM Plex Sans&quot;, sans-serif;
+                            font-size: 14px;
+                            outline: none;
+                            transition: border-color 0.2s;
+                          "
+                          style-focus="border-color:#2FED7F;"
+                        />
+                      </label>
+                      <label
+                        style="
+                          display: flex;
+                          flex-direction: column;
+                          gap: 7px;
+                        "
+                      >
+                        <span
+                          style="
+                            font-family: &quot;IBM Plex Mono&quot;, monospace;
+                            font-size: 12px;
+                            letter-spacing: 0.1em;
+                            text-transform: uppercase;
+                            color: #8fa0b5;
+                          "
+                          >Sous-titre</span
+                        >
+                        <textarea
+                          rows="3"
+                          value="{{ fBlogSub }}"
+                          onInput="{{ onBlogSub }}"
+                          placeholder="L'accroche de la page, en 1–2 phrases."
+                          style="
+                            width: 100%;
+                            padding: 11px 12px;
+                            border-radius: 10px;
+                            background: rgba(255, 255, 255, 0.04);
+                            border: 1px solid rgba(255, 255, 255, 0.12);
+                            color: #eaf0f7;
+                            font-family: &quot;IBM Plex Sans&quot;, sans-serif;
+                            font-size: 14px;
+                            line-height: 1.6;
+                            outline: none;
+                            resize: vertical;
+                            transition: border-color 0.2s;
+                          "
+                          style-focus="border-color:#2FED7F;"
+                        ></textarea>
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      onClick="{{ onSaveBlogHero }}"
+                      disabled="{{ blogHeroBusy }}"
+                      style="
+                        margin-top: 18px;
+                        padding: 11px 20px;
+                        border-radius: 10px;
+                        border: none;
+                        background: #2fed7f;
+                        color: #08111e;
+                        font-family: &quot;Space Grotesk&quot;, sans-serif;
+                        font-weight: 600;
+                        font-size: 14px;
+                        cursor: pointer;
+                      "
+                    >
+                      {{ blogHeroSaveLabel }}
+                    </button>
+                  </div>
+                </sc-if>
                 <div
                   style="
                     display: grid;
@@ -3297,206 +3774,6 @@
                         </div>
                       </sc-if>
 
-                      <sc-if
-                        value="{{ tabTeam }}"
-                        hint-placeholder-val="{{ false }}"
-                      >
-                        <div
-                          style="
-                            display: flex;
-                            flex-direction: column;
-                            gap: 8px;
-                          "
-                        >
-                          <span
-                            style="
-                              font-family: &quot;IBM Plex Mono&quot;, monospace;
-                              font-size: 12px;
-                              letter-spacing: 0.1em;
-                              text-transform: uppercase;
-                              color: #8fa0b5;
-                            "
-                            >Photo</span
-                          >
-                          <label
-                            style="
-                              position: relative;
-                              display: flex;
-                              align-items: center;
-                              justify-content: center;
-                              width: 120px;
-                              aspect-ratio: 4/5;
-                              border-radius: 12px;
-                              border: 1px dashed rgba(255, 255, 255, 0.2);
-                              background: rgba(255, 255, 255, 0.03);
-                              overflow: hidden;
-                              cursor: pointer;
-                              transition: border-color 0.2s;
-                            "
-                            style-hover="border-color:#2FED7F;"
-                          >
-                            <sc-if
-                              value="{{ hasImage }}"
-                              hint-placeholder-val="{{ false }}"
-                            >
-                              <div
-                                class="cod-img"
-                                data-img="{{ fImage }}"
-                                style="
-                                  position: absolute;
-                                  inset: 0;
-                                  background-size: cover;
-                                  background-position: center;
-                                "
-                              ></div>
-                            </sc-if>
-                            <sc-if
-                              value="{{ noImage }}"
-                              hint-placeholder-val="{{ true }}"
-                            >
-                              <span
-                                style="
-                                  display: flex;
-                                  flex-direction: column;
-                                  align-items: center;
-                                  gap: 6px;
-                                  color: #5c6b80;
-                                  pointer-events: none;
-                                "
-                              >
-                                <svg
-                                  width="22"
-                                  height="22"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="1.8"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                >
-                                  <circle cx="12" cy="8" r="4"></circle>
-                                  <path d="M4 21a8 8 0 0 1 16 0"></path>
-                                </svg>
-                                <span
-                                  style="font-size: 12px; text-align: center"
-                                  >Ajouter</span
-                                >
-                              </span>
-                            </sc-if>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange="{{ onFileChange }}"
-                              style="
-                                position: absolute;
-                                inset: 0;
-                                opacity: 0;
-                                cursor: pointer;
-                              "
-                            />
-                          </label>
-                          <sc-if
-                            value="{{ hasImage }}"
-                            hint-placeholder-val="{{ false }}"
-                          >
-                            <button
-                              type="button"
-                              onClick="{{ clearImage }}"
-                              style="
-                                align-self: flex-start;
-                                background: transparent;
-                                border: 0;
-                                color: #8fa0b5;
-                                font-size: 12.5px;
-                                cursor: pointer;
-                                padding: 0;
-                              "
-                              style-hover="color:#ff6b6b;"
-                            >
-                              Retirer la photo
-                            </button>
-                          </sc-if>
-                        </div>
-                        <label
-                          style="
-                            display: flex;
-                            flex-direction: column;
-                            gap: 7px;
-                          "
-                        >
-                          <span
-                            style="
-                              font-family: &quot;IBM Plex Mono&quot;, monospace;
-                              font-size: 12px;
-                              letter-spacing: 0.1em;
-                              text-transform: uppercase;
-                              color: #8fa0b5;
-                            "
-                            >Nom <span style="color: #2fed7f">*</span></span
-                          >
-                          <input
-                            type="text"
-                            required
-                            value="{{ fName }}"
-                            onInput="{{ onField_name }}"
-                            placeholder="Jean Grondin"
-                            style="
-                              width: 100%;
-                              padding: 12px 14px;
-                              border-radius: 10px;
-                              background: rgba(255, 255, 255, 0.04);
-                              border: 1px solid rgba(255, 255, 255, 0.12);
-                              color: #eaf0f7;
-                              font-family:
-                                &quot;IBM Plex Sans&quot;, sans-serif;
-                              font-size: 14.5px;
-                              outline: none;
-                              transition: border-color 0.2s;
-                            "
-                            style-focus="border-color:#2FED7F;"
-                          />
-                        </label>
-                        <label
-                          style="
-                            display: flex;
-                            flex-direction: column;
-                            gap: 7px;
-                          "
-                        >
-                          <span
-                            style="
-                              font-family: &quot;IBM Plex Mono&quot;, monospace;
-                              font-size: 12px;
-                              letter-spacing: 0.1em;
-                              text-transform: uppercase;
-                              color: #8fa0b5;
-                            "
-                            >Rôle <span style="color: #2fed7f">*</span></span
-                          >
-                          <input
-                            type="text"
-                            required
-                            value="{{ fRole }}"
-                            onInput="{{ onField_role }}"
-                            placeholder="Lead Développement"
-                            style="
-                              width: 100%;
-                              padding: 12px 14px;
-                              border-radius: 10px;
-                              background: rgba(255, 255, 255, 0.04);
-                              border: 1px solid rgba(255, 255, 255, 0.12);
-                              color: #eaf0f7;
-                              font-family:
-                                &quot;IBM Plex Sans&quot;, sans-serif;
-                              font-size: 14.5px;
-                              outline: none;
-                              transition: border-color 0.2s;
-                            "
-                            style-focus="border-color:#2FED7F;"
-                          />
-                        </label>
-                      </sc-if>
-
                       <div style="display: flex; gap: 10px; margin-top: 6px">
                         <button
                           type="submit"
@@ -3693,15 +3970,40 @@
                             <div style="flex: 1; min-width: 0">
                               <div
                                 style="
-                                  font-family:
-                                    &quot;IBM Plex Mono&quot;, monospace;
-                                  font-size: 11px;
-                                  letter-spacing: 0.06em;
-                                  color: #2fed7f;
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 8px;
                                   margin-bottom: 3px;
                                 "
                               >
-                                {{ p.sectorLabel }}
+                                <span
+                                  style="
+                                    font-family:
+                                      &quot;IBM Plex Mono&quot;, monospace;
+                                    font-size: 11px;
+                                    letter-spacing: 0.06em;
+                                    color: #2fed7f;
+                                  "
+                                  >{{ p.sectorLabel }}</span
+                                >
+                                <sc-if
+                                  value="{{ p.featured }}"
+                                  hint-placeholder-val="{{ false }}"
+                                >
+                                  <span
+                                    style="
+                                      font-family:
+                                        &quot;IBM Plex Mono&quot;, monospace;
+                                      font-size: 10px;
+                                      letter-spacing: 0.06em;
+                                      color: #08111e;
+                                      background: #f5c86b;
+                                      padding: 2px 8px;
+                                      border-radius: 100px;
+                                    "
+                                    >À la une</span
+                                  >
+                                </sc-if>
                               </div>
                               <div
                                 style="
@@ -3742,6 +4044,44 @@
                                 flex-shrink: 0;
                               "
                             >
+                              <button
+                                type="button"
+                                onClick="{{ p.onFeature }}"
+                                aria-label="{{ p.featTitle }}"
+                                title="{{ p.featTitle }}"
+                                style="
+                                  width: 34px;
+                                  height: 34px;
+                                  border-radius: 9px;
+                                  border: 1px solid {{ p.featBorder }};
+                                  background: {{ p.featBg }};
+                                  color: {{ p.featColor }};
+                                  cursor: pointer;
+                                  display: flex;
+                                  align-items: center;
+                                  justify-content: center;
+                                  transition:
+                                    color 0.2s,
+                                    border-color 0.2s,
+                                    background 0.2s;
+                                "
+                                style-hover="border-color:#f5c86b;color:#f5c86b;"
+                              >
+                                <svg
+                                  width="15"
+                                  height="15"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                                  ></path>
+                                </svg>
+                              </button>
                               <button
                                 type="button"
                                 onClick="{{ p.onEdit }}"
@@ -3994,6 +4334,44 @@
                             >
                               <button
                                 type="button"
+                                onClick="{{ p.onFeature }}"
+                                aria-label="{{ p.featTitle }}"
+                                title="{{ p.featTitle }}"
+                                style="
+                                  width: 34px;
+                                  height: 34px;
+                                  border-radius: 9px;
+                                  border: 1px solid {{ p.featBorder }};
+                                  background: {{ p.featBg }};
+                                  color: {{ p.featColor }};
+                                  cursor: pointer;
+                                  display: flex;
+                                  align-items: center;
+                                  justify-content: center;
+                                  transition:
+                                    color 0.2s,
+                                    border-color 0.2s,
+                                    background 0.2s;
+                                "
+                                style-hover="border-color:#f5c86b;color:#f5c86b;"
+                              >
+                                <svg
+                                  width="15"
+                                  height="15"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                                  ></path>
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
                                 onClick="{{ p.onEdit }}"
                                 aria-label="Modifier"
                                 style="
@@ -4210,190 +4588,6 @@
                                   ></path>
                                 </svg>
                               </button>
-                            </div>
-                          </div>
-                        </sc-for>
-                      </div>
-                    </sc-if>
-
-                    <sc-if
-                      value="{{ tabTeam }}"
-                      hint-placeholder-val="{{ false }}"
-                    >
-                      <div
-                        style="
-                          display: grid;
-                          grid-template-columns: repeat(
-                            auto-fill,
-                            minmax(220px, 1fr)
-                          );
-                          gap: 12px;
-                        "
-                      >
-                        <sc-for
-                          list="{{ team }}"
-                          as="m"
-                          hint-placeholder-count="0"
-                        >
-                          <div
-                            style="display:flex;gap:14px;padding:14px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid {{ m.rowBorder }};transition:border-color .2s;"
-                          >
-                            <div
-                              style="
-                                position: relative;
-                                width: 56px;
-                                height: 70px;
-                                flex-shrink: 0;
-                                border-radius: 9px;
-                                overflow: hidden;
-                                background: rgba(255, 255, 255, 0.05);
-                                border: 1px solid rgba(255, 255, 255, 0.08);
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                              "
-                            >
-                              <sc-if
-                                value="{{ m.image }}"
-                                hint-placeholder-val="{{ false }}"
-                              >
-                                <div
-                                  class="cod-img"
-                                  data-img="{{ m.image }}"
-                                  style="
-                                    position: absolute;
-                                    inset: 0;
-                                    background-size: cover;
-                                    background-position: center;
-                                  "
-                                ></div>
-                              </sc-if>
-                              <sc-if
-                                value="{{ m.noImage }}"
-                                hint-placeholder-val="{{ true }}"
-                              >
-                                <span
-                                  style="
-                                    font-family:
-                                      &quot;Space Grotesk&quot;, sans-serif;
-                                    font-weight: 600;
-                                    font-size: 15px;
-                                    color: #2fed7f;
-                                  "
-                                  >{{ m.initials }}</span
-                                >
-                              </sc-if>
-                            </div>
-                            <div style="flex: 1; min-width: 0">
-                              <div
-                                style="
-                                  font-family:
-                                    &quot;Space Grotesk&quot;, sans-serif;
-                                  font-weight: 600;
-                                  font-size: 15px;
-                                  color: #fff;
-                                  line-height: 1.2;
-                                "
-                              >
-                                {{ m.name }}
-                              </div>
-                              <div
-                                style="
-                                  font-family:
-                                    &quot;IBM Plex Mono&quot;, monospace;
-                                  font-size: 12px;
-                                  color: #2fed7f;
-                                  margin-top: 4px;
-                                  line-height: 1.35;
-                                "
-                              >
-                                {{ m.role }}
-                              </div>
-                              <div
-                                style="
-                                  display: flex;
-                                  gap: 7px;
-                                  margin-top: 10px;
-                                "
-                              >
-                                <button
-                                  type="button"
-                                  onClick="{{ m.onEdit }}"
-                                  aria-label="Modifier"
-                                  style="
-                                    width: 30px;
-                                    height: 30px;
-                                    border-radius: 8px;
-                                    border: 1px solid rgba(255, 255, 255, 0.14);
-                                    background: transparent;
-                                    color: #b7c2d2;
-                                    cursor: pointer;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    transition:
-                                      color 0.2s,
-                                      border-color 0.2s;
-                                  "
-                                  style-hover="border-color:#2FED7F;color:#2FED7F;"
-                                >
-                                  <svg
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                  >
-                                    <path d="M12 20h9"></path>
-                                    <path
-                                      d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"
-                                    ></path>
-                                  </svg>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick="{{ m.onDelete }}"
-                                  aria-label="Supprimer"
-                                  style="
-                                    width: 30px;
-                                    height: 30px;
-                                    border-radius: 8px;
-                                    border: 1px solid rgba(255, 255, 255, 0.14);
-                                    background: transparent;
-                                    color: #b7c2d2;
-                                    cursor: pointer;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    transition:
-                                      color 0.2s,
-                                      border-color 0.2s;
-                                  "
-                                  style-hover="border-color:#ff6b6b;color:#ff6b6b;"
-                                >
-                                  <svg
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                  >
-                                    <path d="M3 6h18"></path>
-                                    <path
-                                      d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                                    ></path>
-                                    <path
-                                      d="M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14"
-                                    ></path>
-                                  </svg>
-                                </button>
-                              </div>
                             </div>
                           </div>
                         </sc-for>
@@ -4764,6 +4958,34 @@
                     <option value="patron">Direction (patron)</option>
                   </select>
                 </label>
+
+                <!-- ===== Vitrine : photo de profil + mise à la une ===== -->
+                <div style="height:1px;background:rgba(255,255,255,0.08);margin:2px 0;"></div>
+                <div style="display:flex;gap:14px;align-items:flex-start;">
+                  <label
+                    style="position:relative;flex-shrink:0;width:76px;aspect-ratio:4/5;border-radius:12px;border:1px dashed rgba(255,255,255,0.2);background:rgba(255,255,255,0.03);overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;"
+                    style-hover="border-color:#2FED7F;"
+                  >
+                    <sc-if value="{{ editEmpHasPhoto }}" hint-placeholder-val="{{ false }}">
+                      <div class="cod-img" data-img="{{ editEmpPhoto }}" style="position:absolute;inset:0;background-size:cover;background-position:center;"></div>
+                    </sc-if>
+                    <sc-if value="{{ editEmpNoPhoto }}" hint-placeholder-val="{{ true }}">
+                      <span style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#5c6b80;pointer-events:none;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
+                        <span style="font-size:11px;">Photo</span>
+                      </span>
+                    </sc-if>
+                    <input type="file" accept="image/*" onChange="{{ onEditEmpFile }}" style="position:absolute;inset:0;opacity:0;cursor:pointer;" />
+                  </label>
+                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:9px;">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8fa0b5;">Photo de profil</span>
+                    <span style="font-size:12px;line-height:1.45;color:#5c6b80;">Affichée sur la page d'accueil si le membre est à la une.</span>
+                    <sc-if value="{{ editEmpHasPhoto }}" hint-placeholder-val="{{ false }}">
+                      <button type="button" onClick="{{ onEditEmpClearPhoto }}" style="align-self:flex-start;background:transparent;border:0;color:#8fa0b5;font-size:12.5px;cursor:pointer;padding:0;" style-hover="color:#ff6b6b;">Retirer la photo</button>
+                    </sc-if>
+                  </div>
+                </div>
+
                 <div style="min-height:18px;">
                   <sc-if value="{{ editEmpError }}" hint-placeholder-val="{{ false }}">
                     <span style="font-size:13px;color:#ff6b6b;">{{ editEmpError }}</span>
@@ -4808,6 +5030,21 @@
         { value: 'design', label: 'Design UX' },
       ];
       function blogCatLabel(k) { const c = BLOG_CATS.find((x) => x.value === k); return c ? c.label : (k || ''); }
+      // Stats de l'en-tête Portfolio (settings portfolio_page.hero.stats).
+      // Valeurs par défaut = celles codées en dur dans Portfolio.dc.html.
+      const PORTFOLIO_STAT_DEFAULTS = [
+        { v: '40', suffix: '+', l: 'projets livrés' },
+        { v: '4', suffix: '', l: "domaines d'expertise" },
+        { v: '99,9', suffix: '%', l: 'disponibilité moyenne' },
+      ];
+      // En-tête de la page Blog (settings blog_page.hero). Défauts = textes
+      // codés en dur dans Blog.dc.html (version FR).
+      const BLOG_HERO_DEFAULTS = {
+        kicker: 'Le blog',
+        lead: "Idées, retours d'expérience &",
+        accent: 'signaux faibles.',
+        sub: "Nos réflexions sur l'ingénierie logicielle, l'IA, le SaaS et le financement de l'innovation — sans jargon inutile.",
+      };
       const PAL = ['#2FED7F', '#7FE6C4', '#A7D8F0', '#C9C2F5', '#F5C86B', '#F5A8C0'];
       const PSTATUS = {
         present: { label: 'Présent', color: '#2FED7F', bg: 'rgba(47,237,127,.12)' },
@@ -4835,11 +5072,13 @@
           accounts: [], session: null,
           loginEmail: '', loginPassword: '', loginError: false, loginErrorMsg: '', loading: true,
           portfolio: [], blog: [], testimonials: [], team: [],
+          portfolioSettings: {}, portfolioStats: PORTFOLIO_STAT_DEFAULTS.map((x) => ({ ...x })), statsBusy: false,
+          blogSettings: {}, blogHero: { ...BLOG_HERO_DEFAULTS }, blogHeroBusy: false,
           entries: [], presence: {},
           tab: 'espace',
           editingId: null, form: this.blankForm(), catAdding: false,
           rhForm: { date: '', hours: '', motif: '' },
-          newEmpPrenom: '', newEmpNom: '', newEmpEmail: '', newEmpPoste: '', newEmpRole: 'employe', addEmpError: '', addEmpBusy: false, newPosteAdding: false,
+          newEmpPrenom: '', newEmpNom: '', newEmpEmail: '', newEmpPoste: '', newEmpRole: 'employe', newEmpPhoto: '', addEmpError: '', addEmpBusy: false, newPosteAdding: false,
           notif: null, confirmDel: null, editEmp: null, editEmpError: '', editEmpBusy: false, editPosteAdding: false,
           weekStart: isoOf(mondayOf(new Date())),
           menu: null, menuHours: '7',
@@ -4894,11 +5133,16 @@
             const [entries, presence] = await Promise.all([api('/entries'), api('/presence')]);
             const patch = { entries, presence };
             if (role === 'patron') {
-              const [accounts, portfolio, blog, testimonials, team] = await Promise.all([
+              const [accounts, portfolio, blog, testimonials, portfolioSettings, blogSettings] = await Promise.all([
                 api('/accounts'), api('/content/portfolio'), api('/content/blog'),
-                api('/content/testimonials'), api('/content/team'),
+                api('/content/testimonials'), api('/settings/portfolio_page'), api('/settings/blog_page'),
               ]);
-              Object.assign(patch, { accounts, portfolio, blog, testimonials, team });
+              const heroStats = portfolioSettings && portfolioSettings.hero && Array.isArray(portfolioSettings.hero.stats) && portfolioSettings.hero.stats.length
+                ? portfolioSettings.hero.stats.map((x) => ({ v: x.v || '', suffix: x.suffix || '', l: x.l || '' }))
+                : PORTFOLIO_STAT_DEFAULTS.map((x) => ({ ...x }));
+              const bh = (blogSettings && blogSettings.hero) || {};
+              const blogHero = { kicker: bh.kicker || BLOG_HERO_DEFAULTS.kicker, lead: bh.lead || BLOG_HERO_DEFAULTS.lead, accent: bh.accent || BLOG_HERO_DEFAULTS.accent, sub: bh.sub || BLOG_HERO_DEFAULTS.sub };
+              Object.assign(patch, { accounts, portfolio, blog, testimonials, portfolioSettings: portfolioSettings || {}, portfolioStats: heroStats, blogSettings: blogSettings || {}, blogHero });
             }
             this.setState(patch);
           } catch (e) { /* session likely expired; me() will fail next action */ }
@@ -4938,7 +5182,6 @@
               { key: 'portfolio', label: 'Portfolio', count: s.portfolio.length || '' },
               { key: 'blog', label: 'Blog', count: s.blog.length || '' },
               { key: 'testimonials', label: 'Témoignages', count: s.testimonials.length || '' },
-              { key: 'team', label: 'Équipe (site)', count: s.team.length || '' },
             ];
           } else {
             tabDefs = [
@@ -4963,16 +5206,20 @@
             portfolio: { title: 'Gestion du portfolio', sub: 'Projets de la section « Autres réalisations ».' },
             blog: { title: 'Gestion du blog', sub: 'Articles publiés sur la page Blog. Cochez « à la une » pour choisir l\u2019article vedette.' },
             testimonials: { title: 'Gestion des témoignages', sub: 'Témoignages affichés sur la page d\u2019accueil.' },
-            team: { title: 'Équipe (site)', sub: 'Membres affichés sur la page d\u2019accueil (vitrine).' },
           }[tab] || { title: '', sub: '' };
 
           // ---- Content (portfolio/testimonials/team) ----
           const rowBorder = (id) => (s.editingId === id ? 'rgba(47,237,127,.5)' : 'rgba(255,255,255,.1)');
-          const projects = s.portfolio.map((p) => ({ ...p, sectorLabel: Array.isArray(p.sector) ? p.sector.join(' · ') : (p.sector || ''), noImage: !p.image, rowBorder: rowBorder(p.id), onEdit: () => this.startEdit(p.id), onDelete: () => this.deleteContent(p.id) }));
-          const blogPosts = s.blog.map((p) => ({ ...p, noImage: !p.image, catLabel: blogCatLabel(p.cat), featuredLabel: p.featured ? 'À la une' : '', rowBorder: rowBorder(p.id), onEdit: () => this.startEdit(p.id), onDelete: () => this.deleteContent(p.id) }));
+          const projects = s.portfolio.map((p) => ({ ...p, sectorLabel: Array.isArray(p.sector) ? p.sector.join(' · ') : (p.sector || ''), noImage: !p.image, rowBorder: rowBorder(p.id), featBg: p.featured ? '#f5c86b' : 'transparent', featColor: p.featured ? '#08111e' : '#b7c2d2', featBorder: p.featured ? '#f5c86b' : 'rgba(255,255,255,.14)', featTitle: p.featured ? 'Retirer de la une' : 'Mettre à la une', onEdit: () => this.startEdit(p.id), onDelete: () => this.deleteContent(p.id), onFeature: () => this.toggleFeatured(p.id) }));
+          const statRows = (s.portfolioStats || []).map((st, i) => ({
+            v: st.v, suffix: st.suffix, l: st.l,
+            onV: (e) => this.setStat(i, 'v', e && e.target ? e.target.value : ''),
+            onSuffix: (e) => this.setStat(i, 'suffix', e && e.target ? e.target.value : ''),
+            onL: (e) => this.setStat(i, 'l', e && e.target ? e.target.value : ''),
+          }));
+          const blogPosts = s.blog.map((p) => ({ ...p, noImage: !p.image, catLabel: blogCatLabel(p.cat), featuredLabel: p.featured ? 'À la une' : '', rowBorder: rowBorder(p.id), featBg: p.featured ? '#f5c86b' : 'transparent', featColor: p.featured ? '#08111e' : '#b7c2d2', featBorder: p.featured ? '#f5c86b' : 'rgba(255,255,255,.14)', featTitle: p.featured ? 'Retirer de la une' : 'Mettre à la une', onEdit: () => this.startEdit(p.id), onDelete: () => this.deleteContent(p.id), onFeature: () => this.toggleFeatured(p.id) }));
           const testimonials = s.testimonials.map((t) => ({ ...t, rowBorder: rowBorder(t.id), onEdit: () => this.startEdit(t.id), onDelete: () => this.deleteContent(t.id) }));
-          const team = s.team.map((m) => ({ ...m, noImage: !m.image, rowBorder: rowBorder(m.id), onEdit: () => this.startEdit(m.id), onDelete: () => this.deleteContent(m.id) }));
-          const contentTabs = ['portfolio', 'blog', 'testimonials', 'team'];
+          const contentTabs = ['portfolio', 'blog', 'testimonials'];
           const isContent = contentTabs.indexOf(tab) >= 0;
           const curContent = isContent ? s[tab] : [];
           const editing = s.editingId !== null;
@@ -5000,7 +5247,7 @@
           const catOptions = [...BLOG_CATS, ...extraCats];
           // Postes déjà enregistrés sur les comptes employés (pour la liste déroulante).
           const posteOptions = [...new Set((s.accounts || []).map((a) => (a.poste || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-          const cMeta = { portfolio: { list: 'Projets en ligne', countLabel: 'projet(s)', empty: 'Aucun projet ajouté.', neww: 'Nouveau projet', editw: 'le projet', sub: 'Publier le projet' }, blog: { list: 'Articles publiés', countLabel: 'article(s)', empty: 'Aucun article publié.', neww: 'Nouvel article', editw: 'l\u2019article', sub: 'Publier l\u2019article' }, testimonials: { list: 'Témoignages', countLabel: 'témoignage(s)', empty: 'Aucun témoignage.', neww: 'Nouveau témoignage', editw: 'le témoignage', sub: 'Publier le témoignage' }, team: { list: 'Membres', countLabel: 'membre(s)', empty: 'Aucun membre.', neww: 'Nouveau membre', editw: 'le membre', sub: 'Ajouter le membre' } }[tab] || {};
+          const cMeta = { portfolio: { list: 'Projets en ligne', countLabel: 'projet(s)', empty: 'Aucun projet ajouté.', neww: 'Nouveau projet', editw: 'le projet', sub: 'Publier le projet' }, blog: { list: 'Articles publiés', countLabel: 'article(s)', empty: 'Aucun article publié.', neww: 'Nouvel article', editw: 'l\u2019article', sub: 'Publier l\u2019article' }, testimonials: { list: 'Témoignages', countLabel: 'témoignage(s)', empty: 'Aucun témoignage.', neww: 'Nouveau témoignage', editw: 'le témoignage', sub: 'Publier le témoignage' } }[tab] || {};
 
           // ---- HR: my entries / balance ----
           const myId = sess ? sess.id : null;
@@ -5038,6 +5285,11 @@
               id: a.id, name: a.name, initials: codInitials(a.name), avatarBg: this.avatarBg(a.id),
               sup: b.sup, recup: b.recup, solde: b.solde, pendingLabel: pend ? (' · ' + pend + ' en attente') : '',
               poste: a.poste || '', hasPoste: !!(a.poste || '').trim(), noPoste: !(a.poste || '').trim(),
+              featured: !!a.featured,
+              featBg: a.featured ? '#f5c86b' : 'transparent', featColor: a.featured ? '#08111e' : '#b7c2d2',
+              featBorder: a.featured ? '#f5c86b' : 'rgba(255,255,255,.14)',
+              featTitle: a.featured ? 'Retirer de la une' : 'Mettre à la une',
+              onFeature: () => this.toggleEmpFeatured(a),
               onEdit: () => this.openEditEmp(a),
               canDelete: true, onDelete: () => this.askDelete(a.id, a.name),
             };
@@ -5179,7 +5431,7 @@
             // section flags
             showEspace: tab === 'espace', showValidation: tab === 'validation',
             showSoldes: tab === 'soldes', showPlanning: tab === 'planning', showContent: isContent,
-            tabPortfolio: tab === 'portfolio', tabBlog: tab === 'blog', tabTestimonials: tab === 'testimonials', tabTeam: tab === 'team',
+            tabPortfolio: tab === 'portfolio', tabBlog: tab === 'blog', tabTestimonials: tab === 'testimonials',
 
             // espace
             myBalSup: myBal.sup, myBalRecup: myBal.recup, myBalSolde: myBal.solde,
@@ -5197,6 +5449,9 @@
             soldesList,
             newEmpPrenom: s.newEmpPrenom, newEmpNom: s.newEmpNom, newEmpEmail: s.newEmpEmail, newEmpPoste: s.newEmpPoste,
             newEmpRole: s.newEmpRole, addEmpError: s.addEmpError,
+            newEmpPhoto: s.newEmpPhoto || '', newEmpHasPhoto: !!s.newEmpPhoto, newEmpNoPhoto: !s.newEmpPhoto,
+            onNewEmpFile: (e) => { const file = e.target.files && e.target.files[0]; if (!file) return; const r = new FileReader(); r.onload = () => this.setState({ newEmpPhoto: r.result, addEmpError: '' }); r.readAsDataURL(file); },
+            onNewEmpClearPhoto: () => this.setState({ newEmpPhoto: '' }),
             onNewEmpPrenom: (e) => this.setState({ newEmpPrenom: e.target.value, addEmpError: '' }),
             onNewEmpNom: (e) => this.setState({ newEmpNom: e.target.value, addEmpError: '' }),
             onNewEmpEmail: (e) => this.setState({ newEmpEmail: e.target.value, addEmpError: '' }),
@@ -5247,9 +5502,16 @@
             editEmpEmail: s.editEmp ? s.editEmp.email : '',
             editEmpPoste: s.editEmp ? s.editEmp.poste : '',
             editEmpRole: s.editEmp ? s.editEmp.role : 'employe',
+            editEmpPhoto: s.editEmp ? (s.editEmp.photo || '') : '',
+            editEmpHasPhoto: !!(s.editEmp && s.editEmp.photo),
+            editEmpNoPhoto: !(s.editEmp && s.editEmp.photo),
+            editEmpFeatured: !!(s.editEmp && s.editEmp.featured),
             editEmpError: s.editEmpError,
             editPosteListMode: !s.editPosteAdding,
             editPosteAdding: !!s.editPosteAdding,
+            onEditEmpFile: (e) => { const file = e.target.files && e.target.files[0]; if (!file) return; const r = new FileReader(); r.onload = () => this.setEditEmpField('photo', r.result); r.readAsDataURL(file); },
+            onEditEmpClearPhoto: () => this.setEditEmpField('photo', ''),
+            onToggleEditEmpFeatured: () => this.setState((st) => ({ editEmp: { ...st.editEmp, featured: !(st.editEmp && st.editEmp.featured) }, editEmpError: '' })),
             onEditEmpPrenom: (e) => this.setEditEmpField('prenom', e.target.value),
             onEditEmpNom: (e) => this.setEditEmpField('nom', e.target.value),
             onEditEmpEmail: (e) => this.setEditEmpField('email', e.target.value),
@@ -5265,7 +5527,19 @@
             saveEditEmp: () => this.saveEditEmp(),
 
             // content
-            projects, blogPosts, testimonials, team,
+            projects, blogPosts, testimonials,
+            statRows,
+            statsBusy: !!s.statsBusy,
+            statsSaveLabel: s.statsBusy ? 'Enregistrement…' : 'Enregistrer les statistiques',
+            onSaveStats: (e) => { if (e) e.preventDefault(); this.savePortfolioStats(); },
+            fBlogKicker: s.blogHero.kicker, fBlogLead: s.blogHero.lead, fBlogAccent: s.blogHero.accent, fBlogSub: s.blogHero.sub,
+            onBlogKicker: (e) => this.setBlogHero('kicker', e && e.target ? e.target.value : ''),
+            onBlogLead: (e) => this.setBlogHero('lead', e && e.target ? e.target.value : ''),
+            onBlogAccent: (e) => this.setBlogHero('accent', e && e.target ? e.target.value : ''),
+            onBlogSub: (e) => this.setBlogHero('sub', e && e.target ? e.target.value : ''),
+            blogHeroBusy: !!s.blogHeroBusy,
+            blogHeroSaveLabel: s.blogHeroBusy ? 'Enregistrement…' : "Enregistrer l'en-tête",
+            onSaveBlogHero: (e) => { if (e) e.preventDefault(); this.saveBlogHero(); },
             catOptions,
             catListMode: !s.catAdding,
             catAdding: !!s.catAdding,
@@ -5422,11 +5696,12 @@
           const email = (this.state.newEmpEmail || '').trim();
           const poste = (this.state.newEmpPoste || '').trim();
           const role = this.state.newEmpRole || 'employe';
+          const photo = this.state.newEmpPhoto || '';
           if (!prenom || !nom || !email) { this.setState({ addEmpError: 'Prénom, nom et email requis.' }); return; }
           this.setState({ addEmpError: '', addEmpBusy: true });
           try {
-            const acc = await api('/accounts', { method: 'POST', body: { prenom, nom, email, poste, role } });
-            this.setState((st) => ({ accounts: [...st.accounts, acc], newEmpPrenom: '', newEmpNom: '', newEmpEmail: '', newEmpPoste: '', newEmpRole: 'employe', addEmpError: '', addEmpBusy: false, newPosteAdding: false }));
+            const acc = await api('/accounts', { method: 'POST', body: { prenom, nom, email, poste, role, photo } });
+            this.setState((st) => ({ accounts: [...st.accounts, acc], newEmpPrenom: '', newEmpNom: '', newEmpEmail: '', newEmpPoste: '', newEmpRole: 'employe', newEmpPhoto: '', addEmpError: '', addEmpBusy: false, newPosteAdding: false }));
             this.notify('Compte créé. Un email de confirmation a été envoyé à ' + email + '. Les identifiants seront envoyés après validation.', 'Compte créé', 'success');
           } catch (err) { this.setState({ addEmpError: err.message, addEmpBusy: false }); }
         }
@@ -5441,7 +5716,7 @@
           this.setState((st) => ({ accounts: st.accounts.filter((a) => a.id !== cd.id), confirmDel: null }));
         }
         // Edit flow: a popup carrying every field except the password.
-        openEditEmp(a) { this.setState({ editEmp: { id: a.id, prenom: a.prenom || '', nom: a.nom || '', email: a.email || '', poste: a.poste || '', role: a.role || 'employe' }, editEmpError: '', editEmpBusy: false, editPosteAdding: false }); }
+        openEditEmp(a) { this.setState({ editEmp: { id: a.id, prenom: a.prenom || '', nom: a.nom || '', email: a.email || '', poste: a.poste || '', role: a.role || 'employe', photo: a.photo || '', featured: !!a.featured }, editEmpError: '', editEmpBusy: false, editPosteAdding: false }); }
         closeEditEmp() { this.setState({ editEmp: null, editEmpError: '', editPosteAdding: false }); }
         setEditEmpField(k, v) { this.setState((st) => ({ editEmp: { ...st.editEmp, [k]: v }, editEmpError: '' })); }
         async saveEditEmp() {
@@ -5453,9 +5728,21 @@
           if (!prenom || !nom || !email) { this.setState({ editEmpError: 'Prénom, nom et email requis.' }); return; }
           this.setState({ editEmpError: '', editEmpBusy: true });
           try {
-            const acc = await api('/accounts/' + e.id, { method: 'PATCH', body: { prenom, nom, email, poste: (e.poste || '').trim(), role: e.role } });
+            const acc = await api('/accounts/' + e.id, { method: 'PATCH', body: { prenom, nom, email, poste: (e.poste || '').trim(), role: e.role, photo: e.photo || '', featured: !!e.featured } });
             this.setState((st) => ({ accounts: st.accounts.map((a) => (a.id === acc.id ? acc : a)), editEmp: null, editEmpError: '', editEmpBusy: false }));
           } catch (err) { this.setState({ editEmpError: err.message, editEmpBusy: false }); }
+        }
+        // Quick "à la une" toggle from the team list — patches only the featured flag,
+        // reusing the account's existing fields (PATCH requires the full body).
+        async toggleEmpFeatured(a) {
+          try {
+            const acc = await api('/accounts/' + a.id, { method: 'PATCH', body: {
+              prenom: a.prenom || '', nom: a.nom || '', email: a.email || '',
+              poste: a.poste || '', role: a.role || 'employe', photo: a.photo || '',
+              featured: !a.featured,
+            } });
+            this.setState((st) => ({ accounts: st.accounts.map((x) => (x.id === acc.id ? acc : x)) }));
+          } catch (err) { this.notify(err.message, 'Erreur', 'error'); }
         }
         // Notification popup — replaces window.alert across the admin.
         notify(message, title, tone) { this.setState({ notif: { message, title: title || 'Information', tone: tone || 'info' } }); }
@@ -5517,7 +5804,7 @@
             };
             const sector = foldDraft(f.sectorList, f.sectorDraft);
             const tech = foldDraft(f.techList, f.techDraft);
-            return { sector, title: f.title.trim(), desc: f.desc.trim(), image: f.image || '', tech, results };
+            return { sector, title: f.title.trim(), desc: f.desc.trim(), image: f.image || '', tech, results, featured: !!f.featured };
           }
           if (tab === 'blog') {
             return { cat: f.cat || 'dev', title: f.title.trim(), excerpt: (f.desc || '').trim(), date: (f.adate || '').trim(), read: (f.aread || '').trim(), image: f.image || '', featured: !!f.featured };
@@ -5529,7 +5816,7 @@
         }
         async saveContent() {
           const tab = this.state.tab;
-          if (!['portfolio', 'blog', 'testimonials', 'team'].includes(tab)) return;
+          if (!['portfolio', 'blog', 'testimonials'].includes(tab)) return;
           const editingId = this.state.editingId;
           const existing = editingId !== null ? this.state[tab].find((x) => x.id === editingId) : null;
           const data = this.buildContent(tab, this.state.form, existing);
@@ -5551,7 +5838,7 @@
         startEdit(id) {
           const tab = this.state.tab; const p = this.state[tab].find((x) => x.id === id); if (!p) return;
           let form = this.blankForm();
-          if (tab === 'portfolio') { const r = p.results || []; const toList = (v) => Array.isArray(v) ? v.filter(Boolean) : (v ? [String(v)] : []); form = { ...form, sectorList: toList(p.sector), sectorDraft: '', title: p.title || '', desc: p.desc || '', techList: toList(p.tech), techDraft: '', r1v: r[0] ? r[0].v : '', r1l: r[0] ? r[0].l : '', r2v: r[1] ? r[1].v : '', r2l: r[1] ? r[1].l : '', image: p.image || '' }; }
+          if (tab === 'portfolio') { const r = p.results || []; const toList = (v) => Array.isArray(v) ? v.filter(Boolean) : (v ? [String(v)] : []); form = { ...form, sectorList: toList(p.sector), sectorDraft: '', title: p.title || '', desc: p.desc || '', techList: toList(p.tech), techDraft: '', r1v: r[0] ? r[0].v : '', r1l: r[0] ? r[0].l : '', r2v: r[1] ? r[1].v : '', r2l: r[1] ? r[1].l : '', image: p.image || '', featured: !!p.featured }; }
           else if (tab === 'blog') { form = { ...form, cat: p.cat || 'dev', title: p.title || '', desc: p.excerpt || '', adate: p.date || '', aread: p.read || '', image: p.image || '', featured: !!p.featured }; }
           else if (tab === 'testimonials') { form = { ...form, quote: p.quote || '', author: p.author || '', company: p.company || '' }; }
           else { form = { ...form, name: p.name || '', role: p.role || '', image: p.image || '' }; }
@@ -5565,6 +5852,60 @@
           const patch = { [tab]: list };
           if (this.state.editingId === id) { patch.editingId = null; patch.form = this.blankForm(); }
           this.setState(patch);
+        }
+        // Bascule « à la une » directement depuis la carte projet. Renvoie
+        // l'objet complet avec le drapeau inversé ; le serveur applique la
+        // règle « un seul projet à la une ». On refetch pour refléter l'état.
+        async toggleFeatured(id) {
+          const tab = this.state.tab;
+          const item = this.state[tab].find((x) => x.id === id);
+          if (!item) return;
+          const { id: _omit, ...data } = item;
+          data.featured = !item.featured;
+          try {
+            await api('/content/' + tab + '/' + id, { method: 'PUT', body: data });
+          } catch (err) { this.notify(err.message, 'Erreur', 'error'); return; }
+          const list = await api('/content/' + tab);
+          this.setState({ [tab]: list });
+        }
+        // ===== Stats de l'en-tête Portfolio =====
+        setStat(i, key, val) {
+          this.setState((st) => ({
+            portfolioStats: st.portfolioStats.map((x, j) => (j === i ? { ...x, [key]: val } : x)),
+          }));
+        }
+        async savePortfolioStats() {
+          const stats = this.state.portfolioStats.map((x) => ({
+            v: (x.v || '').trim(), suffix: (x.suffix || '').trim(), l: (x.l || '').trim(),
+          }));
+          // Fusion : on ne touche qu'à hero.stats, le reste du blob est préservé.
+          const base = this.state.portfolioSettings || {};
+          const data = { ...base, hero: { ...(base.hero || {}), stats } };
+          this.setState({ statsBusy: true });
+          try {
+            const saved = await api('/settings/portfolio_page', { method: 'PUT', body: data });
+            this.setState({ portfolioSettings: saved || data, statsBusy: false });
+            this.notify('Statistiques enregistrées.', 'Enregistré', 'success');
+          } catch (err) { this.setState({ statsBusy: false }); this.notify(err.message, 'Erreur', 'error'); }
+        }
+        // ===== En-tête de la page Blog =====
+        setBlogHero(key, val) {
+          this.setState((st) => ({ blogHero: { ...st.blogHero, [key]: val } }));
+        }
+        async saveBlogHero() {
+          const bh = this.state.blogHero;
+          const hero = {
+            kicker: (bh.kicker || '').trim(), lead: (bh.lead || '').trim(),
+            accent: (bh.accent || '').trim(), sub: (bh.sub || '').trim(),
+          };
+          const base = this.state.blogSettings || {};
+          const data = { ...base, hero: { ...(base.hero || {}), ...hero } };
+          this.setState({ blogHeroBusy: true });
+          try {
+            const saved = await api('/settings/blog_page', { method: 'PUT', body: data });
+            this.setState({ blogSettings: saved || data, blogHeroBusy: false });
+            this.notify('En-tête du blog enregistré.', 'Enregistré', 'success');
+          } catch (err) { this.setState({ blogHeroBusy: false }); this.notify(err.message, 'Erreur', 'error'); }
         }
       }
     </script>

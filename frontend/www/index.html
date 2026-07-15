@@ -1681,6 +1681,7 @@
         </section>
 
         <!-- TÉMOIGNAGES (bleu foncé B) -->
+        <sc-if value="{{ hasTestimonials }}" hint-placeholder-val="{{ true }}">
         <section
           id="temoignages"
           data-screen-label="Témoignages"
@@ -1735,13 +1736,7 @@
             "
           >
             <div
-              data-reveal=""
               style="
-                opacity: 0;
-                transform: translateY(28px);
-                transition:
-                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
                 max-width: 680px;
                 margin-bottom: clamp(40px, 5vw, 60px);
               "
@@ -1783,16 +1778,7 @@
               </h2>
             </div>
 
-            <div
-              data-reveal=""
-              style="
-                opacity: 0;
-                transform: translateY(28px);
-                transition:
-                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
-              "
-            >
+            <div>
               <div
                 style="
                   position: relative;
@@ -1837,6 +1823,8 @@
                         >"</span
                       >
                       <blockquote
+                        onClick="{{ t.openModal }}"
+                        title="{{ t.quote }}"
                         style="
                           font-family: &quot;Space Grotesk&quot;, sans-serif;
                           font-weight: 500;
@@ -1844,17 +1832,47 @@
                           line-height: 1.5;
                           letter-spacing: -0.01em;
                           color: #edf3f7;
-                          margin: 0 0 30px;
+                          margin: 0 0 16px;
                           max-width: 52ch;
+                          cursor: {{ t.cursor }};
+                          display: -webkit-box;
+                          -webkit-box-orient: vertical;
+                          -webkit-line-clamp: 4;
+                          overflow: hidden;
+                          min-height: 6em;
                         "
                       >
-                        {{ t.quote }}
+                        {{ t.display }}
                       </blockquote>
+                      <div style="min-height: 22px; margin: 0 0 24px">
+                        <sc-if value="{{ t.truncated }}">
+                          <button
+                            type="button"
+                            onClick="{{ t.openModal }}"
+                            style="
+                              align-self: flex-start;
+                              padding: 0;
+                              border: 0;
+                              background: transparent;
+                              color: #2fed7f;
+                              font-family: &quot;Space Grotesk&quot;, sans-serif;
+                              font-weight: 600;
+                              font-size: 14px;
+                              letter-spacing: 0.02em;
+                              cursor: pointer;
+                            "
+                            style-hover="color:#7ff2b3;"
+                          >
+                            Lire la suite →
+                          </button>
+                        </sc-if>
+                      </div>
                       <figcaption
                         style="
                           display: flex;
                           align-items: center;
                           gap: 14px;
+                          margin-top: auto;
                           padding-top: 24px;
                           border-top: 1px solid rgba(255, 255, 255, 0.08);
                         "
@@ -1964,6 +1982,7 @@
             </div>
           </div>
         </section>
+        </sc-if>
 
         <!-- CONFIANCE (bleu foncé B) -->
         <section
@@ -2650,6 +2669,118 @@
           </div>
         </footer>
 
+        <sc-if value="{{ modalOpen }}">
+          <div
+            onClick="{{ closeModal }}"
+            style="
+              position: fixed;
+              inset: 0;
+              z-index: 400;
+              background: rgba(4, 8, 16, 0.72);
+              backdrop-filter: blur(4px);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 20px;
+            "
+          >
+            <div
+              onClick="{{ stopProp }}"
+              style="
+                position: relative;
+                width: 100%;
+                max-width: 640px;
+                max-height: 88vh;
+                overflow-y: auto;
+                box-sizing: border-box;
+                padding: clamp(28px, 4vw, 48px);
+                border-radius: 20px;
+                background: #0e1626;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+              "
+            >
+              <button
+                type="button"
+                onClick="{{ closeModal }}"
+                aria-label="Fermer"
+                style="
+                  position: absolute;
+                  top: 16px;
+                  right: 16px;
+                  width: 38px;
+                  height: 38px;
+                  border-radius: 50%;
+                  border: 1px solid rgba(255, 255, 255, 0.16);
+                  background: rgba(255, 255, 255, 0.04);
+                  color: #eaf0f7;
+                  cursor: pointer;
+                  font-size: 18px;
+                  line-height: 1;
+                "
+                style-hover="background:#2FED7F;border-color:#2FED7F;color:#08111E;"
+              >
+                ✕
+              </button>
+              <span
+                style="
+                  font-family: &quot;Space Grotesk&quot;, sans-serif;
+                  font-weight: 700;
+                  font-size: 60px;
+                  line-height: 0.5;
+                  color: rgba(47, 237, 127, 0.5);
+                  display: block;
+                  height: 34px;
+                "
+                >"</span
+              >
+              <blockquote
+                style="
+                  font-family: &quot;Space Grotesk&quot;, sans-serif;
+                  font-weight: 500;
+                  font-size: clamp(18px, 1.9vw, 22px);
+                  line-height: 1.6;
+                  letter-spacing: -0.01em;
+                  color: #edf3f7;
+                  margin: 0 0 30px;
+                "
+              >
+                {{ modalQuote }}
+              </blockquote>
+              <figcaption
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 14px;
+                  padding-top: 24px;
+                  border-top: 1px solid rgba(255, 255, 255, 0.08);
+                "
+              >
+                <span
+                  style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:{{ modalBg }};display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;color:#08111E;"
+                  >{{ modalInitials }}</span
+                >
+                <span style="line-height: 1.35">
+                  <span
+                    style="
+                      display: block;
+                      font-family: &quot;Space Grotesk&quot;, sans-serif;
+                      font-weight: 600;
+                      font-size: 16px;
+                      color: #fff;
+                    "
+                    >{{ modalAuthor }}</span
+                  >
+                  <span
+                    style="display: block; font-size: 13.5px; color: #8fa0b5"
+                    >{{ modalCompany }}</span
+                  >
+                </span>
+              </figcaption>
+            </div>
+          </div>
+        </sc-if>
+
         <dc-import name="Chatbot" hint-size="1px,1px"></dc-import>
       </div>
     </x-dc>
@@ -2659,16 +2790,27 @@
       data-props='{"reduceMotion":{"editor":"boolean","default":false,"tsType":"boolean","section":"Accessibilité"}}'
     >
       class Component extends DCLogic {
-        state = { lang: 'fr', tIndex: 0, customTesti: [], customTeam: [] };
+        state = { lang: 'fr', tIndex: 0, customTesti: [], customTeam: [], modalTesti: null };
         renderVals() {
           const lang = this.state.lang;
           const setLang = (l) => () => this.setState({ lang: l });
-          const defaultTestimonials = [
-            { initials: 'A.M', bg: '#2FED7F', author: 'À compléter', company: 'Société · Secteur', quote: `Emplacement témoignage — remplacez ce texte par un retour client réel : contexte du projet, ce que Codialis a apporté, résultat obtenu.` },
-            { initials: 'L.R', bg: '#7FE6C4', author: 'À compléter', company: 'Société · Secteur', quote: `Emplacement témoignage — un verbatim court et concret fonctionne mieux qu'un texte générique. 2 à 3 phrases suffisent.` },
-            { initials: 'S.B', bg: '#A7D8F0', author: 'À compléter', company: 'Société · Secteur', quote: `Emplacement témoignage — mentionnez idéalement un chiffre ou un bénéfice mesurable pour renforcer la preuve.` },
-          ];
-          const testimonials = (this.state.customTesti && this.state.customTesti.length) ? this.state.customTesti : defaultTestimonials;
+          const baseTestimonials = (this.state.customTesti && this.state.customTesti.length) ? this.state.customTesti : [];
+          const QUOTE_CLAMP = 170;
+          const openT = (t) => () => this.setState({ modalTesti: t });
+          const testimonials = baseTestimonials.map((t) => {
+            const q = t.quote || '';
+            const truncated = q.length > QUOTE_CLAMP;
+            const display = truncated
+              ? q.slice(0, QUOTE_CLAMP).replace(/\s+\S*$/, '') + ' …'
+              : q;
+            return {
+              ...t,
+              display,
+              truncated,
+              cursor: truncated ? 'pointer' : 'default',
+              openModal: truncated ? openT(t) : (() => {}),
+            };
+          });
           const tCount = Math.max(1, testimonials.length);
           this._tCount = tCount;
           const ti = ((this.state.tIndex % tCount) + tCount) % tCount;
@@ -2716,7 +2858,16 @@
             ],
             team,
             testimonialsUnused: null,
+            hasTestimonials: testimonials.length > 0,
             testimonials,
+            modalOpen: !!this.state.modalTesti,
+            modalQuote: this.state.modalTesti ? this.state.modalTesti.quote : '',
+            modalAuthor: this.state.modalTesti ? this.state.modalTesti.author : '',
+            modalCompany: this.state.modalTesti ? this.state.modalTesti.company : '',
+            modalInitials: this.state.modalTesti ? this.state.modalTesti.initials : '',
+            modalBg: this.state.modalTesti ? this.state.modalTesti.bg : '#2FED7F',
+            closeModal: () => this.setState({ modalTesti: null }),
+            stopProp: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
             trackTransform: 'translateX(-' + (ti * 100) + '%)',
             dots,
             tPrev: () => this.setState((s) => ({ tIndex: ((s.tIndex - 1) % tCount + tCount) % tCount })),
@@ -2754,13 +2905,31 @@
         }
         componentDidMount() {
           const apiBase = location.port === '3001' ? '' : 'http://localhost:3001';
+          // L'équipe affichée vient des comptes marqués « à la une » dans
+          // l'admin (plus de liste content/team). On calcule ici l'avatar
+          // (initiales + couleur) que l'ancienne liste fournissait.
+          const teamPal = ['#2FED7F', '#7FE6C4', '#A7D8F0', '#C9C2F5'];
+          const teamInitials = (name) => {
+            const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return '—';
+            if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+          };
           Promise.all([
             fetch(apiBase + '/api/content/testimonials').then((r) => (r.ok ? r.json() : [])).catch(() => []),
-            fetch(apiBase + '/api/content/team').then((r) => (r.ok ? r.json() : [])).catch(() => []),
+            fetch(apiBase + '/api/accounts/featured').then((r) => (r.ok ? r.json() : [])).catch(() => []),
           ]).then(([rt, rm]) => {
             const patch = {};
             if (Array.isArray(rt) && rt.length) patch.customTesti = rt;
-            if (Array.isArray(rm) && rm.length) patch.customTeam = rm;
+            if (Array.isArray(rm) && rm.length) {
+              patch.customTeam = rm.map((m, i) => ({
+                name: m.name || '',
+                role: m.role || '',
+                image: m.image || '',
+                initials: teamInitials(m.name),
+                bg: teamPal[i % teamPal.length],
+              }));
+            }
             if (Object.keys(patch).length) this.setState(patch);
           });
           this.paintImgs();
@@ -2768,6 +2937,7 @@
           const reduce = this.props.reduceMotion === true;
           if (!reduce) {
             this._tTimer = setInterval(() => {
+              if (this.state.modalTesti) return;
               this.setState((s) => ({ tIndex: (s.tIndex + 1) % (this._tCount || 1) }));
             }, 6000);
           }

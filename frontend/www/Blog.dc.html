@@ -1023,13 +1023,16 @@
       data-props='{"$preview":{"width":1280,"height":900}}'
     >
       class Component extends DCLogic {
-        state = { lang: 'fr', query: '', activeCat: 'all', page: 1, subscribed: false, custom: [] };
+        state = { lang: 'fr', query: '', activeCat: 'all', page: 1, subscribed: false, custom: [], settings: {} };
 
         renderVals() {
           const lang = this.state.lang;
           const fr = lang === 'fr';
           const setLang = (l) => () => this.setState({ lang: l });
           const t = (f, e) => (fr ? f : e);
+          // En-tête éditable depuis /admin (settings blog_page.hero). Chaque
+          // champ rempli remplace le défaut bilingue ; vide = on garde le défaut.
+          const h = (this.state.settings || {}).hero || {};
 
           const catDefs = [
             { key: 'all', label: t('Tous', 'All') },
@@ -1156,10 +1159,10 @@
             enColor: !fr ? '#08111E' : '#8FA0B5',
             navLinks,
 
-            heroKicker: t('Le blog', 'The blog'),
-            heroLead: t("Idées, retours d'expérience &", 'Ideas, field notes &'),
-            heroAccent: t('signaux faibles.', 'weak signals.'),
-            heroSub: t(
+            heroKicker: h.kicker || t('Le blog', 'The blog'),
+            heroLead: h.lead || t("Idées, retours d'expérience &", 'Ideas, field notes &'),
+            heroAccent: h.accent || t('signaux faibles.', 'weak signals.'),
+            heroSub: h.sub || t(
               "Nos réflexions sur l'ingénierie logicielle, l'IA, le SaaS et le financement de l'innovation — sans jargon inutile.",
               'Our thinking on software engineering, AI, SaaS and innovation funding — without the needless jargon.'
             ),
@@ -1211,6 +1214,10 @@
           fetch(apiBase + '/api/content/blog')
             .then((r) => (r.ok ? r.json() : []))
             .then((list) => { if (Array.isArray(list) && list.length) this.setState({ custom: list }); })
+            .catch(() => {});
+          fetch(apiBase + '/api/settings/blog_page')
+            .then((r) => (r.ok ? r.json() : {}))
+            .then((cfg) => { if (cfg && typeof cfg === 'object') this.setState({ settings: cfg }); })
             .catch(() => {});
           this.paintImgs();
           setTimeout(() => this.paintImgs(), 300);
