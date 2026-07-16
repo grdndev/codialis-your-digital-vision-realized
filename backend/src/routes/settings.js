@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db.js';
-import { requireAuth, requirePatron } from '../middleware/auth.js';
+import { requireAuth, requireManager } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -17,7 +17,7 @@ router.get('/:key', async (req, res) => {
 });
 
 // Everything below requires patron.
-router.use(requireAuth, requirePatron);
+router.use(requireAuth, requireManager);
 
 // PUT /api/settings/:key  body = the whole settings object. Upserts.
 router.put('/:key', async (req, res) => {

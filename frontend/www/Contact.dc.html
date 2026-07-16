@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="./support.js"></script>
     <script src="./responsive.js"></script>
+    <script src="./i18n-dict.js"></script>
+    <script src="./i18n.js"></script>
+    <script src="./footer-socials.js"></script>
   </head>
   <body>
     <x-dc>
@@ -1174,7 +1177,9 @@
                       stroke-linejoin="round"
                       style="flex-shrink: 0; margin-top: 2px"
                     >
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <path
+                        d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"
+                      ></path>
                       <circle cx="12" cy="10" r="3"></circle>
                     </svg>
                     {{ o.addr }}
@@ -1210,63 +1215,65 @@
                 </div>
               </sc-for>
 
-              <div
-                style="
-                  padding: 22px 26px;
-                  border-radius: 18px;
-                  background: rgba(255, 255, 255, 0.035);
-                  border: 1px solid rgba(255, 255, 255, 0.1);
-                "
-              >
+              <sc-if value="{{ hasSocials }}" hint-placeholder-val="{{ true }}">
                 <div
                   style="
-                    font-family: &quot;IBM Plex Mono&quot;, monospace;
-                    font-size: 12px;
-                    letter-spacing: 0.16em;
-                    text-transform: uppercase;
-                    color: #5c6b80;
-                    margin-bottom: 14px;
+                    padding: 22px 26px;
+                    border-radius: 18px;
+                    background: rgba(255, 255, 255, 0.035);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
                   "
                 >
-                  Suivez-nous
-                </div>
-                <div style="display: flex; gap: 12px">
-                  <sc-for
-                    list="{{ socials }}"
-                    as="s"
-                    hint-placeholder-count="4"
+                  <div
+                    style="
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 12px;
+                      letter-spacing: 0.16em;
+                      text-transform: uppercase;
+                      color: #5c6b80;
+                      margin-bottom: 14px;
+                    "
                   >
-                    <a
-                      href="{{ s.href }}"
-                      target="_blank"
-                      rel="noopener"
-                      aria-label="{{ s.name }}"
-                      style="
-                        width: 40px;
-                        height: 40px;
-                        border-radius: 10px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        background: rgba(255, 255, 255, 0.05);
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        color: #b7c2d2;
-                        transition:
-                          color 0.2s,
-                          background 0.2s,
-                          border-color 0.2s,
-                          transform 0.2s;
-                      "
-                      style-hover="color:#08111E;background:#2FED7F;border-color:#2FED7F;transform:translateY(-2px);"
+                    Suivez-nous
+                  </div>
+                  <div style="display: flex; gap: 12px">
+                    <sc-for
+                      list="{{ socials }}"
+                      as="s"
+                      hint-placeholder-count="4"
                     >
-                      <span
-                        data-icon="{{ s.icon }}"
-                        style="display: flex"
-                      ></span>
-                    </a>
-                  </sc-for>
+                      <a
+                        href="{{ s.href }}"
+                        target="_blank"
+                        rel="noopener"
+                        aria-label="{{ s.name }}"
+                        style="
+                          width: 40px;
+                          height: 40px;
+                          border-radius: 10px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          background: rgba(255, 255, 255, 0.05);
+                          border: 1px solid rgba(255, 255, 255, 0.1);
+                          color: #b7c2d2;
+                          transition:
+                            color 0.2s,
+                            background 0.2s,
+                            border-color 0.2s,
+                            transform 0.2s;
+                        "
+                        style-hover="color:#08111E;background:#2FED7F;border-color:#2FED7F;transform:translateY(-2px);"
+                      >
+                        <span
+                          data-icon="{{ s.icon }}"
+                          style="display: flex"
+                        ></span>
+                      </a>
+                    </sc-for>
+                  </div>
                 </div>
-              </div>
+              </sc-if>
             </div>
           </div>
         </section>
@@ -1405,8 +1412,8 @@
         <footer
           style="
             position: relative;
-            padding: 56px clamp(20px, 5vw, 64px) 36px;
-            background: #0a101e;
+            padding: 64px clamp(20px, 5vw, 64px) 40px;
+            background: #0e1626;
             border-top: 1px solid rgba(255, 255, 255, 0.07);
           "
         >
@@ -1414,44 +1421,223 @@
             style="
               max-width: 1200px;
               margin: 0 auto;
-              display: flex;
-              flex-wrap: wrap;
-              gap: 22px;
-              align-items: center;
-              justify-content: space-between;
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+              gap: 40px;
+              align-items: start;
             "
           >
-            <a href="index.html"
-              ><img
+            <div>
+              <img
                 src="assets/codialis-white.png"
                 alt="Codialis"
-                style="height: 26px; width: auto; display: block"
-            /></a>
-            <div style="display: flex; flex-wrap: wrap; gap: 22px">
-              <sc-for list="{{ navLinks }}" as="lk" hint-placeholder-count="4">
-                <a
-                  href="{{ lk.href }}"
-                  style="font-size: 14px; color: #b7c2d2"
-                  style-hover="color:#2FED7F;"
-                  >{{ lk.label }}</a
-                >
-              </sc-for>
-              <a
-                href="/legal"
-                style="font-size: 14px; color: #2fed7f"
-                style-hover="color:#7ff2b3;"
-                >Mentions légales</a
+                style="
+                  height: 28px;
+                  width: auto;
+                  display: block;
+                  margin-bottom: 18px;
+                "
+              />
+              <p
+                style="
+                  font-size: 14.5px;
+                  line-height: 1.65;
+                  color: #8291a6;
+                  margin: 0;
+                  max-width: 34ch;
+                "
               >
+                Les plateformes digitales qui font avancer les entreprises.
+                Architecture-first, construites pour durer.
+              </p>
+              <div data-cod-footer-socials style="display: flex; gap: 12px; margin-top: 22px">
+                <a
+                  href="https://www.linkedin.com/company/109392264/"
+                  target="_blank"
+                  rel="noopener"
+                  aria-label="LinkedIn"
+                  style="
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    color: #b7c2d2;
+                    transition:
+                      color 0.2s,
+                      background 0.2s,
+                      border-color 0.2s,
+                      transform 0.2s;
+                  "
+                  style-hover="color:#08111E;background:#2FED7F;border-color:#2FED7F;transform:translateY(-2px);"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M4.98 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM3 9h4v12H3zM9 9h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.3c0-1.26-.02-2.9-1.77-2.9-1.77 0-2.04 1.38-2.04 2.8V21H9z"
+                    ></path>
+                  </svg>
+                </a>
+                <a
+                  href="https://www.instagram.com/codialis.dev/"
+                  target="_blank"
+                  rel="noopener"
+                  aria-label="Instagram"
+                  style="
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    color: #b7c2d2;
+                    transition:
+                      color 0.2s,
+                      background 0.2s,
+                      border-color 0.2s,
+                      transform 0.2s;
+                  "
+                  style-hover="color:#08111E;background:#2FED7F;border-color:#2FED7F;transform:translateY(-2px);"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="2" y="2" width="20" height="20" rx="5"></rect>
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <circle
+                      cx="17.5"
+                      cy="6.5"
+                      r="1.2"
+                      fill="currentColor"
+                      stroke="none"
+                    ></circle>
+                  </svg>
+                </a>
+              </div>
             </div>
-            <span
-              style="
-                font-family: &quot;IBM Plex Mono&quot;, monospace;
-                font-size: 12px;
-                letter-spacing: 0.06em;
-                color: #5c6b80;
-              "
-              >© {{ year }} Codialis</span
+            <div>
+              <div
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #5c6b80;
+                  margin-bottom: 16px;
+                "
+              >
+                Expertises
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <sc-for
+                  list="{{ footerExp }}"
+                  as="f"
+                  hint-placeholder-count="4"
+                >
+                  <a
+                    href="/#expertises"
+                    style="
+                      font-size: 14.5px;
+                      color: #b7c2d2;
+                      transition: color 0.2s;
+                    "
+                    style-hover="color:#2FED7F;"
+                    >{{ f }}</a
+                  >
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #5c6b80;
+                  margin-bottom: 16px;
+                "
+              >
+                Confiance
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <span style="font-size: 14.5px; color: #b7c2d2"
+                  >Membre Numeum</span
+                >
+                <span style="font-size: 14.5px; color: #b7c2d2"
+                  >Labellisée France Num</span
+                >
+              </div>
+            </div>
+            <div>
+              <div
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #5c6b80;
+                  margin-bottom: 16px;
+                "
+              >
+                Contact
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <a
+                  href="mailto:contact@codialis.com"
+                  style="font-size: 14.5px; color: #b7c2d2"
+                  style-hover="color:#2FED7F;"
+                  >contact@codialis.com</a
+                >
+                <a
+                  href="https://calendly.com/contact-codialis/30min"
+                  style="font-size: 14.5px; color: #b7c2d2"
+                  style-hover="color:#2FED7F;"
+                  >Prendre rendez-vous</a
+                >
+              </div>
+            </div>
+          </div>
+          <div
+            style="
+              max-width: 1200px;
+              margin: 48px auto 0;
+              padding-top: 24px;
+              border-top: 1px solid rgba(255, 255, 255, 0.07);
+              display: flex;
+              flex-wrap: wrap;
+              gap: 12px;
+              justify-content: space-between;
+              font-family: &quot;IBM Plex Mono&quot;, monospace;
+              font-size: 12px;
+              letter-spacing: 0.06em;
+              color: #5c6b80;
+            "
+          >
+            <span>© {{ year }} Codialis. Tous droits réservés.</span>
+            <a
+              href="/legal"
+              style="color: #2fed7f; letter-spacing: 0.06em"
+              style-hover="color:#7ff2b3;"
+              >Mentions légales</a
             >
+            <span>SaaS · Mobile · IA · CRM / ERP</span>
           </div>
         </footer>
 
@@ -1464,14 +1650,21 @@
       data-props='{"$preview":{"width":1280,"height":900},"reduceMotion":{"editor":"boolean","default":false,"tsType":"boolean","section":"Accessibilité"}}'
     >
       class Component extends DCLogic {
-        state = { lang: 'fr', projectType: '', submitted: false, sentName: '', openFaq: -1 };
+        state = {
+          lang: (window.CodialisI18n ? window.CodialisI18n.get() : 'fr'), projectType: '', submitted: false, sentName: '', openFaq: -1,
+          // Remplacé par les réseaux du back-office (settings contact_socials) s'il y en a.
+          socials: [
+            { name: 'LinkedIn', icon: 'linkedin', href: 'https://www.linkedin.com/company/109392264/' },
+            { name: 'Instagram', icon: 'instagram', href: 'https://www.instagram.com/codialis.dev/' },
+          ],
+        };
 
         renderVals() {
           const lang = this.state.lang;
-          const setLang = (l) => () => this.setState({ lang: l });
+          const setLang = (l) => () => { try { localStorage.setItem('codialis-lang', l); } catch (e) {} location.reload(); };
 
           const navLinks = [
-            { label: 'Expertise', href: 'index.html#expertises', color: '#C4CFDD' },
+            { label: 'Expertise', href: '/#expertises', color: '#C4CFDD' },
             { label: 'Portfolio', href: '/portfolio', color: '#C4CFDD' },
             { label: 'Blog', href: '/blog', color: '#C4CFDD' },
             { label: 'Financement', href: '/financement', color: '#C4CFDD' },
@@ -1516,6 +1709,7 @@
             enBg: lang === 'en' ? '#2FED7F' : 'transparent',
             enColor: lang === 'en' ? '#08111E' : '#8FA0B5',
             navLinks,
+            footerExp: ['Développement SaaS', 'Applications mobiles', 'Intelligence artificielle', 'CRM & ERP sur mesure'],
             heroChecks: ['Réponse sous 24h', 'Premier échange gratuit', 'Sans engagement'],
             projectChips,
             projectType: this.state.projectType,
@@ -1559,10 +1753,8 @@
               { city: 'Île-de-France', tag: 'Siège', desc: `Notre ancrage métropolitain, au plus près des donneurs d'ordre et de l'écosystème tech francilien.`, addr: '88 Rue du Génie, 94400 Vitry-sur-Seine', phone: '+33 (0)7 83 90 57 17', tel: 'tel:+33783905717' },
               { city: 'La Réunion', tag: 'Océan Indien', desc: `Notre implantation ultramarine, pour adresser les marchés de l'océan Indien avec la même exigence.`, addr: 'Espace Tarani, Chemin Pente Sassy 95, 97440 Saint-André', phone: '+262 (0)693 49 84 20', tel: 'tel:+262693498420' },
             ],
-            socials: [
-              { name: 'LinkedIn', icon: 'linkedin', href: 'https://www.linkedin.com/company/109392264/' },
-              { name: 'Instagram', icon: 'instagram', href: 'https://www.instagram.com/codialis.dev/' },
-            ],
+            socials: this.state.socials,
+            hasSocials: (this.state.socials || []).length > 0,
             faqs,
           };
         }
@@ -1651,12 +1843,13 @@
             fetch(apiBase + '/api/settings/contact_socials')
               .then((r) => (r.ok ? r.json() : null))
               .then((data) => {
-                const items = data && Array.isArray(data.items) ? data.items : null;
-                if (!items) return;
-                const socials = items
+                // Pas de clé `items` = jamais configuré : on garde les défauts.
+                // `items` présent (même vide) = le back-office fait autorité.
+                if (!data || !Array.isArray(data.items)) return;
+                const socials = data.items
                   .filter((s) => s && s.href && s.icon)
                   .map((s) => ({ name: s.name || s.icon, icon: s.icon, href: s.href }));
-                if (socials.length) this.setState({ socials });
+                this.setState({ socials });
               })
               .catch(() => {});
           } catch (err) {}

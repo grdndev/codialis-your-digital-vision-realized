@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="./support.js"></script>
     <script src="./responsive.js"></script>
+    <script src="./i18n-dict.js"></script>
+    <script src="./i18n.js"></script>
+    <script src="./footer-socials.js"></script>
   </head>
   <body>
     <x-dc>
@@ -1579,9 +1582,11 @@
               <div
                 style="
                   display: grid;
-                  grid-template-columns: repeat(auto-fit, minmax(220px, 280px));
+                  grid-template-columns: repeat(4, minmax(0, 1fr));
                   justify-content: center;
                   gap: 20px;
+                  max-width: 1000px;
+                  margin: 0 auto;
                 "
               >
                 <sc-for list="{{ team }}" as="t" hint-placeholder-count="4">
@@ -2464,7 +2469,7 @@
                 Les plateformes digitales qui font avancer les entreprises.
                 Architecture-first, construites pour durer.
               </p>
-              <div style="display: flex; gap: 12px; margin-top: 22px">
+              <div data-cod-footer-socials style="display: flex; gap: 12px; margin-top: 22px">
                 <a
                   href="https://www.linkedin.com/company/109392264/"
                   target="_blank"
@@ -2565,7 +2570,7 @@
                   hint-placeholder-count="4"
                 >
                   <a
-                    href="#expertises"
+                    href="/#expertises"
                     style="
                       font-size: 14.5px;
                       color: #b7c2d2;
@@ -2776,10 +2781,10 @@
       data-props='{"reduceMotion":{"editor":"boolean","default":false,"tsType":"boolean","section":"Accessibilité"}}'
     >
       class Component extends DCLogic {
-        state = { lang: 'fr', tIndex: 0, customTesti: [], customTeam: [], modalTesti: null };
+        state = { lang: (window.CodialisI18n ? window.CodialisI18n.get() : 'fr'), tIndex: 0, customTesti: [], customTeam: [], modalTesti: null };
         renderVals() {
           const lang = this.state.lang;
-          const setLang = (l) => () => this.setState({ lang: l });
+          const setLang = (l) => () => { try { localStorage.setItem('codialis-lang', l); } catch (e) {} location.reload(); };
           const baseTestimonials = (this.state.customTesti && this.state.customTesti.length) ? this.state.customTesti : [];
           const QUOTE_CLAMP = 170;
           const openT = (t) => () => this.setState({ modalTesti: t });

@@ -120,7 +120,7 @@ export function generatePassword(len = 14) {
 
 // Builds the welcome-email HTML (no side effects — handy for previews/tests).
 export function renderWelcomeEmail({ name, email, password, role }) {
-  const roleLabel = role === 'patron' ? 'Direction' : 'Employé';
+  const roleLabel = role === 'patron' ? 'Direction' : (role === 'chef' ? 'Chef de projet' : 'Employé');
   const url = loginUrl();
 
   const body = `
@@ -161,7 +161,7 @@ function actionUrl(param, token) {
 // Account-confirmation email. No credentials here — clicking the link tells the
 // server the address is genuine, after which the real password is issued.
 export function renderVerifyEmail({ name, url, role }) {
-  const roleLabel = role === 'patron' ? 'Direction' : 'Employé';
+  const roleLabel = role === 'patron' ? 'Direction' : (role === 'chef' ? 'Chef de projet' : 'Employé');
   const body = `
     <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:${BRAND.green}">Confirmez votre compte</p>
     <h1 style="margin:0 0 18px 0;font-size:26px;line-height:1.25;font-weight:700;color:${BRAND.navy}">Bonjour ${escapeHtml(name)},</h1>

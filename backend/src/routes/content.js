@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db.js';
-import { requireAuth, requirePatron } from '../middleware/auth.js';
+import { requireAuth, requireManager } from '../middleware/auth.js';
 import { sendNewsletterToSubscribers } from '../mail.js';
 
 const router = Router();
@@ -51,7 +51,7 @@ router.post('/:type/:id/view', async (req, res) => {
 });
 
 // Everything below requires patron.
-router.use(requireAuth, requirePatron);
+router.use(requireAuth, requireManager);
 
 // POST /api/content/:type  body = the item object (without id)
 router.post('/:type', async (req, res) => {

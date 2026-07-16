@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db.js';
-import { requireAuth, requirePatron } from '../middleware/auth.js';
+import { requireAuth, requireManager } from '../middleware/auth.js';
 import { verifyUnsubscribe } from '../tokens.js';
 
 const router = Router();
@@ -39,7 +39,7 @@ router.get('/unsubscribe', async (req, res) => {
 });
 
 // Everything below requires patron.
-router.use(requireAuth, requirePatron);
+router.use(requireAuth, requireManager);
 
 // GET /api/newsletter — list subscribers, newest first.
 router.get('/', async (req, res) => {

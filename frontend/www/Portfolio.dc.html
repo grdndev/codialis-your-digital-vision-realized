@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="./support.js"></script>
     <script src="./responsive.js"></script>
+    <script src="./i18n-dict.js"></script>
+    <script src="./i18n.js"></script>
+    <script src="./footer-socials.js"></script>
   </head>
   <body>
     <x-dc>
@@ -306,218 +309,225 @@
 
         <!-- FEATURED CASE -->
         <sc-if value="{{ hasFeatured }}" hint-placeholder-val="{{ true }}">
-        <section
-          data-screen-label="Portfolio — À la une"
-          style="
-            position: relative;
-            padding: clamp(20px, 4vw, 48px) clamp(20px, 5vw, 64px)
-              clamp(40px, 5vw, 64px);
-            background: #0e1626;
-          "
-        >
-          <div
-            data-reveal=""
+          <section
+            data-screen-label="Portfolio — À la une"
             style="
-              opacity: 0;
-              transform: translateY(28px);
-              transition:
-                opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
-              max-width: 1200px;
-              margin: 0 auto;
-              border-radius: 24px;
-              overflow: hidden;
-              border: 1px solid rgba(47, 237, 127, 0.24);
-              background: linear-gradient(
-                160deg,
-                rgba(47, 237, 127, 0.07),
-                rgba(255, 255, 255, 0.015)
-              );
+              position: relative;
+              padding: clamp(20px, 4vw, 48px) clamp(20px, 5vw, 64px)
+                clamp(40px, 5vw, 64px);
+              background: #0e1626;
             "
           >
             <div
+              data-reveal=""
               style="
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                opacity: 0;
+                transform: translateY(28px);
+                transition:
+                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                max-width: 1200px;
+                margin: 0 auto;
+                border-radius: 24px;
+                overflow: hidden;
+                border: 1px solid rgba(47, 237, 127, 0.24);
+                background: linear-gradient(
+                  160deg,
+                  rgba(47, 237, 127, 0.07),
+                  rgba(255, 255, 255, 0.015)
+                );
               "
             >
               <div
                 style="
-                  position: relative;
-                  min-height: 340px;
-                  aspect-ratio: 16/11;
-                "
-              >
-                <sc-if
-                  value="{{ featuredImage }}"
-                  hint-placeholder-val="{{ false }}"
-                >
-                  <div
-                    class="cod-img"
-                    data-img="{{ featuredImage }}"
-                    style="
-                      position: absolute;
-                      inset: 0;
-                      background-size: cover;
-                      background-position: center;
-                    "
-                  ></div>
-                </sc-if>
-                <sc-if
-                  value="{{ featuredNoImage }}"
-                  hint-placeholder-val="{{ true }}"
-                >
-                  <image-slot
-                    id="pf-featured"
-                    shape="rect"
-                    placeholder="Déposez la capture du projet phare"
-                  ></image-slot>
-                </sc-if>
-              </div>
-              <div
-                style="
-                  padding: clamp(32px, 4vw, 56px);
-                  display: flex;
-                  flex-direction: column;
-                  justify-content: center;
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
                 "
               >
                 <div
                   style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    margin-bottom: 18px;
+                    position: relative;
+                    min-height: 340px;
+                    aspect-ratio: 16/11;
                   "
                 >
-                  <span
-                    style="
-                      font-family: &quot;IBM Plex Mono&quot;, monospace;
-                      font-size: 11px;
-                      letter-spacing: 0.16em;
-                      text-transform: uppercase;
-                      color: #2fed7f;
-                      background: rgba(47, 237, 127, 0.12);
-                      padding: 5px 11px;
-                      border-radius: 100px;
-                    "
-                    >Projet à la une</span
+                  <sc-if
+                    value="{{ featuredImage }}"
+                    hint-placeholder-val="{{ false }}"
                   >
-                  <span
-                    style="
-                      font-family: &quot;IBM Plex Mono&quot;, monospace;
-                      font-size: 12px;
-                      letter-spacing: 0.06em;
-                      color: #5c6b80;
-                    "
-                    >{{ featuredSector }}</span
+                    <div
+                      class="cod-img"
+                      data-img="{{ featuredImage }}"
+                      style="
+                        position: absolute;
+                        inset: 0;
+                        background-size: cover;
+                        background-position: center;
+                      "
+                    ></div>
+                  </sc-if>
+                  <sc-if
+                    value="{{ featuredNoImage }}"
+                    hint-placeholder-val="{{ true }}"
                   >
+                    <image-slot
+                      id="pf-featured"
+                      shape="rect"
+                      placeholder="Déposez la capture du projet phare"
+                    ></image-slot>
+                  </sc-if>
                 </div>
-                <h2
+                <div
                   style="
-                    font-family: &quot;Space Grotesk&quot;, sans-serif;
-                    font-weight: 600;
-                    font-size: clamp(26px, 3.4vw, 38px);
-                    line-height: 1.1;
-                    letter-spacing: -0.015em;
-                    margin: 0 0 16px;
-                    color: #fff;
+                    padding: clamp(32px, 4vw, 56px);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
                   "
                 >
-                  {{ featuredTitle }}
-                </h2>
-                <p
-                  onClick="{{ openFeatured }}"
-                  title="{{ featuredDesc }}"
-                  style="
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 10px;
+                      margin-bottom: 18px;
+                    "
+                  >
+                    <span
+                      style="
+                        font-family: &quot;IBM Plex Mono&quot;, monospace;
+                        font-size: 11px;
+                        letter-spacing: 0.16em;
+                        text-transform: uppercase;
+                        color: #2fed7f;
+                        background: rgba(47, 237, 127, 0.12);
+                        padding: 5px 11px;
+                        border-radius: 100px;
+                      "
+                      >Projet à la une</span
+                    >
+                    <span
+                      style="
+                        font-family: &quot;IBM Plex Mono&quot;, monospace;
+                        font-size: 12px;
+                        letter-spacing: 0.06em;
+                        color: #5c6b80;
+                      "
+                      >{{ featuredSector }}</span
+                    >
+                  </div>
+                  <h2
+                    style="
+                      font-family: &quot;Space Grotesk&quot;, sans-serif;
+                      font-weight: 600;
+                      font-size: clamp(26px, 3.4vw, 38px);
+                      line-height: 1.1;
+                      letter-spacing: -0.015em;
+                      margin: 0 0 16px;
+                      color: #fff;
+                    "
+                  >
+                    {{ featuredTitle }}
+                  </h2>
+                  <p
+                    onClick="{{ openFeatured }}"
+                    title="{{ featuredDesc }}"
+                    style="
                     font-size: 16px;
                     line-height: 1.7;
                     color: #98a6ba;
                     margin: 0 0 14px;
                     cursor: {{ featuredDescCursor }};
                   "
-                >
-                  {{ featuredDescDisplay }}
-                </p>
-                <sc-if value="{{ featuredTruncated }}" hint-placeholder-val="{{ false }}">
-                  <button
-                    type="button"
-                    onClick="{{ openFeatured }}"
-                    style="
-                      align-self: flex-start;
-                      padding: 0;
-                      margin: 0 0 26px;
-                      border: 0;
-                      background: transparent;
-                      color: #2fed7f;
-                      font-family: &quot;Space Grotesk&quot;, sans-serif;
-                      font-weight: 600;
-                      font-size: 14px;
-                      letter-spacing: 0.02em;
-                      cursor: pointer;
-                    "
-                    style-hover="color:#7ff2b3;"
                   >
-                    Lire la suite →
-                  </button>
-                </sc-if>
-                <div
-                  style="
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 26px 40px;
-                    margin-bottom: 28px;
-                  "
-                >
-                  <sc-for
-                    list="{{ featuredResults }}"
-                    as="r"
-                    hint-placeholder-count="3"
+                    {{ featuredDescDisplay }}
+                  </p>
+                  <sc-if
+                    value="{{ featuredTruncated }}"
+                    hint-placeholder-val="{{ false }}"
                   >
-                    <div>
-                      <div
-                        style="
-                          font-family: &quot;Space Grotesk&quot;, sans-serif;
-                          font-weight: 700;
-                          font-size: 32px;
-                          color: #2fed7f;
-                          line-height: 1;
-                        "
-                      >
-                        {{ r.v }}
-                      </div>
-                      <div
-                        style="margin-top: 6px; font-size: 13px; color: #8fa0b5"
-                      >
-                        {{ r.l }}
-                      </div>
-                    </div>
-                  </sc-for>
-                </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 8px">
-                  <sc-for
-                    list="{{ featuredTech }}"
-                    as="t"
-                    hint-placeholder-count="4"
-                  >
-                    <span
+                    <button
+                      type="button"
+                      onClick="{{ openFeatured }}"
                       style="
-                        font-family: &quot;IBM Plex Mono&quot;, monospace;
-                        font-size: 11px;
-                        letter-spacing: 0.04em;
-                        color: #b7c2d2;
-                        padding: 5px 10px;
-                        border: 1px solid rgba(255, 255, 255, 0.12);
-                        border-radius: 7px;
+                        align-self: flex-start;
+                        padding: 0;
+                        margin: 0 0 26px;
+                        border: 0;
+                        background: transparent;
+                        color: #2fed7f;
+                        font-family: &quot;Space Grotesk&quot;, sans-serif;
+                        font-weight: 600;
+                        font-size: 14px;
+                        letter-spacing: 0.02em;
+                        cursor: pointer;
                       "
-                      >{{ t }}</span
+                      style-hover="color:#7ff2b3;"
                     >
-                  </sc-for>
+                      Lire la suite →
+                    </button>
+                  </sc-if>
+                  <div
+                    style="
+                      display: flex;
+                      flex-wrap: wrap;
+                      gap: 26px 40px;
+                      margin-bottom: 28px;
+                    "
+                  >
+                    <sc-for
+                      list="{{ featuredResults }}"
+                      as="r"
+                      hint-placeholder-count="3"
+                    >
+                      <div>
+                        <div
+                          style="
+                            font-family: &quot;Space Grotesk&quot;, sans-serif;
+                            font-weight: 700;
+                            font-size: 32px;
+                            color: #2fed7f;
+                            line-height: 1;
+                          "
+                        >
+                          {{ r.v }}
+                        </div>
+                        <div
+                          style="
+                            margin-top: 6px;
+                            font-size: 13px;
+                            color: #8fa0b5;
+                          "
+                        >
+                          {{ r.l }}
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                    <sc-for
+                      list="{{ featuredTech }}"
+                      as="t"
+                      hint-placeholder-count="4"
+                    >
+                      <span
+                        style="
+                          font-family: &quot;IBM Plex Mono&quot;, monospace;
+                          font-size: 11px;
+                          letter-spacing: 0.04em;
+                          color: #b7c2d2;
+                          padding: 5px 10px;
+                          border: 1px solid rgba(255, 255, 255, 0.12);
+                          border-radius: 7px;
+                        "
+                        >{{ t }}</span
+                      >
+                    </sc-for>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
         </sc-if>
 
         <!-- CASE GRID -->
@@ -533,167 +543,167 @@
         >
           <div style="max-width: 1200px; margin: 0 auto">
             <sc-if value="{{ hasProjects }}" hint-placeholder-val="{{ true }}">
-            <div
-              data-reveal=""
-              style="
-                opacity: 0;
-                transform: translateY(28px);
-                transition:
-                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
-                display: flex;
-                align-items: flex-end;
-                justify-content: space-between;
-                flex-wrap: wrap;
-                gap: 16px;
-                margin: clamp(40px, 5vw, 60px) 0 clamp(28px, 3vw, 40px);
-              "
-            >
-              <h2
+              <div
+                data-reveal=""
                 style="
-                  font-family: &quot;Space Grotesk&quot;, sans-serif;
-                  font-weight: 600;
-                  font-size: clamp(26px, 3.4vw, 42px);
-                  line-height: 1.08;
-                  letter-spacing: -0.015em;
-                  margin: 0;
-                  color: #fff;
+                  opacity: 0;
+                  transform: translateY(28px);
+                  transition:
+                    opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                  display: flex;
+                  align-items: flex-end;
+                  justify-content: space-between;
+                  flex-wrap: wrap;
+                  gap: 16px;
+                  margin: clamp(40px, 5vw, 60px) 0 clamp(28px, 3vw, 40px);
                 "
               >
-                Autres réalisations
-              </h2>
-              <span
-                style="
-                  font-family: &quot;IBM Plex Mono&quot;, monospace;
-                  font-size: 13px;
-                  letter-spacing: 0.06em;
-                  color: #5c6b80;
-                "
-                ><span style="color: #2fed7f">{{ projectCount }}</span> projets
-                livrés</span
-              >
-            </div>
-
-            <div
-              style="
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-                gap: 22px;
-              "
-            >
-              <sc-for list="{{ projects }}" as="p" hint-placeholder-count="6">
-                <article
-                  data-reveal=""
+                <h2
                   style="
-                    opacity: 0;
-                    transform: translateY(28px);
-                    transition:
-                      opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                      transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1),
-                      border-color 0.35s,
-                      box-shadow 0.35s;
-                    display: flex;
-                    flex-direction: column;
-                    border-radius: 18px;
-                    overflow: hidden;
-                    background: linear-gradient(
-                      160deg,
-                      rgba(255, 255, 255, 0.05),
-                      rgba(255, 255, 255, 0.012)
-                    );
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    font-family: &quot;Space Grotesk&quot;, sans-serif;
+                    font-weight: 600;
+                    font-size: clamp(26px, 3.4vw, 42px);
+                    line-height: 1.08;
+                    letter-spacing: -0.015em;
+                    margin: 0;
+                    color: #fff;
                   "
-                  style-hover="border-color:rgba(47,237,127,.5);box-shadow:0 30px 55px -26px rgba(0,0,0,.7);transform:translateY(-4px);"
                 >
-                  <div
+                  Autres réalisations
+                </h2>
+                <span
+                  style="
+                    font-family: &quot;IBM Plex Mono&quot;, monospace;
+                    font-size: 13px;
+                    letter-spacing: 0.06em;
+                    color: #5c6b80;
+                  "
+                  ><span style="color: #2fed7f">{{ projectCount }}</span>
+                  projets livrés</span
+                >
+              </div>
+
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+                  gap: 22px;
+                "
+              >
+                <sc-for list="{{ projects }}" as="p" hint-placeholder-count="6">
+                  <article
+                    data-reveal=""
                     style="
-                      position: relative;
-                      aspect-ratio: 16/10;
-                      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-                    "
-                  >
-                    <sc-if
-                      value="{{ p.image }}"
-                      hint-placeholder-val="{{ false }}"
-                    >
-                      <div
-                        class="cod-img"
-                        data-img="{{ p.image }}"
-                        style="
-                          position: absolute;
-                          inset: 0;
-                          background-size: cover;
-                          background-position: center;
-                        "
-                      ></div>
-                    </sc-if>
-                    <sc-if
-                      value="{{ p.noImage }}"
-                      hint-placeholder-val="{{ true }}"
-                    >
-                      <image-slot
-                        id="{{ p.slot }}"
-                        shape="rect"
-                        placeholder="Déposez une capture"
-                      ></image-slot>
-                    </sc-if>
-                    <div
-                      style="
-                        position: absolute;
-                        top: 12px;
-                        left: 12px;
-                        right: 12px;
-                        z-index: 2;
-                        display: flex;
-                        flex-wrap: wrap;
-                        gap: 6px;
-                        pointer-events: none;
-                      "
-                    >
-                      <sc-for
-                        list="{{ p.sectors }}"
-                        as="sct"
-                        hint-placeholder-count="1"
-                      >
-                        <span
-                          style="
-                            font-family: &quot;IBM Plex Mono&quot;, monospace;
-                            font-size: 11px;
-                            letter-spacing: 0.06em;
-                            color: #08111e;
-                            background: #2fed7f;
-                            padding: 4px 10px;
-                            border-radius: 100px;
-                          "
-                          >{{ sct }}</span
-                        >
-                      </sc-for>
-                    </div>
-                  </div>
-                  <div
-                    style="
-                      padding: 26px 24px;
+                      opacity: 0;
+                      transform: translateY(28px);
+                      transition:
+                        opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                        transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1),
+                        border-color 0.35s,
+                        box-shadow 0.35s;
                       display: flex;
                       flex-direction: column;
-                      flex: 1;
+                      border-radius: 18px;
+                      overflow: hidden;
+                      background: linear-gradient(
+                        160deg,
+                        rgba(255, 255, 255, 0.05),
+                        rgba(255, 255, 255, 0.012)
+                      );
+                      border: 1px solid rgba(255, 255, 255, 0.1);
                     "
+                    style-hover="border-color:rgba(47,237,127,.5);box-shadow:0 30px 55px -26px rgba(0,0,0,.7);transform:translateY(-4px);"
                   >
-                    <h3
+                    <div
                       style="
-                        font-family: &quot;Space Grotesk&quot;, sans-serif;
-                        font-weight: 600;
-                        font-size: 20px;
-                        line-height: 1.2;
-                        color: #fff;
-                        margin: 0 0 10px;
+                        position: relative;
+                        aspect-ratio: 16/10;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
                       "
                     >
-                      {{ p.title }}
-                    </h3>
-                    <p
-                      onClick="{{ p.openModal }}"
-                      title="{{ p.desc }}"
+                      <sc-if
+                        value="{{ p.image }}"
+                        hint-placeholder-val="{{ false }}"
+                      >
+                        <div
+                          class="cod-img"
+                          data-img="{{ p.image }}"
+                          style="
+                            position: absolute;
+                            inset: 0;
+                            background-size: cover;
+                            background-position: center;
+                          "
+                        ></div>
+                      </sc-if>
+                      <sc-if
+                        value="{{ p.noImage }}"
+                        hint-placeholder-val="{{ true }}"
+                      >
+                        <image-slot
+                          id="{{ p.slot }}"
+                          shape="rect"
+                          placeholder="Déposez une capture"
+                        ></image-slot>
+                      </sc-if>
+                      <div
+                        style="
+                          position: absolute;
+                          top: 12px;
+                          left: 12px;
+                          right: 12px;
+                          z-index: 2;
+                          display: flex;
+                          flex-wrap: wrap;
+                          gap: 6px;
+                          pointer-events: none;
+                        "
+                      >
+                        <sc-for
+                          list="{{ p.sectors }}"
+                          as="sct"
+                          hint-placeholder-count="1"
+                        >
+                          <span
+                            style="
+                              font-family: &quot;IBM Plex Mono&quot;, monospace;
+                              font-size: 11px;
+                              letter-spacing: 0.06em;
+                              color: #08111e;
+                              background: #2fed7f;
+                              padding: 4px 10px;
+                              border-radius: 100px;
+                            "
+                            >{{ sct }}</span
+                          >
+                        </sc-for>
+                      </div>
+                    </div>
+                    <div
                       style="
+                        padding: 26px 24px;
+                        display: flex;
+                        flex-direction: column;
+                        flex: 1;
+                      "
+                    >
+                      <h3
+                        style="
+                          font-family: &quot;Space Grotesk&quot;, sans-serif;
+                          font-weight: 600;
+                          font-size: 20px;
+                          line-height: 1.2;
+                          color: #fff;
+                          margin: 0 0 10px;
+                        "
+                      >
+                        {{ p.title }}
+                      </h3>
+                      <p
+                        onClick="{{ p.openModal }}"
+                        title="{{ p.desc }}"
+                        style="
                         font-size: 14.5px;
                         line-height: 1.6;
                         color: #98a6ba;
@@ -701,157 +711,160 @@
                         flex: 1;
                         cursor: {{ p.descCursor }};
                       "
-                    >
-                      {{ p.descDisplay }}
-                    </p>
-                    <sc-if value="{{ p.descTruncated }}" hint-placeholder-val="{{ false }}">
-                      <button
-                        type="button"
-                        onClick="{{ p.openModal }}"
-                        style="
-                          align-self: flex-start;
-                          padding: 0;
-                          margin: 0 0 20px;
-                          border: 0;
-                          background: transparent;
-                          color: #2fed7f;
-                          font-family: &quot;Space Grotesk&quot;, sans-serif;
-                          font-weight: 600;
-                          font-size: 13.5px;
-                          letter-spacing: 0.02em;
-                          cursor: pointer;
-                        "
-                        style-hover="color:#7ff2b3;"
                       >
-                        Lire la suite →
-                      </button>
-                    </sc-if>
-                    <div
-                      style="
-                        display: flex;
-                        flex-wrap: wrap;
-                        gap: 24px;
-                        margin-bottom: 20px;
-                      "
-                    >
-                      <sc-for
-                        list="{{ p.results }}"
-                        as="r"
-                        hint-placeholder-count="2"
+                        {{ p.descDisplay }}
+                      </p>
+                      <sc-if
+                        value="{{ p.descTruncated }}"
+                        hint-placeholder-val="{{ false }}"
                       >
-                        <div>
-                          <div
-                            style="
-                              font-family:
-                                &quot;Space Grotesk&quot;, sans-serif;
-                              font-weight: 700;
-                              font-size: 24px;
-                              color: #2fed7f;
-                              line-height: 1;
-                            "
-                          >
-                            {{ r.v }}
-                          </div>
-                          <div
-                            style="
-                              margin-top: 5px;
-                              font-size: 12.5px;
-                              color: #8fa0b5;
-                            "
-                          >
-                            {{ r.l }}
-                          </div>
-                        </div>
-                      </sc-for>
-                    </div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 7px">
-                      <sc-for
-                        list="{{ p.tech }}"
-                        as="t"
-                        hint-placeholder-count="3"
-                      >
-                        <span
+                        <button
+                          type="button"
+                          onClick="{{ p.openModal }}"
                           style="
-                            font-family: &quot;IBM Plex Mono&quot;, monospace;
-                            font-size: 10.5px;
-                            letter-spacing: 0.04em;
-                            color: #b7c2d2;
-                            padding: 4px 9px;
-                            border: 1px solid rgba(255, 255, 255, 0.12);
-                            border-radius: 6px;
+                            align-self: flex-start;
+                            padding: 0;
+                            margin: 0 0 20px;
+                            border: 0;
+                            background: transparent;
+                            color: #2fed7f;
+                            font-family: &quot;Space Grotesk&quot;, sans-serif;
+                            font-weight: 600;
+                            font-size: 13.5px;
+                            letter-spacing: 0.02em;
+                            cursor: pointer;
                           "
-                          >{{ t }}</span
+                          style-hover="color:#7ff2b3;"
                         >
-                      </sc-for>
+                          Lire la suite →
+                        </button>
+                      </sc-if>
+                      <div
+                        style="
+                          display: flex;
+                          flex-wrap: wrap;
+                          gap: 24px;
+                          margin-bottom: 20px;
+                        "
+                      >
+                        <sc-for
+                          list="{{ p.results }}"
+                          as="r"
+                          hint-placeholder-count="2"
+                        >
+                          <div>
+                            <div
+                              style="
+                                font-family:
+                                  &quot;Space Grotesk&quot;, sans-serif;
+                                font-weight: 700;
+                                font-size: 24px;
+                                color: #2fed7f;
+                                line-height: 1;
+                              "
+                            >
+                              {{ r.v }}
+                            </div>
+                            <div
+                              style="
+                                margin-top: 5px;
+                                font-size: 12.5px;
+                                color: #8fa0b5;
+                              "
+                            >
+                              {{ r.l }}
+                            </div>
+                          </div>
+                        </sc-for>
+                      </div>
+                      <div style="display: flex; flex-wrap: wrap; gap: 7px">
+                        <sc-for
+                          list="{{ p.tech }}"
+                          as="t"
+                          hint-placeholder-count="3"
+                        >
+                          <span
+                            style="
+                              font-family: &quot;IBM Plex Mono&quot;, monospace;
+                              font-size: 10.5px;
+                              letter-spacing: 0.04em;
+                              color: #b7c2d2;
+                              padding: 4px 9px;
+                              border: 1px solid rgba(255, 255, 255, 0.12);
+                              border-radius: 6px;
+                            "
+                            >{{ t }}</span
+                          >
+                        </sc-for>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              </sc-for>
-            </div>
+                  </article>
+                </sc-for>
+              </div>
             </sc-if>
 
             <sc-if value="{{ noPortfolio }}" hint-placeholder-val="{{ false }}">
-            <div
-              data-reveal=""
-              style="
-                opacity: 0;
-                transform: translateY(28px);
-                transition:
-                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
-                margin: clamp(40px, 6vw, 80px) 0;
-                padding: clamp(40px, 6vw, 72px) clamp(24px, 4vw, 48px);
-                text-align: center;
-                border-radius: 20px;
-                border: 1px dashed rgba(47, 237, 127, 0.32);
-                background: linear-gradient(
-                  160deg,
-                  rgba(47, 237, 127, 0.06),
-                  rgba(255, 255, 255, 0.012)
-                );
-              "
-            >
-              <span
+              <div
+                data-reveal=""
                 style="
-                  display: inline-block;
-                  font-family: &quot;IBM Plex Mono&quot;, monospace;
-                  font-size: 11px;
-                  letter-spacing: 0.16em;
-                  text-transform: uppercase;
-                  color: #2fed7f;
-                  background: rgba(47, 237, 127, 0.12);
-                  padding: 5px 12px;
-                  border-radius: 100px;
-                  margin-bottom: 18px;
-                "
-                >En cours d'ajout</span
-              >
-              <h2
-                style="
-                  font-family: &quot;Space Grotesk&quot;, sans-serif;
-                  font-weight: 600;
-                  font-size: clamp(22px, 3vw, 34px);
-                  line-height: 1.12;
-                  letter-spacing: -0.015em;
-                  margin: 0 0 12px;
-                  color: #fff;
+                  opacity: 0;
+                  transform: translateY(28px);
+                  transition:
+                    opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                  margin: clamp(40px, 6vw, 80px) 0;
+                  padding: clamp(40px, 6vw, 72px) clamp(24px, 4vw, 48px);
+                  text-align: center;
+                  border-radius: 20px;
+                  border: 1px dashed rgba(47, 237, 127, 0.32);
+                  background: linear-gradient(
+                    160deg,
+                    rgba(47, 237, 127, 0.06),
+                    rgba(255, 255, 255, 0.012)
+                  );
                 "
               >
-                Nos réalisations arrivent bientôt.
-              </h2>
-              <p
-                style="
-                  font-size: 15px;
-                  line-height: 1.6;
-                  color: #98a6ba;
-                  margin: 0 auto;
-                  max-width: 520px;
-                "
-              >
-                Nous préparons la sélection de nos projets. Revenez très
-                prochainement — ou contactez-nous pour discuter du vôtre.
-              </p>
-            </div>
+                <span
+                  style="
+                    display: inline-block;
+                    font-family: &quot;IBM Plex Mono&quot;, monospace;
+                    font-size: 11px;
+                    letter-spacing: 0.16em;
+                    text-transform: uppercase;
+                    color: #2fed7f;
+                    background: rgba(47, 237, 127, 0.12);
+                    padding: 5px 12px;
+                    border-radius: 100px;
+                    margin-bottom: 18px;
+                  "
+                  >En cours d'ajout</span
+                >
+                <h2
+                  style="
+                    font-family: &quot;Space Grotesk&quot;, sans-serif;
+                    font-weight: 600;
+                    font-size: clamp(22px, 3vw, 34px);
+                    line-height: 1.12;
+                    letter-spacing: -0.015em;
+                    margin: 0 0 12px;
+                    color: #fff;
+                  "
+                >
+                  Nos réalisations arrivent bientôt.
+                </h2>
+                <p
+                  style="
+                    font-size: 15px;
+                    line-height: 1.6;
+                    color: #98a6ba;
+                    margin: 0 auto;
+                    max-width: 520px;
+                  "
+                >
+                  Nous préparons la sélection de nos projets. Revenez très
+                  prochainement — ou contactez-nous pour discuter du vôtre.
+                </p>
+              </div>
             </sc-if>
           </div>
         </section>
@@ -947,8 +960,8 @@
         <footer
           style="
             position: relative;
-            padding: 56px clamp(20px, 5vw, 64px) 36px;
-            background: #0a101e;
+            padding: 64px clamp(20px, 5vw, 64px) 40px;
+            background: #0e1626;
             border-top: 1px solid rgba(255, 255, 255, 0.07);
           "
         >
@@ -956,44 +969,223 @@
             style="
               max-width: 1200px;
               margin: 0 auto;
-              display: flex;
-              flex-wrap: wrap;
-              gap: 22px;
-              align-items: center;
-              justify-content: space-between;
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+              gap: 40px;
+              align-items: start;
             "
           >
-            <a href="index.html"
-              ><img
+            <div>
+              <img
                 src="assets/codialis-white.png"
                 alt="Codialis"
-                style="height: 26px; width: auto; display: block"
-            /></a>
-            <div style="display: flex; flex-wrap: wrap; gap: 22px">
-              <sc-for list="{{ navLinks }}" as="lk" hint-placeholder-count="4">
-                <a
-                  href="{{ lk.href }}"
-                  style="font-size: 14px; color: #b7c2d2"
-                  style-hover="color:#2FED7F;"
-                  >{{ lk.label }}</a
-                >
-              </sc-for>
-              <a
-                href="/legal"
-                style="font-size: 14px; color: #2fed7f"
-                style-hover="color:#7ff2b3;"
-                >Mentions légales</a
+                style="
+                  height: 28px;
+                  width: auto;
+                  display: block;
+                  margin-bottom: 18px;
+                "
+              />
+              <p
+                style="
+                  font-size: 14.5px;
+                  line-height: 1.65;
+                  color: #8291a6;
+                  margin: 0;
+                  max-width: 34ch;
+                "
               >
+                Les plateformes digitales qui font avancer les entreprises.
+                Architecture-first, construites pour durer.
+              </p>
+              <div data-cod-footer-socials style="display: flex; gap: 12px; margin-top: 22px">
+                <a
+                  href="https://www.linkedin.com/company/109392264/"
+                  target="_blank"
+                  rel="noopener"
+                  aria-label="LinkedIn"
+                  style="
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    color: #b7c2d2;
+                    transition:
+                      color 0.2s,
+                      background 0.2s,
+                      border-color 0.2s,
+                      transform 0.2s;
+                  "
+                  style-hover="color:#08111E;background:#2FED7F;border-color:#2FED7F;transform:translateY(-2px);"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M4.98 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM3 9h4v12H3zM9 9h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.3c0-1.26-.02-2.9-1.77-2.9-1.77 0-2.04 1.38-2.04 2.8V21H9z"
+                    ></path>
+                  </svg>
+                </a>
+                <a
+                  href="https://www.instagram.com/codialis.dev/"
+                  target="_blank"
+                  rel="noopener"
+                  aria-label="Instagram"
+                  style="
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    color: #b7c2d2;
+                    transition:
+                      color 0.2s,
+                      background 0.2s,
+                      border-color 0.2s,
+                      transform 0.2s;
+                  "
+                  style-hover="color:#08111E;background:#2FED7F;border-color:#2FED7F;transform:translateY(-2px);"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="2" y="2" width="20" height="20" rx="5"></rect>
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <circle
+                      cx="17.5"
+                      cy="6.5"
+                      r="1.2"
+                      fill="currentColor"
+                      stroke="none"
+                    ></circle>
+                  </svg>
+                </a>
+              </div>
             </div>
-            <span
-              style="
-                font-family: &quot;IBM Plex Mono&quot;, monospace;
-                font-size: 12px;
-                letter-spacing: 0.06em;
-                color: #5c6b80;
-              "
-              >© {{ year }} Codialis</span
+            <div>
+              <div
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #5c6b80;
+                  margin-bottom: 16px;
+                "
+              >
+                Expertises
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <sc-for
+                  list="{{ footerExp }}"
+                  as="f"
+                  hint-placeholder-count="4"
+                >
+                  <a
+                    href="/#expertises"
+                    style="
+                      font-size: 14.5px;
+                      color: #b7c2d2;
+                      transition: color 0.2s;
+                    "
+                    style-hover="color:#2FED7F;"
+                    >{{ f }}</a
+                  >
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #5c6b80;
+                  margin-bottom: 16px;
+                "
+              >
+                Confiance
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <span style="font-size: 14.5px; color: #b7c2d2"
+                  >Membre Numeum</span
+                >
+                <span style="font-size: 14.5px; color: #b7c2d2"
+                  >Labellisée France Num</span
+                >
+              </div>
+            </div>
+            <div>
+              <div
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #5c6b80;
+                  margin-bottom: 16px;
+                "
+              >
+                Contact
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <a
+                  href="mailto:contact@codialis.com"
+                  style="font-size: 14.5px; color: #b7c2d2"
+                  style-hover="color:#2FED7F;"
+                  >contact@codialis.com</a
+                >
+                <a
+                  href="https://calendly.com/contact-codialis/30min"
+                  style="font-size: 14.5px; color: #b7c2d2"
+                  style-hover="color:#2FED7F;"
+                  >Prendre rendez-vous</a
+                >
+              </div>
+            </div>
+          </div>
+          <div
+            style="
+              max-width: 1200px;
+              margin: 48px auto 0;
+              padding-top: 24px;
+              border-top: 1px solid rgba(255, 255, 255, 0.07);
+              display: flex;
+              flex-wrap: wrap;
+              gap: 12px;
+              justify-content: space-between;
+              font-family: &quot;IBM Plex Mono&quot;, monospace;
+              font-size: 12px;
+              letter-spacing: 0.06em;
+              color: #5c6b80;
+            "
+          >
+            <span>© {{ year }} Codialis. Tous droits réservés.</span>
+            <a
+              href="/legal"
+              style="color: #2fed7f; letter-spacing: 0.06em"
+              style-hover="color:#7ff2b3;"
+              >Mentions légales</a
             >
+            <span>SaaS · Mobile · IA · CRM / ERP</span>
           </div>
         </footer>
 
@@ -1060,7 +1252,11 @@
                   padding-right: 40px;
                 "
               >
-                <sc-for list="{{ modalSectors }}" as="sct" hint-placeholder-count="1">
+                <sc-for
+                  list="{{ modalSectors }}"
+                  as="sct"
+                  hint-placeholder-count="1"
+                >
                   <span
                     style="
                       font-family: &quot;IBM Plex Mono&quot;, monospace;
@@ -1099,7 +1295,11 @@
                 {{ modalDesc }}
               </p>
               <div style="display: flex; flex-wrap: wrap; gap: 7px">
-                <sc-for list="{{ modalTech }}" as="t" hint-placeholder-count="3">
+                <sc-for
+                  list="{{ modalTech }}"
+                  as="t"
+                  hint-placeholder-count="3"
+                >
                   <span
                     style="
                       font-family: &quot;IBM Plex Mono&quot;, monospace;
@@ -1127,10 +1327,10 @@
       data-props='{"$preview":{"width":1280,"height":900},"reduceMotion":{"editor":"boolean","default":false,"tsType":"boolean","section":"Accessibilité"}}'
     >
       class Component extends DCLogic {
-        state = { lang: 'fr', custom: [], settings: {}, modalProject: null };
+        state = { lang: (window.CodialisI18n ? window.CodialisI18n.get() : 'fr'), custom: [], settings: {}, modalProject: null };
         renderVals() {
           const lang = this.state.lang;
-          const setLang = (l) => () => this.setState({ lang: l });
+          const setLang = (l) => () => { try { localStorage.setItem('codialis-lang', l); } catch (e) {} location.reload(); };
           // Page content the patron can edit from /admin. Falls back to the
           // built-in copy when nothing has been saved yet.
           const cfg = this.state.settings || {};
@@ -1208,7 +1408,7 @@
           const openFeatured = featuredTruncated ? openP(featuredModalItem) : (() => {});
           const featuredDescCursor = featuredTruncated ? 'pointer' : 'default';
           const navLinks = [
-            { label: 'Expertise', href: 'index.html#expertises', color: '#C4CFDD' },
+            { label: 'Expertise', href: '/#expertises', color: '#C4CFDD' },
             { label: 'Portfolio', href: '/portfolio', color: '#2FED7F' },
             { label: 'Blog', href: '/blog', color: '#C4CFDD' },
             { label: 'Financement', href: '/financement', color: '#C4CFDD' },
@@ -1223,6 +1423,7 @@
             enBg: lang === 'en' ? '#2FED7F' : 'transparent',
             enColor: lang === 'en' ? '#08111E' : '#8FA0B5',
             navLinks,
+            footerExp: ['Développement SaaS', 'Applications mobiles', 'Intelligence artificielle', 'CRM & ERP sur mesure'],
             heroTitle, heroTitleAccent, heroSubtitle,
             heroStats,
             featuredImage, featuredNoImage: !featuredImage,

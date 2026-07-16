@@ -1051,7 +1051,7 @@
                       <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:19px;margin:0 0 4px;color:#fff;">Récapitulatif</h2>
                       <p style="font-size:12.5px;color:#8fa0b5;margin:0 0 14px;">{{ myRecapCount }} ligne(s) — congés, absences et heures.</p>
                       <div style="position:relative;display:flex;align-items:center;margin-bottom:12px;">
-                        <span style="position:absolute;left:14px;font-size:15px;color:#66768c;pointer-events:none;">⌕</span>
+                        <span style="position:absolute;left:14px;font-size:15px;color:#66768c;pointer-events:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></span>
                         <input type="text" value="{{ contentSearchQuery }}" onChange="{{ onContentSearch }}" placeholder="Rechercher (type, date, motif)..." style="width:100%;padding:11px 14px 11px 38px;border-radius:100px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;transition:border-color .25s,background .25s;" style-focus="border-color:rgba(47,237,127,.55);background:rgba(255,255,255,.08);" />
                       </div>
                       <div style="display:flex;flex-wrap:wrap;gap:7px;">
@@ -1079,7 +1079,7 @@
                     </sc-if>
                     <sc-if value="{{ myRecapSearchEmpty }}" hint-placeholder-val="{{ false }}">
                       <div style="padding:40px 24px;border-radius:16px;border:1px dashed rgba(255,255,255,0.14);text-align:center;color:#8fa0b5;font-size:14.5px;">
-                        <div style="font-size:22px;margin-bottom:6px;">⌕</div>
+                        <div style="font-size:22px;margin-bottom:6px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></div>
                         Aucune ligne ne correspond à ces filtres.
                       </div>
                     </sc-if>
@@ -1214,7 +1214,7 @@
                 hint-placeholder-val="{{ false }}"
               >
                 <div style="position: relative; display: flex; align-items: center; margin-bottom: 16px; max-width: 760px;">
-                  <span style="position: absolute; left: 16px; font-size: 16px; color: #66768c; pointer-events: none;">⌕</span>
+                  <span style="position: absolute; left: 16px; font-size: 16px; color: #66768c; pointer-events: none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></span>
                   <input
                     type="text"
                     value="{{ contentSearchQuery }}"
@@ -1234,8 +1234,8 @@
                       onClick="{{ onToggleValidationEmp }}"
                       style="{{ validationEmpStyle }}"
                     >
-                      <span>👤 {{ validationEmpLabel }}</span>
-                      <span style="font-size:10px;">▾</span>
+                      <span style="display:inline-flex;align-items:center;gap:6px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>{{ validationEmpLabel }}</span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
                     </button>
                     <sc-if value="{{ validationEmpOpen }}" hint-placeholder-val="{{ false }}">
                       <div style="position:absolute;z-index:20;top:calc(100% + 6px);left:0;min-width:220px;max-height:280px;overflow-y:auto;padding:6px 0;border-radius:12px;background:#0f1a2b;border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 32px rgba(0,0,0,.45);">
@@ -1248,7 +1248,7 @@
                 </div>
                 <sc-if value="{{ isValidationSearchEmpty }}" hint-placeholder-val="{{ false }}">
                   <div style="padding: 44px 24px; border-radius: 16px; border: 1px dashed rgba(255, 255, 255, 0.14); text-align: center; color: #5c6b80; max-width: 760px;">
-                    <div style="font-size: 24px; margin-bottom: 8px; color: #8fa0b5;">⌕</div>
+                    <div style="font-size: 24px; margin-bottom: 8px; color: #8fa0b5;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></div>
                     <div style="font-size: 15px; color: #8fa0b5;">
                       Aucun résultat ne correspond à votre recherche « {{ contentSearchQuery }} ».
                     </div>
@@ -1437,7 +1437,7 @@
                       Soldes par employé
                     </h2>
                     <div style="position: relative; display: flex; align-items: center; margin-bottom: 16px;">
-                      <span style="position: absolute; left: 16px; font-size: 16px; color: #66768c; pointer-events: none;">⌕</span>
+                      <span style="position: absolute; left: 16px; font-size: 16px; color: #66768c; pointer-events: none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></span>
                       <input
                         type="text"
                         value="{{ contentSearchQuery }}"
@@ -1449,7 +1449,7 @@
                     </div>
                     <sc-if value="{{ isSoldesSearchEmpty }}" hint-placeholder-val="{{ false }}">
                       <div style="padding: 44px 24px; border-radius: 16px; border: 1px dashed rgba(255, 255, 255, 0.14); text-align: center; color: #5c6b80;">
-                        <div style="font-size: 24px; margin-bottom: 8px; color: #8fa0b5;">⌕</div>
+                        <div style="font-size: 24px; margin-bottom: 8px; color: #8fa0b5;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></div>
                         <div style="font-size: 15px; color: #8fa0b5;">
                           Aucun résultat ne correspond à votre recherche « {{ contentSearchQuery }} ».
                         </div>
@@ -1578,6 +1578,7 @@
                               solde
                             </div>
                           </div>
+                          <sc-if value="{{ s.canManage }}" hint-placeholder-val="{{ false }}">
                           <button
                             type="button"
                             onClick="{{ s.onFeature }}"
@@ -1657,6 +1658,7 @@
                               ></path>
                             </svg>
                           </button>
+                          </sc-if>
                           <sc-if
                             value="{{ s.canDelete }}"
                             hint-placeholder-val="{{ false }}"
@@ -1716,6 +1718,7 @@
                       </sc-if>
                     </div>
                   </div>
+                  <sc-if value="{{ canManageTeam }}" hint-placeholder-val="{{ false }}">
                   <div
                     style="
                       padding: clamp(22px, 2.5vw, 30px);
@@ -2020,6 +2023,7 @@
                           style-focus="border-color:#2FED7F;"
                         >
                           <option value="employe">Employé</option>
+                          <option value="chef">Chef de projet</option>
                           <option value="patron">Direction (patron)</option>
                         </select>
                       </label>
@@ -2059,6 +2063,7 @@
                       </button>
                     </form>
                   </div>
+                  </sc-if>
                 </div>
               </sc-if>
 
@@ -4238,7 +4243,7 @@
 
                     <sc-if value="{{ showContentSearch }}" hint-placeholder-val="{{ true }}">
                       <div style="position: relative; display: flex; align-items: center; margin-bottom: 16px;">
-                        <span style="position: absolute; left: 16px; font-size: 16px; color: #66768c; pointer-events: none;">⌕</span>
+                        <span style="position: absolute; left: 16px; font-size: 16px; color: #66768c; pointer-events: none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></span>
                         <input
                           type="text"
                           value="{{ contentSearchQuery }}"
@@ -4288,7 +4293,7 @@
                           color: #5c6b80;
                         "
                       >
-                        <div style="font-size: 24px; margin-bottom: 8px; color: #8fa0b5;">⌕</div>
+                        <div style="font-size: 24px; margin-bottom: 8px; color: #8fa0b5;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></div>
                         <div style="font-size: 15px; color: #8fa0b5;">
                           Aucun résultat ne correspond à votre recherche « {{ contentSearchQuery }} ».
                         </div>
@@ -5064,7 +5069,7 @@
                   {{ nlSubCount }} abonné(s)
                 </h2>
                 <div style="position: relative; display: flex; align-items: center; margin-bottom: 16px; max-width: 600px;">
-                  <span style="position: absolute; left: 16px; font-size: 16px; color: #66768c; pointer-events: none;">⌕</span>
+                  <span style="position: absolute; left: 16px; font-size: 16px; color: #66768c; pointer-events: none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></span>
                   <input
                     type="text"
                     value="{{ contentSearchQuery }}"
@@ -5076,7 +5081,7 @@
                 </div>
                 <sc-if value="{{ isNewsletterSearchEmpty }}" hint-placeholder-val="{{ false }}">
                   <div style="padding: 44px 24px; border-radius: 16px; border: 1px dashed rgba(255, 255, 255, 0.14); text-align: center; color: #5c6b80; max-width: 600px;">
-                    <div style="font-size: 24px; margin-bottom: 8px; color: #8fa0b5;">⌕</div>
+                    <div style="font-size: 24px; margin-bottom: 8px; color: #8fa0b5;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></div>
                     <div style="font-size: 15px; color: #8fa0b5;">
                       Aucun résultat ne correspond à votre recherche « {{ contentSearchQuery }} ».
                     </div>
@@ -5195,7 +5200,7 @@
                   {{ contactCount }} demande(s)
                 </h2>
                 <div style="position: relative; display: flex; align-items: center; margin-bottom: 16px; max-width: 600px;">
-                  <span style="position: absolute; left: 16px; font-size: 16px; color: #66768c; pointer-events: none;">⌕</span>
+                  <span style="position: absolute; left: 16px; font-size: 16px; color: #66768c; pointer-events: none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></span>
                   <input
                     type="text"
                     value="{{ contentSearchQuery }}"
@@ -5212,7 +5217,7 @@
                 </div>
                 <sc-if value="{{ isContactSearchEmpty }}" hint-placeholder-val="{{ false }}">
                   <div style="padding: 44px 24px; border-radius: 16px; border: 1px dashed rgba(255, 255, 255, 0.14); text-align: center; color: #5c6b80; max-width: 720px;">
-                    <div style="font-size: 24px; margin-bottom: 8px; color: #8fa0b5;">⌕</div>
+                    <div style="font-size: 24px; margin-bottom: 8px; color: #8fa0b5;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></div>
                     <div style="font-size: 15px; color: #8fa0b5;">
                       Aucune demande ne correspond à ces critères.
                     </div>
@@ -5732,6 +5737,7 @@
                   <span style="font-family:'Space Grotesk',sans-serif;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8fa0b5;">Rôle</span>
                   <select value="{{ editEmpRole }}" onChange="{{ onEditEmpRole }}" style="width:100%;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;cursor:pointer;" style-focus="border-color:#2FED7F;">
                     <option value="employe">Employé</option>
+                    <option value="chef">Chef de projet</option>
                     <option value="patron">Direction (patron)</option>
                   </select>
                 </label>
@@ -6111,7 +6117,9 @@
             // ancres de solde (celles des autres lui arrivent masquées).
             const [entries, presence, absences, recurrences, accounts0] = await Promise.all([api('/entries'), api('/presence'), api('/absences'), api('/recurrences'), api('/accounts')]);
             const patch = { entries, presence, absences, recurrences, accounts: accounts0 };
-            if (role === 'patron') {
+            // Direction ET chef de projet chargent le contenu du site (portfolio,
+            // blog, témoignages, réseaux, newsletter, demandes de contact).
+            if (role === 'patron' || role === 'chef') {
               const [portfolio, blog, testimonials, portfolioSettings, blogSettings, newsletterSubs, contactRequests, pageViewsData, socialsData] = await Promise.all([
                 api('/content/portfolio?admin=1'), api('/content/blog?admin=1'),
                 api('/content/testimonials?admin=1'), api('/settings/portfolio_page'), api('/settings/blog_page'), api('/newsletter'), api('/contact'),
@@ -6149,6 +6157,7 @@
           });
         }
 
+        // Direction : validation. Chef de projet & employé : leur espace de demande.
         defaultTab(role) { return role === 'patron' ? 'validation' : 'espace'; }
         accountOf(id) { return (this.state.accounts || []).find((a) => a.id === id) || null; }
         // Solde d'heures « à ancre » : base saisie par la direction (hoursBalance
@@ -6201,22 +6210,38 @@
           const sess = s.session;
           const role = sess ? sess.role : null;
           const isPatron = role === 'patron';
+          const isChef = role === 'chef';
+          // « Manager » = direction OU chef de projet : même vue d'ensemble.
+          // Seul le patron valide les demandes et gère les comptes/soldes.
+          const isManager = isPatron || isChef;
 
           // ---- Tabs ----
           const pendingAll = s.entries.filter((e) => e.status === 'attente');
           const pendingAbsAll = s.absences.filter((x) => x.status === 'attente');
+          // Onglets « contenu & équipe » communs à la direction et au chef de projet.
+          const managerTabs = [
+            { key: 'soldes', label: 'Équipe & soldes', count: '' },
+            { key: 'planning', label: 'Planning', count: '' },
+            { key: 'portfolio', label: 'Portfolio', count: s.portfolio.length || '' },
+            { key: 'blog', label: 'Blog', count: s.blog.length || '' },
+            { key: 'testimonials', label: 'Témoignages', count: s.testimonials.length || '' },
+            { key: 'socials', label: 'Réseaux', count: (s.socials || []).length || '' },
+            { key: 'contacts', label: 'Demandes', count: s.contactRequests.filter((c) => c.status === 'nouveau').length || '' },
+            { key: 'newsletter', label: 'Newsletter', count: s.newsletterSubs.length || '' },
+          ];
           let tabDefs;
           if (isPatron) {
+            // La direction ouvre sur la validation, puis la vue équipe/contenu.
             tabDefs = [
               { key: 'validation', label: 'Validation', count: (pendingAll.length + pendingAbsAll.length) || '' },
-              { key: 'soldes', label: 'Équipe & soldes', count: '' },
-              { key: 'planning', label: 'Planning', count: '' },
-              { key: 'portfolio', label: 'Portfolio', count: s.portfolio.length || '' },
-              { key: 'blog', label: 'Blog', count: s.blog.length || '' },
-              { key: 'testimonials', label: 'Témoignages', count: s.testimonials.length || '' },
-              { key: 'socials', label: 'Réseaux', count: (s.socials || []).length || '' },
-              { key: 'contacts', label: 'Demandes', count: s.contactRequests.filter((c) => c.status === 'nouveau').length || '' },
-              { key: 'newsletter', label: 'Newsletter', count: s.newsletterSubs.length || '' },
+              ...managerTabs,
+            ];
+          } else if (isChef) {
+            // Le chef de projet : pas de validation, mais son propre espace de
+            // demande (heures supp / congés) qui part en attente vers la direction.
+            tabDefs = [
+              { key: 'espace', label: 'Ma demande', count: '' },
+              ...managerTabs,
             ];
           } else {
             tabDefs = [
@@ -6236,7 +6261,7 @@
           const META = {
             espace: { title: 'Mon espace', sub: 'Déclarez vos heures supplémentaires et suivez votre solde.' },
             validation: { title: 'Demandes à valider', sub: 'Validez ou refusez les heures supp et récupérations demandées par l\u2019équipe.' },
-            soldes: { title: 'Équipe & soldes', sub: 'Soldes d\u2019heures et de congés par employé (+2,5 j de congés/mois, saisie du solde via le crayon) et gestion des comptes.' },
+            soldes: { title: 'Équipe & soldes', sub: isChef ? 'Vue en lecture seule des soldes d\u2019heures et de congés de l\u2019équipe. La gestion des comptes reste réservée à la direction.' : 'Soldes d\u2019heures et de congés par employé (+2,5 j de congés/mois, saisie du solde via le crayon) et gestion des comptes.' },
             planning: { title: 'Planning de présence', sub: 'Cliquez sur une case pour définir la présence ou demander une récupération.' },
             portfolio: { title: 'Gestion du portfolio', sub: 'Projets de la section « Autres réalisations ».' },
             blog: { title: 'Gestion du blog', sub: 'Articles publiés sur la page Blog. Cochez « à la une » pour choisir l\u2019article vedette.' },
@@ -6368,7 +6393,7 @@
           const myEntryRows = (myId ? s.entries.filter((e) => e.employeeId === myId) : []).map((e) => {
             const row = entryRow(e);
             return { ...row, filterKey: e.kind === 'recup' ? 'recup' : 'sup', sortDate: e.date,
-              isPending: e.status === 'attente', onGo: () => this.goToPlanningDate(e.date),
+              isPending: e.status === 'attente', isValidated: e.status === 'valide', onGo: () => this.goToPlanningDate(e.date),
               onDelete: (ev) => { if (ev) ev.stopPropagation(); this.deleteEntry(e.id); },
               searchHay: (row.kindLabel + ' ' + row.metaLine).toLowerCase() };
           });
@@ -6381,7 +6406,7 @@
             return { kindLabel: mt.label || mt.short, hoursLabel: mt.short || 'Abs', hoursColor: mt.color || '#c9c2f5',
               metaLine: dLabel + (x.motif ? (' · ' + x.motif) : '') + (unpaid ? ' · Non payé' : ''),
               ...statusMeta(x.status), filterKey: x.type === 'conge' ? 'conge' : (x.type === 'absence' ? 'absence' : 'autre'),
-              sortDate: x.startDate, isPending: x.status === 'attente', onGo: () => this.goToPlanningDate(x.startDate),
+              sortDate: x.startDate, isPending: x.status === 'attente', isValidated: x.status === 'valide', onGo: () => this.goToPlanningDate(x.startDate),
               onDelete: (ev) => { if (ev) ev.stopPropagation(); this.deleteAbsence(x.id); },
               searchHay: ((mt.label || '') + ' ' + dLabel + ' ' + (x.motif || '')).toLowerCase() };
           });
@@ -6405,17 +6430,18 @@
           const espaceCounts = { tous: rawRecap.length, sup: 0, recup: 0, conge: 0, absence: 0, autre: 0 };
           rawRecap.forEach((r) => { espaceCounts[r.filterKey] = (espaceCounts[r.filterKey] || 0) + 1; });
           espaceCounts.attente = rawRecap.filter((r) => r.isPending).length;
+          espaceCounts.valide = rawRecap.filter((r) => r.isValidated).length;
           const espaceFilterStyle = (active) => "font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;padding:7px 14px;border-radius:100px;cursor:pointer;transition:background .2s,border-color .2s,color .2s;"
             + (active ? 'background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);color:#fff;' : 'background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#8fa0b5;');
           const setEspaceFilter = (f) => () => this.setState({ espaceFilter: f, espacePage: 1 });
           const espaceFilterChips = [
-            { key: 'tous', label: 'Tout' }, { key: 'attente', label: 'En attente' },
+            { key: 'tous', label: 'Tout' }, { key: 'attente', label: 'En attente' }, { key: 'valide', label: 'Validé' },
             { key: 'sup', label: 'Heures supp' }, { key: 'recup', label: 'Récup' },
             { key: 'conge', label: 'Congés' }, { key: 'absence', label: 'Absences' },
           ].filter((f) => f.key === 'tous' || espaceCounts[f.key] > 0).map((f) => ({
             label: f.label + ' (' + (espaceCounts[f.key] || 0) + ')', style: espaceFilterStyle(espaceFilter === f.key), onClick: setEspaceFilter(f.key),
           }));
-          const matchesEspace = (r) => (espaceFilter === 'tous' || (espaceFilter === 'attente' ? r.isPending : r.filterKey === espaceFilter)) && (!q || r.searchHay.indexOf(q) !== -1);
+          const matchesEspace = (r) => (espaceFilter === 'tous' || (espaceFilter === 'attente' ? r.isPending : (espaceFilter === 'valide' ? r.isValidated : r.filterKey === espaceFilter))) && (!q || r.searchHay.indexOf(q) !== -1);
           const filteredRecap = rawRecap.filter(matchesEspace);
           const espacePageSize = 6;
           const espaceTotalPages = Math.max(1, Math.ceil(filteredRecap.length / espacePageSize));
@@ -6515,7 +6541,10 @@
               featTitle: a.featured ? 'Retirer de la une' : 'Mettre à la une',
               onFeature: () => this.toggleEmpFeatured(a),
               onEdit: () => this.openEditEmp(a),
-              canDelete: true, onDelete: () => this.askDelete(a.id, a.name),
+              // Le chef de projet a une vue équipe en LECTURE SEULE : pas de
+              // gestion (à la une / édition / suppression), réservée au patron.
+              canManage: isPatron,
+              canDelete: isPatron, onDelete: () => this.askDelete(a.id, a.name),
             };
           });
           const matchesSoldes = (a) => !q || (String(a.name || '') + ' ' + String(a.poste || '') + ' ' + String(a.solde || '') + ' ' + String(a.sup || '') + ' ' + String(a.recup || '')).toLowerCase().indexOf(q) !== -1;
@@ -6618,7 +6647,11 @@
             };
           });
           const weekLabel = 'Semaine du ' + fmtLong(wStart);
-          const planningEmployees = isPatron ? employees : (sess ? [sess] : []);
+          // Direction : planning de toute l'équipe. Chef de projet : l'équipe
+          // (lecture seule) + sa propre ligne éditable. Employé : soi uniquement.
+          const planningEmployees = isPatron ? employees
+            : isChef ? (sess ? [...employees, sess] : employees)
+            : (sess ? [sess] : []);
           const halfLabel = (h) => (h === 'am' ? 'matin' : h === 'pm' ? 'après-midi' : '');
           // Priorité d'une case : absence > récup > présence saisie > règle
           // récurrente > jour férié > vide.
@@ -6661,7 +6694,7 @@
           };
           const canEdit = (empId) => isPatron || (myId && empId === myId);
           const planningRows = planningEmployees.map((a) => ({
-            name: isPatron ? a.name : 'Moi', initials: codInitials(a.name), avatarBg: this.avatarBg(a.id),
+            name: (myId && a.id === myId) ? 'Moi' : a.name, initials: codInitials(a.name), avatarBg: this.avatarBg(a.id),
             cells: days.map((d) => {
               const c = cellFor(a.id, d);
               const editable = canEdit(a.id);
@@ -6859,9 +6892,9 @@
             cnSpecialIcon: /[^a-zA-Z0-9À-ÖØ-öø-ÿ\s]/.test(s.changeNew || '') ? '✓' : '•',
 
             // header
-            roleLabel: isPatron ? 'Direction' : 'Employé',
-            roleColor: isPatron ? '#F5C86B' : '#2FED7F',
-            roleBorder: isPatron ? 'rgba(245,200,107,.4)' : 'rgba(47,237,127,.4)',
+            roleLabel: isPatron ? 'Direction' : (isChef ? 'Chef de projet' : 'Employé'),
+            roleColor: isPatron ? '#F5C86B' : (isChef ? '#A7D8F0' : '#2FED7F'),
+            roleBorder: isPatron ? 'rgba(245,200,107,.4)' : (isChef ? 'rgba(167,216,240,.4)' : 'rgba(47,237,127,.4)'),
             meName: sess ? sess.name : '', meInitials: sess ? codInitials(sess.name) : '',
 
             tabs, sectionTitle: META.title, sectionSubtitle: META.sub,
@@ -6869,6 +6902,8 @@
             // section flags
             showEspace: tab === 'espace', showValidation: tab === 'validation',
             showSoldes: tab === 'soldes', showPlanning: tab === 'planning', showContent: isContent,
+            // Gestion d'équipe (ajout / édition de comptes) : patron uniquement.
+            canManageTeam: isPatron,
             showNewsletter: tab === 'newsletter',
             showContacts: tab === 'contacts',
             showSocials: tab === 'socials',
@@ -7006,7 +7041,7 @@
 
             // planning
             weekHeaders, weekLabel, planningRows, legend,
-            planningHint: isPatron ? 'En tant que direction, vous pouvez éditer toutes les lignes. Les récupérations « ? » sont en attente de validation (onglet Validation).' : 'Cliquez sur un jour pour indiquer votre présence ou demander une récupération d\u2019heures supp.',
+            planningHint: isPatron ? 'En tant que direction, vous pouvez éditer toutes les lignes. Les récupérations « ? » sont en attente de validation (onglet Validation).' : (isChef ? 'Vue d’équipe en lecture seule. Vous pouvez éditer votre propre ligne : vos demandes partent en validation auprès de la direction.' : 'Cliquez sur un jour pour indiquer votre présence ou demander une récupération d\u2019heures supp.'),
             prevWeek: () => this.setState({ weekStart: isoOf(addDays(parseIso(s.weekStart), -7)) }),
             nextWeek: () => this.setState({ weekStart: isoOf(addDays(parseIso(s.weekStart), 7)) }),
             thisWeek: () => this.setState({ weekStart: isoOf(mondayOf(new Date())) }),

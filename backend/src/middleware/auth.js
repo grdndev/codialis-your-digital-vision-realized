@@ -37,3 +37,16 @@ export function requirePatron(req, res, next) {
   if (req.user?.role !== 'patron') return res.status(403).json({ error: 'Réservé à la direction' });
   next();
 }
+
+// « Manager » = direction (patron) OU chef de projet. Ces deux rôles partagent
+// la même vue d'ensemble (toute l'équipe, tout le contenu). Le chef de projet
+// n'a PAS les droits d'écriture réservés au patron (validation des demandes,
+// gestion des comptes/soldes) : ceux-là restent derrière requirePatron.
+export function isManager(user) {
+  return user?.role === 'patron' || user?.role === 'chef';
+}
+
+export function requireManager(req, res, next) {
+  if (!isManager(req.user)) return res.status(403).json({ error: 'Réservé à la direction et aux chefs de projet' });
+  next();
+}

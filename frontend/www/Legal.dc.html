@@ -1,418 +1,1566 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="./support.js"></script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
     <script src="./responsive.js"></script>
-</head>
-<body>
-<x-dc>
-<helmet>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
-<style>
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body { margin: 0; background: #0E1626; color: #EAF0F7; font-family: 'IBM Plex Sans', sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-  a { color: #2FED7F; text-decoration: none; }
-  a:hover { color: #7ff2b3; }
-  ::selection { background: #2FED7F; color: #08111E; }
-  @keyframes cod-rise { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
-  @keyframes cod-float { 0%,100% { transform: translate(0,0) rotate(-3deg); } 50% { transform: translate(16px,-40px) rotate(8deg); } }
-  @keyframes cod-float2 { 0%,100% { transform: translate(0,0) rotate(4deg); } 50% { transform: translate(-20px,36px) rotate(-9deg); } }
+    <script src="./i18n-dict.js"></script>
+    <script src="./i18n.js"></script>
+    <script src="./footer-socials.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin=""
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap"
+          rel="stylesheet"
+        />
+        <style>
+          * {
+            box-sizing: border-box;
+          }
+          html {
+            scroll-behavior: smooth;
+          }
+          body {
+            margin: 0;
+            background: #0e1626;
+            color: #eaf0f7;
+            font-family: "IBM Plex Sans", sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+          }
+          a {
+            color: #2fed7f;
+            text-decoration: none;
+          }
+          a:hover {
+            color: #7ff2b3;
+          }
+          ::selection {
+            background: #2fed7f;
+            color: #08111e;
+          }
+          @keyframes cod-rise {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: none;
+            }
+          }
+          @keyframes cod-float {
+            0%,
+            100% {
+              transform: translate(0, 0) rotate(-3deg);
+            }
+            50% {
+              transform: translate(16px, -40px) rotate(8deg);
+            }
+          }
+          @keyframes cod-float2 {
+            0%,
+            100% {
+              transform: translate(0, 0) rotate(4deg);
+            }
+            50% {
+              transform: translate(-20px, 36px) rotate(-9deg);
+            }
+          }
 
-  /* Legal content helpers */
-  .lg-card { position:relative; padding:clamp(24px,3vw,40px); border-radius:20px; background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.012)); border:1px solid rgba(255,255,255,.09); margin-bottom:18px; scroll-margin-top:110px; }
-  .lg-num { display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; padding:0 9px; border-radius:9px; background:rgba(47,237,127,.13); color:#2FED7F; font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:14px; }
-  .lg-head { display:flex; align-items:center; gap:14px; margin:0 0 18px; }
-  .lg-h { font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:clamp(19px,2.3vw,24px); line-height:1.2; letter-spacing:-.01em; margin:0; color:#fff; }
-  .lg-p { font-size:15.5px; line-height:1.75; color:#A6B3C6; margin:0 0 14px; }
-  .lg-p:last-child { margin-bottom:0; }
-  .lg-p strong { color:#D6E0EC; font-weight:600; }
-  .lg-p a { color:#2FED7F; }
-  .lg-list { margin:0 0 14px; padding:0; list-style:none; display:flex; flex-direction:column; gap:9px; }
-  .lg-list li { position:relative; padding-left:22px; font-size:15.5px; line-height:1.7; color:#A6B3C6; }
-  .lg-list li::before { content:''; position:absolute; left:2px; top:11px; width:7px; height:7px; border-radius:50%; background:#2FED7F; opacity:.75; }
-  .lg-list li strong { color:#D6E0EC; font-weight:600; }
-  .lg-dl { display:grid; grid-template-columns:minmax(180px,240px) 1fr; gap:0; border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,.08); margin:0 0 6px; }
-  .lg-dl > div { display:contents; }
-  .lg-dt { padding:12px 18px; background:rgba(255,255,255,.02); font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:.04em; text-transform:uppercase; color:#8FA0B5; border-top:1px solid rgba(255,255,255,.055); }
-  .lg-dd { padding:12px 18px; font-size:15px; color:#D6E0EC; border-top:1px solid rgba(255,255,255,.055); }
-  .lg-dd a { color:#2FED7F; }
-  .lg-dl .lg-dt:first-of-type, .lg-dl .lg-dd:nth-of-type(2) { border-top:0; }
-  @media (max-width:620px){
-    .lg-dl { grid-template-columns:1fr; }
-    .lg-dt { border-top:1px solid rgba(255,255,255,.055); }
-    .lg-dd { padding-top:2px; }
-    .lg-dl .lg-dd:nth-of-type(2) { border-top:0; }
-  }
-</style>
-</helmet>
+          /* Legal content helpers */
+          .lg-card {
+            position: relative;
+            padding: clamp(24px, 3vw, 40px);
+            border-radius: 20px;
+            background: linear-gradient(
+              160deg,
+              rgba(255, 255, 255, 0.05),
+              rgba(255, 255, 255, 0.012)
+            );
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            margin-bottom: 18px;
+            scroll-margin-top: 110px;
+          }
+          .lg-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 30px;
+            height: 30px;
+            padding: 0 9px;
+            border-radius: 9px;
+            background: rgba(47, 237, 127, 0.13);
+            color: #2fed7f;
+            font-family: "IBM Plex Mono", monospace;
+            font-weight: 500;
+            font-size: 14px;
+          }
+          .lg-head {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 0 0 18px;
+          }
+          .lg-h {
+            font-family: "Space Grotesk", sans-serif;
+            font-weight: 600;
+            font-size: clamp(19px, 2.3vw, 24px);
+            line-height: 1.2;
+            letter-spacing: -0.01em;
+            margin: 0;
+            color: #fff;
+          }
+          .lg-p {
+            font-size: 15.5px;
+            line-height: 1.75;
+            color: #a6b3c6;
+            margin: 0 0 14px;
+          }
+          .lg-p:last-child {
+            margin-bottom: 0;
+          }
+          .lg-p strong {
+            color: #d6e0ec;
+            font-weight: 600;
+          }
+          .lg-p a {
+            color: #2fed7f;
+          }
+          .lg-list {
+            margin: 0 0 14px;
+            padding: 0;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+          }
+          .lg-list li {
+            position: relative;
+            padding-left: 22px;
+            font-size: 15.5px;
+            line-height: 1.7;
+            color: #a6b3c6;
+          }
+          .lg-list li::before {
+            content: "";
+            position: absolute;
+            left: 2px;
+            top: 11px;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #2fed7f;
+            opacity: 0.75;
+          }
+          .lg-list li strong {
+            color: #d6e0ec;
+            font-weight: 600;
+          }
+          .lg-dl {
+            display: grid;
+            grid-template-columns: minmax(180px, 240px) 1fr;
+            gap: 0;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin: 0 0 6px;
+          }
+          .lg-dl > div {
+            display: contents;
+          }
+          .lg-dt {
+            padding: 12px 18px;
+            background: rgba(255, 255, 255, 0.02);
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 12.5px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #8fa0b5;
+            border-top: 1px solid rgba(255, 255, 255, 0.055);
+          }
+          .lg-dd {
+            padding: 12px 18px;
+            font-size: 15px;
+            color: #d6e0ec;
+            border-top: 1px solid rgba(255, 255, 255, 0.055);
+          }
+          .lg-dd a {
+            color: #2fed7f;
+          }
+          .lg-dl .lg-dt:first-of-type,
+          .lg-dl .lg-dd:nth-of-type(2) {
+            border-top: 0;
+          }
+          @media (max-width: 620px) {
+            .lg-dl {
+              grid-template-columns: 1fr;
+            }
+            .lg-dt {
+              border-top: 1px solid rgba(255, 255, 255, 0.055);
+            }
+            .lg-dd {
+              padding-top: 2px;
+            }
+            .lg-dl .lg-dd:nth-of-type(2) {
+              border-top: 0;
+            }
+          }
+        </style>
+      </helmet>
 
-<div style="position:relative;width:100%;max-width:100%;">
+      <div style="position: relative; width: 100%; max-width: 100%">
+        <!-- NAV -->
+        <nav
+          id="cod-nav"
+          style="
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: clamp(14px, 2vw, 28px);
+            padding: 9px 9px 9px 22px;
+            border-radius: 100px;
+            background: rgba(16, 24, 40, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(18px) saturate(140%);
+            -webkit-backdrop-filter: blur(18px) saturate(140%);
+            box-shadow:
+              0 18px 50px -18px rgba(0, 0, 0, 0.65),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            max-width: calc(100vw - 32px);
+            transition:
+              box-shadow 0.4s,
+              background 0.4s;
+          "
+        >
+          <a
+            href="index.html"
+            style="
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              flex-shrink: 0;
+            "
+          >
+            <img
+              src="assets/codialis-white.png"
+              alt="Codialis"
+              style="height: 26px; width: auto; display: block"
+            />
+          </a>
+          <div
+            class="cod-navlinks"
+            style="
+              display: flex;
+              align-items: center;
+              gap: clamp(6px, 1vw, 12px);
+              padding: 0 clamp(4px, 1vw, 10px);
+              border-left: 1px solid rgba(255, 255, 255, 0.1);
+              border-right: 1px solid rgba(255, 255, 255, 0.1);
+            "
+          >
+            <sc-for list="{{ navLinks }}" as="lk" hint-placeholder-count="5">
+              <a
+                href="{{ lk.href }}"
+                style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:14.5px;letter-spacing:.01em;color:{{ lk.color }};padding:8px 12px;border-radius:100px;transition:color .25s,background .25s;"
+                style-hover="color:#fff;background:rgba(255,255,255,.07);"
+                >{{ lk.label }}</a
+              >
+            </sc-for>
+          </div>
+          <div
+            class="cod-navtoggle"
+            style="
+              display: flex;
+              align-items: center;
+              background: rgba(255, 255, 255, 0.06);
+              border-radius: 100px;
+              padding: 3px;
+              flex-shrink: 0;
+            "
+          >
+            <button
+              type="button"
+              onClick="{{ setLangFr }}"
+              style="border:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;padding:5px 11px;border-radius:100px;transition:background .25s,color .25s;background:{{ frBg }};color:{{ frColor }};"
+            >
+              FR
+            </button>
+            <button
+              type="button"
+              onClick="{{ setLangEn }}"
+              style="border:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;padding:5px 11px;border-radius:100px;transition:background .25s,color .25s;background:{{ enBg }};color:{{ enColor }};"
+            >
+              EN
+            </button>
+          </div>
+          <a
+            href="Contact.dc.html#form"
+            style="
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              padding: 11px 20px;
+              border-radius: 100px;
+              background: #2fed7f;
+              color: #08111e;
+              font-family: &quot;Space Grotesk&quot;, sans-serif;
+              font-weight: 600;
+              font-size: 14.5px;
+              flex-shrink: 0;
+              transition:
+                transform 0.25s,
+                box-shadow 0.25s;
+            "
+            style-hover="transform:translateY(-1px);box-shadow:0 12px 26px -8px rgba(47,237,127,.6);"
+            >Prendre RDV<span style="display: inline-block; font-size: 15px"
+              >→</span
+            ></a
+          >
+        </nav>
 
-  <!-- NAV -->
-  <nav id="cod-nav" style="position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:100;display:flex;align-items:center;gap:clamp(14px,2vw,28px);padding:9px 9px 9px 22px;border-radius:100px;background:rgba(16,24,40,.72);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);box-shadow:0 18px 50px -18px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.06);max-width:calc(100vw - 32px);transition:box-shadow .4s,background .4s;">
-    <a href="index.html" style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-      <img src="assets/codialis-white.png" alt="Codialis" style="height:26px;width:auto;display:block;">
-    </a>
-    <div class="cod-navlinks" style="display:flex;align-items:center;gap:clamp(6px,1vw,12px);padding:0 clamp(4px,1vw,10px);border-left:1px solid rgba(255,255,255,.1);border-right:1px solid rgba(255,255,255,.1);">
-      <sc-for list="{{ navLinks }}" as="lk" hint-placeholder-count="5">
-        <a href="{{ lk.href }}" style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:14.5px;letter-spacing:.01em;color:{{ lk.color }};padding:8px 12px;border-radius:100px;transition:color .25s,background .25s;" style-hover="color:#fff;background:rgba(255,255,255,.07);">{{ lk.label }}</a>
-      </sc-for>
-    </div>
-    <div class="cod-navtoggle" style="display:flex;align-items:center;background:rgba(255,255,255,.06);border-radius:100px;padding:3px;flex-shrink:0;">
-      <button type="button" onClick="{{ setLangFr }}" style="border:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;padding:5px 11px;border-radius:100px;transition:background .25s,color .25s;background:{{ frBg }};color:{{ frColor }};">FR</button>
-      <button type="button" onClick="{{ setLangEn }}" style="border:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;padding:5px 11px;border-radius:100px;transition:background .25s,color .25s;background:{{ enBg }};color:{{ enColor }};">EN</button>
-    </div>
-    <a href="Contact.dc.html#form" style="display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:100px;background:#2FED7F;color:#08111E;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;flex-shrink:0;transition:transform .25s,box-shadow .25s;" style-hover="transform:translateY(-1px);box-shadow:0 12px 26px -8px rgba(47,237,127,.6);">Prendre RDV<span style="display:inline-block;font-size:15px;">→</span></a>
-  </nav>
+        <!-- HERO -->
+        <header
+          data-screen-label="Légal — Hero"
+          style="
+            position: relative;
+            overflow: hidden;
+            padding: clamp(140px, 19vh, 220px) clamp(20px, 5vw, 64px)
+              clamp(40px, 5vw, 60px);
+            background:
+              radial-gradient(
+                120% 90% at 50% 0%,
+                rgba(47, 237, 127, 0.15),
+                rgba(14, 22, 38, 0) 55%
+              ),
+              #0e1626;
+          "
+        >
+          <div
+            style="
+              position: absolute;
+              inset: 0;
+              z-index: 0;
+              pointer-events: none;
+              overflow: hidden;
+              font-family: &quot;IBM Plex Mono&quot;, monospace;
+              font-weight: 500;
+            "
+          >
+            <span
+              style="
+                position: absolute;
+                top: 30%;
+                left: 9%;
+                font-size: 42px;
+                color: rgba(47, 237, 127, 0.11);
+                animation: cod-float 14s ease-in-out infinite;
+              "
+              >§</span
+            >
+            <span
+              style="
+                position: absolute;
+                top: 22%;
+                left: 84%;
+                font-size: 38px;
+                color: rgba(255, 255, 255, 0.05);
+                animation: cod-float2 16s ease-in-out infinite;
+                animation-delay: -3s;
+              "
+              >{ }</span
+            >
+            <span
+              style="
+                position: absolute;
+                top: 66%;
+                left: 88%;
+                font-size: 30px;
+                color: rgba(47, 237, 127, 0.09);
+                animation: cod-float 17s ease-in-out infinite;
+                animation-delay: -5s;
+              "
+              >©</span
+            >
+          </div>
+          <div
+            style="
+              position: relative;
+              z-index: 1;
+              max-width: 1080px;
+              margin: 0 auto;
+            "
+          >
+            <div
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 20px;
+                animation: cod-rise 0.7s ease both;
+              "
+            >
+              <span
+                style="width: 26px; height: 1px; background: #2fed7f"
+              ></span>
+              <span
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 13px;
+                  letter-spacing: 0.2em;
+                  text-transform: uppercase;
+                  color: #2fed7f;
+                "
+                >Informations légales</span
+              >
+            </div>
+            <h1
+              style="
+                font-family: &quot;Space Grotesk&quot;, sans-serif;
+                font-weight: 600;
+                font-size: clamp(34px, 5.5vw, 64px);
+                line-height: 1.05;
+                letter-spacing: -0.02em;
+                margin: 0 0 22px;
+                max-width: 20ch;
+                color: #edf3f7;
+                animation: cod-rise 0.8s ease both;
+                animation-delay: 0.08s;
+              "
+            >
+              Mentions légales
+              <span style="color: #2fed7f">&amp;</span> confidentialité
+            </h1>
+            <p
+              style="
+                font-size: 17px;
+                line-height: 1.7;
+                color: #a6b3c6;
+                margin: 0 0 30px;
+                max-width: 60ch;
+                animation: cod-rise 0.8s ease both;
+                animation-delay: 0.16s;
+              "
+            >
+              Conformément aux dispositions de la loi n° 2004-575 du 21 juin
+              2004 pour la Confiance en l'économie numérique (LCEN) et au
+              Règlement Général sur la Protection des Données (RGPD).
+            </p>
+            <div
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 9px;
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 12.5px;
+                letter-spacing: 0.06em;
+                color: #8fa0b5;
+                animation: cod-rise 0.8s ease both;
+                animation-delay: 0.24s;
+              "
+            >
+              <span
+                style="
+                  width: 8px;
+                  height: 8px;
+                  border-radius: 50%;
+                  background: #2fed7f;
+                  box-shadow: 0 0 10px 2px rgba(47, 237, 127, 0.55);
+                "
+              ></span>
+              Dernière mise à jour : mars 2025
+            </div>
+          </div>
+        </header>
 
-  <!-- HERO -->
-  <header data-screen-label="Légal — Hero" style="position:relative;overflow:hidden;padding:clamp(140px,19vh,220px) clamp(20px,5vw,64px) clamp(40px,5vw,60px);background:radial-gradient(120% 90% at 50% 0%,rgba(47,237,127,.15),rgba(14,22,38,0) 55%),#0E1626;">
-    <div style="position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;font-family:'IBM Plex Mono',monospace;font-weight:500;">
-      <span style="position:absolute;top:30%;left:9%;font-size:42px;color:rgba(47,237,127,.11);animation:cod-float 14s ease-in-out infinite;">§</span>
-      <span style="position:absolute;top:22%;left:84%;font-size:38px;color:rgba(255,255,255,.05);animation:cod-float2 16s ease-in-out infinite;animation-delay:-3s;">{ }</span>
-      <span style="position:absolute;top:66%;left:88%;font-size:30px;color:rgba(47,237,127,.09);animation:cod-float 17s ease-in-out infinite;animation-delay:-5s;">©</span>
-    </div>
-    <div style="position:relative;z-index:1;max-width:1080px;margin:0 auto;">
-      <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:20px;animation:cod-rise .7s ease both;">
-        <span style="width:26px;height:1px;background:#2FED7F;"></span>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#2FED7F;">Informations légales</span>
-      </div>
-      <h1 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:clamp(34px,5.5vw,64px);line-height:1.05;letter-spacing:-.02em;margin:0 0 22px;max-width:20ch;color:#EDF3F7;animation:cod-rise .8s ease both;animation-delay:.08s;">Mentions légales <span style="color:#2FED7F;">&amp;</span> confidentialité</h1>
-      <p style="font-size:17px;line-height:1.7;color:#A6B3C6;margin:0 0 30px;max-width:60ch;animation:cod-rise .8s ease both;animation-delay:.16s;">Conformément aux dispositions de la loi n° 2004-575 du 21 juin 2004 pour la Confiance en l'économie numérique (LCEN) et au Règlement Général sur la Protection des Données (RGPD).</p>
-      <div style="display:inline-flex;align-items:center;gap:9px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;letter-spacing:.06em;color:#8FA0B5;animation:cod-rise .8s ease both;animation-delay:.24s;">
-        <span style="width:8px;height:8px;border-radius:50%;background:#2FED7F;box-shadow:0 0 10px 2px rgba(47,237,127,.55);"></span>
-        Dernière mise à jour : mars 2025
-      </div>
-    </div>
-  </header>
-
-  <!-- TAB SWITCHER -->
-  <div style="position:sticky;top:0;z-index:50;background:rgba(10,16,30,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06);">
-    <div style="max-width:1080px;margin:0 auto;padding:12px clamp(20px,5vw,64px);display:flex;gap:10px;flex-wrap:wrap;">
-      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
-        <button type="button" onClick="{{ t.onClick }}" style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;padding:10px 20px;border-radius:100px;cursor:pointer;transition:background .2s,border-color .2s,color .2s;background:{{ t.bg }};border:1px solid {{ t.border }};color:{{ t.color }};">{{ t.label }}</button>
-      </sc-for>
-    </div>
-  </div>
-
-  <!-- CONTENT -->
-  <section style="position:relative;padding:clamp(40px,5vw,70px) clamp(20px,5vw,64px) clamp(70px,9vw,120px);background:#0A101E;">
-    <div style="max-width:1080px;margin:0 auto;">
-
-      <!-- ===== MENTIONS LÉGALES ===== -->
-      <sc-if value="{{ showML }}" hint-placeholder-val="{{ true }}">
-      <div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">01</span><h2 class="lg-h">Informations générales</h2></div>
-          <p class="lg-p">Le site internet <strong>www.codialis.com</strong> est édité par la société :</p>
-          <div class="lg-dl">
-            <div><span class="lg-dt">Société</span><span class="lg-dd">CODIALIS</span></div>
-            <div><span class="lg-dt">Forme juridique</span><span class="lg-dd">EURL (Entreprise Unipersonnelle à Responsabilité Limitée)</span></div>
-            <div><span class="lg-dt">Capital social</span><span class="lg-dd">1 000,00 €</span></div>
-            <div><span class="lg-dt">Siège social</span><span class="lg-dd">88 Rue du Génie, 94400 Vitry-sur-Seine, France</span></div>
-            <div><span class="lg-dt">SIREN</span><span class="lg-dd">991 679 457</span></div>
-            <div><span class="lg-dt">SIRET</span><span class="lg-dd">991 679 457 00010</span></div>
-            <div><span class="lg-dt">RCS</span><span class="lg-dd">991 679 457 R.C.S. Créteil</span></div>
-            <div><span class="lg-dt">TVA intracom.</span><span class="lg-dd">FR77991679457</span></div>
-            <div><span class="lg-dt">Code NAF</span><span class="lg-dd">62.02A — Conseil en systèmes et logiciels informatiques</span></div>
-            <div><span class="lg-dt">Directeur publication</span><span class="lg-dd">M. Jayan Grondin</span></div>
-            <div><span class="lg-dt">Téléphone</span><span class="lg-dd"><a href="tel:+33783905717">07 83 90 57 17</a></span></div>
-            <div><span class="lg-dt">E-mail</span><span class="lg-dd"><a href="mailto:contact@codialis.com">contact@codialis.com</a></span></div>
+        <!-- TAB SWITCHER -->
+        <div
+          style="
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(10, 16, 30, 0.82);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          "
+        >
+          <div
+            style="
+              max-width: 1080px;
+              margin: 0 auto;
+              padding: 12px clamp(20px, 5vw, 64px);
+              display: flex;
+              gap: 10px;
+              flex-wrap: wrap;
+            "
+          >
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+              <button
+                type="button"
+                onClick="{{ t.onClick }}"
+                style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;padding:10px 20px;border-radius:100px;cursor:pointer;transition:background .2s,border-color .2s,color .2s;background:{{ t.bg }};border:1px solid {{ t.border }};color:{{ t.color }};"
+              >
+                {{ t.label }}
+              </button>
+            </sc-for>
           </div>
         </div>
 
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">02</span><h2 class="lg-h">Hébergement</h2></div>
-          <p class="lg-p">Le site www.codialis.com est hébergé par :</p>
-          <div class="lg-dl">
-            <div><span class="lg-dt">Hébergeur</span><span class="lg-dd">Hostinger International Ltd.</span></div>
-            <div><span class="lg-dt">Adresse</span><span class="lg-dd">Švitrigailos g. 34, LT-03230 Vilnius, Lituanie</span></div>
-            <div><span class="lg-dt">Site web</span><span class="lg-dd"><a href="https://www.hostinger.fr" target="_blank" rel="noopener">www.hostinger.fr</a></span></div>
+        <!-- CONTENT -->
+        <section
+          style="
+            position: relative;
+            padding: clamp(40px, 5vw, 70px) clamp(20px, 5vw, 64px)
+              clamp(70px, 9vw, 120px);
+            background: #0a101e;
+          "
+        >
+          <div style="max-width: 1080px; margin: 0 auto">
+            <!-- ===== MENTIONS LÉGALES ===== -->
+            <sc-if value="{{ showML }}" hint-placeholder-val="{{ true }}">
+              <div>
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">01</span>
+                    <h2 class="lg-h">Informations générales</h2>
+                  </div>
+                  <p class="lg-p">
+                    Le site internet <strong>www.codialis.com</strong> est édité
+                    par la société :
+                  </p>
+                  <div class="lg-dl">
+                    <div>
+                      <span class="lg-dt">Société</span
+                      ><span class="lg-dd">CODIALIS</span>
+                    </div>
+                    <div>
+                      <span class="lg-dt">Forme juridique</span
+                      ><span class="lg-dd"
+                        >EURL (Entreprise Unipersonnelle à Responsabilité
+                        Limitée)</span
+                      >
+                    </div>
+                    <div>
+                      <span class="lg-dt">Capital social</span
+                      ><span class="lg-dd">1 000,00 €</span>
+                    </div>
+                    <div>
+                      <span class="lg-dt">Siège social</span
+                      ><span class="lg-dd"
+                        >88 Rue du Génie, 94400 Vitry-sur-Seine, France</span
+                      >
+                    </div>
+                    <div>
+                      <span class="lg-dt">SIREN</span
+                      ><span class="lg-dd">991 679 457</span>
+                    </div>
+                    <div>
+                      <span class="lg-dt">SIRET</span
+                      ><span class="lg-dd">991 679 457 00010</span>
+                    </div>
+                    <div>
+                      <span class="lg-dt">RCS</span
+                      ><span class="lg-dd">991 679 457 R.C.S. Créteil</span>
+                    </div>
+                    <div>
+                      <span class="lg-dt">TVA intracom.</span
+                      ><span class="lg-dd">FR77991679457</span>
+                    </div>
+                    <div>
+                      <span class="lg-dt">Code NAF</span
+                      ><span class="lg-dd"
+                        >62.02A — Conseil en systèmes et logiciels
+                        informatiques</span
+                      >
+                    </div>
+                    <div>
+                      <span class="lg-dt">Directeur publication</span
+                      ><span class="lg-dd">M. Jayan Grondin</span>
+                    </div>
+                    <div>
+                      <span class="lg-dt">Téléphone</span
+                      ><span class="lg-dd"
+                        ><a href="tel:+33783905717">07 83 90 57 17</a></span
+                      >
+                    </div>
+                    <div>
+                      <span class="lg-dt">E-mail</span
+                      ><span class="lg-dd"
+                        ><a href="mailto:contact@codialis.com"
+                          >contact@codialis.com</a
+                        ></span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">02</span>
+                    <h2 class="lg-h">Hébergement</h2>
+                  </div>
+                  <p class="lg-p">Le site www.codialis.com est hébergé par :</p>
+                  <div class="lg-dl">
+                    <div>
+                      <span class="lg-dt">Hébergeur</span
+                      ><span class="lg-dd">Hostinger International Ltd.</span>
+                    </div>
+                    <div>
+                      <span class="lg-dt">Adresse</span
+                      ><span class="lg-dd"
+                        >Švitrigailos g. 34, LT-03230 Vilnius, Lituanie</span
+                      >
+                    </div>
+                    <div>
+                      <span class="lg-dt">Site web</span
+                      ><span class="lg-dd"
+                        ><a
+                          href="https://www.hostinger.fr"
+                          target="_blank"
+                          rel="noopener"
+                          >www.hostinger.fr</a
+                        ></span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">03</span>
+                    <h2 class="lg-h">Propriété intellectuelle</h2>
+                  </div>
+                  <p class="lg-p">
+                    L'ensemble du contenu du site www.codialis.com — incluant,
+                    sans s'y limiter, les textes, articles, visuels, logos,
+                    icônes, photographies, vidéos, interfaces, code source,
+                    bases de données et logiciels — est la propriété exclusive
+                    de CODIALIS, sauf mention contraire explicite.
+                  </p>
+                  <p class="lg-p">
+                    Ces éléments sont protégés par le droit français et
+                    international de la propriété intellectuelle, notamment le
+                    Code de la propriété intellectuelle (articles L.111-1 et
+                    suivants).
+                  </p>
+                  <p class="lg-p">
+                    Toute reproduction, représentation, modification,
+                    publication, adaptation ou exploitation, totale ou
+                    partielle, par quelque procédé que ce soit, sans
+                    l'autorisation préalable et écrite de CODIALIS, est
+                    strictement interdite et constituerait une contrefaçon
+                    sanctionnée pénalement et civilement.
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">04</span>
+                    <h2 class="lg-h">Services proposés</h2>
+                  </div>
+                  <p class="lg-p">
+                    CODIALIS est une société de conseil et d'ingénierie
+                    informatique spécialisée dans la conception de solutions
+                    digitales sur mesure à destination des entreprises. Elle
+                    propose notamment :
+                  </p>
+                  <ul class="lg-list">
+                    <li>
+                      le développement de solutions
+                      <strong>ERP/CRM sur mesure</strong> ;
+                    </li>
+                    <li>
+                      le développement d'<strong
+                        >applications web et mobiles</strong
+                      >
+                      ;
+                    </li>
+                    <li>
+                      la conception de
+                      <strong>logiciels d'entreprise</strong> et de
+                      <strong>plateformes SaaS</strong> ;
+                    </li>
+                    <li>
+                      des <strong>solutions cloud</strong> (migration,
+                      infrastructure, supervision) ;
+                    </li>
+                    <li>
+                      des <strong>chatbots et assistants virtuels</strong> basés
+                      sur l'intelligence artificielle.
+                    </li>
+                  </ul>
+                  <p class="lg-p">
+                    Les informations présentées sur ce site ont un caractère
+                    purement indicatif. Toute prestation fait l'objet d'un
+                    contrat et de conditions particulières communiqués au client
+                    lors de la prise en charge de sa demande.
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">05</span>
+                    <h2 class="lg-h">Limitation de responsabilité</h2>
+                  </div>
+                  <p class="lg-p">
+                    CODIALIS s'efforce de maintenir les informations publiées
+                    sur ce site aussi exactes et à jour que possible. Toutefois,
+                    la société ne saurait être tenue responsable des erreurs ou
+                    omissions, d'une interruption ou indisponibilité du site, de
+                    dommages directs ou indirects résultant de l'accès ou de
+                    l'utilisation du site, ni de l'utilisation frauduleuse par
+                    un tiers des informations transmises via le site.
+                  </p>
+                  <p class="lg-p">
+                    CODIALIS se réserve le droit de modifier, corriger ou mettre
+                    à jour le contenu du site à tout moment et sans préavis.
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">06</span>
+                    <h2 class="lg-h">Liens hypertextes</h2>
+                  </div>
+                  <p class="lg-p">
+                    Le site www.codialis.com peut contenir des liens vers des
+                    sites tiers. CODIALIS n'exerce aucun contrôle sur ces sites
+                    et décline toute responsabilité quant à leur contenu, leur
+                    disponibilité ou leur politique de confidentialité.
+                  </p>
+                  <p class="lg-p">
+                    La création de liens hypertextes pointant vers le site
+                    www.codialis.com est soumise à l'accord préalable et écrit
+                    de CODIALIS.
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">07</span>
+                    <h2 class="lg-h">Données personnelles</h2>
+                  </div>
+                  <p class="lg-p">
+                    Dans le cadre de l'utilisation du site, CODIALIS est
+                    susceptible de collecter des données à caractère personnel
+                    (nom, prénom, adresse e-mail, numéro de téléphone) via les
+                    formulaires de contact.
+                  </p>
+                  <p class="lg-p">
+                    Ces données sont traitées conformément au Règlement Général
+                    sur la Protection des Données (RGPD – Règlement UE 2016/679)
+                    et à la loi Informatique et Libertés n° 78-17 du 6 janvier
+                    1978 modifiée.
+                  </p>
+                  <p class="lg-p">
+                    Elles sont destinées exclusivement à CODIALIS, ne sont pas
+                    transmises à des tiers, et sont conservées pour la durée
+                    strictement nécessaire à leur finalité.
+                  </p>
+                  <p class="lg-p">
+                    Conformément à la réglementation en vigueur, vous disposez
+                    d'un droit d'accès, de rectification, d'opposition,
+                    d'effacement et de portabilité de vos données, que vous
+                    pouvez exercer en contactant :
+                    <a href="mailto:contact@codialis.com"
+                      >contact@codialis.com</a
+                    >
+                  </p>
+                  <p class="lg-p">
+                    Pour toute réclamation, vous pouvez également saisir la
+                    Commission Nationale de l'Informatique et des Libertés
+                    (CNIL) —
+                    <a href="https://www.cnil.fr" target="_blank" rel="noopener"
+                      >www.cnil.fr</a
+                    >.
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">08</span>
+                    <h2 class="lg-h">Cookies</h2>
+                  </div>
+                  <p class="lg-p">
+                    Le site www.codialis.com est susceptible d'utiliser des
+                    cookies à des fins de mesure d'audience, d'amélioration de
+                    l'expérience utilisateur ou de mémorisation de préférences
+                    de navigation.
+                  </p>
+                  <p class="lg-p">
+                    Conformément à la réglementation applicable, votre
+                    consentement est recueilli avant le dépôt de tout cookie non
+                    strictement nécessaire au fonctionnement du site. Vous
+                    pouvez à tout moment modifier vos préférences directement
+                    depuis les paramètres de votre navigateur.
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">09</span>
+                    <h2 class="lg-h">
+                      Droit applicable et juridiction compétente
+                    </h2>
+                  </div>
+                  <p class="lg-p">
+                    Les présentes mentions légales sont régies par le droit
+                    français. En cas de litige relatif à l'interprétation ou à
+                    l'exécution des présentes, et à défaut de résolution
+                    amiable, les tribunaux compétents du ressort de Créteil
+                    seront seuls compétents.
+                  </p>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- ===== POLITIQUE DE CONFIDENTIALITÉ ===== -->
+            <sc-if value="{{ showPC }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div
+                  class="lg-card"
+                  style="
+                    border-color: rgba(47, 237, 127, 0.22);
+                    background: linear-gradient(
+                      160deg,
+                      rgba(47, 237, 127, 0.07),
+                      rgba(255, 255, 255, 0.012)
+                    );
+                  "
+                >
+                  <p class="lg-p" style="margin-bottom: 8px">
+                    Conformément au Règlement Général sur la Protection des
+                    Données (RGPD – Règlement UE 2016/679) et à la loi
+                    Informatique et Libertés n° 78-17 du 6 janvier 1978
+                    modifiée.
+                  </p>
+                  <p
+                    class="lg-p"
+                    style="
+                      margin: 0;
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 13px;
+                      color: #8fa0b5;
+                    "
+                  >
+                    Dernière mise à jour : mars 2025
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">01</span>
+                    <h2 class="lg-h">Identité du responsable de traitement</h2>
+                  </div>
+                  <p class="lg-p">
+                    Le responsable du traitement des données personnelles
+                    collectées sur le site www.codialis.com est :
+                  </p>
+                  <div class="lg-dl">
+                    <div>
+                      <span class="lg-dt">Société</span
+                      ><span class="lg-dd">CODIALIS</span>
+                    </div>
+                    <div>
+                      <span class="lg-dt">Représentant légal</span
+                      ><span class="lg-dd">M. Jayan Grondin</span>
+                    </div>
+                    <div>
+                      <span class="lg-dt">Adresse</span
+                      ><span class="lg-dd"
+                        >88 Rue du Génie, 94400 Vitry-sur-Seine, France</span
+                      >
+                    </div>
+                    <div>
+                      <span class="lg-dt">E-mail</span
+                      ><span class="lg-dd"
+                        ><a href="mailto:jayan@codialis.com"
+                          >jayan@codialis.com</a
+                        ></span
+                      >
+                    </div>
+                    <div>
+                      <span class="lg-dt">Téléphone</span
+                      ><span class="lg-dd"
+                        ><a href="tel:+262693298420">06 93 29 84 20</a></span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">02</span>
+                    <h2 class="lg-h">Données collectées</h2>
+                  </div>
+                  <p class="lg-p">
+                    Dans le cadre de l'utilisation du site www.codialis.com,
+                    CODIALIS est susceptible de collecter les données
+                    personnelles suivantes :
+                  </p>
+                  <ul class="lg-list">
+                    <li>
+                      <strong>Via le formulaire de contact :</strong> nom,
+                      prénom, adresse e-mail, numéro de téléphone, nom de
+                      l'entreprise et le contenu du message transmis.
+                    </li>
+                    <li>
+                      <strong>Automatiquement lors de la navigation :</strong>
+                      adresse IP, type et version du navigateur, pages visitées,
+                      durée de la visite, système d'exploitation, données de
+                      cookies (voir section 7).
+                    </li>
+                  </ul>
+                  <p class="lg-p">
+                    Ces données sont collectées uniquement lorsque vous les
+                    communiquez volontairement ou lors de votre navigation sur
+                    le site.
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">03</span>
+                    <h2 class="lg-h">Finalités du traitement</h2>
+                  </div>
+                  <p class="lg-p">
+                    Les données collectées sont utilisées exclusivement aux fins
+                    suivantes :
+                  </p>
+                  <ul class="lg-list">
+                    <li>répondre à vos demandes de contact ou de devis ;</li>
+                    <li>assurer le suivi commercial et la relation client ;</li>
+                    <li>améliorer l'expérience de navigation sur le site ;</li>
+                    <li>
+                      mesurer l'audience du site à des fins statistiques ;
+                    </li>
+                    <li>
+                      respecter les obligations légales et réglementaires
+                      applicables à CODIALIS.
+                    </li>
+                  </ul>
+                  <p class="lg-p">
+                    Aucune donnée n'est utilisée à des fins de prospection
+                    commerciale sans votre consentement préalable.
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">04</span>
+                    <h2 class="lg-h">Base légale des traitements</h2>
+                  </div>
+                  <p class="lg-p">
+                    Chaque traitement repose sur l'une des bases légales
+                    suivantes prévues par le RGPD :
+                  </p>
+                  <ul class="lg-list">
+                    <li>
+                      votre <strong>consentement</strong> (article 6.1.a) ;
+                    </li>
+                    <li>
+                      l'<strong>exécution d'un contrat</strong> ou de mesures
+                      précontractuelles à votre demande (article 6.1.b) ;
+                    </li>
+                    <li>
+                      le respect d'une <strong>obligation légale</strong> à
+                      laquelle CODIALIS est soumise (article 6.1.c) ;
+                    </li>
+                    <li>
+                      l'<strong>intérêt légitime</strong> de CODIALIS à
+                      développer et améliorer ses services (article 6.1.f).
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">05</span>
+                    <h2 class="lg-h">Destinataires des données</h2>
+                  </div>
+                  <p class="lg-p">
+                    Les données personnelles collectées sont destinées
+                    exclusivement à CODIALIS et à ses collaborateurs habilités,
+                    dans la stricte limite de leurs attributions.
+                  </p>
+                  <p class="lg-p">
+                    CODIALIS ne vend, ne loue et ne cède aucune donnée
+                    personnelle à des tiers à des fins commerciales.
+                  </p>
+                  <p class="lg-p">
+                    Des données peuvent toutefois être transmises à des
+                    prestataires techniques tiers agissant en qualité de
+                    sous-traitants (hébergement, outil d'envoi d'e-mails,
+                    analytics), liés par des engagements contractuels conformes
+                    au RGPD. Ces prestataires n'utilisent vos données qu'aux
+                    seules fins nécessaires à l'exécution de leur mission.
+                  </p>
+                  <p class="lg-p">
+                    En cas d'obligation légale ou judiciaire, CODIALIS peut être
+                    amenée à communiquer certaines données aux autorités
+                    compétentes.
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">06</span>
+                    <h2 class="lg-h">Durée de conservation</h2>
+                  </div>
+                  <p class="lg-p">
+                    Les données sont conservées pendant la durée strictement
+                    nécessaire aux finalités pour lesquelles elles ont été
+                    collectées, soit :
+                  </p>
+                  <ul class="lg-list">
+                    <li>
+                      <strong>3 ans</strong> à compter du dernier contact pour
+                      les données de prospects et clients ;
+                    </li>
+                    <li>
+                      <strong>5 ans</strong> pour les données liées à une
+                      relation contractuelle (conformément aux obligations
+                      légales comptables et fiscales) ;
+                    </li>
+                    <li>
+                      <strong>13 mois maximum</strong> pour les données de
+                      cookies et de navigation.
+                    </li>
+                  </ul>
+                  <p class="lg-p">
+                    À l'issue de ces délais, les données sont supprimées ou
+                    anonymisées de façon irréversible.
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">07</span>
+                    <h2 class="lg-h">Cookies</h2>
+                  </div>
+                  <p class="lg-p">
+                    Un cookie est un petit fichier texte déposé sur votre
+                    terminal (ordinateur, tablette, smartphone) lors de la
+                    visite d'un site internet.
+                  </p>
+                  <p class="lg-p">
+                    Le site www.codialis.com peut utiliser les types de cookies
+                    suivants :
+                  </p>
+                  <ul class="lg-list">
+                    <li>
+                      les <strong>cookies strictement nécessaires</strong> au
+                      fonctionnement du site (navigation, sécurité), qui ne
+                      nécessitent pas de consentement ;
+                    </li>
+                    <li>
+                      les
+                      <strong>cookies de mesure d'audience</strong>
+                      (statistiques de fréquentation anonymisées) ;
+                    </li>
+                    <li>
+                      les <strong>cookies de préférences</strong> permettant de
+                      mémoriser vos choix de navigation.
+                    </li>
+                  </ul>
+                  <p class="lg-p">
+                    Lors de votre première visite, un bandeau vous informe de la
+                    présence de cookies et vous permet d'accepter ou de refuser
+                    les cookies non essentiels. Vous pouvez modifier vos
+                    préférences à tout moment depuis les paramètres de votre
+                    navigateur ou via le gestionnaire de cookies du site.
+                  </p>
+                  <p class="lg-p">
+                    La désactivation de certains cookies peut limiter certaines
+                    fonctionnalités du site.
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">08</span>
+                    <h2 class="lg-h">Vos droits</h2>
+                  </div>
+                  <p class="lg-p">
+                    Conformément au RGPD et à la loi Informatique et Libertés,
+                    vous disposez des droits suivants sur vos données
+                    personnelles :
+                  </p>
+                  <ul class="lg-list">
+                    <li>
+                      <strong>Droit d'accès :</strong> obtenir la confirmation
+                      que des données vous concernant sont traitées et en
+                      obtenir une copie.
+                    </li>
+                    <li>
+                      <strong>Droit de rectification :</strong> demander la
+                      correction de données inexactes ou incomplètes.
+                    </li>
+                    <li>
+                      <strong>Droit à l'effacement :</strong> demander la
+                      suppression de vos données dans les cas prévus par la
+                      réglementation.
+                    </li>
+                    <li>
+                      <strong>Droit à la limitation :</strong> demander la
+                      suspension temporaire du traitement de vos données.
+                    </li>
+                    <li>
+                      <strong>Droit d'opposition :</strong> vous opposer au
+                      traitement fondé sur l'intérêt légitime ou à des fins de
+                      prospection.
+                    </li>
+                    <li>
+                      <strong>Droit à la portabilité :</strong> recevoir vos
+                      données dans un format structuré et lisible par machine.
+                    </li>
+                    <li>
+                      <strong>Droit de retirer votre consentement</strong> à
+                      tout moment, sans que cela ne remette en cause la licéité
+                      du traitement effectué avant ce retrait.
+                    </li>
+                  </ul>
+                  <p class="lg-p">
+                    Pour exercer l'un de ces droits, vous pouvez contacter
+                    CODIALIS par e-mail à l'adresse suivante :
+                    <a href="mailto:contact@codialis.com"
+                      >contact@codialis.com</a
+                    >, en précisant votre identité et la nature de votre
+                    demande. Une réponse vous sera apportée dans un délai
+                    maximum d'un mois à compter de la réception de votre
+                    demande.
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">09</span>
+                    <h2 class="lg-h">Réclamation auprès de la CNIL</h2>
+                  </div>
+                  <p class="lg-p">
+                    Si vous estimez que le traitement de vos données
+                    personnelles ne respecte pas la réglementation en vigueur,
+                    vous avez le droit d'introduire une réclamation auprès de
+                    l'autorité de contrôle compétente :
+                  </p>
+                  <div class="lg-dl">
+                    <div>
+                      <span class="lg-dt">Autorité</span
+                      ><span class="lg-dd"
+                        >Commission Nationale de l'Informatique et des Libertés
+                        (CNIL)</span
+                      >
+                    </div>
+                    <div>
+                      <span class="lg-dt">Adresse</span
+                      ><span class="lg-dd"
+                        >3 Place de Fontenoy – TSA 80715 – 75334 Paris Cedex
+                        07</span
+                      >
+                    </div>
+                    <div>
+                      <span class="lg-dt">Site web</span
+                      ><span class="lg-dd"
+                        ><a
+                          href="https://www.cnil.fr"
+                          target="_blank"
+                          rel="noopener"
+                          >www.cnil.fr</a
+                        ></span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">10</span>
+                    <h2 class="lg-h">Sécurité des données</h2>
+                  </div>
+                  <p class="lg-p">
+                    CODIALIS met en œuvre toutes les mesures techniques et
+                    organisationnelles appropriées afin de garantir la sécurité,
+                    l'intégrité et la confidentialité de vos données
+                    personnelles, et de les protéger contre tout accès non
+                    autorisé, toute perte, altération ou divulgation.
+                  </p>
+                  <p class="lg-p">
+                    En cas de violation de données susceptible d'engendrer un
+                    risque pour vos droits et libertés, CODIALIS s'engage à en
+                    informer la CNIL dans les délais prévus par le RGPD, et le
+                    cas échéant, les personnes concernées.
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">11</span>
+                    <h2 class="lg-h">
+                      Transferts de données hors Union européenne
+                    </h2>
+                  </div>
+                  <p class="lg-p">
+                    Les données personnelles collectées sont hébergées au sein
+                    de l'Union européenne, chez Hostinger International Ltd.,
+                    dont le siège est établi à Vilnius, en Lituanie.
+                  </p>
+                  <p class="lg-p">
+                    En cas de transfert vers un pays tiers, CODIALIS s'assure
+                    que ce transfert est encadré par des garanties appropriées
+                    conformes au RGPD (clauses contractuelles types de la
+                    Commission européenne, décision d'adéquation, etc.).
+                  </p>
+                </div>
+
+                <div class="lg-card">
+                  <div class="lg-head">
+                    <span class="lg-num">12</span>
+                    <h2 class="lg-h">Modifications de la présente politique</h2>
+                  </div>
+                  <p class="lg-p">
+                    CODIALIS se réserve le droit de modifier la présente
+                    politique de confidentialité à tout moment, notamment pour
+                    se conformer à toute évolution légale, réglementaire ou
+                    technique. La date de dernière mise à jour est indiquée en
+                    haut du document. Il vous est conseillé de consulter
+                    régulièrement cette page.
+                  </p>
+                  <p class="lg-p">
+                    Pour toute question relative à la protection de vos données
+                    personnelles, vous pouvez contacter CODIALIS à l'adresse :
+                    <a href="mailto:contact@codialis.com"
+                      >contact@codialis.com</a
+                    >
+                  </p>
+                </div>
+              </div>
+            </sc-if>
           </div>
-        </div>
+        </section>
 
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">03</span><h2 class="lg-h">Propriété intellectuelle</h2></div>
-          <p class="lg-p">L'ensemble du contenu du site www.codialis.com — incluant, sans s'y limiter, les textes, articles, visuels, logos, icônes, photographies, vidéos, interfaces, code source, bases de données et logiciels — est la propriété exclusive de CODIALIS, sauf mention contraire explicite.</p>
-          <p class="lg-p">Ces éléments sont protégés par le droit français et international de la propriété intellectuelle, notamment le Code de la propriété intellectuelle (articles L.111-1 et suivants).</p>
-          <p class="lg-p">Toute reproduction, représentation, modification, publication, adaptation ou exploitation, totale ou partielle, par quelque procédé que ce soit, sans l'autorisation préalable et écrite de CODIALIS, est strictement interdite et constituerait une contrefaçon sanctionnée pénalement et civilement.</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">04</span><h2 class="lg-h">Services proposés</h2></div>
-          <p class="lg-p">CODIALIS est une société de conseil et d'ingénierie informatique spécialisée dans la conception de solutions digitales sur mesure à destination des entreprises. Elle propose notamment :</p>
-          <ul class="lg-list">
-            <li>le développement de solutions <strong>ERP/CRM sur mesure</strong> ;</li>
-            <li>le développement d'<strong>applications web et mobiles</strong> ;</li>
-            <li>la conception de <strong>logiciels d'entreprise</strong> et de <strong>plateformes SaaS</strong> ;</li>
-            <li>des <strong>solutions cloud</strong> (migration, infrastructure, supervision) ;</li>
-            <li>des <strong>chatbots et assistants virtuels</strong> basés sur l'intelligence artificielle.</li>
-          </ul>
-          <p class="lg-p">Les informations présentées sur ce site ont un caractère purement indicatif. Toute prestation fait l'objet d'un contrat et de conditions particulières communiqués au client lors de la prise en charge de sa demande.</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">05</span><h2 class="lg-h">Limitation de responsabilité</h2></div>
-          <p class="lg-p">CODIALIS s'efforce de maintenir les informations publiées sur ce site aussi exactes et à jour que possible. Toutefois, la société ne saurait être tenue responsable des erreurs ou omissions, d'une interruption ou indisponibilité du site, de dommages directs ou indirects résultant de l'accès ou de l'utilisation du site, ni de l'utilisation frauduleuse par un tiers des informations transmises via le site.</p>
-          <p class="lg-p">CODIALIS se réserve le droit de modifier, corriger ou mettre à jour le contenu du site à tout moment et sans préavis.</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">06</span><h2 class="lg-h">Liens hypertextes</h2></div>
-          <p class="lg-p">Le site www.codialis.com peut contenir des liens vers des sites tiers. CODIALIS n'exerce aucun contrôle sur ces sites et décline toute responsabilité quant à leur contenu, leur disponibilité ou leur politique de confidentialité.</p>
-          <p class="lg-p">La création de liens hypertextes pointant vers le site www.codialis.com est soumise à l'accord préalable et écrit de CODIALIS.</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">07</span><h2 class="lg-h">Données personnelles</h2></div>
-          <p class="lg-p">Dans le cadre de l'utilisation du site, CODIALIS est susceptible de collecter des données à caractère personnel (nom, prénom, adresse e-mail, numéro de téléphone) via les formulaires de contact.</p>
-          <p class="lg-p">Ces données sont traitées conformément au Règlement Général sur la Protection des Données (RGPD – Règlement UE 2016/679) et à la loi Informatique et Libertés n° 78-17 du 6 janvier 1978 modifiée.</p>
-          <p class="lg-p">Elles sont destinées exclusivement à CODIALIS, ne sont pas transmises à des tiers, et sont conservées pour la durée strictement nécessaire à leur finalité.</p>
-          <p class="lg-p">Conformément à la réglementation en vigueur, vous disposez d'un droit d'accès, de rectification, d'opposition, d'effacement et de portabilité de vos données, que vous pouvez exercer en contactant : <a href="mailto:contact@codialis.com">contact@codialis.com</a></p>
-          <p class="lg-p">Pour toute réclamation, vous pouvez également saisir la Commission Nationale de l'Informatique et des Libertés (CNIL) — <a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a>.</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">08</span><h2 class="lg-h">Cookies</h2></div>
-          <p class="lg-p">Le site www.codialis.com est susceptible d'utiliser des cookies à des fins de mesure d'audience, d'amélioration de l'expérience utilisateur ou de mémorisation de préférences de navigation.</p>
-          <p class="lg-p">Conformément à la réglementation applicable, votre consentement est recueilli avant le dépôt de tout cookie non strictement nécessaire au fonctionnement du site. Vous pouvez à tout moment modifier vos préférences directement depuis les paramètres de votre navigateur.</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">09</span><h2 class="lg-h">Droit applicable et juridiction compétente</h2></div>
-          <p class="lg-p">Les présentes mentions légales sont régies par le droit français. En cas de litige relatif à l'interprétation ou à l'exécution des présentes, et à défaut de résolution amiable, les tribunaux compétents du ressort de Créteil seront seuls compétents.</p>
-        </div>
-
-      </div>
-      </sc-if>
-
-      <!-- ===== POLITIQUE DE CONFIDENTIALITÉ ===== -->
-      <sc-if value="{{ showPC }}" hint-placeholder-val="{{ false }}">
-      <div>
-
-        <div class="lg-card" style="border-color:rgba(47,237,127,.22);background:linear-gradient(160deg,rgba(47,237,127,.07),rgba(255,255,255,.012));">
-          <p class="lg-p" style="margin-bottom:8px;">Conformément au Règlement Général sur la Protection des Données (RGPD – Règlement UE 2016/679) et à la loi Informatique et Libertés n° 78-17 du 6 janvier 1978 modifiée.</p>
-          <p class="lg-p" style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#8FA0B5;">Dernière mise à jour : mars 2025</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">01</span><h2 class="lg-h">Identité du responsable de traitement</h2></div>
-          <p class="lg-p">Le responsable du traitement des données personnelles collectées sur le site www.codialis.com est :</p>
-          <div class="lg-dl">
-            <div><span class="lg-dt">Société</span><span class="lg-dd">CODIALIS</span></div>
-            <div><span class="lg-dt">Représentant légal</span><span class="lg-dd">M. Jayan Grondin</span></div>
-            <div><span class="lg-dt">Adresse</span><span class="lg-dd">88 Rue du Génie, 94400 Vitry-sur-Seine, France</span></div>
-            <div><span class="lg-dt">E-mail</span><span class="lg-dd"><a href="mailto:jayan@codialis.com">jayan@codialis.com</a></span></div>
-            <div><span class="lg-dt">Téléphone</span><span class="lg-dd"><a href="tel:+262693298420">06 93 29 84 20</a></span></div>
+        <!-- FOOTER -->
+        <footer
+          style="
+            position: relative;
+            padding: 64px clamp(20px, 5vw, 64px) 40px;
+            background: #0e1626;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+          "
+        >
+          <div
+            style="
+              max-width: 1200px;
+              margin: 0 auto;
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+              gap: 40px;
+              align-items: start;
+            "
+          >
+            <div>
+              <img
+                src="assets/codialis-white.png"
+                alt="Codialis"
+                style="
+                  height: 28px;
+                  width: auto;
+                  display: block;
+                  margin-bottom: 18px;
+                "
+              />
+              <p
+                style="
+                  font-size: 14.5px;
+                  line-height: 1.65;
+                  color: #8291a6;
+                  margin: 0;
+                  max-width: 34ch;
+                "
+              >
+                Les plateformes digitales qui font avancer les entreprises.
+                Architecture-first, construites pour durer.
+              </p>
+              <div data-cod-footer-socials style="display: flex; gap: 12px; margin-top: 22px">
+                <a
+                  href="https://www.linkedin.com/company/109392264/"
+                  target="_blank"
+                  rel="noopener"
+                  aria-label="LinkedIn"
+                  style="
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    color: #b7c2d2;
+                    transition:
+                      color 0.2s,
+                      background 0.2s,
+                      border-color 0.2s,
+                      transform 0.2s;
+                  "
+                  style-hover="color:#08111E;background:#2FED7F;border-color:#2FED7F;transform:translateY(-2px);"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M4.98 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM3 9h4v12H3zM9 9h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.3c0-1.26-.02-2.9-1.77-2.9-1.77 0-2.04 1.38-2.04 2.8V21H9z"
+                    ></path>
+                  </svg>
+                </a>
+                <a
+                  href="https://www.instagram.com/codialis.dev/"
+                  target="_blank"
+                  rel="noopener"
+                  aria-label="Instagram"
+                  style="
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    color: #b7c2d2;
+                    transition:
+                      color 0.2s,
+                      background 0.2s,
+                      border-color 0.2s,
+                      transform 0.2s;
+                  "
+                  style-hover="color:#08111E;background:#2FED7F;border-color:#2FED7F;transform:translateY(-2px);"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="2" y="2" width="20" height="20" rx="5"></rect>
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <circle
+                      cx="17.5"
+                      cy="6.5"
+                      r="1.2"
+                      fill="currentColor"
+                      stroke="none"
+                    ></circle>
+                  </svg>
+                </a>
+              </div>
+            </div>
+            <div>
+              <div
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #5c6b80;
+                  margin-bottom: 16px;
+                "
+              >
+                Expertises
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <sc-for
+                  list="{{ footerExp }}"
+                  as="f"
+                  hint-placeholder-count="4"
+                >
+                  <a
+                    href="/#expertises"
+                    style="
+                      font-size: 14.5px;
+                      color: #b7c2d2;
+                      transition: color 0.2s;
+                    "
+                    style-hover="color:#2FED7F;"
+                    >{{ f }}</a
+                  >
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #5c6b80;
+                  margin-bottom: 16px;
+                "
+              >
+                Confiance
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <span style="font-size: 14.5px; color: #b7c2d2"
+                  >Membre Numeum</span
+                >
+                <span style="font-size: 14.5px; color: #b7c2d2"
+                  >Labellisée France Num</span
+                >
+              </div>
+            </div>
+            <div>
+              <div
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #5c6b80;
+                  margin-bottom: 16px;
+                "
+              >
+                Contact
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <a
+                  href="mailto:contact@codialis.com"
+                  style="font-size: 14.5px; color: #b7c2d2"
+                  style-hover="color:#2FED7F;"
+                  >contact@codialis.com</a
+                >
+                <a
+                  href="https://calendly.com/contact-codialis/30min"
+                  style="font-size: 14.5px; color: #b7c2d2"
+                  style-hover="color:#2FED7F;"
+                  >Prendre rendez-vous</a
+                >
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">02</span><h2 class="lg-h">Données collectées</h2></div>
-          <p class="lg-p">Dans le cadre de l'utilisation du site www.codialis.com, CODIALIS est susceptible de collecter les données personnelles suivantes :</p>
-          <ul class="lg-list">
-            <li><strong>Via le formulaire de contact :</strong> nom, prénom, adresse e-mail, numéro de téléphone, nom de l'entreprise et le contenu du message transmis.</li>
-            <li><strong>Automatiquement lors de la navigation :</strong> adresse IP, type et version du navigateur, pages visitées, durée de la visite, système d'exploitation, données de cookies (voir section 7).</li>
-          </ul>
-          <p class="lg-p">Ces données sont collectées uniquement lorsque vous les communiquez volontairement ou lors de votre navigation sur le site.</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">03</span><h2 class="lg-h">Finalités du traitement</h2></div>
-          <p class="lg-p">Les données collectées sont utilisées exclusivement aux fins suivantes :</p>
-          <ul class="lg-list">
-            <li>répondre à vos demandes de contact ou de devis ;</li>
-            <li>assurer le suivi commercial et la relation client ;</li>
-            <li>améliorer l'expérience de navigation sur le site ;</li>
-            <li>mesurer l'audience du site à des fins statistiques ;</li>
-            <li>respecter les obligations légales et réglementaires applicables à CODIALIS.</li>
-          </ul>
-          <p class="lg-p">Aucune donnée n'est utilisée à des fins de prospection commerciale sans votre consentement préalable.</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">04</span><h2 class="lg-h">Base légale des traitements</h2></div>
-          <p class="lg-p">Chaque traitement repose sur l'une des bases légales suivantes prévues par le RGPD :</p>
-          <ul class="lg-list">
-            <li>votre <strong>consentement</strong> (article 6.1.a) ;</li>
-            <li>l'<strong>exécution d'un contrat</strong> ou de mesures précontractuelles à votre demande (article 6.1.b) ;</li>
-            <li>le respect d'une <strong>obligation légale</strong> à laquelle CODIALIS est soumise (article 6.1.c) ;</li>
-            <li>l'<strong>intérêt légitime</strong> de CODIALIS à développer et améliorer ses services (article 6.1.f).</li>
-          </ul>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">05</span><h2 class="lg-h">Destinataires des données</h2></div>
-          <p class="lg-p">Les données personnelles collectées sont destinées exclusivement à CODIALIS et à ses collaborateurs habilités, dans la stricte limite de leurs attributions.</p>
-          <p class="lg-p">CODIALIS ne vend, ne loue et ne cède aucune donnée personnelle à des tiers à des fins commerciales.</p>
-          <p class="lg-p">Des données peuvent toutefois être transmises à des prestataires techniques tiers agissant en qualité de sous-traitants (hébergement, outil d'envoi d'e-mails, analytics), liés par des engagements contractuels conformes au RGPD. Ces prestataires n'utilisent vos données qu'aux seules fins nécessaires à l'exécution de leur mission.</p>
-          <p class="lg-p">En cas d'obligation légale ou judiciaire, CODIALIS peut être amenée à communiquer certaines données aux autorités compétentes.</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">06</span><h2 class="lg-h">Durée de conservation</h2></div>
-          <p class="lg-p">Les données sont conservées pendant la durée strictement nécessaire aux finalités pour lesquelles elles ont été collectées, soit :</p>
-          <ul class="lg-list">
-            <li><strong>3 ans</strong> à compter du dernier contact pour les données de prospects et clients ;</li>
-            <li><strong>5 ans</strong> pour les données liées à une relation contractuelle (conformément aux obligations légales comptables et fiscales) ;</li>
-            <li><strong>13 mois maximum</strong> pour les données de cookies et de navigation.</li>
-          </ul>
-          <p class="lg-p">À l'issue de ces délais, les données sont supprimées ou anonymisées de façon irréversible.</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">07</span><h2 class="lg-h">Cookies</h2></div>
-          <p class="lg-p">Un cookie est un petit fichier texte déposé sur votre terminal (ordinateur, tablette, smartphone) lors de la visite d'un site internet.</p>
-          <p class="lg-p">Le site www.codialis.com peut utiliser les types de cookies suivants :</p>
-          <ul class="lg-list">
-            <li>les <strong>cookies strictement nécessaires</strong> au fonctionnement du site (navigation, sécurité), qui ne nécessitent pas de consentement ;</li>
-            <li>les <strong>cookies de mesure d'audience</strong> (statistiques de fréquentation anonymisées) ;</li>
-            <li>les <strong>cookies de préférences</strong> permettant de mémoriser vos choix de navigation.</li>
-          </ul>
-          <p class="lg-p">Lors de votre première visite, un bandeau vous informe de la présence de cookies et vous permet d'accepter ou de refuser les cookies non essentiels. Vous pouvez modifier vos préférences à tout moment depuis les paramètres de votre navigateur ou via le gestionnaire de cookies du site.</p>
-          <p class="lg-p">La désactivation de certains cookies peut limiter certaines fonctionnalités du site.</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">08</span><h2 class="lg-h">Vos droits</h2></div>
-          <p class="lg-p">Conformément au RGPD et à la loi Informatique et Libertés, vous disposez des droits suivants sur vos données personnelles :</p>
-          <ul class="lg-list">
-            <li><strong>Droit d'accès :</strong> obtenir la confirmation que des données vous concernant sont traitées et en obtenir une copie.</li>
-            <li><strong>Droit de rectification :</strong> demander la correction de données inexactes ou incomplètes.</li>
-            <li><strong>Droit à l'effacement :</strong> demander la suppression de vos données dans les cas prévus par la réglementation.</li>
-            <li><strong>Droit à la limitation :</strong> demander la suspension temporaire du traitement de vos données.</li>
-            <li><strong>Droit d'opposition :</strong> vous opposer au traitement fondé sur l'intérêt légitime ou à des fins de prospection.</li>
-            <li><strong>Droit à la portabilité :</strong> recevoir vos données dans un format structuré et lisible par machine.</li>
-            <li><strong>Droit de retirer votre consentement</strong> à tout moment, sans que cela ne remette en cause la licéité du traitement effectué avant ce retrait.</li>
-          </ul>
-          <p class="lg-p">Pour exercer l'un de ces droits, vous pouvez contacter CODIALIS par e-mail à l'adresse suivante : <a href="mailto:contact@codialis.com">contact@codialis.com</a>, en précisant votre identité et la nature de votre demande. Une réponse vous sera apportée dans un délai maximum d'un mois à compter de la réception de votre demande.</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">09</span><h2 class="lg-h">Réclamation auprès de la CNIL</h2></div>
-          <p class="lg-p">Si vous estimez que le traitement de vos données personnelles ne respecte pas la réglementation en vigueur, vous avez le droit d'introduire une réclamation auprès de l'autorité de contrôle compétente :</p>
-          <div class="lg-dl">
-            <div><span class="lg-dt">Autorité</span><span class="lg-dd">Commission Nationale de l'Informatique et des Libertés (CNIL)</span></div>
-            <div><span class="lg-dt">Adresse</span><span class="lg-dd">3 Place de Fontenoy – TSA 80715 – 75334 Paris Cedex 07</span></div>
-            <div><span class="lg-dt">Site web</span><span class="lg-dd"><a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a></span></div>
+          <div
+            style="
+              max-width: 1200px;
+              margin: 48px auto 0;
+              padding-top: 24px;
+              border-top: 1px solid rgba(255, 255, 255, 0.07);
+              display: flex;
+              flex-wrap: wrap;
+              gap: 12px;
+              justify-content: space-between;
+              font-family: &quot;IBM Plex Mono&quot;, monospace;
+              font-size: 12px;
+              letter-spacing: 0.06em;
+              color: #5c6b80;
+            "
+          >
+            <span>© {{ year }} Codialis. Tous droits réservés.</span>
+            <a
+              href="/legal"
+              style="color: #2fed7f; letter-spacing: 0.06em"
+              style-hover="color:#7ff2b3;"
+              >Mentions légales</a
+            >
+            <span>SaaS · Mobile · IA · CRM / ERP</span>
           </div>
-        </div>
+        </footer>
 
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">10</span><h2 class="lg-h">Sécurité des données</h2></div>
-          <p class="lg-p">CODIALIS met en œuvre toutes les mesures techniques et organisationnelles appropriées afin de garantir la sécurité, l'intégrité et la confidentialité de vos données personnelles, et de les protéger contre tout accès non autorisé, toute perte, altération ou divulgation.</p>
-          <p class="lg-p">En cas de violation de données susceptible d'engendrer un risque pour vos droits et libertés, CODIALIS s'engage à en informer la CNIL dans les délais prévus par le RGPD, et le cas échéant, les personnes concernées.</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">11</span><h2 class="lg-h">Transferts de données hors Union européenne</h2></div>
-          <p class="lg-p">Les données personnelles collectées sont hébergées au sein de l'Union européenne, chez Hostinger International Ltd., dont le siège est établi à Vilnius, en Lituanie.</p>
-          <p class="lg-p">En cas de transfert vers un pays tiers, CODIALIS s'assure que ce transfert est encadré par des garanties appropriées conformes au RGPD (clauses contractuelles types de la Commission européenne, décision d'adéquation, etc.).</p>
-        </div>
-
-        <div class="lg-card">
-          <div class="lg-head"><span class="lg-num">12</span><h2 class="lg-h">Modifications de la présente politique</h2></div>
-          <p class="lg-p">CODIALIS se réserve le droit de modifier la présente politique de confidentialité à tout moment, notamment pour se conformer à toute évolution légale, réglementaire ou technique. La date de dernière mise à jour est indiquée en haut du document. Il vous est conseillé de consulter régulièrement cette page.</p>
-          <p class="lg-p">Pour toute question relative à la protection de vos données personnelles, vous pouvez contacter CODIALIS à l'adresse : <a href="mailto:contact@codialis.com">contact@codialis.com</a></p>
-        </div>
-
+        <dc-import name="Chatbot" hint-size="1px,1px"></dc-import>
       </div>
-      </sc-if>
+    </x-dc>
+    <script
+      type="text/x-dc"
+      data-dc-script
+      data-props='{"reduceMotion":{"editor":"boolean","default":false,"tsType":"boolean","section":"Accessibilité"}}'
+    >
+      class Component extends DCLogic {
+        state = { lang: (window.CodialisI18n ? window.CodialisI18n.get() : 'fr'), tab: 'ml' };
 
-    </div>
-  </section>
+        renderVals() {
+          const lang = this.state.lang;
+          const setLang = (l) => () => { try { localStorage.setItem('codialis-lang', l); } catch (e) {} location.reload(); };
 
-  <!-- FOOTER -->
-  <footer style="position:relative;padding:56px clamp(20px,5vw,64px) 36px;background:#0E1626;border-top:1px solid rgba(255,255,255,.07);">
-    <div style="max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;gap:22px;align-items:center;justify-content:space-between;">
-      <a href="index.html"><img src="assets/codialis-white.png" alt="Codialis" style="height:26px;width:auto;display:block;"></a>
-      <div style="display:flex;flex-wrap:wrap;gap:22px;">
-        <sc-for list="{{ navLinks }}" as="lk" hint-placeholder-count="5">
-          <a href="{{ lk.href }}" style="font-size:14px;color:#B7C2D2;" style-hover="color:#2FED7F;">{{ lk.label }}</a>
-        </sc-for>
-        <a href="/legal" style="font-size:14px;color:#2FED7F;" style-hover="color:#7ff2b3;">Mentions légales</a>
-      </div>
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;color:#5C6B80;">© {{ year }} Codialis</span>
-    </div>
-  </footer>
+          const navLinks = [
+            { label: 'Expertise', href: '/#expertises', color: '#C4CFDD' },
+            { label: 'Portfolio', href: '/portfolio', color: '#C4CFDD' },
+            { label: 'Blog', href: '/blog', color: '#C4CFDD' },
+            { label: 'Financement', href: '/financement', color: '#C4CFDD' },
+            { label: 'Contact', href: '/contact', color: '#C4CFDD' },
+          ];
 
-  <dc-import name="Chatbot" hint-size="1px,1px"></dc-import>
+          const tabDefs = [
+            { key: 'ml', label: 'Mentions légales' },
+            { key: 'pc', label: 'Politique de confidentialité' },
+          ];
+          const tabs = tabDefs.map((t) => {
+            const active = this.state.tab === t.key;
+            return {
+              label: t.label,
+              onClick: () => { this.setState({ tab: t.key }); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {} },
+              bg: active ? '#2FED7F' : 'rgba(255,255,255,.04)',
+              border: active ? '#2FED7F' : 'rgba(255,255,255,.14)',
+              color: active ? '#08111E' : '#C4CFDD',
+            };
+          });
 
-</div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Accessibilité&quot;}}">
-class Component extends DCLogic {
-  state = { lang: 'fr', tab: 'ml' };
+          return {
+            year: new Date().getFullYear(),
+            setLangFr: setLang('fr'),
+            setLangEn: setLang('en'),
+            frBg: lang === 'fr' ? '#2FED7F' : 'transparent',
+            frColor: lang === 'fr' ? '#08111E' : '#8FA0B5',
+            enBg: lang === 'en' ? '#2FED7F' : 'transparent',
+            enColor: lang === 'en' ? '#08111E' : '#8FA0B5',
+            navLinks,
+            footerExp: ['Développement SaaS', 'Applications mobiles', 'Intelligence artificielle', 'CRM & ERP sur mesure'],
+            tabs,
+            showML: this.state.tab === 'ml',
+            showPC: this.state.tab === 'pc',
+          };
+        }
 
-  renderVals() {
-    const lang = this.state.lang;
-    const setLang = (l) => () => this.setState({ lang: l });
+        componentDidMount() {
+          const nav = document.getElementById('cod-nav');
+          const onScroll = () => {
+            const y = window.scrollY || 0;
+            if (nav) {
+              nav.style.background = y > 24 ? 'rgba(12,19,32,.85)' : 'rgba(16,24,40,.72)';
+              nav.style.boxShadow = y > 24 ? '0 22px 60px -20px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.07)' : '0 18px 50px -18px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.06)';
+            }
+          };
+          let ticking = false;
+          window.addEventListener('scroll', () => { if (!ticking) { requestAnimationFrame(() => { onScroll(); ticking = false; }); ticking = true; } }, { passive: true });
+          onScroll();
 
-    const navLinks = [
-      { label: 'Expertise', href: 'index.html#expertises', color: '#C4CFDD' },
-      { label: 'Portfolio', href: '/portfolio', color: '#C4CFDD' },
-      { label: 'Blog', href: '/blog', color: '#C4CFDD' },
-      { label: 'Financement', href: '/financement', color: '#C4CFDD' },
-      { label: 'Contact', href: '/contact', color: '#C4CFDD' },
-    ];
-
-    const tabDefs = [
-      { key: 'ml', label: 'Mentions légales' },
-      { key: 'pc', label: 'Politique de confidentialité' },
-    ];
-    const tabs = tabDefs.map((t) => {
-      const active = this.state.tab === t.key;
-      return {
-        label: t.label,
-        onClick: () => { this.setState({ tab: t.key }); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {} },
-        bg: active ? '#2FED7F' : 'rgba(255,255,255,.04)',
-        border: active ? '#2FED7F' : 'rgba(255,255,255,.14)',
-        color: active ? '#08111E' : '#C4CFDD',
-      };
-    });
-
-    return {
-      year: new Date().getFullYear(),
-      setLangFr: setLang('fr'),
-      setLangEn: setLang('en'),
-      frBg: lang === 'fr' ? '#2FED7F' : 'transparent',
-      frColor: lang === 'fr' ? '#08111E' : '#8FA0B5',
-      enBg: lang === 'en' ? '#2FED7F' : 'transparent',
-      enColor: lang === 'en' ? '#08111E' : '#8FA0B5',
-      navLinks,
-      tabs,
-      showML: this.state.tab === 'ml',
-      showPC: this.state.tab === 'pc',
-    };
-  }
-
-  componentDidMount() {
-    const nav = document.getElementById('cod-nav');
-    const onScroll = () => {
-      const y = window.scrollY || 0;
-      if (nav) {
-        nav.style.background = y > 24 ? 'rgba(12,19,32,.85)' : 'rgba(16,24,40,.72)';
-        nav.style.boxShadow = y > 24 ? '0 22px 60px -20px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.07)' : '0 18px 50px -18px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.06)';
+          const applyResponsive = () => {
+            const wrap = document.querySelector('.cod-navlinks');
+            if (wrap) wrap.style.display = window.innerWidth > 860 ? 'flex' : 'none';
+          };
+          applyResponsive();
+          window.addEventListener('resize', applyResponsive);
+        }
       }
-    };
-    let ticking = false;
-    window.addEventListener('scroll', () => { if (!ticking) { requestAnimationFrame(() => { onScroll(); ticking = false; }); ticking = true; } }, { passive: true });
-    onScroll();
-
-    const applyResponsive = () => {
-      const wrap = document.querySelector('.cod-navlinks');
-      if (wrap) wrap.style.display = window.innerWidth > 860 ? 'flex' : 'none';
-    };
-    applyResponsive();
-    window.addEventListener('resize', applyResponsive);
-  }
-}
-</script>
-</body>
+    </script>
+  </body>
 </html>

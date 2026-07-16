@@ -1,17 +1,17 @@
 import { Router } from 'express';
 import { query } from '../db.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, isManager } from '../middleware/auth.js';
 
 const router = Router();
 router.use(requireAuth);
 
 // GET /api/presence — nested map { employeeId: { 'YYYY-MM-DD': status } }
-// patron sees everyone, employe sees only self.
+// direction/chef de projet voient tout le monde, employé voit seulement le sien.
 router.get('/', async (req, res) => {
-  const sql = req.user.role === 'patron'
+  const sql = isManager(req.user)
     ? `SELECT employee_id, to_char(day,'YYYY-MM-DD') AS day, status FROM presence`
     : `SELECT employee_id, to_char(day,'YYYY-MM-DD') AS day, status FROM presence WHERE employee_id = $1`;
-  const params = req.user.role === 'patron' ? [] : [req.user.id];
+  const params = isManager(req.user) ? [] : [req.user.id];
   const { rows } = await query(sql, params);
   const map = {};
   for (const r of rows) {

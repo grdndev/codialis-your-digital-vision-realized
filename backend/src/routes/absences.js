@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, isManager } from '../middleware/auth.js';
 import { notifyAbsenceCreated, notifyAbsenceDecided } from '../notify.js';
 import { canPostLeave, availableLeave } from '../balances.js';
 
@@ -49,12 +49,12 @@ function paidFrom(req, fallback = true) {
 
 const TYPES = ['tt', 'conge', 'absence', 'formation'];
 
-// GET /api/absences — patron sees all, employe sees own.
+// GET /api/absences — direction/chef de projet voient tout, employé voit le sien.
 router.get('/', async (req, res) => {
-  const sql = req.user.role === 'patron'
+  const sql = isManager(req.user)
     ? `${SELECT} ORDER BY start_date DESC, created_at DESC`
     : `${SELECT} WHERE employee_id = $1 ORDER BY start_date DESC, created_at DESC`;
-  const params = req.user.role === 'patron' ? [] : [req.user.id];
+  const params = isManager(req.user) ? [] : [req.user.id];
   const { rows } = await query(sql, params);
   res.json(rows);
 });

@@ -7,10 +7,14 @@ CREATE TABLE IF NOT EXISTS users (
   nom           TEXT NOT NULL DEFAULT '',
   email         TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
-  role          TEXT NOT NULL CHECK (role IN ('patron', 'employe')),
+  role          TEXT NOT NULL CHECK (role IN ('patron', 'chef', 'employe')),
   poste         TEXT NOT NULL DEFAULT '',
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- Ouvre le rôle « chef de projet » sur les bases créées avant son existence :
+-- la contrainte CHECK d'origine (patron/employe seulement) est remplacée.
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('patron', 'chef', 'employe'));
 -- Add columns to databases created before they existed.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS prenom TEXT NOT NULL DEFAULT '';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS nom    TEXT NOT NULL DEFAULT '';

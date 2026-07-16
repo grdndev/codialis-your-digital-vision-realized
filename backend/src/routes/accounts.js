@@ -2,7 +2,11 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { query } from '../db.js';
 import { randomBytes } from 'node:crypto';
-import { requireAuth, requirePatron } from '../middleware/auth.js';
+import { requireAuth, requirePatron, isManager } from '../middleware/auth.js';
+
+// Rôles autorisés à la création/édition d'un compte.
+const ROLES = ['patron', 'chef', 'employe'];
+const sanitizeRole = (r) => (ROLES.includes(r) ? r : 'employe');
 import { sendVerifyEmail } from '../mail.js';
 import { createToken } from '../tokens.js';
 
@@ -22,8 +26,9 @@ router.get('/featured', async (req, res) => {
 router.use(requireAuth);
 
 // GET /api/accounts — any authenticated user (no hashes exposed).
-// Les ancres de solde (congés/heures) ne sont visibles que du patron — un
-// employé ne reçoit que les siennes (null pour les autres).
+// Les ancres de solde (congés/heures) sont visibles de la direction et du chef
+// de projet (vue d'équipe) — un employé ne reçoit que les siennes (null pour
+// les autres).
 router.get('/', async (req, res) => {
   const { rows } = await query(
     `SELECT id, name, prenom, nom, email, role, poste, email_verified, photo, featured,
@@ -33,8 +38,8 @@ router.get('/', async (req, res) => {
             to_char(hours_anchor, 'YYYY-MM-DD') AS "hoursAnchor"
      FROM users ORDER BY role DESC, name ASC`,
   );
-  const isPatron = req.user.role === 'patron';
-  res.json(rows.map((r) => (isPatron || r.id === req.user.id
+  const canSeeAll = isManager(req.user);
+  res.json(rows.map((r) => (canSeeAll || r.id === req.user.id
     ? r
     : { ...r, leaveBalance: null, leaveAnchor: null, hoursBalance: null, hoursAnchor: null })));
 });
@@ -78,7 +83,7 @@ router.post('/', requirePatron, async (req, res) => {
   const nom = String(req.body?.nom || '').trim();
   const email = String(req.body?.email || '').trim().toLowerCase();
   const poste = String(req.body?.poste || '').trim();
-  const role = req.body?.role === 'patron' ? 'patron' : 'employe';
+  const role = sanitizeRole(req.body?.role);
   // `name` stays as the display/JWT identity — kept in sync with prenom + nom.
   const name = `${prenom} ${nom}`.trim();
 
@@ -122,7 +127,7 @@ router.patch('/:id', requirePatron, async (req, res) => {
   const nom = String(req.body?.nom || '').trim();
   const email = String(req.body?.email || '').trim().toLowerCase();
   const poste = String(req.body?.poste || '').trim();
-  const role = req.body?.role === 'patron' ? 'patron' : 'employe';
+  const role = sanitizeRole(req.body?.role);
   const name = `${prenom} ${nom}`.trim();
 
   if (!prenom || !nom || !email) return res.status(400).json({ error: 'Prénom, nom et email requis' });

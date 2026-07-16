@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db.js';
-import { requireAuth, requirePatron } from '../middleware/auth.js';
+import { requireAuth, requireManager } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -27,7 +27,7 @@ router.post('/', async (req, res) => {
 });
 
 // Tout ce qui suit est réservé au patron.
-router.use(requireAuth, requirePatron);
+router.use(requireAuth, requireManager);
 
 // GET /api/contact — liste, plus récentes d'abord.
 router.get('/', async (req, res) => {
