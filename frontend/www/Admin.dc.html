@@ -657,30 +657,43 @@
                 </sc-for>
               </div>
 
-              <div style="margin-bottom: clamp(20px, 3vw, 28px)">
-                <h1
-                  style="
-                    font-family: &quot;Space Grotesk&quot;, sans-serif;
-                    font-weight: 600;
-                    font-size: clamp(24px, 3.2vw, 34px);
-                    line-height: 1.1;
-                    letter-spacing: -0.015em;
-                    margin: 0 0 8px;
-                    color: #fff;
-                  "
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom: clamp(20px, 3vw, 28px)">
+                <div>
+                  <h1
+                    style="
+                      font-family: &quot;Space Grotesk&quot;, sans-serif;
+                      font-weight: 600;
+                      font-size: clamp(24px, 3.2vw, 34px);
+                      line-height: 1.1;
+                      letter-spacing: -0.015em;
+                      margin: 0 0 8px;
+                      color: #fff;
+                    "
+                  >
+                    {{ sectionTitle }}
+                  </h1>
+                  <p
+                    style="
+                      font-size: 15px;
+                      line-height: 1.6;
+                      color: #8fa0b5;
+                      margin: 0;
+                    "
+                  >
+                    {{ sectionSubtitle }}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick="{{ onRefresh }}"
+                  disabled="{{ refreshDisabled }}"
+                  title="Recharger les données sans recharger la page"
+                  style="flex-shrink:0;display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:100px;border:1px solid rgba(255,255,255,0.16);background:transparent;color:#b7c2d2;font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:13.5px;cursor:pointer;transition:border-color .2s,color .2s;"
+                  style-hover="border-color:#2fed7f;color:#2fed7f;"
                 >
-                  {{ sectionTitle }}
-                </h1>
-                <p
-                  style="
-                    font-size: 15px;
-                    line-height: 1.6;
-                    color: #8fa0b5;
-                    margin: 0;
-                  "
-                >
-                  {{ sectionSubtitle }}
-                </p>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 6.7 3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-6.7-3L3 16"/><path d="M8 16H3v5"/></svg>
+                  {{ refreshLabel }}
+                </button>
               </div>
 
               <!-- ===================== MON ESPACE (employé) ===================== -->
@@ -1210,6 +1223,28 @@
                     style="width: 100%; padding: 12px 14px 12px 42px; border-radius: 100px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); color: #eaf0f7; font-family: 'Space Grotesk', sans-serif; font-size: 14.5px; outline: none; transition: border-color 0.25s, background 0.25s;"
                     style-focus="border-color: rgba(47,237,127,.55); background: rgba(255,255,255,.08);"
                   />
+                </div>
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-bottom:16px;max-width:760px;">
+                  <sc-for list="{{ validationFilterChips }}" as="f" hint-placeholder-count="5">
+                    <button type="button" onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}</button>
+                  </sc-for>
+                  <div style="position:relative;">
+                    <button
+                      type="button"
+                      onClick="{{ onToggleValidationEmp }}"
+                      style="{{ validationEmpStyle }}"
+                    >
+                      <span>👤 {{ validationEmpLabel }}</span>
+                      <span style="font-size:10px;">▾</span>
+                    </button>
+                    <sc-if value="{{ validationEmpOpen }}" hint-placeholder-val="{{ false }}">
+                      <div style="position:absolute;z-index:20;top:calc(100% + 6px);left:0;min-width:220px;max-height:280px;overflow-y:auto;padding:6px 0;border-radius:12px;background:#0f1a2b;border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 32px rgba(0,0,0,.45);">
+                        <sc-for list="{{ validationEmpItems }}" as="emp" hint-placeholder-count="4">
+                          <button type="button" onClick="{{ emp.onClick }}" style="{{ emp.style }}" style-hover="background:rgba(255,255,255,.06);">{{ emp.label }}</button>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
                 </div>
                 <sc-if value="{{ isValidationSearchEmpty }}" hint-placeholder-val="{{ false }}">
                   <div style="padding: 44px 24px; border-radius: 16px; border: 1px dashed rgba(255, 255, 255, 0.14); text-align: center; color: #5c6b80; max-width: 760px;">
@@ -5258,6 +5293,78 @@
                   </sc-if>
                 </div>
               </sc-if>
+
+              <!-- ===== SECTION RÉSEAUX SOCIAUX ===== -->
+              <sc-if value="{{ showSocials }}" hint-placeholder-val="{{ false }}">
+                <div style="max-width: 720px;">
+                  <p style="font-size: 13px; line-height: 1.55; color: #8fa0b5; margin: 0 0 18px;">
+                    Ces liens s'affichent sous « Suivez-nous » sur la page Contact.
+                    Choisissez l'icône, un nom et l'adresse complète (https://…).
+                  </p>
+                  <sc-if value="{{ socialsEmpty }}" hint-placeholder-val="{{ false }}">
+                    <p style="font-size: 14px; color: #8fa0b5;">
+                      Aucun réseau pour le moment. Cliquez sur « Ajouter un réseau ».
+                    </p>
+                  </sc-if>
+                  <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <sc-for list="{{ socialRows }}" as="s" hint-placeholder-count="2">
+                      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <select
+                          value="{{ s.icon }}"
+                          onChange="{{ s.onIcon }}"
+                          aria-label="Icône"
+                          style="width: 148px; padding: 11px 12px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #eaf0f7; font-family: 'Space Grotesk', sans-serif; font-size: 14px; outline: none; cursor: pointer; transition: border-color 0.2s;"
+                          style-focus="border-color:#2FED7F;"
+                        >
+                          <option value="linkedin">LinkedIn</option>
+                          <option value="instagram">Instagram</option>
+                          <option value="facebook">Facebook</option>
+                          <option value="x">X (Twitter)</option>
+                          <option value="youtube">YouTube</option>
+                          <option value="tiktok">TikTok</option>
+                          <option value="github">GitHub</option>
+                        </select>
+                        <input
+                          type="text"
+                          value="{{ s.href }}"
+                          onInput="{{ s.onHref }}"
+                          placeholder="https://…"
+                          aria-label="Lien"
+                          style="flex: 1; min-width: 180px; padding: 11px 12px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #2fed7f; font-family: 'Space Grotesk', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s;"
+                          style-focus="border-color:#2FED7F;"
+                        />
+                        <button
+                          type="button"
+                          onClick="{{ s.onRemove }}"
+                          title="Supprimer"
+                          style="flex-shrink: 0; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid rgba(255,107,107,0.4); background: rgba(255,107,107,0.08); color: #ff6b6b; cursor: pointer;"
+                          style-hover="background:rgba(255,107,107,.18);"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap;">
+                    <button
+                      type="button"
+                      onClick="{{ onAddSocial }}"
+                      style="padding: 11px 18px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.05); color: #eaf0f7; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer;"
+                      style-hover="border-color:#2FED7F;color:#2FED7F;"
+                    >
+                      ＋ Ajouter un réseau
+                    </button>
+                    <button
+                      type="button"
+                      onClick="{{ onSaveSocials }}"
+                      disabled="{{ socialsBusy }}"
+                      style="padding: 11px 20px; border-radius: 10px; border: none; background: #2fed7f; color: #08111e; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer;"
+                    >
+                      {{ socialsSaveLabel }}
+                    </button>
+                  </div>
+                </div>
+              </sc-if>
             </div>
           </div>
         </sc-if>
@@ -5729,6 +5836,21 @@
         accent: 'signaux faibles.',
         sub: "Nos réflexions sur l'ingénierie logicielle, l'IA, le SaaS et le financement de l'innovation — sans jargon inutile.",
       };
+      // Réseaux sociaux affichés dans la page Contact (settings contact_socials).
+      // `icon` doit correspondre à une icône SVG connue de Contact.dc.html.
+      const SOCIAL_ICON_OPTIONS = [
+        { value: 'linkedin', label: 'LinkedIn' },
+        { value: 'instagram', label: 'Instagram' },
+        { value: 'facebook', label: 'Facebook' },
+        { value: 'x', label: 'X (Twitter)' },
+        { value: 'youtube', label: 'YouTube' },
+        { value: 'tiktok', label: 'TikTok' },
+        { value: 'github', label: 'GitHub' },
+      ];
+      const SOCIAL_DEFAULTS = [
+        { name: 'LinkedIn', icon: 'linkedin', href: 'https://www.linkedin.com/company/109392264/' },
+        { name: 'Instagram', icon: 'instagram', href: 'https://www.instagram.com/codialis.dev/' },
+      ];
       const PAL = ['#2FED7F', '#7FE6C4', '#A7D8F0', '#C9C2F5', '#F5C86B', '#F5A8C0'];
       const PSTATUS = {
         present: { label: 'Présent', color: '#2FED7F', bg: 'rgba(47,237,127,.12)' },
@@ -5923,11 +6045,13 @@
           contentSearchQuery: '', portfolioPage: 1, blogPage: 1,
           portfolioSettings: {}, portfolioStats: PORTFOLIO_STAT_DEFAULTS.map((x) => ({ ...x })), statsBusy: false,
           blogSettings: {}, blogHero: { ...BLOG_HERO_DEFAULTS }, blogHeroBusy: false,
+          socials: SOCIAL_DEFAULTS.map((x) => ({ ...x })), socialsBusy: false,
           entries: [], presence: {}, absences: [], recurrences: [],
           tab: 'espace',
           editingId: null, form: this.blankForm(), catAdding: false,
           rhForm: { date: '', hours: '', motif: '' },
-          espacePage: 1, espaceFilter: 'tous',
+          espacePage: 1, espaceFilter: 'tous', refreshing: false,
+          validationFilter: 'tous', validationEmp: '', validationEmpOpen: false,
           newEmpPrenom: '', newEmpNom: '', newEmpEmail: '', newEmpPoste: '', newEmpRole: 'employe', newEmpPhoto: '', addEmpError: '', addEmpBusy: false, newPosteAdding: false,
           notif: null, confirmDel: null, editEmp: null, editEmpError: '', editEmpBusy: false, editPosteAdding: false,
           weekStart: isoOf(mondayOf(new Date())),
@@ -5988,21 +6112,33 @@
             const [entries, presence, absences, recurrences, accounts0] = await Promise.all([api('/entries'), api('/presence'), api('/absences'), api('/recurrences'), api('/accounts')]);
             const patch = { entries, presence, absences, recurrences, accounts: accounts0 };
             if (role === 'patron') {
-              const [portfolio, blog, testimonials, portfolioSettings, blogSettings, newsletterSubs, contactRequests, pageViewsData] = await Promise.all([
+              const [portfolio, blog, testimonials, portfolioSettings, blogSettings, newsletterSubs, contactRequests, pageViewsData, socialsData] = await Promise.all([
                 api('/content/portfolio?admin=1'), api('/content/blog?admin=1'),
                 api('/content/testimonials?admin=1'), api('/settings/portfolio_page'), api('/settings/blog_page'), api('/newsletter'), api('/contact'),
                 api('/content/stats/page-views').catch(() => null),
+                api('/settings/contact_socials').catch(() => null),
               ]);
+              const socials = socialsData && Array.isArray(socialsData.items) && socialsData.items.length
+                ? socialsData.items.map((x) => ({ name: x.name || '', icon: x.icon || 'linkedin', href: x.href || '' }))
+                : SOCIAL_DEFAULTS.map((x) => ({ ...x }));
               const heroStats = portfolioSettings && portfolioSettings.hero && Array.isArray(portfolioSettings.hero.stats) && portfolioSettings.hero.stats.length
                 ? portfolioSettings.hero.stats.map((x) => ({ v: x.v || '', suffix: x.suffix || '', l: x.l || '' }))
                 : PORTFOLIO_STAT_DEFAULTS.map((x) => ({ ...x }));
               const bh = (blogSettings && blogSettings.hero) || {};
               const blogHero = { kicker: bh.kicker || BLOG_HERO_DEFAULTS.kicker, lead: bh.lead || BLOG_HERO_DEFAULTS.lead, accent: bh.accent || BLOG_HERO_DEFAULTS.accent, sub: bh.sub || BLOG_HERO_DEFAULTS.sub };
               const pageViews = pageViewsData ? { portfolio: Number(pageViewsData.portfolio || 0), blog: Number(pageViewsData.blog || 0) } : { portfolio: 142, blog: 318 };
-              Object.assign(patch, { portfolio, blog, testimonials, portfolioSettings: portfolioSettings || {}, portfolioStats: heroStats, blogSettings: blogSettings || {}, blogHero, newsletterSubs, contactRequests, pageViews });
+              Object.assign(patch, { portfolio, blog, testimonials, portfolioSettings: portfolioSettings || {}, portfolioStats: heroStats, blogSettings: blogSettings || {}, blogHero, socials, newsletterSubs, contactRequests, pageViews });
             }
             this.setState(patch);
           } catch (e) { /* session likely expired; me() will fail next action */ }
+        }
+        // Recharge les données admin sans recharger la page (bouton Actualiser,
+        // présent dans la barre du haut sur toutes les sections).
+        async refreshData() {
+          if (this.state.refreshing || !this.state.session) return;
+          this.setState({ refreshing: true });
+          try { await this.loadPrivate(this.state.session.role); }
+          finally { this.setState({ refreshing: false }); }
         }
         componentDidUpdate() { this.paintImgs(); }
         paintImgs() {
@@ -6078,6 +6214,7 @@
               { key: 'portfolio', label: 'Portfolio', count: s.portfolio.length || '' },
               { key: 'blog', label: 'Blog', count: s.blog.length || '' },
               { key: 'testimonials', label: 'Témoignages', count: s.testimonials.length || '' },
+              { key: 'socials', label: 'Réseaux', count: (s.socials || []).length || '' },
               { key: 'contacts', label: 'Demandes', count: s.contactRequests.filter((c) => c.status === 'nouveau').length || '' },
               { key: 'newsletter', label: 'Newsletter', count: s.newsletterSubs.length || '' },
             ];
@@ -6104,6 +6241,7 @@
             portfolio: { title: 'Gestion du portfolio', sub: 'Projets de la section « Autres réalisations ».' },
             blog: { title: 'Gestion du blog', sub: 'Articles publiés sur la page Blog. Cochez « à la une » pour choisir l\u2019article vedette.' },
             testimonials: { title: 'Gestion des témoignages', sub: 'Témoignages affichés sur la page d\u2019accueil.' },
+            socials: { title: 'Réseaux sociaux', sub: 'Liens affichés dans la section « Suivez-nous » de la page Contact.' },
             contacts: { title: 'Demandes de contact', sub: 'Messages reçus via le formulaire de la page Contact. Suivez et traitez chaque demande client.' },
             newsletter: { title: 'Newsletter', sub: 'Abonnés inscrits depuis la page Blog. Un email leur est envoyé automatiquement à chaque publication d’article.' },
           }[tab] || { title: '', sub: '' };
@@ -6266,16 +6404,18 @@
           const espaceFilter = s.espaceFilter || 'tous';
           const espaceCounts = { tous: rawRecap.length, sup: 0, recup: 0, conge: 0, absence: 0, autre: 0 };
           rawRecap.forEach((r) => { espaceCounts[r.filterKey] = (espaceCounts[r.filterKey] || 0) + 1; });
+          espaceCounts.attente = rawRecap.filter((r) => r.isPending).length;
           const espaceFilterStyle = (active) => "font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;padding:7px 14px;border-radius:100px;cursor:pointer;transition:background .2s,border-color .2s,color .2s;"
             + (active ? 'background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);color:#fff;' : 'background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#8fa0b5;');
           const setEspaceFilter = (f) => () => this.setState({ espaceFilter: f, espacePage: 1 });
           const espaceFilterChips = [
-            { key: 'tous', label: 'Tout' }, { key: 'sup', label: 'Heures supp' }, { key: 'recup', label: 'Récup' },
+            { key: 'tous', label: 'Tout' }, { key: 'attente', label: 'En attente' },
+            { key: 'sup', label: 'Heures supp' }, { key: 'recup', label: 'Récup' },
             { key: 'conge', label: 'Congés' }, { key: 'absence', label: 'Absences' },
           ].filter((f) => f.key === 'tous' || espaceCounts[f.key] > 0).map((f) => ({
             label: f.label + ' (' + (espaceCounts[f.key] || 0) + ')', style: espaceFilterStyle(espaceFilter === f.key), onClick: setEspaceFilter(f.key),
           }));
-          const matchesEspace = (r) => (espaceFilter === 'tous' || r.filterKey === espaceFilter) && (!q || r.searchHay.indexOf(q) !== -1);
+          const matchesEspace = (r) => (espaceFilter === 'tous' || (espaceFilter === 'attente' ? r.isPending : r.filterKey === espaceFilter)) && (!q || r.searchHay.indexOf(q) !== -1);
           const filteredRecap = rawRecap.filter(matchesEspace);
           const espacePageSize = 6;
           const espaceTotalPages = Math.max(1, Math.ceil(filteredRecap.length / espacePageSize));
@@ -6294,18 +6434,55 @@
             ? fmtLong(parseIso(x.startDate)) + halfDaySuffix(x.halfDay)
             : fmtLong(parseIso(x.startDate)) + ' → ' + fmtLong(parseIso(x.endDate)));
           const pendingEntryItems = pendingAll.map((e) => ({
-            ...entryRow(e), sortDate: e.date, empName: nameOf(e.employeeId), empInitials: codInitials(nameOf(e.employeeId)), avatarBg: this.avatarBg(e.employeeId),
+            ...entryRow(e), sortDate: e.date, empId: e.employeeId, empName: nameOf(e.employeeId), empInitials: codInitials(nameOf(e.employeeId)), avatarBg: this.avatarBg(e.employeeId),
+            filterKey: e.kind === 'recup' ? 'recup' : 'sup',
             onApprove: () => this.setEntryStatus(e.id, 'valide'), onRefuse: () => this.setEntryStatus(e.id, 'refuse'),
           }));
           const pendingAbsItems = pendingAbsAll.map((x) => ({
             kindLabel: absTypeMeta(x.type).label, hoursLabel: 'Absence', hoursColor: absTypeMeta(x.type).color,
             metaLine: absDateLabel(x) + (x.motif ? (' · ' + x.motif) : '') + (x.paid === false && (x.type === 'conge' || x.type === 'absence') ? ' · Non payé' : ''),
             ...statusMeta('attente'), sortDate: x.startDate,
-            empName: nameOf(x.employeeId), empInitials: codInitials(nameOf(x.employeeId)), avatarBg: this.avatarBg(x.employeeId),
+            filterKey: x.type === 'conge' ? 'conge' : (x.type === 'absence' ? 'absence' : 'autre'),
+            empId: x.employeeId, empName: nameOf(x.employeeId), empInitials: codInitials(nameOf(x.employeeId)), avatarBg: this.avatarBg(x.employeeId),
             onApprove: () => this.setAbsenceStatus(x.id, 'valide'), onRefuse: () => this.setAbsenceStatus(x.id, 'refuse'),
           }));
           const rawPendingList = [...pendingEntryItems, ...pendingAbsItems].sort((a, b) => (a.sortDate < b.sortDate ? 1 : -1));
-          const matchesValidation = (x) => !q || (String(x.empName || '') + ' ' + String(x.kindLabel || '') + ' ' + String(x.metaLine || '') + ' ' + String(x.hoursLabel || '')).toLowerCase().indexOf(q) !== -1;
+          // Puces de type (Heures supp / Récup / Congés / Absences) pour simplifier
+          // la navigation dans les demandes en attente.
+          const validationFilter = s.validationFilter || 'tous';
+          const validationEmp = s.validationEmp || '';
+          const valCounts = { tous: rawPendingList.length, sup: 0, recup: 0, conge: 0, absence: 0, autre: 0 };
+          rawPendingList.forEach((r) => { valCounts[r.filterKey] = (valCounts[r.filterKey] || 0) + 1; });
+          const setValidationFilter = (f) => () => this.setState({ validationFilter: f, validationPage: 1 });
+          const validationFilterChips = [
+            { key: 'tous', label: 'Tout' }, { key: 'sup', label: 'Heures supp' }, { key: 'recup', label: 'Récup' },
+            { key: 'conge', label: 'Congés' }, { key: 'absence', label: 'Absences' }, { key: 'autre', label: 'Autre' },
+          ].filter((f) => f.key === 'tous' || valCounts[f.key] > 0).map((f) => ({
+            label: f.label + ' (' + (valCounts[f.key] || 0) + ')', style: espaceFilterStyle(validationFilter === f.key), onClick: setValidationFilter(f.key),
+          }));
+          // Filtre « Employé » : liste déroulante des employés ayant une demande
+          // d'heures supp ou de congés en attente.
+          const valEmpMap = {};
+          rawPendingList.forEach((r) => {
+            if (r.empId == null) return;
+            const k = String(r.empId);
+            if (valEmpMap[k]) valEmpMap[k].count += 1;
+            else valEmpMap[k] = { id: r.empId, name: r.empName, count: 1 };
+          });
+          const valEmpList = Object.keys(valEmpMap).map((k) => valEmpMap[k]).sort((a, b) => (String(a.name) < String(b.name) ? -1 : 1));
+          const setValidationEmp = (id) => () => this.setState({ validationEmp: id, validationEmpOpen: false, validationPage: 1 });
+          const validationEmpOpen = !!s.validationEmpOpen;
+          const validationEmpLabel = validationEmp ? ((valEmpMap[String(validationEmp)] && valEmpMap[String(validationEmp)].name) || 'Employé') : 'Tous les employés';
+          const validationEmpStyle = "display:inline-flex;align-items:center;gap:7px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;padding:7px 14px;border-radius:100px;cursor:pointer;transition:background .2s,border-color .2s,color .2s;"
+            + (validationEmp ? 'background:rgba(47,237,127,.12);border:1px solid rgba(47,237,127,.45);color:#2fed7f;' : 'background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#8fa0b5;');
+          const valEmpItemStyle = (active) => "display:block;width:100%;text-align:left;font-family:'Space Grotesk',sans-serif;font-size:13.5px;padding:10px 14px;border:none;background:transparent;cursor:pointer;transition:background .15s,color .15s;"
+            + (active ? 'color:#2fed7f;background:rgba(47,237,127,.08);' : 'color:#eaf0f7;');
+          const validationEmpItems = [{ id: '', name: 'Tous les employés' }]
+            .concat(valEmpList.map((e) => ({ id: e.id, name: e.name + ' (' + e.count + ')' })))
+            .map((e) => ({ label: e.name, style: valEmpItemStyle(String(validationEmp) === String(e.id)), onClick: setValidationEmp(e.id) }));
+          const matchesValidation = (x) => (validationFilter === 'tous' || x.filterKey === validationFilter)
+            && (!validationEmp || String(x.empId) === String(validationEmp))
+            && (!q || (String(x.empName || '') + ' ' + String(x.kindLabel || '') + ' ' + String(x.metaLine || '') + ' ' + String(x.hoursLabel || '')).toLowerCase().indexOf(q) !== -1);
           const filteredPendingList = rawPendingList.filter(matchesValidation);
           const validationPageSize = 5;
           const validationTotalPages = Math.max(1, Math.ceil(filteredPendingList.length / validationPageSize));
@@ -6618,6 +6795,9 @@
             onLoginPassword: (e) => this.setState({ loginPassword: e.target.value, loginError: false }),
             onLogin: (e) => { e.preventDefault(); this.doLogin(); },
             onLogout: () => { this.doLogout(); },
+            onRefresh: () => { this.refreshData(); },
+            refreshLabel: s.refreshing ? 'Actualisation…' : 'Actualiser',
+            refreshDisabled: !!s.refreshing,
             onLogoClick: () => { window.location.href = '/'; },
             onForgotOpen: () => this.setState({ authMode: 'forgot', forgotEmail: s.loginEmail || '', forgotError: '', forgotDone: false }),
             onAuthBackToLogin: () => this.backToLogin(),
@@ -6691,6 +6871,7 @@
             showSoldes: tab === 'soldes', showPlanning: tab === 'planning', showContent: isContent,
             showNewsletter: tab === 'newsletter',
             showContacts: tab === 'contacts',
+            showSocials: tab === 'socials',
             tabPortfolio: tab === 'portfolio', tabBlog: tab === 'blog', tabTestimonials: tab === 'testimonials',
             portfolioViews: Number((s.pageViews || {}).portfolio || 142),
             blogViews: Number((s.pageViews || {}).blog || 318),
@@ -6752,6 +6933,9 @@
             onDeclare: (e) => { e.preventDefault(); this.declareOvertime(); },
 
             // validation
+            validationFilterChips,
+            validationEmpItems, validationEmpOpen, validationEmpLabel, validationEmpStyle,
+            onToggleValidationEmp: () => this.setState({ validationEmpOpen: !s.validationEmpOpen }),
             pendingList, pendingEmpty: rawPendingList.length === 0,
             isValidationSearchEmpty: rawPendingList.length > 0 && filteredPendingList.length === 0,
             showValidationPagination: validationTotalPages > 1,
@@ -6995,6 +7179,18 @@
             blogHeroBusy: !!s.blogHeroBusy,
             blogHeroSaveLabel: s.blogHeroBusy ? 'Enregistrement…' : "Enregistrer l'en-tête",
             onSaveBlogHero: (e) => { if (e) e.preventDefault(); this.saveBlogHero(); },
+            // Réseaux sociaux (page Contact)
+            socialRows: (s.socials || []).map((it, i) => ({
+              icon: it.icon || 'linkedin', href: it.href || '',
+              onIcon: (e) => this.setSocial(i, 'icon', e && e.target ? e.target.value : ''),
+              onHref: (e) => this.setSocial(i, 'href', e && e.target ? e.target.value : ''),
+              onRemove: () => this.removeSocial(i),
+            })),
+            socialsEmpty: (s.socials || []).length === 0,
+            socialsBusy: !!s.socialsBusy,
+            socialsSaveLabel: s.socialsBusy ? 'Enregistrement…' : 'Enregistrer les réseaux',
+            onAddSocial: () => this.addSocial(),
+            onSaveSocials: (e) => { if (e) e.preventDefault(); this.saveSocials(); },
             catOptions,
             catListMode: !s.catAdding,
             catAdding: !!s.catAdding,
@@ -7535,6 +7731,31 @@
             this.setState({ blogSettings: saved || data, blogHeroBusy: false });
             this.notify('En-tête du blog enregistré.', 'Enregistré', 'success');
           } catch (err) { this.setState({ blogHeroBusy: false }); this.notify(err.message, 'Erreur', 'error'); }
+        }
+        // ===== Réseaux sociaux (page Contact) =====
+        setSocial(i, key, val) {
+          this.setState((st) => ({
+            socials: st.socials.map((x, j) => (j === i ? { ...x, [key]: val } : x)),
+          }));
+        }
+        addSocial() {
+          this.setState((st) => ({ socials: [...st.socials, { icon: 'linkedin', href: '' }] }));
+        }
+        removeSocial(i) {
+          this.setState((st) => ({ socials: st.socials.filter((_, j) => j !== i) }));
+        }
+        async saveSocials() {
+          // On ne garde que les entrées avec un lien ; le nom = libellé de l'icône (accessibilité).
+          const items = this.state.socials
+            .map((x) => ({ icon: (x.icon || '').trim(), href: (x.href || '').trim() }))
+            .filter((x) => x.href && x.icon)
+            .map((x) => ({ ...x, name: (SOCIAL_ICON_OPTIONS.find((o) => o.value === x.icon) || {}).label || x.icon }));
+          this.setState({ socialsBusy: true });
+          try {
+            await api('/settings/contact_socials', { method: 'PUT', body: { items } });
+            this.setState({ socialsBusy: false });
+            this.notify('Réseaux sociaux enregistrés.', 'Enregistré', 'success');
+          } catch (err) { this.setState({ socialsBusy: false }); this.notify(err.message, 'Erreur', 'error'); }
         }
       }
     </script>

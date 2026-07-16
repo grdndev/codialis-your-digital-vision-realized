@@ -96,7 +96,7 @@
           }
           .cod-h1line {
             display: block;
-            animation: cod-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+            animation: cod-rise 1.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
           }
           @keyframes cod-bounce {
             0%,
@@ -173,8 +173,6 @@
             transition:
               box-shadow 0.4s,
               background 0.4s;
-            width: 900px;
-            height: 75px;
           "
         >
           <a
@@ -206,18 +204,7 @@
             <sc-for list="{{ navLinks }}" as="lk" hint-placeholder-count="4">
               <a
                 href="{{ lk.href }}"
-                style="
-                  font-family: &quot;Space Grotesk&quot;, sans-serif;
-                  font-weight: 500;
-                  font-size: 14.5px;
-                  letter-spacing: 0.01em;
-                  color: #c4cfdd;
-                  padding: 8px 12px;
-                  border-radius: 100px;
-                  transition:
-                    color 0.25s,
-                    background 0.25s;
-                "
+                style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:14.5px;letter-spacing:.01em;color:{{ lk.color }};padding:8px 12px;border-radius:100px;transition:color .25s,background .25s;"
                 style-hover="color:#fff;background:rgba(255,255,255,.07);"
                 >{{ lk.label }}</a
               >
@@ -505,10 +492,10 @@
                 color: #edf3f7;
               "
             >
-              <span class="cod-h1line" style="animation-delay: 0.05s"
+              <span class="cod-h1line" style="animation-delay: 0.15s"
                 >Nous concevons les plateformes</span
               >
-              <span class="cod-h1line" style="animation-delay: 0.16s"
+              <span class="cod-h1line" style="animation-delay: 0.6s"
                 >digitales qui font
                 <span
                   style="
@@ -518,7 +505,7 @@
                   >avancer</span
                 ></span
               >
-              <span class="cod-h1line" style="animation-delay: 0.27s"
+              <span class="cod-h1line" style="animation-delay: 1.05s"
                 >les entreprises.</span
               >
             </h1>
@@ -530,8 +517,8 @@
                 gap: 12px 26px;
                 justify-content: center;
                 margin-bottom: 40px;
-                animation: cod-rise 0.8s ease both;
-                animation-delay: 0.42s;
+                animation: cod-rise 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+                animation-delay: 1.6s;
               "
             >
               <sc-for list="{{ heroChecks }}" as="c" hint-placeholder-count="3">
@@ -569,8 +556,8 @@
                 flex-wrap: wrap;
                 gap: 14px;
                 justify-content: center;
-                animation: cod-rise 0.8s ease both;
-                animation-delay: 0.54s;
+                animation: cod-rise 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+                animation-delay: 1.95s;
               "
             >
               <a
@@ -644,8 +631,8 @@
                 background: rgba(255, 255, 255, 0.05);
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 backdrop-filter: blur(8px);
-                animation: cod-rise 0.8s ease both;
-                animation-delay: 0.66s;
+                animation: cod-rise 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+                animation-delay: 2.3s;
               "
             >
               <div style="display: flex; align-items: center">
@@ -729,8 +716,8 @@
                 opacity: 0;
                 transform: translateY(28px);
                 transition:
-                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                  opacity 1.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  transform 1.9s cubic-bezier(0.2, 0.7, 0.2, 1);
                 max-width: 620px;
                 margin-bottom: 40px;
               "
@@ -797,8 +784,8 @@
                     border: 1px solid rgba(255, 255, 255, 0.1);
                     overflow: hidden;
                     transition:
-                      opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                      transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1),
+                      opacity 1.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+                      transform 1.5s cubic-bezier(0.2, 0.7, 0.2, 1),
                       border-color 0.35s,
                       box-shadow 0.35s;
                   "
@@ -1043,8 +1030,8 @@
                     opacity: 0;
                     transform: translateX(70px);
                     transition:
-                      opacity 0.65s cubic-bezier(0.2, 0.8, 0.2, 1),
-                      transform 0.65s cubic-bezier(0.2, 0.8, 0.2, 1),
+                      opacity 1.6s cubic-bezier(0.2, 0.8, 0.2, 1),
+                      transform 1.6s cubic-bezier(0.2, 0.8, 0.2, 1),
                       border-color 0.3s,
                       background 0.3s;
                     display: flex;
@@ -1123,8 +1110,8 @@
                 opacity: 0;
                 transform: translateY(28px);
                 transition:
-                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                  opacity 1.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  transform 1.9s cubic-bezier(0.2, 0.7, 0.2, 1);
                 text-align: center;
                 max-width: 680px;
                 margin: 0 auto 48px;
@@ -1186,8 +1173,8 @@
                 opacity: 0;
                 transform: translateY(28px);
                 transition:
-                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                  opacity 1.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  transform 1.9s cubic-bezier(0.2, 0.7, 0.2, 1);
               "
             >
               <div
@@ -1334,8 +1321,8 @@
                 opacity: 0;
                 transform: translateY(28px);
                 transition:
-                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                  opacity 1.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  transform 1.9s cubic-bezier(0.2, 0.7, 0.2, 1);
                 max-width: 720px;
                 margin-bottom: clamp(40px, 5vw, 64px);
               "
@@ -1391,8 +1378,8 @@
                   opacity: 0;
                   transform: translateY(30px) scale(0.97);
                   transition:
-                    opacity 0.75s cubic-bezier(0.2, 0.8, 0.2, 1),
-                    transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1);
+                    opacity 1.6s cubic-bezier(0.2, 0.8, 0.2, 1),
+                    transform 1.6s cubic-bezier(0.2, 0.8, 0.2, 1);
                   position: relative;
                   padding: clamp(28px, 3vw, 40px);
                   border-radius: 18px;
@@ -1453,8 +1440,8 @@
                   opacity: 0;
                   transform: translateY(30px);
                   transition:
-                    opacity 0.75s cubic-bezier(0.2, 0.8, 0.2, 1),
-                    transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1);
+                    opacity 1.6s cubic-bezier(0.2, 0.8, 0.2, 1),
+                    transform 1.6s cubic-bezier(0.2, 0.8, 0.2, 1);
                   display: flex;
                   flex-direction: column;
                   gap: 20px;
@@ -1506,8 +1493,8 @@
                     opacity: 0;
                     transform: translateY(28px);
                     transition:
-                      opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                      transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                      opacity 1.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+                      transform 1.9s cubic-bezier(0.2, 0.7, 0.2, 1),
                       border-color 0.3s,
                       background 0.3s;
                     display: flex;
@@ -1549,8 +1536,8 @@
                 opacity: 0;
                 transform: translateY(28px);
                 transition:
-                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                  opacity 1.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  transform 1.9s cubic-bezier(0.2, 0.7, 0.2, 1);
                 margin-top: clamp(64px, 8vw, 110px);
               "
             >
@@ -1605,7 +1592,7 @@
                       opacity: 0;
                       transform: translateY(28px);
                       transition:
-                        opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                        opacity 1.9s cubic-bezier(0.2, 0.7, 0.2, 1),
                         transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
                       display: flex;
                       flex-direction: column;
@@ -2028,8 +2015,8 @@
                 opacity: 0;
                 transform: translateY(28px);
                 transition:
-                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                  opacity 1.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  transform 1.9s cubic-bezier(0.2, 0.7, 0.2, 1);
                 text-align: center;
                 max-width: 680px;
                 margin: 0 auto 56px;
@@ -2092,8 +2079,8 @@
                 opacity: 0;
                 transform: translateY(28px);
                 transition:
-                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                  opacity 1.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  transform 1.9s cubic-bezier(0.2, 0.7, 0.2, 1);
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
                 gap: 20px;
@@ -2220,8 +2207,8 @@
                 opacity: 0;
                 transform: translateY(28px);
                 transition:
-                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                  transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                  opacity 1.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  transform 1.9s cubic-bezier(0.2, 0.7, 0.2, 1);
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
                 gap: 24px;
@@ -2325,8 +2312,8 @@
               opacity: 0;
               transform: translateY(28px);
               transition:
-                opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                opacity 1.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+                transform 1.9s cubic-bezier(0.2, 0.7, 0.2, 1);
               position: relative;
               z-index: 1;
               max-width: 820px;
@@ -2825,7 +2812,7 @@
             { slot: 'team-dly', initials: 'DL', name: 'Denis Lam-Yam', role: 'Ingénieur IA · Data', bg: '#A7D8F0' },
             { slot: 'team-lm', initials: 'LM', name: 'Luc Moutanin', role: 'Apprenti Ingénieur IA · Data', bg: '#C9C2F5' },
           ];
-          const team = ((this.state.customTeam && this.state.customTeam.length) ? this.state.customTeam : defaultTeam).map((m) => ({ ...m, noImage: !m.image, bg: m.bg || '#2FED7F' }));
+          const team = ((this.state.customTeam && this.state.customTeam.length) ? this.state.customTeam : defaultTeam).map((m, i) => ({ ...m, noImage: !m.image, bg: m.bg || '#2FED7F', delay: i * 550 }));
           return {
             year: new Date().getFullYear(),
             setLangFr: setLang('fr'),
@@ -2851,9 +2838,9 @@
             footerExp: ['Développement SaaS', 'Applications mobiles', 'Intelligence artificielle', 'CRM & ERP sur mesure'],
             values: [
               { num: '01', delay: 0, label: 'Excellence technique' },
-              { num: '02', delay: 80, label: 'Responsabilité long terme' },
-              { num: '03', delay: 160, label: 'Innovation utile' },
-              { num: '04', delay: 240, label: 'Clarté & transparence' },
+              { num: '02', delay: 550, label: 'Responsabilité long terme' },
+              { num: '03', delay: 1100, label: 'Innovation utile' },
+              { num: '04', delay: 1650, label: 'Clarté & transparence' },
             ],
             team,
             testimonialsUnused: null,
@@ -2873,15 +2860,15 @@
             tNext: () => this.setState((s) => ({ tIndex: (s.tIndex + 1) % tCount })),
             services: [
               { num: '01', delay: 0, kicker: 'Plateformes', title: 'Développement SaaS', desc: `Plateformes cloud-native et multi-tenant, pensées pour la performance et la croissance. Approche architecture-first, scalabilité sans dette technique.`, tags: ['Cloud-native', 'Multi-tenant', 'API REST/GraphQL', 'Microservices'] },
-              { num: '02', delay: 80, kicker: 'Mobile', title: 'Applications mobiles', desc: `iOS, Android, React Native ou Flutter des apps performantes à l'UX soignée, architecturées pour absorber votre croissance.`, tags: ['React Native', 'Flutter', 'iOS · Android', 'Performance'] },
-              { num: '03', delay: 160, kicker: 'IA', title: 'Intelligence artificielle', desc: `LLM, automatisation, analyse prédictive. On intègre l'IA là où elle crée un impact mesurable  pas par effet de mode.`, tags: ['LLM / RAG', 'Automatisation', 'Computer Vision', 'ML Ops'] },
-              { num: '04', delay: 240, kicker: 'Gestion', title: 'CRM & ERP sur mesure', desc: `Des outils de gestion qui épousent votre métier. CRM/ERP sur mesure, tableaux de bord actionnables et automatisations.`, tags: ['CRM custom', 'ERP modulaire', 'Odoo · Salesforce', 'Intégration API'] },
+              { num: '02', delay: 550, kicker: 'Mobile', title: 'Applications mobiles', desc: `iOS, Android, React Native ou Flutter des apps performantes à l'UX soignée, architecturées pour absorber votre croissance.`, tags: ['React Native', 'Flutter', 'iOS · Android', 'Performance'] },
+              { num: '03', delay: 1100, kicker: 'IA', title: 'Intelligence artificielle', desc: `LLM, automatisation, analyse prédictive. On intègre l'IA là où elle crée un impact mesurable  pas par effet de mode.`, tags: ['LLM / RAG', 'Automatisation', 'Computer Vision', 'ML Ops'] },
+              { num: '04', delay: 1650, kicker: 'Gestion', title: 'CRM & ERP sur mesure', desc: `Des outils de gestion qui épousent votre métier. CRM/ERP sur mesure, tableaux de bord actionnables et automatisations.`, tags: ['CRM custom', 'ERP modulaire', 'Odoo · Salesforce', 'Intégration API'] },
             ],
             steps: [
               { num: '01', delay: 0, title: 'Cadrage & architecture', desc: `On part de vos enjeux métier pour poser une architecture claire, documentée et évolutive.` },
-              { num: '02', delay: 260, title: 'Conception & design', desc: `Parcours, UX et UI pensés pour vos usages réels. Sobre, rapide, accessible.` },
-              { num: '03', delay: 520, title: 'Développement itératif', desc: `Des livraisons régulières et testées. Vous suivez l'avancement, sans effet tunnel.` },
-              { num: '04', delay: 780, title: 'Déploiement & durée', desc: `Mise en production maîtrisée, monitoring et accompagnement. Construit pour durer.` },
+              { num: '02', delay: 550, title: 'Conception & design', desc: `Parcours, UX et UI pensés pour vos usages réels. Sobre, rapide, accessible.` },
+              { num: '03', delay: 1100, title: 'Développement itératif', desc: `Des livraisons régulières et testées. Vous suivez l'avancement, sans effet tunnel.` },
+              { num: '04', delay: 1650, title: 'Déploiement & durée', desc: `Mise en production maîtrisée, monitoring et accompagnement. Construit pour durer.` },
             ],
             stats: [
               { count: 4, suffix: '', label: `Domaines d'expertise` },
@@ -2983,7 +2970,7 @@
               });
             }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
             reveals.forEach((el) => io.observe(el));
-            setTimeout(() => reveals.forEach(show), 3500);
+            setTimeout(() => reveals.forEach(show), 6000);
           } else {
             reveals.forEach(show);
           }
@@ -2992,7 +2979,7 @@
           const run = (el) => {
             const target = parseFloat(el.getAttribute('data-count')) || 0;
             if (reduce) { el.textContent = String(target); return; }
-            const dur = 1500;
+            const dur = 3200;
             const start = performance.now();
             const ease = (t) => 1 - Math.pow(1 - t, 3);
             const step = (now) => {
