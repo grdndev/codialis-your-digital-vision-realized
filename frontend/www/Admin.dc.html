@@ -731,10 +731,10 @@
                     <div
                       style="margin-top: 6px; font-size: 13px; color: #8fa0b5"
                     >
-                      Heures supp validées
+                      Heures supp
                     </div>
                     <div style="margin-top:3px;font-size:11px;color:#5c6b80;line-height:1.4;">
-                      Cumul validé par la direction
+                      Supp déclarées (attente + validées)
                     </div>
                   </div>
                   <div
@@ -776,7 +776,7 @@
                       );
                       border: 1px solid rgba(47, 237, 127, 0.3);
                     "
-                    title="Heures récupérables restantes : heures supp validées moins heures déjà récupérées."
+                    title="Heures récupérables restantes : heures supp déclarées moins heures déjà récupérées."
                   >
                     <div
                       style="
@@ -795,7 +795,7 @@
                       Heures récupérables
                     </div>
                     <div style="margin-top:3px;font-size:11px;color:#5c6b80;line-height:1.4;">
-                      Supp validées − déjà récupérées
+                      Supp déclarées − déjà récupérées
                     </div>
                   </div>
                   <div
@@ -5438,7 +5438,12 @@
                     <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8fa0b5;font-family:'Space Grotesk',sans-serif;margin-bottom:2px;">Absence posée</div>
                     <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;color:#c9c2f5;">{{ menuAbsLabel }}</div>
                   </div>
-                  <button type="button" onClick="{{ deleteMenuAbs }}" style="padding:8px 12px;border-radius:9px;border:1px solid rgba(255,107,107,0.4);background:rgba(255,107,107,0.08);color:#ff6b6b;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;white-space:nowrap;" style-hover="background:rgba(255,107,107,.18);">Supprimer</button>
+                  <sc-if value="{{ canDeleteMenuAbs }}" hint-placeholder-val="{{ false }}">
+                    <button type="button" onClick="{{ deleteMenuAbs }}" style="padding:8px 12px;border-radius:9px;border:1px solid rgba(255,107,107,0.4);background:rgba(255,107,107,0.08);color:#ff6b6b;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;white-space:nowrap;" style-hover="background:rgba(255,107,107,.18);">Supprimer</button>
+                  </sc-if>
+                  <sc-if value="{{ !canDeleteMenuAbs }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;color:#2fed7f;background:rgba(47,237,127,0.12);padding:6px 10px;border-radius:8px;border:1px solid rgba(47,237,127,0.3);white-space:nowrap;">Validé par la direction</span>
+                  </sc-if>
                 </div>
               </sc-if>
               <sc-if value="{{ menuHasRecup }}" hint-placeholder-val="{{ false }}">
@@ -5447,7 +5452,12 @@
                     <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8fa0b5;font-family:'Space Grotesk',sans-serif;margin-bottom:2px;">Récupération</div>
                     <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;color:#f5c86b;">{{ menuRecupLabel }}</div>
                   </div>
-                  <button type="button" onClick="{{ deleteMenuRecup }}" style="padding:8px 12px;border-radius:9px;border:1px solid rgba(255,107,107,0.4);background:rgba(255,107,107,0.08);color:#ff6b6b;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;white-space:nowrap;" style-hover="background:rgba(255,107,107,.18);">Supprimer</button>
+                  <sc-if value="{{ canDeleteMenuRecup }}" hint-placeholder-val="{{ false }}">
+                    <button type="button" onClick="{{ deleteMenuRecup }}" style="padding:8px 12px;border-radius:9px;border:1px solid rgba(255,107,107,0.4);background:rgba(255,107,107,0.08);color:#ff6b6b;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;white-space:nowrap;" style-hover="background:rgba(255,107,107,.18);">Supprimer</button>
+                  </sc-if>
+                  <sc-if value="{{ !canDeleteMenuRecup }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;color:#2fed7f;background:rgba(47,237,127,0.12);padding:6px 10px;border-radius:8px;border:1px solid rgba(47,237,127,0.3);white-space:nowrap;">Validé par la direction</span>
+                  </sc-if>
                 </div>
               </sc-if>
               <sc-if value="{{ menuHasRule }}" hint-placeholder-val="{{ false }}">
@@ -6161,17 +6171,17 @@
         defaultTab(role) { return role === 'patron' ? 'validation' : 'espace'; }
         accountOf(id) { return (this.state.accounts || []).find((a) => a.id === id) || null; }
         // Solde d'heures « à ancre » : base saisie par la direction (hoursBalance
-        // au jour hoursAnchor) + sup validées − récups (attente + validées) datées
+        // au jour hoursAnchor) + sup déclarées − récups (attente + validées) datées
         // APRÈS l'ancre. Sans ancre : comportement historique (tout depuis début).
         balanceOf(empId) {
           const acc = this.accountOf(empId);
           const anchor = acc && acc.hoursAnchor ? acc.hoursAnchor : null;
           const base = acc && acc.hoursBalance != null ? (parseFloat(acc.hoursBalance) || 0) : 0;
-          // Aligné sur le back (availableHours) : sup comptée seulement VALIDÉE ;
-          // récup dès qu'elle n'est pas refusée (attente = réservée), pour que le
-          // solde se décompte tout de suite à la pose sur le planning.
+          // Aligné sur le back (availableHours) : sup et récup comptées dès qu'elles
+          // ne sont pas refusées (attente + validées), pour que le solde prenne
+          // en compte les heures en attente et se décompte tout de suite sur le planning.
           const es = this.state.entries.filter((e) => e.employeeId === empId && (!anchor || e.date > anchor));
-          const sup = es.filter((e) => e.kind === 'sup' && e.status === 'valide').reduce((a, e) => a + (parseFloat(e.hours) || 0), 0);
+          const sup = es.filter((e) => e.kind === 'sup' && e.status !== 'refuse').reduce((a, e) => a + (parseFloat(e.hours) || 0), 0);
           const recup = es.filter((e) => e.kind === 'recup' && e.status !== 'refuse').reduce((a, e) => a + (parseFloat(e.hours) || 0), 0);
           return { sup: codRound(sup), recup: codRound(recup), solde: codRound(base + sup - recup), base: codRound(base) };
         }
@@ -6204,6 +6214,7 @@
           return { defined: true, solde: codRound((parseFloat(acc.leaveBalance) || 0) + accrued - taken) };
         }
         avatarBg(id) { let h = 0; const s = String(id); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return PAL[h % PAL.length]; }
+        isPatron() { const sess = this.state && this.state.session; return sess && sess.role === 'patron'; }
 
         renderVals() {
           const s = this.state;
@@ -7062,8 +7073,8 @@
             menuRecupHint: (isPatron ? 'Récupération validée d’office. Solde dispo : ' : 'La demande part en validation. Solde dispo : ') + menuSolde + ' h.',
             // Ce qui occupe déjà la case (pour retirer ce qui masque `presence`).
             menuHasManual: !!menuManual,
-            menuHasAbs: !!menuAbs, menuAbsLabel,
-            menuHasRecup: !!menuRecup, menuRecupLabel,
+            menuHasAbs: !!menuAbs, menuAbsLabel, canDeleteMenuAbs: isPatron || (menuAbs && menuAbs.status === 'attente'),
+            menuHasRecup: !!menuRecup, menuRecupLabel, canDeleteMenuRecup: isPatron || (menuRecup && menuRecup.status === 'attente'),
             menuHasRule: !!menuRule, menuRuleLabel,
             deleteMenuAbs: () => { if (menuAbs) this.deleteAbsenceFromMenu(menuAbs.id); },
             deleteMenuRecup: () => { if (menuRecup) this.deleteRecupFromMenu(menuRecup.id); },
@@ -7365,6 +7376,13 @@
           } catch (err) { this.notify(err.message, 'Erreur', 'error'); }
         }
         async deleteEntry(id) {
+          if (!this.isPatron()) {
+            const cur = this.state.entries.find((e) => e.id === id);
+            if (cur && cur.status === 'valide') {
+              this.notify('Demande déjà validée par la direction — annulation impossible.', 'Annulation interdite', 'error');
+              return;
+            }
+          }
           try { await api('/entries/' + id, { method: 'DELETE' }); } catch (err) { this.notify(err.message, 'Erreur', 'error'); return; }
           this.setState((st) => ({ entries: st.entries.filter((e) => e.id !== id) }));
         }
@@ -7481,17 +7499,28 @@
           // pré-rempli ; case vide → on ouvre sur « Présence » (léger, 1 clic).
           this.setState({ menu: { empId, date }, menuTab: existing ? 'absence' : 'presence', menuHours: '7', absForm, absEditId: existing ? existing.id : null });
         }
-        // Retire toute récup active (attente OU validée) posée sur cette case
-        // quand on la repasse en présence/vide. La direction pose des récups
-        // « validées » d'office : ne filtrer que 'attente' laisserait une récup
-        // fantôme qui continuerait à décompter le solde d'heures.
+        // Retire toute récup active posée sur cette case (attente OU validée si
+        // patron ; seulement 'attente' si employé). La direction peut tout retirer ;
+        // l'employé ne peut pas annuler/retirer un congé ou une récup déjà validé(e).
         async dropPendingRecup(empId, date) {
-          const pend = this.state.entries.filter((e) => e.employeeId === empId && e.kind === 'recup' && e.date === date && e.status !== 'refuse');
-          for (const e of pend) { try { await api('/entries/' + e.id, { method: 'DELETE' }); } catch (er) {} }
-          if (pend.length) this.setState((st) => ({ entries: st.entries.filter((e) => !pend.some((p) => p.id === e.id)) }));
+          const isPat = this.isPatron();
+          const pend = this.state.entries.filter((e) => e.employeeId === empId && e.kind === 'recup' && e.date === date && e.status !== 'refuse' && (isPat || e.status === 'attente'));
+          const deleted = [];
+          for (const e of pend) {
+            try { await api('/entries/' + e.id, { method: 'DELETE' }); deleted.push(e.id); } catch (er) {}
+          }
+          if (deleted.length) this.setState((st) => ({ entries: st.entries.filter((e) => !deleted.includes(e.id)) }));
         }
         async setPresence(status) {
           const m = this.state.menu; if (!m) return;
+          if (!this.isPatron()) {
+            const valAbs = this.state.absences.find((a) => a.employeeId === m.empId && a.status === 'valide' && m.date >= a.startDate && m.date <= a.endDate);
+            const valRec = this.state.entries.find((e) => e.employeeId === m.empId && e.kind === 'recup' && e.date === m.date && e.status === 'valide');
+            if (valAbs || valRec) {
+              this.notify('Cette journée a déjà été validée par la direction — modification impossible.', 'Action interdite', 'error');
+              return;
+            }
+          }
           try { await api('/presence', { method: 'PUT', body: { employeeId: m.empId, date: m.date, status } }); }
           catch (err) { this.notify(err.message, 'Erreur', 'error'); return; }
           await this.dropPendingRecup(m.empId, m.date);
@@ -7504,6 +7533,14 @@
         }
         async clearCell() {
           const m = this.state.menu; if (!m) return;
+          if (!this.isPatron()) {
+            const valAbs = this.state.absences.find((a) => a.employeeId === m.empId && a.status === 'valide' && m.date >= a.startDate && m.date <= a.endDate);
+            const valRec = this.state.entries.find((e) => e.employeeId === m.empId && e.kind === 'recup' && e.date === m.date && e.status === 'valide');
+            if (valAbs || valRec) {
+              this.notify('Cette journée a déjà été validée par la direction — modification impossible.', 'Action interdite', 'error');
+              return;
+            }
+          }
           try { await api('/presence', { method: 'PUT', body: { employeeId: m.empId, date: m.date, status: null } }); }
           catch (err) { this.notify(err.message, 'Erreur', 'error'); return; }
           await this.dropPendingRecup(m.empId, m.date);
@@ -7519,6 +7556,14 @@
           const m = this.state.menu; if (!m) return;
           const hours = parseFloat(this.state.menuHours) || 0;
           if (hours <= 0) return;
+          if (!this.isPatron()) {
+            const valAbs = this.state.absences.find((a) => a.employeeId === m.empId && a.status === 'valide' && m.date >= a.startDate && m.date <= a.endDate);
+            const valRec = this.state.entries.find((e) => e.employeeId === m.empId && e.kind === 'recup' && e.date === m.date && e.status === 'valide');
+            if (valAbs || valRec) {
+              this.notify('Cette journée a déjà été validée par la direction — modification impossible.', 'Action interdite', 'error');
+              return;
+            }
+          }
           // Une seule récup active par jour : sinon on empilerait des doublons
           // qui décompteraient le solde plusieurs fois. Supprimer l'existante d'abord.
           const dup = this.state.entries.find((e) => e.employeeId === m.empId && e.kind === 'recup' && e.date === m.date && e.status !== 'refuse');
@@ -7537,6 +7582,13 @@
         // ---- Absences ----
         async confirmAbsence() {
           const m = this.state.menu; if (!m) return;
+          if (this.state.absEditId && !this.isPatron()) {
+            const cur = this.state.absences.find((a) => a.id === this.state.absEditId);
+            if (cur && cur.status === 'valide') {
+              this.notify('Ce congé a déjà été validé par la direction — modification impossible.', 'Congé validé', 'error');
+              return;
+            }
+          }
           const f = this.state.absForm;
           const start = f.start || m.date;
           const end = f.end || start;
@@ -7586,6 +7638,13 @@
           } catch (err) { this.notify(err.message, 'Erreur', 'error'); }
         }
         async deleteAbsence(id) {
+          if (!this.isPatron()) {
+            const cur = this.state.absences.find((a) => a.id === id);
+            if (cur && cur.status === 'valide') {
+              this.notify('Congé déjà validé par la direction — annulation impossible.', 'Annulation interdite', 'error');
+              return;
+            }
+          }
           try {
             await api('/absences/' + id, { method: 'DELETE' });
             this.setState((st) => ({ absences: st.absences.filter((a) => a.id !== id) }));
@@ -7618,12 +7677,26 @@
         }
         // ---- Retrait depuis le menu du jour (ferme le menu ensuite) ----
         async deleteAbsenceFromMenu(id) {
+          if (!this.isPatron()) {
+            const cur = this.state.absences.find((a) => a.id === id);
+            if (cur && cur.status === 'valide') {
+              this.notify('Ce congé a déjà été validé par la direction — annulation impossible.', 'Action interdite', 'error');
+              return;
+            }
+          }
           try {
             await api('/absences/' + id, { method: 'DELETE' });
             this.setState((st) => ({ absences: st.absences.filter((a) => a.id !== id), menu: null }));
           } catch (err) { this.notify(err.message, 'Erreur', 'error'); }
         }
         async deleteRecupFromMenu(id) {
+          if (!this.isPatron()) {
+            const cur = this.state.entries.find((e) => e.id === id);
+            if (cur && cur.status === 'valide') {
+              this.notify('Cette récupération a déjà été validée par la direction — annulation impossible.', 'Action interdite', 'error');
+              return;
+            }
+          }
           try {
             await api('/entries/' + id, { method: 'DELETE' });
             this.setState((st) => ({ entries: st.entries.filter((e) => e.id !== id), menu: null }));

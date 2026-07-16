@@ -79,8 +79,16 @@ router.patch('/:id', requirePatron, async (req, res) => {
   res.json(rows[0]);
 });
 
-// DELETE /api/entries/:id — owner (any status) or patron
+// DELETE /api/entries/:id — owner (if still in 'attente') or patron
 router.delete('/:id', async (req, res) => {
+  if (req.user.role !== 'patron') {
+    const { rows: check } = await query('SELECT status, employee_id FROM entries WHERE id = $1', [req.params.id]);
+    if (check.length === 0) return res.status(404).json({ error: 'Demande introuvable' });
+    if (check[0].employee_id !== req.user.id) return res.status(403).json({ error: 'Interdit' });
+    if (check[0].status === 'valide') {
+      return res.status(403).json({ error: 'Demande déjà validée par la direction — annulation impossible' });
+    }
+  }
   const sql = req.user.role === 'patron'
     ? 'DELETE FROM entries WHERE id = $1 RETURNING id'
     : 'DELETE FROM entries WHERE id = $1 AND employee_id = $2 RETURNING id';

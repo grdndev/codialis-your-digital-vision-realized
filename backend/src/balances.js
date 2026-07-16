@@ -71,10 +71,10 @@ function todayIso() { return isoOf(new Date()); }
 
 // ---------------------------------------------------------------------------
 // HEURES SUP / RÉCUP
-// disponible = base ancrée + heures sup VALIDÉES − récups (attente + validées),
+// disponible = base ancrée + heures sup (attente + validées) − récups (attente + validées),
 // en excluant éventuellement une entrée (`excludeId`, utile à la validation).
-// Les récups en attente réservent leur montant ; les heures sup en attente ne
-// sont PAS comptées comme disponibles (prudence : elles ne sont pas acquises).
+// Les récups et heures sup en attente sont prises en compte dès leur saisie
+// pour que le solde disponible soit décompté immédiatement dans le planning.
 export async function availableHours(employeeId, excludeId = null) {
   const { rows: urows } = await query(
     'SELECT hours_balance::float AS base, to_char(hours_anchor, \'YYYY-MM-DD\') AS anchor FROM users WHERE id = $1',
@@ -92,7 +92,7 @@ export async function availableHours(employeeId, excludeId = null) {
   let avail = base;
   for (const e of rows) {
     if (anchor && e.date <= anchor) continue;
-    if (e.kind === 'sup' && e.status === 'valide') avail += e.hours;
+    if (e.kind === 'sup' && e.status !== 'refuse') avail += e.hours;
     else if (e.kind === 'recup' && e.status !== 'refuse') avail -= e.hours;
   }
   return { defined: true, available: Math.round(avail * 100) / 100 };

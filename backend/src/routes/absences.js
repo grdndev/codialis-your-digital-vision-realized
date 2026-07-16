@@ -179,8 +179,16 @@ router.patch('/:id', async (req, res) => {
   res.json(rows[0]);
 });
 
-// DELETE /api/absences/:id — owner (any status) or patron.
+// DELETE /api/absences/:id — owner (if still in 'attente') or patron.
 router.delete('/:id', async (req, res) => {
+  if (req.user.role !== 'patron') {
+    const { rows: check } = await query('SELECT status, employee_id FROM absences WHERE id = $1', [req.params.id]);
+    if (check.length === 0) return res.status(404).json({ error: 'Absence introuvable' });
+    if (check[0].employee_id !== req.user.id) return res.status(403).json({ error: 'Interdit' });
+    if (check[0].status === 'valide') {
+      return res.status(403).json({ error: 'Congé déjà validé par la direction — annulation impossible' });
+    }
+  }
   const sql = req.user.role === 'patron'
     ? 'DELETE FROM absences WHERE id = $1 RETURNING id'
     : 'DELETE FROM absences WHERE id = $1 AND employee_id = $2 RETURNING id';
