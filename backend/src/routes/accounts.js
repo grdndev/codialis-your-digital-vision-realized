@@ -21,12 +21,51 @@ router.get('/featured', async (req, res) => {
 // Everything below requires authentication.
 router.use(requireAuth);
 
-// GET /api/accounts — any authenticated user (no hashes exposed)
+// GET /api/accounts — any authenticated user (no hashes exposed).
+// Les ancres de solde (congés/heures) ne sont visibles que du patron — un
+// employé ne reçoit que les siennes (null pour les autres).
 router.get('/', async (req, res) => {
   const { rows } = await query(
-    'SELECT id, name, prenom, nom, email, role, poste, email_verified, photo, featured FROM users ORDER BY role DESC, name ASC',
+    `SELECT id, name, prenom, nom, email, role, poste, email_verified, photo, featured,
+            leave_balance::float AS "leaveBalance",
+            to_char(leave_anchor, 'YYYY-MM-DD') AS "leaveAnchor",
+            hours_balance::float AS "hoursBalance",
+            to_char(hours_anchor, 'YYYY-MM-DD') AS "hoursAnchor"
+     FROM users ORDER BY role DESC, name ASC`,
   );
-  res.json(rows);
+  const isPatron = req.user.role === 'patron';
+  res.json(rows.map((r) => (isPatron || r.id === req.user.id
+    ? r
+    : { ...r, leaveBalance: null, leaveAnchor: null, hoursBalance: null, hoursAnchor: null })));
+});
+
+// PATCH /api/accounts/:id/balances — patron saisit/corrige un solde (congés en
+// jours et/ou heures). La valeur saisie est le solde RÉEL du moment : l'ancre
+// passe à aujourd'hui, le calcul repart de là (aucun double comptage).
+router.patch('/:id/balances', requirePatron, async (req, res) => {
+  const { id } = req.params;
+  const sets = [];
+  const params = [];
+  for (const [field, col] of [['leave', 'leave'], ['hours', 'hours']]) {
+    if (req.body?.[field] === undefined) continue;
+    const v = Number.parseFloat(req.body[field]);
+    if (!Number.isFinite(v) || v < -999 || v > 9999) return res.status(400).json({ error: 'Solde invalide' });
+    params.push(v);
+    sets.push(`${col}_balance = $${params.length}, ${col}_anchor = CURRENT_DATE`);
+  }
+  if (sets.length === 0) return res.status(400).json({ error: 'Aucun solde fourni' });
+  params.push(id);
+  const { rows } = await query(
+    `UPDATE users SET ${sets.join(', ')} WHERE id = $${params.length}
+     RETURNING id,
+               leave_balance::float AS "leaveBalance",
+               to_char(leave_anchor, 'YYYY-MM-DD') AS "leaveAnchor",
+               hours_balance::float AS "hoursBalance",
+               to_char(hours_anchor, 'YYYY-MM-DD') AS "hoursAnchor"`,
+    params,
+  );
+  if (rows.length === 0) return res.status(404).json({ error: 'Compte introuvable' });
+  res.json(rows[0]);
 });
 
 // POST /api/accounts — patron creates a user.

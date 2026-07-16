@@ -29,9 +29,20 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password  BOOLEAN NOT NUL
 -- Les membres à la une remplacent l'ancienne liste content type 'team'.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS photo    TEXT NOT NULL DEFAULT '';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT false;
--- Pas de solde de congés géré par l'appli — la direction gère le quota et le
--- payé/non-payé de tête, via le motif libre des absences.
+-- L'ancien quota fixe (leave_allowance) a été abandonné au profit du modèle
+-- « ancre » ci-dessous.
 ALTER TABLE users DROP COLUMN IF EXISTS leave_allowance;
+-- Soldes « à ancre » : la direction saisit une valeur (solde réel du moment) et
+-- la date de saisie devient l'ancre. Le solde affiché est TOUJOURS recalculé :
+--   congés : leave_balance + 2.5 j/mois complet écoulé depuis leave_anchor
+--            − jours ouvrés de congés/absences PAYÉS et VALIDÉS posés après l'ancre
+--   heures : hours_balance + heures sup validées − récups validées datées après l'ancre
+-- NULL = jamais saisi (solde congés « non défini » ; heures partent de 0).
+-- Ré-ancrer (nouvelle saisie) corrige le solde sans jamais double-compter.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS leave_balance NUMERIC(6,2);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS leave_anchor  DATE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS hours_balance NUMERIC(7,2);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS hours_anchor  DATE;
 
 -- Single-use, expiring tokens for account verification and password reset.
 -- Only the SHA-256 hash of the token is stored; the raw token lives only in the
@@ -93,6 +104,8 @@ CREATE TABLE IF NOT EXISTS recurrences (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS recurrences_emp_idx ON recurrences(employee_id);
+-- Payé / non payé : seuls les congés/absences PAYÉS décomptent le solde de congés.
+ALTER TABLE recurrences ADD COLUMN IF NOT EXISTS paid BOOLEAN NOT NULL DEFAULT true;
 -- Rejoue le CHECK sur `effect` pour les bases créées avant l'ajout de 'formation'
 -- (CREATE TABLE IF NOT EXISTS ne modifie pas une contrainte déjà en place).
 ALTER TABLE recurrences DROP CONSTRAINT IF EXISTS recurrences_effect_check;
@@ -103,8 +116,8 @@ ALTER TABLE recurrences DROP CONSTRAINT IF EXISTS recurrences_freq_check;
 ALTER TABLE recurrences ADD CONSTRAINT recurrences_freq_check CHECK (freq IN ('weekly', 'biweekly', 'monthly', 'daily'));
 
 -- Absences ponctuelles sur une plage de dates. Circuit de validation identique
--- à `entries` (attente/valide/refuse). Pas de solde décompté — le type est
--- juste informatif (payé/non payé/etc. se gère via le motif, à l'œil).
+-- à `entries` (attente/valide/refuse). Un congé/absence PAYÉ et VALIDÉ décompte
+-- le solde de congés (voir soldes « à ancre » sur users) ; non payé = informatif.
 --   half_day ne s'applique que si start_date = end_date (absence d'un seul jour).
 CREATE TABLE IF NOT EXISTS absences (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -125,6 +138,8 @@ ALTER TABLE absences DROP CONSTRAINT IF EXISTS absences_type_check;
 UPDATE absences SET type = 'conge' WHERE type IN ('conge_paye', 'rtt');
 UPDATE absences SET type = 'absence' WHERE type IN ('maladie', 'sans_solde', 'autre');
 ALTER TABLE absences ADD CONSTRAINT absences_type_check CHECK (type IN ('tt', 'conge', 'absence', 'formation'));
+-- Payé / non payé : seuls les congés/absences PAYÉS décomptent le solde de congés.
+ALTER TABLE absences ADD COLUMN IF NOT EXISTS paid BOOLEAN NOT NULL DEFAULT true;
 
 -- Flexible site content (portfolio / blog / testimonials / team).
 -- The shape of each item is kept in `data` (jsonb) so the frontend

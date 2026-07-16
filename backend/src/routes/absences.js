@@ -1,6 +1,22 @@
 import { Router } from 'express';
 import { query } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
+import { notifyAbsenceCreated, notifyAbsenceDecided } from '../notify.js';
+import { canPostLeave, availableLeave } from '../balances.js';
+
+// Message d'erreur commun quand une demande dépasse le solde de congés.
+function leaveError(check) {
+  return `Solde de congés insuffisant : ${check.cost} j demandé(s) pour ${check.available} j disponible(s).`;
+}
+
+// Un congé/absence payé exige un solde de congés défini par la direction :
+// sans solde, rien à décompter. On refuse la pose et on invite à le définir.
+// Renvoie une chaîne d'erreur si bloqué, sinon null.
+async function leaveUndefinedError(employeeId, { type, paid }) {
+  if (paid === false || (type !== 'conge' && type !== 'absence')) return null;
+  const { defined } = await availableLeave(employeeId);
+  return defined ? null : 'Solde de congés non défini : la direction doit le définir avant de poser un congé.';
+}
 
 const router = Router();
 router.use(requireAuth);
@@ -13,8 +29,23 @@ const SELECT = `
          to_char(end_date,   'YYYY-MM-DD') AS "endDate",
          half_day AS "halfDay",
          motif,
-         status
+         status,
+         paid
   FROM absences`;
+
+const RETURNING = `
+     RETURNING id, employee_id AS "employeeId", type,
+               to_char(start_date,'YYYY-MM-DD') AS "startDate",
+               to_char(end_date,'YYYY-MM-DD') AS "endDate",
+               half_day AS "halfDay", motif, status, paid`;
+
+// Payé/non payé : seul le patron le fixe. Une demande d'employé part toujours
+// « payé » — la direction tranche à la validation.
+function paidFrom(req, fallback = true) {
+  if (req.user.role !== 'patron') return fallback;
+  if (req.body?.paid === undefined) return fallback;
+  return req.body.paid !== false;
+}
 
 const TYPES = ['tt', 'conge', 'absence', 'formation'];
 
@@ -51,15 +82,23 @@ router.post('/', async (req, res) => {
   const halfDay = (startDate === endDate && (req.body?.halfDay === 'am' || req.body?.halfDay === 'pm')) ? req.body.halfDay : null;
   const status = isPatron ? 'valide' : 'attente';
 
+  const paid = paidFrom(req);
+
+  // Le solde doit être défini avant tout congé payé (rien à décompter sinon).
+  const undef = await leaveUndefinedError(employeeId, { type, paid });
+  if (undef) return res.status(400).json({ error: undef });
+
+  // Un congé/absence payé ne peut pas faire passer le solde de congés sous zéro.
+  const check = await canPostLeave(employeeId, { type, paid, startDate, endDate, halfDay });
+  if (!check.ok) return res.status(400).json({ error: leaveError(check) });
+
   const { rows } = await query(
-    `INSERT INTO absences (employee_id, type, start_date, end_date, half_day, motif, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
-     RETURNING id, employee_id AS "employeeId", type,
-               to_char(start_date,'YYYY-MM-DD') AS "startDate",
-               to_char(end_date,'YYYY-MM-DD') AS "endDate",
-               half_day AS "halfDay", motif, status`,
-    [employeeId, type, startDate, endDate, halfDay, motif, status],
+    `INSERT INTO absences (employee_id, type, start_date, end_date, half_day, motif, status, paid)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)${RETURNING}`,
+    [employeeId, type, startDate, endDate, halfDay, motif, status, paid],
   );
+  // Notification email (employé → patrons, patron → employé). Fire-and-forget.
+  notifyAbsenceCreated({ absence: rows[0], actor: req.user }).catch((err) => console.error('notifyAbsenceCreated:', err?.message || err));
   res.status(201).json(rows[0]);
 });
 
@@ -71,7 +110,13 @@ router.post('/', async (req, res) => {
 //                                       'attente'; patron may edit anything
 //                                       and it stays/becomes 'valide'.
 router.patch('/:id', async (req, res) => {
-  const { rows: existingRows } = await query('SELECT employee_id, status FROM absences WHERE id = $1', [req.params.id]);
+  const { rows: existingRows } = await query(
+    `SELECT employee_id, status, paid, type, half_day AS "halfDay",
+            to_char(start_date, 'YYYY-MM-DD') AS "startDate",
+            to_char(end_date,   'YYYY-MM-DD') AS "endDate"
+     FROM absences WHERE id = $1`,
+    [req.params.id],
+  );
   if (existingRows.length === 0) return res.status(404).json({ error: 'Absence introuvable' });
   const existing = existingRows[0];
   const isPatron = req.user.role === 'patron';
@@ -94,14 +139,17 @@ router.patch('/:id', async (req, res) => {
     if (endDate < startDate) return res.status(400).json({ error: 'La date de fin précède le début' });
     const halfDay = (startDate === endDate && (req.body?.halfDay === 'am' || req.body?.halfDay === 'pm')) ? req.body.halfDay : null;
     const status = isPatron ? 'valide' : 'attente';
+    const paid = paidFrom(req, existing.paid);
+    // Le solde doit être défini avant tout congé payé.
+    const undef = await leaveUndefinedError(existing.employee_id, { type, paid });
+    if (undef) return res.status(400).json({ error: undef });
+    // Revérifie le solde en ignorant cette absence (on la remplace).
+    const check = await canPostLeave(existing.employee_id, { type, paid, startDate, endDate, halfDay, excludeAbsenceId: req.params.id });
+    if (!check.ok) return res.status(400).json({ error: leaveError(check) });
     const { rows } = await query(
-      `UPDATE absences SET type = $1, start_date = $2, end_date = $3, half_day = $4, motif = $5, status = $6
-       WHERE id = $7
-       RETURNING id, employee_id AS "employeeId", type,
-                 to_char(start_date,'YYYY-MM-DD') AS "startDate",
-                 to_char(end_date,'YYYY-MM-DD') AS "endDate",
-                 half_day AS "halfDay", motif, status`,
-      [type, startDate, endDate, halfDay, motif, status, req.params.id],
+      `UPDATE absences SET type = $1, start_date = $2, end_date = $3, half_day = $4, motif = $5, status = $6, paid = $7
+       WHERE id = $8${RETURNING}`,
+      [type, startDate, endDate, halfDay, motif, status, paid, req.params.id],
     );
     return res.json(rows[0]);
   }
@@ -109,14 +157,25 @@ router.patch('/:id', async (req, res) => {
   if (!isPatron) return res.status(403).json({ error: 'Réservé à la direction' });
   const status = req.body?.status;
   if (!['attente', 'valide', 'refuse'].includes(status)) return res.status(400).json({ error: 'Statut invalide' });
+  // Le patron peut trancher payé/non payé au moment de la décision.
+  const paid = paidFrom(req, existing.paid);
+  // Valider (ou marquer payé) ne doit pas faire passer le solde sous zéro —
+  // notamment si le patron bascule une demande « non payé » en « payé » ici.
+  if (status !== 'refuse') {
+    const check = await canPostLeave(existing.employee_id, {
+      type: existing.type, paid, startDate: existing.startDate, endDate: existing.endDate,
+      halfDay: existing.halfDay, excludeAbsenceId: req.params.id,
+    });
+    if (!check.ok) return res.status(400).json({ error: leaveError(check) });
+  }
   const { rows } = await query(
-    `UPDATE absences SET status = $1 WHERE id = $2
-     RETURNING id, employee_id AS "employeeId", type,
-               to_char(start_date,'YYYY-MM-DD') AS "startDate",
-               to_char(end_date,'YYYY-MM-DD') AS "endDate",
-               half_day AS "halfDay", motif, status`,
-    [status, req.params.id],
+    `UPDATE absences SET status = $1, paid = $2 WHERE id = $3${RETURNING}`,
+    [status, paid, req.params.id],
   );
+  // L'employé est prévenu du verdict (validé / refusé). Fire-and-forget.
+  if (status !== 'attente') {
+    notifyAbsenceDecided({ absence: rows[0] }).catch((err) => console.error('notifyAbsenceDecided:', err?.message || err));
+  }
   res.json(rows[0]);
 });
 

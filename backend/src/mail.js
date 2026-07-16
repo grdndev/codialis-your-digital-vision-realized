@@ -281,6 +281,39 @@ export async function sendVerifyEmail({ name, email, role, token }) {
   });
 }
 
+// Notification RH générique (demande créée, demande validée/refusée…).
+// `details` : liste de paires [label, valeur] affichées dans la carte sombre.
+// `tone` : green (info/validé) | amber (à traiter) | red (refusé).
+export function renderHrNotifEmail({ heading, name, intro, details = [], tone = 'green' }) {
+  const toneColor = tone === 'red' ? '#e5484d' : tone === 'amber' ? '#f5c86b' : BRAND.green;
+  const rows = details
+    .filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== '')
+    .map(([label, value]) => `
+        <p style="margin:0 0 4px 0;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8a99ad">${escapeHtml(label)}</p>
+        <p style="margin:0 0 14px 0;font-family:'IBM Plex Mono',Consolas,monospace;font-size:15px;color:#ffffff">${escapeHtml(value)}</p>`)
+    .join('');
+  const body = `
+    <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:${toneColor}">${escapeHtml(heading)}</p>
+    <h1 style="margin:0 0 18px 0;font-size:24px;line-height:1.3;font-weight:700;color:${BRAND.navy}">Bonjour ${escapeHtml(name)},</h1>
+    <p style="margin:0 0 22px 0;font-size:15px;color:${BRAND.ink}">${escapeHtml(intro)}</p>
+    ${rows ? `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BRAND.panel};border-radius:12px;margin:0 0 26px 0">
+      <tr><td style="padding:22px 24px 8px 24px">${rows}</td></tr>
+    </table>` : ''}
+    ${ctaButton("Ouvrir l'espace Codialis", loginUrl())}`;
+  return emailLayout({ preheader: intro, bodyHtml: body });
+}
+
+// Envoie une notification RH à un destinataire. Best-effort côté appelant :
+// ne jamais bloquer la réponse HTTP sur un échec Brevo.
+export async function sendHrNotifEmail({ email, name, subject, heading, intro, details, tone }) {
+  return sendEmail({
+    email, name,
+    subject,
+    htmlContent: renderHrNotifEmail({ heading, name, intro, details, tone }),
+  });
+}
+
 // Sends the password-reset email carrying the reset link.
 export async function sendResetEmail({ name, email, token }) {
   return sendEmail({

@@ -775,6 +775,30 @@
                       Solde disponible
                     </div>
                   </div>
+                  <div
+                    style="
+                      padding: 18px 20px;
+                      border-radius: 14px;
+                      background: linear-gradient(
+                        160deg,
+                        rgba(201, 194, 245, 0.1),
+                        rgba(255, 255, 255, 0.012)
+                      );
+                      border: 1px solid rgba(201, 194, 245, 0.3);
+                    "
+                    title="{{ myLeaveTitle }}"
+                  >
+                    <div
+                      style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:28px;color:{{ myLeaveColor }};line-height:1;"
+                    >
+                      {{ myLeaveLabel }}
+                    </div>
+                    <div
+                      style="margin-top: 6px; font-size: 13px; color: #8fa0b5"
+                    >
+                      Solde de congés
+                    </div>
+                  </div>
                 </div>
 
                 <div
@@ -1452,6 +1476,22 @@
                             >
                               supp {{ s.sup }}h · récup {{ s.recup }}h{{
                               s.pendingLabel }}
+                            </div>
+                          </div>
+                          <div style="text-align: right; flex-shrink: 0" title="{{ s.congesTitle }}">
+                            <div
+                              style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;color:{{ s.congesColor }};line-height:1;"
+                            >
+                              {{ s.congesLabel }}
+                            </div>
+                            <div
+                              style="
+                                font-size: 11px;
+                                color: #5c6b80;
+                                margin-top: 3px;
+                              "
+                            >
+                              congés
                             </div>
                           </div>
                           <div style="text-align: right; flex-shrink: 0">
@@ -2256,6 +2296,23 @@
                               <sc-for list="{{ recEffectOptions }}" as="o" hint-placeholder-count="4"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
                             </select>
                           </label>
+                          <sc-if value="{{ recSelHasEmp }}" hint-placeholder-val="{{ false }}">
+                            <div style="grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+                              <div style="padding:11px 13px;border-radius:11px;background:rgba(245,200,107,0.08);border:1px solid rgba(245,200,107,0.26);">
+                                <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8fa0b5;font-family:'IBM Plex Mono',monospace;margin-bottom:3px;">Heures supp — {{ recSelName }}</div>
+                                <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px;color:#f5c86b;">{{ recSelSolde }} h</div>
+                              </div>
+                              <div style="padding:11px 13px;border-radius:11px;background:rgba(201,194,245,0.08);border:1px solid rgba(201,194,245,0.26);">
+                                <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8fa0b5;font-family:'IBM Plex Mono',monospace;margin-bottom:3px;">Congés</div>
+                                <sc-if value="{{ recSelLeaveDefined }}" hint-placeholder-val="{{ true }}">
+                                  <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px;color:#c9c2f5;">{{ recSelLeaveSolde }} j</div>
+                                </sc-if>
+                                <sc-if value="{{ recSelLeaveUndefined }}" hint-placeholder-val="{{ false }}">
+                                  <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;color:#66768c;">Non défini</div>
+                                </sc-if>
+                              </div>
+                            </div>
+                          </sc-if>
                           <p style="grid-column:1 / -1;margin:0;padding:8px 11px;border-radius:9px;background:rgba(127,230,196,0.08);border:1px solid rgba(127,230,196,0.18);font-size:12px;color:#9fe8d0;line-height:1.5;">{{ recEffectHelp }}</p>
                           <sc-if value="{{ recShowFreq }}" hint-placeholder-val="{{ true }}">
                           <label style="display:block;">
@@ -2297,6 +2354,15 @@
                             <span style="display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'IBM Plex Mono',monospace;margin-bottom:6px;">Fin · vide = permanent</span>
                             <input type="date" value="{{ recEnd }}" onInput="{{ onRecEnd }}" style="width:100%;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#eaf0f7;font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;" style-focus="border-color:#2FED7F;" />
                           </label>
+                          <sc-if value="{{ recShowPaid }}" hint-placeholder-val="{{ false }}">
+                            <label style="grid-column:1 / -1;display:block;">
+                              <span style="display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'IBM Plex Mono',monospace;margin-bottom:6px;">Décompte du solde</span>
+                              <select value="{{ recPaidValue }}" onChange="{{ onRecPaid }}" style="width:100%;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#eaf0f7;font-family:'IBM Plex Sans',sans-serif;font-size:14px;outline:none;cursor:pointer;box-sizing:border-box;" style-focus="border-color:#2FED7F;">
+                                <option value="paid">Payé — décompté du solde de congés</option>
+                                <option value="np">Non payé — sans décompte</option>
+                              </select>
+                            </label>
+                          </sc-if>
                           <label style="grid-column:1 / -1;display:block;">
                             <span style="display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'IBM Plex Mono',monospace;margin-bottom:6px;">{{ recNoteLabel }}</span>
                             <input type="text" value="{{ recMotif }}" onInput="{{ onRecMotif }}" placeholder="{{ recNotePlaceholder }}" style="width:100%;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#eaf0f7;font-family:'IBM Plex Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;" style-focus="border-color:#2FED7F;" />
@@ -5078,11 +5144,16 @@
                     style-focus="border-color: rgba(47,237,127,.55); background: rgba(255,255,255,.08);"
                   />
                 </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px;">
+                  <sc-for list="{{ contactFilterChips }}" as="f" hint-placeholder-count="4">
+                    <button type="button" onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}</button>
+                  </sc-for>
+                </div>
                 <sc-if value="{{ isContactSearchEmpty }}" hint-placeholder-val="{{ false }}">
                   <div style="padding: 44px 24px; border-radius: 16px; border: 1px dashed rgba(255, 255, 255, 0.14); text-align: center; color: #5c6b80; max-width: 720px;">
                     <div style="font-size: 24px; margin-bottom: 8px; color: #8fa0b5;">⌕</div>
                     <div style="font-size: 15px; color: #8fa0b5;">
-                      Aucun résultat ne correspond à votre recherche « {{ contentSearchQuery }} ».
+                      Aucune demande ne correspond à ces critères.
                     </div>
                   </div>
                 </sc-if>
@@ -5204,11 +5275,29 @@
                 </button>
               </div>
 
+              <!-- Soldes de l'employé, condensés sur une ligne : supp + congés -->
+              <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding:11px 14px;border-radius:11px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);">
+                <div style="display:flex;align-items:baseline;gap:6px;">
+                  <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;color:#f5c86b;">{{ menuSolde }}</span>
+                  <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'Space Grotesk',sans-serif;">h&nbsp;supp</span>
+                </div>
+                <span style="width:1px;height:18px;background:rgba(255,255,255,0.12);"></span>
+                <div style="display:flex;align-items:baseline;gap:6px;">
+                  <sc-if value="{{ menuLeaveDefined }}" hint-placeholder-val="{{ true }}">
+                    <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;color:#c9c2f5;">{{ menuLeaveSolde }}</span>
+                  </sc-if>
+                  <sc-if value="{{ menuLeaveUndefined }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;color:#66768c;">—</span>
+                  </sc-if>
+                  <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'Space Grotesk',sans-serif;">j&nbsp;congés</span>
+                </div>
+              </div>
+
               <!-- Ce qui occupe déjà la case (absence / récup / règle) + retrait -->
               <sc-if value="{{ menuHasAbs }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:11px 13px;border-radius:11px;background:rgba(201,194,245,0.09);border:1px solid rgba(201,194,245,0.28);">
                   <div style="flex:1;min-width:0;">
-                    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8fa0b5;font-family:'IBM Plex Mono',monospace;margin-bottom:2px;">Absence posée</div>
+                    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8fa0b5;font-family:'Space Grotesk',sans-serif;margin-bottom:2px;">Absence posée</div>
                     <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;color:#c9c2f5;">{{ menuAbsLabel }}</div>
                   </div>
                   <button type="button" onClick="{{ deleteMenuAbs }}" style="padding:8px 12px;border-radius:9px;border:1px solid rgba(255,107,107,0.4);background:rgba(255,107,107,0.08);color:#ff6b6b;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;white-space:nowrap;" style-hover="background:rgba(255,107,107,.18);">Supprimer</button>
@@ -5217,7 +5306,7 @@
               <sc-if value="{{ menuHasRecup }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:11px 13px;border-radius:11px;background:rgba(245,200,107,0.09);border:1px solid rgba(245,200,107,0.28);">
                   <div style="flex:1;min-width:0;">
-                    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8fa0b5;font-family:'IBM Plex Mono',monospace;margin-bottom:2px;">Récupération</div>
+                    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8fa0b5;font-family:'Space Grotesk',sans-serif;margin-bottom:2px;">Récupération</div>
                     <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;color:#f5c86b;">{{ menuRecupLabel }}</div>
                   </div>
                   <button type="button" onClick="{{ deleteMenuRecup }}" style="padding:8px 12px;border-radius:9px;border:1px solid rgba(255,107,107,0.4);background:rgba(255,107,107,0.08);color:#ff6b6b;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;white-space:nowrap;" style-hover="background:rgba(255,107,107,.18);">Supprimer</button>
@@ -5226,7 +5315,7 @@
               <sc-if value="{{ menuHasRule }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:11px 13px;border-radius:11px;background:rgba(47,237,127,0.07);border:1px solid rgba(47,237,127,0.24);">
                   <div style="flex:1;min-width:0;">
-                    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8fa0b5;font-family:'IBM Plex Mono',monospace;margin-bottom:2px;">Règle récurrente</div>
+                    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8fa0b5;font-family:'Space Grotesk',sans-serif;margin-bottom:2px;">Règle récurrente</div>
                     <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;color:#2fed7f;">{{ menuRuleLabel }}</div>
                     <div style="font-size:11px;color:#8fa0b5;margin-top:3px;line-height:1.4;">Choisir Présent / Télétravail / Congé remplace juste ce jour. « Supprimer » retire la règle pour tous les jours.</div>
                   </div>
@@ -5234,33 +5323,36 @@
                 </div>
               </sc-if>
 
-              <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7c8aa0;font-family:'IBM Plex Mono',monospace;margin-bottom:9px;">Statut du jour</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px;">
-                <button type="button" onClick="{{ setTT }}" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:11px;border:1px solid rgba(167,216,240,0.28);background:rgba(167,216,240,0.08);color:#a7d8f0;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;" style-hover="background:rgba(167,216,240,.18);">
-                  <span style="width:9px;height:9px;border-radius:50%;background:#a7d8f0;"></span>Télétravail
-                </button>
-                <button type="button" onClick="{{ setConge }}" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:11px;border:1px solid rgba(201,194,245,0.28);background:rgba(201,194,245,0.08);color:#c9c2f5;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;" style-hover="background:rgba(201,194,245,.18);">
-                  <span style="width:9px;height:9px;border-radius:50%;background:#c9c2f5;"></span>Congé
-                </button>
-              </div>
-              <button type="button" onClick="{{ clearCell }}" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#8fa0b5;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;margin-bottom:22px;" style-hover="border-color:#ff6b6b;color:#ff6b6b;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Effacer ce jour
-              </button>
-              <!-- Poser une demande : onglets Absence / Récupération -->
-              <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7c8aa0;font-family:'IBM Plex Mono',monospace;margin-bottom:9px;">{{ absPanelTitle }}</div>
-              <div style="display:flex;gap:5px;padding:4px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);margin-bottom:16px;">
+              <!-- Un seul sélecteur pilote tout le bas : présence / absence / récup -->
+              <div style="display:flex;gap:4px;padding:4px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);margin-bottom:16px;">
+                <button type="button" onClick="{{ setMenuTabPresence }}" style="{{ menuTabPresenceStyle }}">Présence</button>
                 <button type="button" onClick="{{ setMenuTabAbsence }}" style="{{ menuTabAbsStyle }}">Absence</button>
-                <button type="button" onClick="{{ setMenuTabRecup }}" style="{{ menuTabRecupStyle }}">Récupération</button>
+                <button type="button" onClick="{{ setMenuTabRecup }}" style="{{ menuTabRecupStyle }}">Récup</button>
               </div>
 
-              <!-- Panneau Absence -->
-              <sc-if value="{{ menuTabIsAbsence }}" hint-placeholder-val="{{ true }}">
+              <!-- Panneau Présence : marqueurs rapides, aucun impact solde -->
+              <sc-if value="{{ menuTabIsPresence }}" hint-placeholder-val="{{ true }}">
                 <div>
-                  <label style="display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'IBM Plex Mono',monospace;margin-bottom:6px;">Type d’absence</label>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <button type="button" onClick="{{ setTT }}" style="display:flex;flex-direction:column;align-items:center;gap:7px;padding:16px 6px;border-radius:11px;border:1px solid rgba(167,216,240,0.28);background:rgba(167,216,240,0.08);color:#a7d8f0;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;cursor:pointer;" style-hover="background:rgba(167,216,240,.18);">
+                      <span style="width:10px;height:10px;border-radius:50%;background:#a7d8f0;"></span>Télétravail
+                    </button>
+                    <button type="button" onClick="{{ clearCell }}" style="display:flex;flex-direction:column;align-items:center;gap:7px;padding:16px 6px;border-radius:11px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#8fa0b5;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;cursor:pointer;" style-hover="border-color:#ff6b6b;color:#ff6b6b;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Effacer
+                    </button>
+                  </div>
+                  <p style="margin:12px 0 0;font-size:12px;color:#8fa0b5;line-height:1.5;">Marque la journée sans toucher aux soldes. « Effacer » la remet en présence par défaut.</p>
+                </div>
+              </sc-if>
+
+              <!-- Panneau Absence -->
+              <sc-if value="{{ menuTabIsAbsence }}" hint-placeholder-val="{{ false }}">
+                <div>
+                  <label style="display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'Space Grotesk',sans-serif;margin-bottom:6px;">Type d’absence</label>
                   <select
                     value="{{ absType }}"
                     onChange="{{ onAbsType }}"
-                    style="width:100%;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'IBM Plex Sans',sans-serif;font-size:14px;outline:none;cursor:pointer;margin-bottom:10px;"
+                    style="width:100%;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;cursor:pointer;margin-bottom:10px;"
                     style-focus="border-color:#C9C2F5;"
                   >
                     <sc-for list="{{ absTypeOptions }}" as="o" hint-placeholder-count="6">
@@ -5269,23 +5361,23 @@
                   </select>
                   <p style="margin:0 0 10px;font-size:12px;color:#a9b6c9;line-height:1.5;">{{ absTypeHelp }}</p>
                   <div style="display:flex;gap:9px;margin-bottom:10px;">
-                    <label style="flex:1;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'IBM Plex Mono',monospace;">
+                    <label style="flex:1;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'Space Grotesk',sans-serif;">
                       Du
                       <input
                         type="date"
                         value="{{ absStart }}"
                         onInput="{{ onAbsStart }}"
-                        style="width:100%;margin-top:5px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;"
+                        style="width:100%;margin-top:5px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;"
                         style-focus="border-color:#C9C2F5;"
                       />
                     </label>
-                    <label style="flex:1;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'IBM Plex Mono',monospace;">
+                    <label style="flex:1;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'Space Grotesk',sans-serif;">
                       Au
                       <input
                         type="date"
                         value="{{ absEnd }}"
                         onInput="{{ onAbsEnd }}"
-                        style="width:100%;margin-top:5px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;"
+                        style="width:100%;margin-top:5px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;"
                         style-focus="border-color:#C9C2F5;"
                       />
                     </label>
@@ -5294,7 +5386,7 @@
                     <select
                       value="{{ absHalf }}"
                       onChange="{{ onAbsHalf }}"
-                      style="width:100%;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'IBM Plex Sans',sans-serif;font-size:14px;outline:none;cursor:pointer;margin-bottom:10px;"
+                      style="width:100%;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;cursor:pointer;margin-bottom:10px;"
                       style-focus="border-color:#C9C2F5;"
                     >
                       <sc-for list="{{ halfDayOptions }}" as="o" hint-placeholder-count="3">
@@ -5302,17 +5394,37 @@
                       </sc-for>
                     </select>
                   </sc-if>
-                  <label style="display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'IBM Plex Mono',monospace;margin-bottom:14px;">
+                  <label style="display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'Space Grotesk',sans-serif;margin-bottom:14px;">
                     {{ absNoteLabel }}
                     <input
                       type="text"
                       value="{{ absMotif }}"
                       onInput="{{ onAbsMotif }}"
                       placeholder="{{ absNotePlaceholder }}"
-                      style="width:100%;margin-top:5px;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'IBM Plex Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;"
+                      style="width:100%;margin-top:5px;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;box-sizing:border-box;"
                       style-focus="border-color:#C9C2F5;"
                     />
                   </label>
+                  <sc-if value="{{ absShowPaid }}" hint-placeholder-val="{{ false }}">
+                    <label style="display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'Space Grotesk',sans-serif;margin-bottom:10px;">
+                      Décompte du solde
+                      <select
+                        value="{{ absPaidValue }}"
+                        onChange="{{ onAbsPaid }}"
+                        style="width:100%;margin-top:5px;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;cursor:pointer;"
+                        style-focus="border-color:#C9C2F5;"
+                      >
+                        <option value="paid">Payé — décompté du solde de congés</option>
+                        <option value="np">Non payé — sans décompte</option>
+                      </select>
+                    </label>
+                  </sc-if>
+                  <sc-if value="{{ absSoldeShown }}" hint-placeholder-val="{{ false }}">
+                    <p style="margin:0 0 10px;font-size:12px;line-height:1.5;color:{{ absSoldeColor }};">{{ absSoldeText }}</p>
+                  </sc-if>
+                  <sc-if value="{{ absOverdrawShown }}" hint-placeholder-val="{{ false }}">
+                    <p style="margin:0 0 10px;padding:8px 11px;border-radius:9px;background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.3);font-size:12px;line-height:1.5;color:#ff6b6b;">⚠ Cette demande dépasse le solde de congés disponible : elle sera refusée. Réduisez la période, passez-la en « non payé », ou ajustez le solde.</p>
+                  </sc-if>
                   <button
                     type="button"
                     onClick="{{ confirmAbsence }}"
@@ -5327,7 +5439,7 @@
               <!-- Panneau Récupération -->
               <sc-if value="{{ menuTabIsRecup }}" hint-placeholder-val="{{ false }}">
                 <div>
-                  <label style="display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'IBM Plex Mono',monospace;margin-bottom:6px;">Heures à récupérer</label>
+                  <label style="display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7c8aa0;font-family:'Space Grotesk',sans-serif;margin-bottom:6px;">Heures à récupérer</label>
                   <div style="display:flex;gap:9px;margin-bottom:10px;">
                     <input
                       type="number"
@@ -5335,7 +5447,7 @@
                       step="0.5"
                       value="{{ menuHours }}"
                       onInput="{{ onMenuHours }}"
-                      style="width:96px;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'IBM Plex Sans',sans-serif;font-size:14.5px;outline:none;box-sizing:border-box;"
+                      style="width:96px;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:14.5px;outline:none;box-sizing:border-box;"
                       style-focus="border-color:#F5C86B;"
                     />
                     <button
@@ -5347,7 +5459,10 @@
                       Demander {{ menuHours }} h
                     </button>
                   </div>
-                  <p style="margin:0;font-size:12px;color:#8fa0b5;line-height:1.5;">La demande part en validation. Solde dispo : {{ menuSolde }} h.</p>
+                  <p style="margin:0;font-size:12px;color:{{ menuSoldeColor }};line-height:1.5;">{{ menuRecupHint }}</p>
+                  <sc-if value="{{ recupOverdrawShown }}" hint-placeholder-val="{{ false }}">
+                    <p style="margin:8px 0 0;padding:8px 11px;border-radius:9px;background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.3);font-size:12px;line-height:1.5;color:#ff6b6b;">⚠ Ces heures dépassent le solde disponible : la demande sera refusée.</p>
+                  </sc-if>
                 </div>
               </sc-if>
             </div>
@@ -5488,6 +5603,20 @@
                   </select>
                 </label>
 
+                <!-- ===== Soldes (congés / heures) — saisie direction ===== -->
+                <div style="height:1px;background:rgba(255,255,255,0.08);margin:2px 0;"></div>
+                <div style="display:flex;gap:12px;">
+                  <label style="display:flex;flex-direction:column;gap:6px;flex:1;">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8fa0b5;">Solde congés (jours)</span>
+                    <input type="text" inputmode="decimal" value="{{ editEmpLeave }}" onInput="{{ onEditEmpLeave }}" placeholder="ex. 6,5" style="width:100%;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(201,194,245,0.3);color:#eaf0f7;font-family:'IBM Plex Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;" style-focus="border-color:#C9C2F5;" />
+                  </label>
+                  <label style="display:flex;flex-direction:column;gap:6px;flex:1;">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8fa0b5;">Solde heures (h)</span>
+                    <input type="text" inputmode="decimal" value="{{ editEmpHours }}" onInput="{{ onEditEmpHours }}" placeholder="ex. 12" style="width:100%;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(47,237,127,0.3);color:#eaf0f7;font-family:'IBM Plex Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;" style-focus="border-color:#2FED7F;" />
+                  </label>
+                </div>
+                <p style="margin:0;font-size:12px;line-height:1.5;color:#5c6b80;">Saisissez le solde <strong style="color:#8fa0b5;">réel du jour</strong> : le compteur repart d'aujourd'hui (+2,5 j de congés/mois ; congés payés validés décomptés, heures supp/récup validées ajustées).</p>
+
                 <!-- ===== Vitrine : photo de profil + mise à la une ===== -->
                 <div style="height:1px;background:rgba(255,255,255,0.08);margin:2px 0;"></div>
                 <div style="display:flex;gap:14px;align-items:flex-start;">
@@ -5580,16 +5709,17 @@
         tt: { label: 'Télétravail', color: '#A7D8F0', bg: 'rgba(167,216,240,.14)' },
         conge: { label: 'Congé', color: '#C9C2F5', bg: 'rgba(201,194,245,.14)' },
       };
-      // Types d'absence : libellé, couleur. Pas de solde décompté — le
-      // payé/non-payé se gère par la direction via le motif libre.
+      // Types d'absence : libellé, couleur. Un congé/absence PAYÉ et VALIDÉ
+      // décompte le solde de congés (voir leaveBalanceOf) ; non payé = informatif.
       const ATYPE = {
         tt:        { label: 'Télétravail', short: 'TT', color: '#A7D8F0', bg: 'rgba(167,216,240,.16)' },
         conge:     { label: 'Congé', short: 'Congé', color: '#C9C2F5', bg: 'rgba(201,194,245,.16)' },
         absence:   { label: 'Absent', short: 'Absent', color: '#8FA0B5', bg: 'rgba(143,160,181,.16)' },
         formation: { label: 'Formation', short: 'Formation', color: '#7FE6C4', bg: 'rgba(127,230,196,.16)' },
       };
+      // Télétravail vit uniquement dans « Statut du jour » (marqueur presence).
+      // Ici, seulement les demandes qui touchent un solde ou un suivi.
       const ATYPE_OPTIONS = [
-        { value: 'tt', label: 'Télétravail' },
         { value: 'conge', label: 'Congé' },
         { value: 'absence', label: 'Absent' },
         { value: 'formation', label: 'Formation' },
@@ -5732,11 +5862,37 @@
         const iso = isoOf(d);
         return iso >= a.startDate && iso <= a.endDate;
       }
+      // Mois COMPLETS écoulés entre deux dates ISO (pour l'accrual +2,5 j/mois :
+      // ancre le 15 mars → +2,5 le 15 avril, +5 le 15 mai…).
+      function monthsBetweenIso(fromIso, toIso) {
+        if (!fromIso || !toIso || toIso <= fromIso) return 0;
+        const a = parseIso(fromIso), b = parseIso(toIso);
+        let m = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+        if (b.getDate() < a.getDate()) m -= 1;
+        return Math.max(0, m);
+      }
+      // Jours ouvrés (lun-ven, hors fériés) d'une plage inclusive [start..end],
+      // en ne comptant que les jours STRICTEMENT après `afterIso` (l'ancre du
+      // solde — ce qui la précède est déjà reflété dans la valeur saisie).
+      // Demi-journée : chaque jour compte 0,5.
+      function leaveDaysInRange(startIso, endIso, halfDay, afterIso) {
+        if (!startIso) return 0;
+        let d = parseIso(startIso);
+        const end = parseIso(endIso || startIso);
+        let total = 0;
+        while (d <= end) {
+          const iso = isoOf(d);
+          const wd = (d.getDay() + 6) % 7;
+          if ((!afterIso || iso > afterIso) && wd < 5 && !holidayName(iso)) total += 1;
+          d = addDays(d, 1);
+        }
+        return halfDay ? total * 0.5 : total;
+      }
       class Component extends DCLogic {
         state = {
           accounts: [], session: null,
           loginEmail: '', loginPassword: '', loginError: false, loginErrorMsg: '', loading: true,
-          portfolio: [], blog: [], testimonials: [], team: [], newsletterSubs: [], contactRequests: [], contactPage: 1,
+          portfolio: [], blog: [], testimonials: [], team: [], newsletterSubs: [], contactRequests: [], contactPage: 1, contactStatusFilter: 'tous',
           pageViews: { portfolio: 142, blog: 318 },
           contentSearchQuery: '', portfolioPage: 1, blogPage: 1,
           portfolioSettings: {}, portfolioStats: PORTFOLIO_STAT_DEFAULTS.map((x) => ({ ...x })), statsBusy: false,
@@ -5749,8 +5905,8 @@
           notif: null, confirmDel: null, editEmp: null, editEmpError: '', editEmpBusy: false, editPosteAdding: false,
           weekStart: isoOf(mondayOf(new Date())),
           menu: null, menuHours: '7',
-          absForm: { type: 'conge', start: '', end: '', half: '', motif: '' }, absEditId: null,
-          recForm: { empId: '', effect: 'tt', freq: 'weekly', weekday: 4, monthday: 1, half: '', start: '', end: '', motif: '' },
+          absForm: { type: 'conge', start: '', end: '', half: '', motif: '', paid: true }, absEditId: null,
+          recForm: { empId: '', effect: 'tt', freq: 'weekly', weekday: 4, monthday: 1, half: '', start: '', end: '', motif: '', paid: true },
           recSearch: '', recPage: 1,
           // Auth flows: '' | 'forgot' | 'verify' | 'reset'. authToken carries the
           // one-shot token pulled from the URL for verify/reset.
@@ -5800,11 +5956,13 @@
         }
         async loadPrivate(role) {
           try {
-            const [entries, presence, absences, recurrences] = await Promise.all([api('/entries'), api('/presence'), api('/absences'), api('/recurrences')]);
-            const patch = { entries, presence, absences, recurrences };
+            // `accounts` se charge pour tous : un employé y lit ses propres
+            // ancres de solde (celles des autres lui arrivent masquées).
+            const [entries, presence, absences, recurrences, accounts0] = await Promise.all([api('/entries'), api('/presence'), api('/absences'), api('/recurrences'), api('/accounts')]);
+            const patch = { entries, presence, absences, recurrences, accounts: accounts0 };
             if (role === 'patron') {
-              const [accounts, portfolio, blog, testimonials, portfolioSettings, blogSettings, newsletterSubs, contactRequests, pageViewsData] = await Promise.all([
-                api('/accounts'), api('/content/portfolio?admin=1'), api('/content/blog?admin=1'),
+              const [portfolio, blog, testimonials, portfolioSettings, blogSettings, newsletterSubs, contactRequests, pageViewsData] = await Promise.all([
+                api('/content/portfolio?admin=1'), api('/content/blog?admin=1'),
                 api('/content/testimonials?admin=1'), api('/settings/portfolio_page'), api('/settings/blog_page'), api('/newsletter'), api('/contact'),
                 api('/content/stats/page-views').catch(() => null),
               ]);
@@ -5814,7 +5972,7 @@
               const bh = (blogSettings && blogSettings.hero) || {};
               const blogHero = { kicker: bh.kicker || BLOG_HERO_DEFAULTS.kicker, lead: bh.lead || BLOG_HERO_DEFAULTS.lead, accent: bh.accent || BLOG_HERO_DEFAULTS.accent, sub: bh.sub || BLOG_HERO_DEFAULTS.sub };
               const pageViews = pageViewsData ? { portfolio: Number(pageViewsData.portfolio || 0), blog: Number(pageViewsData.blog || 0) } : { portfolio: 142, blog: 318 };
-              Object.assign(patch, { accounts, portfolio, blog, testimonials, portfolioSettings: portfolioSettings || {}, portfolioStats: heroStats, blogSettings: blogSettings || {}, blogHero, newsletterSubs, contactRequests, pageViews });
+              Object.assign(patch, { portfolio, blog, testimonials, portfolioSettings: portfolioSettings || {}, portfolioStats: heroStats, blogSettings: blogSettings || {}, blogHero, newsletterSubs, contactRequests, pageViews });
             }
             this.setState(patch);
           } catch (e) { /* session likely expired; me() will fail next action */ }
@@ -5829,11 +5987,49 @@
         }
 
         defaultTab(role) { return role === 'patron' ? 'validation' : 'espace'; }
+        accountOf(id) { return (this.state.accounts || []).find((a) => a.id === id) || null; }
+        // Solde d'heures « à ancre » : base saisie par la direction (hoursBalance
+        // au jour hoursAnchor) + sup validées − récups (attente + validées) datées
+        // APRÈS l'ancre. Sans ancre : comportement historique (tout depuis début).
         balanceOf(empId) {
-          const es = this.state.entries.filter((e) => e.employeeId === empId && e.status === 'valide');
-          const sup = es.filter((e) => e.kind === 'sup').reduce((a, e) => a + (parseFloat(e.hours) || 0), 0);
-          const recup = es.filter((e) => e.kind === 'recup').reduce((a, e) => a + (parseFloat(e.hours) || 0), 0);
-          return { sup: codRound(sup), recup: codRound(recup), solde: codRound(sup - recup) };
+          const acc = this.accountOf(empId);
+          const anchor = acc && acc.hoursAnchor ? acc.hoursAnchor : null;
+          const base = acc && acc.hoursBalance != null ? (parseFloat(acc.hoursBalance) || 0) : 0;
+          // Aligné sur le back (availableHours) : sup comptée seulement VALIDÉE ;
+          // récup dès qu'elle n'est pas refusée (attente = réservée), pour que le
+          // solde se décompte tout de suite à la pose sur le planning.
+          const es = this.state.entries.filter((e) => e.employeeId === empId && (!anchor || e.date > anchor));
+          const sup = es.filter((e) => e.kind === 'sup' && e.status === 'valide').reduce((a, e) => a + (parseFloat(e.hours) || 0), 0);
+          const recup = es.filter((e) => e.kind === 'recup' && e.status !== 'refuse').reduce((a, e) => a + (parseFloat(e.hours) || 0), 0);
+          return { sup: codRound(sup), recup: codRound(recup), solde: codRound(base + sup - recup), base: codRound(base) };
+        }
+        // Solde de congés (jours) : valeur ancrée + 2,5 j/mois complet écoulé −
+        // jours ouvrés de congés/absences PAYÉS (attente + validés) après l'ancre
+        // (absences ponctuelles + règles « daily » du planning). Une règle sans
+        // date de fin est comptée jusqu'à aujourd'hui.
+        // defined=false tant que la direction n'a jamais saisi de solde.
+        leaveBalanceOf(empId) {
+          const acc = this.accountOf(empId);
+          if (!acc || acc.leaveBalance == null || !acc.leaveAnchor) return { defined: false, solde: 0 };
+          const anchor = acc.leaveAnchor;
+          const today = isoOf(new Date());
+          const accrued = monthsBetweenIso(anchor, today) * 2.5;
+          let taken = 0;
+          for (const a of this.state.absences) {
+            // Aligné sur le back (availableLeave) : réservé dès la pose (attente),
+            // seul un refus libère le solde. Non payé = informatif, pas décompté.
+            if (a.employeeId !== empId || a.status === 'refuse' || a.paid === false) continue;
+            if (a.type !== 'conge' && a.type !== 'absence') continue;
+            taken += leaveDaysInRange(a.startDate, a.endDate, a.halfDay, anchor);
+          }
+          for (const r of this.state.recurrences) {
+            if (r.employeeId !== empId || r.paid === false || r.freq !== 'daily') continue;
+            if (r.effect !== 'conge' && r.effect !== 'absence') continue;
+            const end = (r.endDate && r.endDate < today) ? r.endDate : today;
+            if (r.startDate && r.startDate > end) continue;
+            taken += leaveDaysInRange(r.startDate, end, r.halfDay, anchor);
+          }
+          return { defined: true, solde: codRound((parseFloat(acc.leaveBalance) || 0) + accrued - taken) };
         }
         avatarBg(id) { let h = 0; const s = String(id); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return PAL[h % PAL.length]; }
 
@@ -5876,7 +6072,7 @@
           const META = {
             espace: { title: 'Mon espace', sub: 'Déclarez vos heures supplémentaires et suivez votre solde.' },
             validation: { title: 'Demandes à valider', sub: 'Validez ou refusez les heures supp et récupérations demandées par l\u2019équipe.' },
-            soldes: { title: 'Équipe & soldes', sub: 'Soldes d\u2019heures par employé et gestion des comptes.' },
+            soldes: { title: 'Équipe & soldes', sub: 'Soldes d\u2019heures et de congés par employé (+2,5 j de congés/mois, saisie du solde via le crayon) et gestion des comptes.' },
             planning: { title: 'Planning de présence', sub: 'Cliquez sur une case pour définir la présence ou demander une récupération.' },
             portfolio: { title: 'Gestion du portfolio', sub: 'Projets de la section « Autres réalisations ».' },
             blog: { title: 'Gestion du blog', sub: 'Articles publiés sur la page Blog. Cochez « à la une » pour choisir l\u2019article vedette.' },
@@ -5986,6 +6182,7 @@
           // ---- HR: my entries / balance ----
           const myId = sess ? sess.id : null;
           const myBal = myId ? this.balanceOf(myId) : { sup: 0, recup: 0, solde: 0 };
+          const myLeave = myId ? this.leaveBalanceOf(myId) : { defined: false, solde: 0 };
           const statusMeta = (st) => ({
             statusLabel: ({ attente: 'En attente', valide: 'Validé', refuse: 'Refusé' })[st] || 'En attente',
             statusColor: ({ attente: '#F5C86B', valide: '#2FED7F', refuse: '#ff6b6b' })[st] || '#F5C86B',
@@ -6015,7 +6212,7 @@
           }));
           const pendingAbsItems = pendingAbsAll.map((x) => ({
             kindLabel: absTypeMeta(x.type).label, hoursLabel: 'Absence', hoursColor: absTypeMeta(x.type).color,
-            metaLine: absDateLabel(x) + (x.motif ? (' · ' + x.motif) : ''),
+            metaLine: absDateLabel(x) + (x.motif ? (' · ' + x.motif) : '') + (x.paid === false && (x.type === 'conge' || x.type === 'absence') ? ' · Non payé' : ''),
             ...statusMeta('attente'), sortDate: x.startDate,
             empName: nameOf(x.employeeId), empInitials: codInitials(nameOf(x.employeeId)), avatarBg: this.avatarBg(x.employeeId),
             onApprove: () => this.setAbsenceStatus(x.id, 'valide'), onRefuse: () => this.setAbsenceStatus(x.id, 'refuse'),
@@ -6037,11 +6234,15 @@
           const employees = s.accounts.filter((a) => a.role === 'employe');
           const rawSoldesList = employees.map((a) => {
             const b = this.balanceOf(a.id);
+            const lv = this.leaveBalanceOf(a.id);
             const pend = s.entries.filter((e) => e.employeeId === a.id && e.status === 'attente').length
               + s.absences.filter((x) => x.employeeId === a.id && x.status === 'attente').length;
             return {
               id: a.id, name: a.name, initials: codInitials(a.name), avatarBg: this.avatarBg(a.id),
               sup: b.sup, recup: b.recup, solde: b.solde, pendingLabel: pend ? (' · ' + pend + ' en attente') : '',
+              congesLabel: lv.defined ? (lv.solde + ' j') : '— j',
+              congesColor: !lv.defined ? '#5c6b80' : (lv.solde < 0 ? '#ff6b6b' : '#c9c2f5'),
+              congesTitle: lv.defined ? 'Solde de congés (payés)' : 'Solde de congés non défini — cliquez sur ✎ pour le saisir',
               poste: a.poste || '', hasPoste: !!(a.poste || '').trim(), noPoste: !(a.poste || '').trim(),
               photo: a.photo || '', hasPhoto: !!a.photo,
               featured: !!a.featured,
@@ -6097,6 +6298,7 @@
               email: c.email, phone: c.phone, hasPhone: !!c.phone,
               project: c.project, hasProject: !!c.project, budget: c.budget, hasBudget: !!c.budget,
               message: c.message, dateLabel: fmtLong(new Date(c.createdAt)),
+              statusKey: CONTACT_STATUS[c.status] ? c.status : 'nouveau',
               statusLabel: st.label, statusColor: st.color,
               statusChipBg: 'rgba(' + st.rgb + ',.14)', statusChipBorder: 'rgba(' + st.rgb + ',.4)',
               cardBorder: c.status === 'nouveau' ? 'rgba(47,237,127,.35)' : 'rgba(255,255,255,.1)',
@@ -6108,7 +6310,23 @@
               onDelete: () => this.deleteContactRequest(c.id),
             };
           });
-          const matchesContact = (c) => !q || (String(c.name || '') + ' ' + String(c.company || '') + ' ' + String(c.email || '') + ' ' + String(c.message || '') + ' ' + String(c.project || '')).toLowerCase().indexOf(q) !== -1;
+          const contactFilter = s.contactStatusFilter || 'tous';
+          const contactStatusCounts = { tous: rawContacts.length, nouveau: 0, en_cours: 0, traite: 0 };
+          rawContacts.forEach((c) => { contactStatusCounts[c.statusKey] = (contactStatusCounts[c.statusKey] || 0) + 1; });
+          const contactFilterStyle = (active) => "font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;padding:7px 14px;border-radius:100px;cursor:pointer;transition:background .2s,border-color .2s,color .2s;"
+            + (active ? 'background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);color:#fff;' : 'background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#8fa0b5;');
+          const setContactFilter = (f) => () => this.setState({ contactStatusFilter: f, contactPage: 1 });
+          const contactFilterChips = [
+            { key: 'tous', label: 'Tous' },
+            { key: 'nouveau', label: CONTACT_STATUS.nouveau.label },
+            { key: 'en_cours', label: CONTACT_STATUS.en_cours.label },
+            { key: 'traite', label: CONTACT_STATUS.traite.label },
+          ].map((f) => ({
+            label: f.label + ' (' + (contactStatusCounts[f.key] || 0) + ')',
+            style: contactFilterStyle(contactFilter === f.key),
+            onClick: setContactFilter(f.key),
+          }));
+          const matchesContact = (c) => (contactFilter === 'tous' || c.statusKey === contactFilter) && (!q || (String(c.name || '') + ' ' + String(c.company || '') + ' ' + String(c.email || '') + ' ' + String(c.message || '') + ' ' + String(c.project || '')).toLowerCase().indexOf(q) !== -1);
           const filteredContacts = rawContacts.filter(matchesContact);
           const contactPageSize = 5;
           const contactTotalPages = Math.max(1, Math.ceil(filteredContacts.length / contactPageSize));
@@ -6149,7 +6367,9 @@
               const meta = ATYPE[abs.type] || ATYPE.absence;
               const pending = abs.status === 'attente';
               const single = abs.startDate === abs.endDate;
-              return { label: meta.short + (pending ? ' ?' : ''), sub: single ? halfLabel(abs.halfDay) : '', color: meta.color, subColor: meta.color, bg: pending ? 'rgba(255,255,255,.03)' : meta.bg };
+              const np = abs.paid === false && (abs.type === 'conge' || abs.type === 'absence');
+              const sub = [single ? halfLabel(abs.halfDay) : '', np ? 'non payé' : ''].filter(Boolean).join(' · ');
+              return { label: meta.short + (pending ? ' ?' : ''), sub, color: meta.color, subColor: meta.color, bg: pending ? 'rgba(255,255,255,.03)' : meta.bg };
             }
             // 2. Récupération d'heures
             const rec = s.entries.find((e) => e.employeeId === empId && e.kind === 'recup' && e.date === iso && e.status !== 'refuse');
@@ -6165,7 +6385,8 @@
             if (rule) {
               const meta = ATYPE[rule.effect] || PSTATUS[rule.effect];
               if (meta) {
-                const sub = rule.halfDay ? halfLabel(rule.halfDay) : 'auto';
+                const np = rule.paid === false && (rule.effect === 'conge' || rule.effect === 'absence');
+                const sub = np ? 'non payé' : (rule.halfDay ? halfLabel(rule.halfDay) : 'auto');
                 return { label: meta.label || meta.short, sub, color: meta.color, subColor: '#5C6B80', bg: meta.bg };
               }
             }
@@ -6213,7 +6434,7 @@
           };
           const recSource = isPatron ? s.recurrences : s.recurrences.filter((r) => r.employeeId === myId);
           const recAll = recSource.map((r) => ({
-            id: r.id, desc: recWhen(r), empName: nameOf(r.employeeId),
+            id: r.id, desc: recWhen(r) + (r.paid === false && (r.effect === 'conge' || r.effect === 'absence') ? ' · non payé' : ''), empName: nameOf(r.employeeId),
             dotColor: effColor(r.effect), effLabel: effLabel(r.effect),
             chipBg: 'rgba(' + effRgb(r.effect) + ',0.14)', chipBorder: 'rgba(' + effRgb(r.effect) + ',0.4)',
             cardBg: 'rgba(' + effRgb(r.effect) + ',0.05)',
@@ -6236,11 +6457,30 @@
           // continue : on masque fréquence + jour, on ne garde que début/fin.
           const recIsRecurring = rf.effect === 'tt';
           const recFreqMonthly = recIsRecurring && rf.freq === 'monthly';
+          // Aperçu soldes de l'employé sélectionné dans le formulaire de règle
+          // (uniquement quand un employé précis est choisi, pas « Tous »).
+          const recSelHasEmp = !!rf.empId && rf.empId !== 'all';
+          const recSelName = recSelHasEmp ? nameOf(rf.empId) : '';
+          const recSelSolde = recSelHasEmp ? this.balanceOf(rf.empId).solde : 0;
+          const recSelLeave = recSelHasEmp ? this.leaveBalanceOf(rf.empId) : { defined: false, solde: 0 };
 
           // ---- Menu popover ----
           const menu = s.menu;
           let menuEmpName = '', menuDateLabel = '', menuSolde = 0;
-          if (menu) { menuEmpName = nameOf(menu.empId); menuDateLabel = (DOW[(parseIso(menu.date).getDay() + 6) % 7] + ' ' + fmtLong(parseIso(menu.date))); menuSolde = this.balanceOf(menu.empId).solde; }
+          let menuLeave = { defined: false, solde: 0 }, absReqDays = 0;
+          if (menu) {
+            menuEmpName = nameOf(menu.empId); menuDateLabel = (DOW[(parseIso(menu.date).getDay() + 6) % 7] + ' ' + fmtLong(parseIso(menu.date))); menuSolde = this.balanceOf(menu.empId).solde;
+            // Solde congés + coût (jours ouvrés) de la demande en cours de saisie
+            // — pour afficher l'alerte de dépassement (informative, sans blocage).
+            menuLeave = this.leaveBalanceOf(menu.empId);
+            const af = s.absForm;
+            const aStart = af.start || menu.date;
+            const aEnd = (af.end && af.end >= aStart) ? af.end : aStart;
+            absReqDays = leaveDaysInRange(aStart, aEnd, (aStart === aEnd ? (af.half || null) : null), null);
+          }
+          const absIsLeaveType = s.absForm.type === 'conge' || s.absForm.type === 'absence';
+          const absOverdraw = menuLeave.defined && s.absForm.paid !== false && absIsLeaveType && absReqDays > menuLeave.solde;
+          const recupOverdraw = (parseFloat(s.menuHours) || 0) > menuSolde;
           // Ce qui occupe déjà la case cliquée — pour proposer de le retirer.
           // (Présent/Effacer ne touchent que `presence`, qui est masquée par une
           // absence ou une récup ; sans ces contrôles la case serait « bloquée ».)
@@ -6256,8 +6496,11 @@
             menuRule = s.recurrences.find((r) => r.employeeId === menu.empId && recurrenceMatches(r, md)) || null;
             if (menuRule) menuRuleLabel = effLabel(menuRule.effect) + ' · ' + recWhen(menuRule);
           }
-          // Onglet actif du bas de menu (récupération / absence).
-          const menuTabIsRecup = (s.menuTab || 'absence') === 'recup';
+          // Onglet actif du popover : présence (défaut) / absence / récupération.
+          const menuTab = s.menuTab || 'presence';
+          const menuTabIsRecup = menuTab === 'recup';
+          const menuTabIsAbsence = menuTab === 'absence';
+          const menuTabIsPresence = menuTab === 'presence';
           const MENU_TAB_ON = "flex:1;padding:9px 10px;border-radius:9px;border:none;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;cursor:pointer;background:rgba(255,255,255,0.1);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.3);";
           const MENU_TAB_OFF = "flex:1;padding:9px 10px;border-radius:9px;border:none;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;cursor:pointer;background:transparent;color:#8fa0b5;";
 
@@ -6404,6 +6647,9 @@
 
             // espace
             myBalSup: myBal.sup, myBalRecup: myBal.recup, myBalSolde: myBal.solde,
+            myLeaveLabel: myLeave.defined ? (myLeave.solde + ' j') : '—',
+            myLeaveColor: !myLeave.defined ? '#5c6b80' : (myLeave.solde < 0 ? '#ff6b6b' : '#fff'),
+            myLeaveTitle: myLeave.defined ? 'Congés payés restants (+2,5 j/mois)' : 'Solde non encore défini par la direction',
             myEntries, myEmpty: myEntries.length === 0,
             rhDate: s.rhForm.date, rhHours: s.rhForm.hours, rhMotif: s.rhForm.motif,
             onRhDate: (e) => this.setState((st) => ({ rhForm: { ...st.rhForm, date: e.target.value } })),
@@ -6436,7 +6682,8 @@
             newsletterNextStyle: arrowBtnStyle(newsletterPage >= newsletterTotalPages),
 
             // demandes de contact
-            contacts, contactsEmpty: rawContacts.length === 0, contactCount: rawContacts.length,
+            contacts, contactsEmpty: rawContacts.length === 0, contactCount: filteredContacts.length,
+            contactFilterChips,
             isContactSearchEmpty: rawContacts.length > 0 && filteredContacts.length === 0,
             showContactPagination: contactTotalPages > 1,
             contactPageItems,
@@ -6488,14 +6735,18 @@
 
             // menu
             menuOpen: !!menu, menuEmpName, menuDateLabel, menuSolde, menuHours: s.menuHours,
+            menuLeaveDefined: menuLeave.defined, menuLeaveUndefined: !menuLeave.defined, menuLeaveSolde: menuLeave.solde,
+            menuSoldeColor: recupOverdraw ? '#ff6b6b' : '#8fa0b5',
+            recupOverdrawShown: recupOverdraw,
             onMenuHours: (e) => this.setState({ menuHours: e.target.value }),
             closeMenu: () => this.setState({ menu: null }),
             stopProp: (e) => { e.stopPropagation(); },
             setPresent: () => this.setPresence('present'),
             setTT: () => this.setPresence('tt'),
-            setConge: () => this.setPresence('conge'),
             clearCell: () => this.clearCell(),
             confirmRecup: () => this.confirmRecup(),
+            // La direction valide d'office ; un employé passe par la validation.
+            menuRecupHint: (isPatron ? 'Récupération validée d’office. Solde dispo : ' : 'La demande part en validation. Solde dispo : ') + menuSolde + ' h.',
             // Ce qui occupe déjà la case (pour retirer ce qui masque `presence`).
             menuHasManual: !!menuManual,
             menuHasAbs: !!menuAbs, menuAbsLabel,
@@ -6507,11 +6758,13 @@
             // En-tête (pastille initiales) + onglets bas de menu.
             menuInitials: menu ? codInitials(menuEmpName) : '',
             menuAvatarBg: menu ? this.avatarBg(menu.empId) : '#2fed7f',
-            menuTabIsRecup, menuTabIsAbsence: !menuTabIsRecup,
+            menuTabIsRecup, menuTabIsAbsence, menuTabIsPresence,
+            menuTabPresenceStyle: menuTabIsPresence ? MENU_TAB_ON : MENU_TAB_OFF,
+            menuTabAbsStyle: menuTabIsAbsence ? MENU_TAB_ON : MENU_TAB_OFF,
             menuTabRecupStyle: menuTabIsRecup ? MENU_TAB_ON : MENU_TAB_OFF,
-            menuTabAbsStyle: menuTabIsRecup ? MENU_TAB_OFF : MENU_TAB_ON,
-            setMenuTabRecup: () => this.setState({ menuTab: 'recup' }),
+            setMenuTabPresence: () => this.setState({ menuTab: 'presence' }),
             setMenuTabAbsence: () => this.setState({ menuTab: 'absence' }),
+            setMenuTabRecup: () => this.setState({ menuTab: 'recup' }),
 
             // popover — poser une absence
             absTypeOptions: ATYPE_OPTIONS, halfDayOptions: HALFDAY_OPTIONS,
@@ -6532,6 +6785,16 @@
             onAbsHalf: (e) => this.setState((st) => ({ absForm: { ...st.absForm, half: e.target.value } })),
             onAbsMotif: (e) => this.setState((st) => ({ absForm: { ...st.absForm, motif: e.target.value } })),
             confirmAbsence: () => this.confirmAbsence(),
+            // Payé / non payé (direction) + info solde congés de l'employé.
+            absShowPaid: isPatron && absIsLeaveType,
+            absPaidValue: s.absForm.paid === false ? 'np' : 'paid',
+            onAbsPaid: (e) => this.setState((st) => ({ absForm: { ...st.absForm, paid: e.target.value !== 'np' } })),
+            absSoldeShown: absIsLeaveType && menuLeave.defined,
+            absSoldeText: s.absForm.paid === false
+              ? 'Non payé — le solde de congés (' + menuLeave.solde + ' j) ne sera pas décompté.'
+              : 'Solde congés : ' + menuLeave.solde + ' j · cette demande : ' + absReqDays + ' j ouvrés.',
+            absSoldeColor: absOverdraw ? '#ff6b6b' : '#8fa0b5',
+            absOverdrawShown: absOverdraw,
 
             // planning — règles récurrentes (direction)
             showRecurPanel: isPatron,
@@ -6546,6 +6809,8 @@
             recNextPage: () => this.setState((st) => ({ recPage: (st.recPage || 1) + 1 })),
             recEmpOptions, recEffectOptions: RECUR_EFFECT_OPTIONS, recFreqOptions: FREQ_OPTIONS,
             recWeekdayOptions: WEEKDAY_OPTIONS, recMonthdayOptions: MONTHDAY_OPTIONS,
+            recSelHasEmp, recSelName, recSelSolde,
+            recSelLeaveDefined: recSelLeave.defined, recSelLeaveUndefined: !recSelLeave.defined, recSelLeaveSolde: recSelLeave.solde,
             recEmpId: rf.empId, recEffect: rf.effect, recFreq: rf.freq,
             recWeekday: rf.weekday, recMonthday: rf.monthday, recHalf: rf.half,
             recStart: rf.start, recEnd: rf.end, recMotif: rf.motif,
@@ -6572,6 +6837,10 @@
             onRecStart: (e) => this.setState((st) => ({ recForm: { ...st.recForm, start: e.target.value } })),
             onRecEnd: (e) => this.setState((st) => ({ recForm: { ...st.recForm, end: e.target.value } })),
             onRecMotif: (e) => this.setState((st) => ({ recForm: { ...st.recForm, motif: e.target.value } })),
+            // Payé / non payé : uniquement pour congé/absence (décompte du solde).
+            recShowPaid: rf.effect === 'conge' || rf.effect === 'absence',
+            recPaidValue: rf.paid === false ? 'np' : 'paid',
+            onRecPaid: (e) => this.setState((st) => ({ recForm: { ...st.recForm, paid: e.target.value !== 'np' } })),
             addRecurrence: () => this.addRecurrence(),
 
             // popups (notification / delete confirm / edit employee)
@@ -6594,6 +6863,10 @@
             editEmpHasPhoto: !!(s.editEmp && s.editEmp.photo),
             editEmpNoPhoto: !(s.editEmp && s.editEmp.photo),
             editEmpFeatured: !!(s.editEmp && s.editEmp.featured),
+            editEmpLeave: s.editEmp ? (s.editEmp.leave == null ? '' : s.editEmp.leave) : '',
+            editEmpHours: s.editEmp ? (s.editEmp.hours == null ? '' : s.editEmp.hours) : '',
+            onEditEmpLeave: (e) => this.setEditEmpField('leave', e && e.target ? e.target.value : ''),
+            onEditEmpHours: (e) => this.setEditEmpField('hours', e && e.target ? e.target.value : ''),
             editEmpError: s.editEmpError,
             editPosteListMode: !s.editPosteAdding,
             editPosteAdding: !!s.editPosteAdding,
@@ -6804,7 +7077,16 @@
           this.setState((st) => ({ accounts: st.accounts.filter((a) => a.id !== cd.id), confirmDel: null }));
         }
         // Edit flow: a popup carrying every field except the password.
-        openEditEmp(a) { this.setState({ editEmp: { id: a.id, prenom: a.prenom || '', nom: a.nom || '', email: a.email || '', poste: a.poste || '', role: a.role || 'employe', photo: a.photo || '', featured: !!a.featured }, editEmpError: '', editEmpBusy: false, editPosteAdding: false }); }
+        // Les champs solde sont pré-remplis avec la valeur COURANTE calculée ;
+        // les modifier ré-ancre le solde à aujourd'hui (leaveInit/hoursInit
+        // servent à détecter un changement réel avant d'appeler l'API).
+        openEditEmp(a) {
+          const lv = this.leaveBalanceOf(a.id);
+          const hb = this.balanceOf(a.id);
+          const leaveVal = lv.defined ? String(lv.solde) : '';
+          const hoursVal = String(hb.solde);
+          this.setState({ editEmp: { id: a.id, prenom: a.prenom || '', nom: a.nom || '', email: a.email || '', poste: a.poste || '', role: a.role || 'employe', photo: a.photo || '', featured: !!a.featured, leave: leaveVal, leaveInit: leaveVal, hours: hoursVal, hoursInit: hoursVal }, editEmpError: '', editEmpBusy: false, editPosteAdding: false });
+        }
         closeEditEmp() { this.setState({ editEmp: null, editEmpError: '', editPosteAdding: false }); }
         setEditEmpField(k, v) { this.setState((st) => ({ editEmp: { ...st.editEmp, [k]: v }, editEmpError: '' })); }
         async saveEditEmp() {
@@ -6814,10 +7096,29 @@
           const nom = (e.nom || '').trim();
           const email = (e.email || '').trim();
           if (!prenom || !nom || !email) { this.setState({ editEmpError: 'Prénom, nom et email requis.' }); return; }
+          // Soldes : n'appelle l'API (ré-ancrage) que si la valeur a vraiment changé.
+          const balances = {};
+          const leaveTxt = String(e.leave == null ? '' : e.leave).trim().replace(',', '.');
+          const hoursTxt = String(e.hours == null ? '' : e.hours).trim().replace(',', '.');
+          if (leaveTxt !== '' && leaveTxt !== String(e.leaveInit)) {
+            const v = parseFloat(leaveTxt);
+            if (!Number.isFinite(v)) { this.setState({ editEmpError: 'Solde de congés invalide.' }); return; }
+            balances.leave = v;
+          }
+          if (hoursTxt !== '' && hoursTxt !== String(e.hoursInit)) {
+            const v = parseFloat(hoursTxt);
+            if (!Number.isFinite(v)) { this.setState({ editEmpError: "Solde d'heures invalide." }); return; }
+            balances.hours = v;
+          }
           this.setState({ editEmpError: '', editEmpBusy: true });
           try {
             const acc = await api('/accounts/' + e.id, { method: 'PATCH', body: { prenom, nom, email, poste: (e.poste || '').trim(), role: e.role, photo: e.photo || '', featured: !!e.featured } });
-            this.setState((st) => ({ accounts: st.accounts.map((a) => (a.id === acc.id ? acc : a)), editEmp: null, editEmpError: '', editEmpBusy: false }));
+            let merged = acc;
+            if (Object.keys(balances).length) {
+              const bal = await api('/accounts/' + e.id + '/balances', { method: 'PATCH', body: balances });
+              merged = { ...acc, ...bal };
+            }
+            this.setState((st) => ({ accounts: st.accounts.map((a) => (a.id === merged.id ? { ...a, ...merged } : a)), editEmp: null, editEmpError: '', editEmpBusy: false }));
           } catch (err) { this.setState({ editEmpError: err.message, editEmpBusy: false }); }
         }
         // Quick "à la une" toggle from the team list — patches only the featured flag,
@@ -6843,13 +7144,18 @@
         openMenu(empId, date) {
           const existing = this.state.absences.find((a) => a.employeeId === empId && a.status !== 'refuse' && date >= a.startDate && date <= a.endDate);
           const absForm = existing
-            ? { type: existing.type, start: existing.startDate, end: existing.endDate, half: existing.halfDay || '', motif: existing.motif || '' }
-            : { type: 'conge', start: date, end: date, half: '', motif: '' };
-          this.setState({ menu: { empId, date }, menuTab: 'absence', menuHours: '7', absForm, absEditId: existing ? existing.id : null });
+            ? { type: existing.type, start: existing.startDate, end: existing.endDate, half: existing.halfDay || '', motif: existing.motif || '', paid: existing.paid !== false }
+            : { type: 'conge', start: date, end: date, half: '', motif: '', paid: true };
+          // Case occupée → on ouvre directement sur le formulaire d'absence
+          // pré-rempli ; case vide → on ouvre sur « Présence » (léger, 1 clic).
+          this.setState({ menu: { empId, date }, menuTab: existing ? 'absence' : 'presence', menuHours: '7', absForm, absEditId: existing ? existing.id : null });
         }
-        // Drops any pending recup entry on this employee/day (server + local).
+        // Retire toute récup active (attente OU validée) posée sur cette case
+        // quand on la repasse en présence/vide. La direction pose des récups
+        // « validées » d'office : ne filtrer que 'attente' laisserait une récup
+        // fantôme qui continuerait à décompter le solde d'heures.
         async dropPendingRecup(empId, date) {
-          const pend = this.state.entries.filter((e) => e.employeeId === empId && e.kind === 'recup' && e.date === date && e.status === 'attente');
+          const pend = this.state.entries.filter((e) => e.employeeId === empId && e.kind === 'recup' && e.date === date && e.status !== 'refuse');
           for (const e of pend) { try { await api('/entries/' + e.id, { method: 'DELETE' }); } catch (er) {} }
           if (pend.length) this.setState((st) => ({ entries: st.entries.filter((e) => !pend.some((p) => p.id === e.id)) }));
         }
@@ -6876,10 +7182,22 @@
             return { presence, menu: null };
           });
         }
+        // Congé se pose désormais uniquement via l'onglet « Absence » du popover
+        // (type=conge), source unique côté absences — plus de bouton rapide doublon.
         async confirmRecup() {
           const m = this.state.menu; if (!m) return;
           const hours = parseFloat(this.state.menuHours) || 0;
           if (hours <= 0) return;
+          // Une seule récup active par jour : sinon on empilerait des doublons
+          // qui décompteraient le solde plusieurs fois. Supprimer l'existante d'abord.
+          const dup = this.state.entries.find((e) => e.employeeId === m.empId && e.kind === 'recup' && e.date === m.date && e.status !== 'refuse');
+          if (dup) { this.notify('Une récupération est déjà posée ce jour. Supprimez-la avant d’en ajouter une autre.', 'Récupération existante', 'error'); return; }
+          // Blocage : une récup ne peut pas dépasser le solde d'heures dispo.
+          const bal = this.balanceOf(m.empId).solde;
+          if (hours > bal + 0.001) {
+            this.notify('Solde d’heures insuffisant : ' + hours + ' h demandées pour ' + bal + ' h disponibles.', 'Récupération impossible', 'error');
+            return;
+          }
           try {
             const entry = await api('/entries', { method: 'POST', body: { employeeId: m.empId, kind: 'recup', date: m.date, hours, motif: 'Récupération (planning)' } });
             this.setState((st) => ({ entries: [entry, ...st.entries], menu: null }));
@@ -6893,7 +7211,32 @@
           const end = f.end || start;
           if (end < start) { this.notify('La date de fin précède le début.', 'Dates invalides', 'error'); return; }
           const single = start === end;
-          const body = { employeeId: m.empId, type: f.type, startDate: start, endDate: end, halfDay: single ? (f.half || null) : null, motif: (f.motif || '').trim() };
+          const paid = f.paid !== false;
+          const halfDay = single ? (f.half || null) : null;
+          // Blocage : un congé/absence payé ne peut pas dépasser le solde de congés.
+          if (paid && (f.type === 'conge' || f.type === 'absence')) {
+            const lv = this.leaveBalanceOf(m.empId);
+            if (!lv.defined) {
+              this.notify('Solde de congés non défini pour cet employé. Définissez-le d’abord dans « Équipe & soldes ».', 'Congé impossible', 'error');
+              return;
+            }
+            {
+              const cost = leaveDaysInRange(start, end, halfDay, this.accountOf(m.empId).leaveAnchor);
+              // À l'édition, on réintègre les jours de l'absence en cours de modif.
+              let avail = lv.solde;
+              if (this.state.absEditId) {
+                const cur = this.state.absences.find((a) => a.id === this.state.absEditId);
+                if (cur && cur.status !== 'refuse' && cur.paid !== false && (cur.type === 'conge' || cur.type === 'absence')) {
+                  avail += leaveDaysInRange(cur.startDate, cur.endDate, cur.halfDay, this.accountOf(m.empId).leaveAnchor);
+                }
+              }
+              if (cost > avail + 0.001) {
+                this.notify('Solde de congés insuffisant : ' + cost + ' j demandé(s) pour ' + avail + ' j disponible(s).', 'Congé impossible', 'error');
+                return;
+              }
+            }
+          }
+          const body = { employeeId: m.empId, type: f.type, startDate: start, endDate: end, halfDay, motif: (f.motif || '').trim(), paid };
           const editId = this.state.absEditId;
           try {
             const abs = editId
@@ -6925,6 +7268,7 @@
           const body = {
             employeeId: f.empId, effect: f.effect, freq: f.freq,
             halfDay: f.half || null, startDate: f.start, endDate: f.end || null, motif: (f.motif || '').trim(),
+            paid: f.paid !== false,
           };
           if (f.freq === 'monthly') body.monthday = parseInt(f.monthday, 10);
           else if (f.freq !== 'daily') body.weekday = parseInt(f.weekday, 10);

@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { query } from '../db.js';
 import { requireAuth, requirePatron } from '../middleware/auth.js';
+import { notifyEntryCreated, notifyEntryDecided } from '../notify.js';
+import { canSpendHours } from '../balances.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -38,13 +40,24 @@ router.post('/', async (req, res) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Date invalide' });
   if (!Number.isFinite(hours) || hours <= 0) return res.status(400).json({ error: 'Heures invalides' });
 
+  // Une récupération ne peut pas faire passer le solde d'heures sous zéro.
+  if (kind === 'recup' && !(await canSpendHours(employeeId, hours))) {
+    return res.status(400).json({ error: 'Solde d’heures insuffisant pour cette récupération.' });
+  }
+
+  // La direction a plein pouvoir : ses saisies sont validées d'office, sans
+  // repasser par l'étape de validation. Un employé part toujours en 'attente'.
+  const status = req.user.role === 'patron' ? 'valide' : 'attente';
+
   const { rows } = await query(
     `INSERT INTO entries (employee_id, kind, entry_date, hours, motif, status)
-     VALUES ($1, $2, $3, $4, $5, 'attente')
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id, employee_id AS "employeeId", kind,
                to_char(entry_date,'YYYY-MM-DD') AS date, hours::float AS hours, motif, status`,
-    [employeeId, kind, date, hours, motif],
+    [employeeId, kind, date, hours, motif, status],
   );
+  // Notification email (employé → patrons, patron → employé). Fire-and-forget.
+  notifyEntryCreated({ entry: rows[0], actor: req.user }).catch((err) => console.error('notifyEntryCreated:', err?.message || err));
   res.status(201).json(rows[0]);
 });
 
@@ -59,6 +72,10 @@ router.patch('/:id', requirePatron, async (req, res) => {
     [status, req.params.id],
   );
   if (rows.length === 0) return res.status(404).json({ error: 'Demande introuvable' });
+  // L'employé est prévenu du verdict (validé / refusé). Fire-and-forget.
+  if (status !== 'attente') {
+    notifyEntryDecided({ entry: rows[0] }).catch((err) => console.error('notifyEntryDecided:', err?.message || err));
+  }
   res.json(rows[0]);
 });
 
