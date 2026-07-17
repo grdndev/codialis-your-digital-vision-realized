@@ -7457,8 +7457,10 @@
             onAbsHalf: (e) => this.setState((st) => ({ absForm: { ...st.absForm, half: e.target.value } })),
             onAbsMotif: (e) => this.setState((st) => ({ absForm: { ...st.absForm, motif: e.target.value } })),
             confirmAbsence: () => this.confirmAbsence(),
-            // Payé / non payé (direction) + info solde congés de l'employé.
-            absShowPaid: isPatron && absIsLeaveType,
+            // Payé / non payé (patron, chef & employé) + info solde congés.
+            // Permet à chacun de poser un congé « non payé » quand le solde
+            // est insuffisant ou non défini (sinon confirmAbsence bloque).
+            absShowPaid: absIsLeaveType,
             absPaidValue: s.absForm.paid === false ? 'np' : 'paid',
             onAbsPaid: (e) => this.setState((st) => ({ absForm: { ...st.absForm, paid: e.target.value !== 'np' } })),
             absSoldeShown: absIsLeaveType && menuLeave.defined,

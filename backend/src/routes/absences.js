@@ -39,10 +39,10 @@ const RETURNING = `
                to_char(end_date,'YYYY-MM-DD') AS "endDate",
                half_day AS "halfDay", motif, status, paid`;
 
-// Payé/non payé : seul le patron le fixe. Une demande d'employé part toujours
-// « payé » — la direction tranche à la validation.
+// Payé/non payé : chacun peut poser sa demande en « non payé » (utile quand le
+// solde de congés est nul ou non défini). Le patron tranche à la validation ;
+// une demande non payée ne décompte rien et ne bute donc pas sur le solde.
 function paidFrom(req, fallback = true) {
-  if (req.user.role !== 'patron') return fallback;
   if (req.body?.paid === undefined) return fallback;
   return req.body.paid !== false;
 }
@@ -71,7 +71,8 @@ router.post('/', async (req, res) => {
   const employeeId = (isPatron && req.body?.employeeId) ? req.body.employeeId : req.user.id;
 
   if (!isPatron && req.body?.employeeId && req.body.employeeId !== req.user.id) {
-    return res.status(403).json({ error: 'Interdit' });
+    // DIAG TEMP — révèle le mismatch d'id pour comprendre le 403 « Interdit ».
+    return res.status(403).json({ error: `Interdit [DIAG body.employeeId=${req.body.employeeId} req.user.id=${req.user.id} role=${req.user.role}]` });
   }
   if (!TYPES.includes(type)) return res.status(400).json({ error: "Type d'absence invalide" });
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return res.status(400).json({ error: 'Date de début invalide' });
