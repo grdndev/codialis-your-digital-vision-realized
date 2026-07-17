@@ -2709,6 +2709,67 @@
                     </button>
                   </div>
                 </sc-if>
+                <!-- ===== SUGGESTIONS RSS (veille intégrée à l'onglet Blog) ===== -->
+                <sc-if value="{{ tabBlog }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding: clamp(22px,2.5vw,28px);border-radius:18px;background:linear-gradient(160deg,rgba(47,237,127,.06),rgba(255,255,255,.012));border:1px solid rgba(47,237,127,.18);margin-bottom:clamp(20px,3vw,32px);">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+                      <span style="width:30px;height:30px;border-radius:9px;background:rgba(47,237,127,.14);display:flex;align-items:center;justify-content:center;color:#2fed7f;font-size:16px;">📡</span>
+                      <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:19px;margin:0;color:#fff;">Suggestions d'articles (flux RSS)</h2>
+                      <button type="button" onClick="{{ onVeilleRefresh }}" disabled="{{ veilleBusy }}" style="margin-left:auto;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:100px;border:1px solid #2FED7F;background:rgba(47,237,127,.12);color:#2FED7F;cursor:pointer;">{{ veilleRefreshLabel }}</button>
+                    </div>
+                    <p style="font-size:13px;line-height:1.55;color:#8fa0b5;margin:0 0 18px 40px;">Choisissez une catégorie, puis « Publier » met l'article en ligne (photo + contenu) et notifie les abonnés.</p>
+
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
+                      <sc-for list="{{ veillePills }}" as="c" hint-placeholder-count="6">
+                        <button type="button" onClick="{{ c.onClick }}" style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;padding:7px 14px;border-radius:100px;cursor:pointer;transition:background .2s,color .2s;background:{{ c.bg }};color:{{ c.color }};border:1px solid {{ c.border }};">{{ c.label }} {{ c.count }}</button>
+                      </sc-for>
+                    </div>
+
+                    <sc-if value="{{ veilleEmpty }}" hint-placeholder-val="{{ true }}">
+                      <p style="font-size:14px;color:#8fa0b5;padding:8px 0;">Aucune suggestion pour cette catégorie. Cliquez « Rafraîchir les suggestions ».</p>
+                    </sc-if>
+
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;">
+                      <sc-for list="{{ veilleCards }}" as="a" hint-placeholder-count="0">
+                        <div style="display:flex;flex-direction:column;border-radius:14px;overflow:hidden;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.1);">
+                          <div style="position:relative;width:100%;height:140px;background:rgba(255,255,255,.05);flex-shrink:0;">
+                            <sc-if value="{{ a.image }}" hint-placeholder-val="{{ false }}">
+                              <div class="cod-img" data-img="{{ a.image }}" style="position:absolute;inset:0;background-size:cover;background-position:center;"></div>
+                            </sc-if>
+                            <sc-if value="{{ a.noImage }}" hint-placeholder-val="{{ true }}">
+                              <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#3a4658;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.6"></circle><path d="M21 15l-5-5L5 21"></path></svg></span>
+                            </sc-if>
+                            <span style="position:absolute;top:10px;left:10px;font-family:'Space Grotesk',sans-serif;font-size:10.5px;font-weight:600;letter-spacing:.05em;color:#08111e;background:#2fed7f;padding:3px 10px;border-radius:100px;">{{ a.catLabel }}</span>
+                          </div>
+                          <div style="display:flex;flex-direction:column;gap:8px;padding:14px;flex:1;">
+                            <div style="display:flex;align-items:center;gap:8px;font-family:'Space Grotesk',sans-serif;font-size:11px;color:#8fa0b5;flex-wrap:wrap;">
+                              <span style="color:#b7c2d2;">{{ a.source }}</span>
+                              <span style="width:3px;height:3px;border-radius:50%;background:#5c6b80;"></span>
+                              <span>{{ a.dateLabel }}</span>
+                            </div>
+                            <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;line-height:1.3;color:#fff;margin:0;">{{ a.title }}</h3>
+                            <p style="font-size:13px;line-height:1.55;color:#c4cfdd;margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">{{ a.excerpt }}</p>
+                            <div style="display:flex;flex-direction:column;gap:8px;margin-top:auto;padding-top:8px;">
+                              <button type="button" onClick="{{ a.onPreview }}" style="width:100%;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;padding:9px 12px;border-radius:9px;border:1px solid rgba(47,237,127,.4);background:rgba(47,237,127,.08);color:#2fed7f;cursor:pointer;transition:background .2s;" style-hover="background:rgba(47,237,127,.16);">👁 {{ a.previewLabel }}</button>
+                              <div style="display:flex;gap:8px;">
+                                <button type="button" onClick="{{ a.onPublish }}" disabled="{{ a.publishing }}" style="flex:1;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;padding:9px 12px;border-radius:9px;border:1px solid #2FED7F;background:#2FED7F;color:#08111E;cursor:pointer;transition:opacity .2s;" style-hover="opacity:.85;">{{ a.publishLabel }}</button>
+                                <button type="button" onClick="{{ a.onIgnore }}" title="Ignorer" style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;padding:9px 12px;border-radius:9px;border:1px solid rgba(255,107,107,.4);background:rgba(255,107,107,.08);color:#ff6b6b;cursor:pointer;">Ignorer</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                    <sc-if value="{{ veilleShowPagination }}" hint-placeholder-val="{{ false }}">
+                      <nav style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:18px;">
+                        <button type="button" onClick="{{ veillePrevClick }}" disabled="{{ veillePrevDisabled }}" style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;padding:8px 16px;border-radius:100px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#c4cfdd;cursor:pointer;">← Précédent</button>
+                        <span style="font-family:'Space Grotesk',sans-serif;font-size:13px;color:#8fa0b5;">{{ veillePageLabel }}</span>
+                        <button type="button" onClick="{{ veilleNextClick }}" disabled="{{ veilleNextDisabled }}" style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;padding:8px 16px;border-radius:100px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#c4cfdd;cursor:pointer;">Suivant →</button>
+                      </nav>
+                    </sc-if>
+                  </div>
+                </sc-if>
+
                 <sc-if
                   value="{{ tabBlog }}"
                   hint-placeholder-val="{{ false }}"
@@ -2771,6 +2832,8 @@
                       Le titre et l'accroche affichés en tête de la page Blog.
                       Laissez vide pour garder le texte par défaut.
                     </p>
+                    <button type="button" onClick="{{ onToggleBlogHero }}" style="margin:0 0 14px 40px;padding:6px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#c4cfdd;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12px;cursor:pointer;">{{ blogHeroToggleLabel }} l'en-tête</button>
+                    <sc-if value="{{ blogHeroFieldsVisible }}" hint-placeholder-val="{{ false }}">
                     <div
                       style="display: flex; flex-direction: column; gap: 14px"
                     >
@@ -2944,17 +3007,19 @@
                     >
                       {{ blogHeroSaveLabel }}
                     </button>
+                    </sc-if>
                   </div>
                 </sc-if>
                 <div
                   style="
                     display: grid;
-                    grid-template-columns: 1fr 1.15fr;
+                    grid-template-columns: 1fr;
                     gap: clamp(20px, 3vw, 32px);
                     align-items: start;
                   "
                   id="cod-contentgrid"
                 >
+                  <sc-if value="{{ formOpenerBtn }}" hint-placeholder-val="{{ true }}">
                   <div
                     style="
                       padding: clamp(22px, 2.5vw, 32px);
@@ -2967,6 +3032,12 @@
                       border: 1px solid rgba(255, 255, 255, 0.1);
                     "
                   >
+                      <button type="button" onClick="{{ onOpenForm }}" style="width:100%;padding:16px;border-radius:12px;border:1px dashed rgba(47,237,127,.45);background:rgba(47,237,127,.06);color:#2fed7f;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;cursor:pointer;transition:background .2s;" style-hover="background:rgba(47,237,127,.14);">{{ formOpenerLabel }}</button>
+                  </div>
+                  </sc-if>
+                    <sc-if value="{{ formModalOpen }}" hint-placeholder-val="{{ false }}">
+                      <div onClick="{{ closeFormModal }}" style="position:fixed;inset:0;z-index:320;background:rgba(4,8,16,0.72);display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto;">
+                        <div onClick="{{ stopProp }}" style="width:100%;max-width:720px;margin:auto;background:#0e1626;border:1px solid rgba(255,255,255,0.12);border-radius:18px;padding:26px;box-shadow:0 30px 70px -20px rgba(0,0,0,0.7);animation:cod-pop 0.18s ease both;">
                     <div
                       style="
                         display: flex;
@@ -3000,6 +3071,7 @@
                       >
                         {{ formTitle }}
                       </h2>
+                      <button type="button" onClick="{{ closeFormModal }}" title="Fermer" style="margin-left:auto;flex-shrink:0;width:32px;height:32px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#c4cfdd;font-size:20px;line-height:1;cursor:pointer;">×</button>
                     </div>
                     <form
                       onSubmit="{{ onSave }}"
@@ -3946,6 +4018,14 @@
                             style-focus="border-color:#2FED7F;"
                           ></textarea>
                         </label>
+                        <label style="display:flex;flex-direction:column;gap:7px;">
+                          <span style="font-family:&quot;Space Grotesk&quot;,sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#8fa0b5;">Contenu de l'article</span>
+                          <textarea rows="12" value="{{ fContent }}" onInput="{{ onField_content }}" placeholder="Corps de l'article (pré-rempli depuis la veille, éditable)." style="width:100%;padding:12px 14px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:&quot;Space Grotesk&quot;,sans-serif;font-size:14.5px;line-height:1.6;outline:none;resize:vertical;transition:border-color 0.2s;" style-focus="border-color:#2FED7F;"></textarea>
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:7px;">
+                          <span style="font-family:&quot;Space Grotesk&quot;,sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#8fa0b5;">Source (via)</span>
+                          <input type="text" value="{{ fSource }}" onInput="{{ onField_source }}" placeholder="https://… (lien affiché comme « via » sur l'article publié)" style="width:100%;padding:12px 14px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#2fed7f;font-family:&quot;Space Grotesk&quot;,sans-serif;font-size:14.5px;outline:none;transition:border-color 0.2s;" style-focus="border-color:#2FED7F;" />
+                        </label>
                         <label
                           style="
                             display: flex;
@@ -4226,7 +4306,9 @@
                         </sc-if>
                       </div>
                     </form>
-                  </div>
+                        </div>
+                      </div>
+                    </sc-if>
 
                   <div>
                     <div
@@ -4620,6 +4702,11 @@
                       <div
                         style="display: flex; flex-direction: column; gap: 12px"
                       >
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                          <sc-for list="{{ blogListPills }}" as="c" hint-placeholder-count="0">
+                            <button type="button" onClick="{{ c.onClick }}" style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:11.5px;padding:5px 12px;border-radius:100px;cursor:pointer;transition:background .2s,color .2s;background:{{ c.bg }};color:{{ c.color }};border:1px solid {{ c.border }};">{{ c.label }} {{ c.count }}</button>
+                          </sc-for>
+                        </div>
                         <sc-for
                           list="{{ blogPosts }}"
                           as="p"
@@ -5667,6 +5754,29 @@
           </div>
         </sc-if>
 
+        <!-- ===================== APERÇU ARTICLE (veille) ===================== -->
+        <sc-if value="{{ veillePreviewOpen }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ closeVeillePreview }}" style="position:fixed;inset:0;z-index:300;background:rgba(4,8,16,0.7);display:flex;align-items:center;justify-content:center;padding:20px;">
+            <div onClick="{{ stopProp }}" style="width:100%;max-width:720px;max-height:88vh;overflow-y:auto;border-radius:18px;background:#0e1626;border:1px solid rgba(255,255,255,0.12);box-shadow:0 30px 70px -20px rgba(0,0,0,0.7);animation:cod-pop 0.18s ease both;">
+              <sc-if value="{{ vpHasImage }}" hint-placeholder-val="{{ false }}">
+                <div class="cod-img" data-img="{{ vpImage }}" style="width:100%;height:220px;background-size:cover;background-position:center;border-radius:18px 18px 0 0;"></div>
+              </sc-if>
+              <div style="padding:26px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                  <span style="font-family:'Space Grotesk',sans-serif;font-size:10.5px;font-weight:600;letter-spacing:.05em;color:#08111e;background:#2fed7f;padding:3px 10px;border-radius:100px;">{{ vpCatLabel }}</span>
+                  <span style="font-family:'Space Grotesk',sans-serif;font-size:12px;color:#8fa0b5;">{{ vpDate }}</span>
+                </div>
+                <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:22px;line-height:1.25;color:#fff;margin:0 0 16px;">{{ vpTitle }}</h3>
+                <div style="font-size:15px;line-height:1.7;color:#c4cfdd;white-space:pre-wrap;">{{ vpContent }}</div>
+                <sc-if value="{{ vpHasSource }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin:18px 0 0;font-size:13px;color:#8fa0b5;">via <a href="{{ vpSource }}" target="_blank" rel="noopener noreferrer" style="color:#2fed7f;text-decoration:none;">{{ vpSourceHost }} ↗</a></p>
+                </sc-if>
+                <button type="button" onClick="{{ closeVeillePreview }}" style="margin-top:22px;width:100%;padding:13px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#c4cfdd;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;cursor:pointer;">Fermer</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
         <!-- ===================== CONFIRM DELETE POPUP ===================== -->
         <sc-if value="{{ confirmDelOpen }}" hint-placeholder-val="{{ false }}">
           <div
@@ -5909,6 +6019,22 @@
         { value: 'design', label: 'Design UX' },
       ];
       function blogCatLabel(k) { const c = BLOG_CATS.find((x) => x.value === k); return c ? c.label : (k || ''); }
+      // Catégories de la veille (pills de filtrage + libellés). Superset des
+      // catégories blog : les 5 en plus deviennent des catégories personnalisées
+      // du blog à la publication (mapping côté backend /feeds/.../prefill).
+      const VEILLE_CATS = [
+        { value: 'all', label: 'Tout' },
+        { value: 'development', label: 'Développement' },
+        { value: 'ia', label: 'IA' },
+        { value: 'saas', label: 'SaaS' },
+        { value: 'funding', label: 'Financement' },
+        { value: 'design', label: 'Design UX' },
+        { value: 'cyber', label: 'Cybersécurité' },
+        { value: 'startups', label: 'Startups' },
+        { value: 'data', label: 'Data' },
+        { value: 'opensource', label: 'Open Source' },
+      ];
+      const veilleCatLabel = (k) => (VEILLE_CATS.find((c) => c.value === k) || {}).label || k || '';
       // Stats de l'en-tête Portfolio (settings portfolio_page.hero.stats).
       // Valeurs par défaut = celles codées en dur dans Portfolio.dc.html.
       const PORTFOLIO_STAT_DEFAULTS = [
@@ -6138,7 +6264,8 @@
           loginEmail: '', loginPassword: '', loginError: false, loginErrorMsg: '', loading: true,
           portfolio: [], blog: [], testimonials: [], team: [], newsletterSubs: [], contactRequests: [], contactPage: 1, contactStatusFilter: 'tous',
           pageViews: { portfolio: 142, blog: 318 },
-          contentSearchQuery: '', portfolioPage: 1, blogPage: 1,
+          contentSearchQuery: '', portfolioPage: 1, blogPage: 1, blogListCat: 'all',
+          showFormModal: false, showBlogHero: false,
           portfolioSettings: {}, portfolioStats: PORTFOLIO_STAT_DEFAULTS.map((x) => ({ ...x })), statsBusy: false,
           blogSettings: {}, blogHero: { ...BLOG_HERO_DEFAULTS }, blogHeroBusy: false,
           socials: SOCIAL_DEFAULTS.map((x) => ({ ...x })), socialsBusy: false,
@@ -6150,6 +6277,9 @@
           validationFilter: 'tous', validationEmp: '', validationEmpOpen: false,
           newEmpPrenom: '', newEmpNom: '', newEmpEmail: '', newEmpPoste: '', newEmpRole: 'employe', newEmpPhoto: '', addEmpError: '', addEmpBusy: false, newPosteAdding: false,
           notif: null, confirmDel: null, editEmp: null, editEmpError: '', editEmpBusy: false, editPosteAdding: false,
+          // Veille : suggestions agrégées depuis les flux RSS.
+          veille: [], veilleCat: 'all', veilleQuery: '', veilleBusy: false, veillePublishId: null,
+          veillePreview: null, veillePreviewLoading: null, veillePage: 1,
           // Récap PDF (direction / chef) : null, ou { mode:'employee'|'team', empId, empName, scope:'month'|'year', year, month }.
           recap: null,
           weekStart: isoOf(mondayOf(new Date())),
@@ -6168,7 +6298,7 @@
           showChangeCurrent: false, showChangeNew: false, showChangeConfirm: false,
         };
 
-        blankForm() { return { sectorList: [], sectorDraft: '', title: '', desc: '', techList: [], techDraft: '', r1v: '', r1l: '', r2v: '', r2l: '', image: '', quote: '', author: '', company: '', name: '', role: '', cat: 'dev', adate: '', aread: '', featured: false }; }
+        blankForm() { return { sectorList: [], sectorDraft: '', title: '', desc: '', content: '', source: '', techList: [], techDraft: '', r1v: '', r1l: '', r2v: '', r2l: '', image: '', quote: '', author: '', company: '', name: '', role: '', cat: 'dev', adate: '', aread: '', featured: false }; }
 
         componentDidMount() {
           // Public content loads for everyone; protected data loads only if a
@@ -6212,11 +6342,12 @@
             // Direction ET chef de projet chargent le contenu du site (portfolio,
             // blog, témoignages, réseaux, newsletter, demandes de contact).
             if (role === 'patron' || role === 'chef') {
-              const [portfolio, blog, testimonials, portfolioSettings, blogSettings, newsletterSubs, contactRequests, pageViewsData, socialsData] = await Promise.all([
+              const [portfolio, blog, testimonials, portfolioSettings, blogSettings, newsletterSubs, contactRequests, pageViewsData, socialsData, veille0] = await Promise.all([
                 api('/content/portfolio?admin=1'), api('/content/blog?admin=1'),
                 api('/content/testimonials?admin=1'), api('/settings/portfolio_page'), api('/settings/blog_page'), api('/newsletter'), api('/contact'),
                 api('/content/stats/page-views').catch(() => null),
                 api('/settings/contact_socials').catch(() => null),
+                api('/feeds/items?status=new').catch(() => []),
               ]);
               const socials = socialsData && Array.isArray(socialsData.items) && socialsData.items.length
                 ? socialsData.items.map((x) => ({ name: x.name || '', icon: x.icon || 'linkedin', href: x.href || '' }))
@@ -6227,7 +6358,7 @@
               const bh = (blogSettings && blogSettings.hero) || {};
               const blogHero = { kicker: bh.kicker || BLOG_HERO_DEFAULTS.kicker, lead: bh.lead || BLOG_HERO_DEFAULTS.lead, accent: bh.accent || BLOG_HERO_DEFAULTS.accent, sub: bh.sub || BLOG_HERO_DEFAULTS.sub };
               const pageViews = pageViewsData ? { portfolio: Number(pageViewsData.portfolio || 0), blog: Number(pageViewsData.blog || 0) } : { portfolio: 142, blog: 318 };
-              Object.assign(patch, { portfolio, blog, testimonials, portfolioSettings: portfolioSettings || {}, portfolioStats: heroStats, blogSettings: blogSettings || {}, blogHero, socials, newsletterSubs, contactRequests, pageViews });
+              Object.assign(patch, { portfolio, blog, testimonials, portfolioSettings: portfolioSettings || {}, portfolioStats: heroStats, blogSettings: blogSettings || {}, blogHero, socials, newsletterSubs, contactRequests, pageViews, veille: Array.isArray(veille0) ? veille0 : [] });
             }
             this.setState(patch);
           } catch (e) { /* session likely expired; me() will fail next action */ }
@@ -6336,9 +6467,14 @@
           } else if (isChef) {
             // Le chef de projet : pas de validation, mais son propre espace de
             // demande (heures supp / congés) qui part en attente vers la direction.
+            // Pas de gestion du contenu du site (portfolio/blog/témoignages) :
+            // réservée à la direction.
+            const chefTabs = managerTabs.filter(
+              (t) => !['portfolio', 'blog', 'testimonials'].includes(t.key)
+            );
             tabDefs = [
               { key: 'espace', label: 'Ma demande', count: '' },
-              ...managerTabs,
+              ...chefTabs,
             ];
           } else {
             tabDefs = [
@@ -6349,7 +6485,7 @@
           const tab = s.tab;
           const tabs = tabDefs.map((t) => ({
             label: t.label, count: t.count,
-            onClick: () => this.setState({ tab: t.key, editingId: null, form: this.blankForm(), catAdding: false }),
+            onClick: () => this.setState({ tab: t.key, editingId: null, form: this.blankForm(), catAdding: false, veillePublishId: null }),
             bg: tab === t.key ? '#2FED7F' : 'rgba(255,255,255,.04)',
             border: tab === t.key ? '#2FED7F' : 'rgba(255,255,255,.14)',
             color: tab === t.key ? '#08111E' : '#C4CFDD',
@@ -6376,7 +6512,9 @@
             const hay = (String(p.title || '') + ' ' + String(p.desc || '') + ' ' + (Array.isArray(p.sector) ? p.sector.join(' ') : String(p.sector || '')) + ' ' + (Array.isArray(p.tech) ? p.tech.join(' ') : String(p.tech || ''))).toLowerCase();
             return hay.indexOf(q) !== -1;
           };
+          const blogListCat = s.blogListCat || 'all';
           const matchesBlog = (p) => {
+            if (blogListCat !== 'all' && (p.cat || 'dev') !== blogListCat) return false;
             if (!q) return true;
             const hay = (String(p.title || '') + ' ' + String(p.excerpt || '') + ' ' + String(p.cat || '') + ' ' + blogCatLabel(p.cat)).toLowerCase();
             return hay.indexOf(q) !== -1;
@@ -6410,6 +6548,20 @@
 
           const rawBlogPosts = s.blog.map((p) => ({ ...p, noImage: !p.image, catLabel: blogCatLabel(p.cat), featuredLabel: p.featured ? 'À la une' : '', rowBorder: rowBorder(p.id), viewsLabel: `${p.views || 0} vue${(p.views || 0) > 1 ? 's' : ''}`, featBg: p.featured ? '#f5c86b' : 'transparent', featColor: p.featured ? '#08111e' : '#b7c2d2', featBorder: p.featured ? '#f5c86b' : 'rgba(255,255,255,.14)', featTitle: p.featured ? 'Retirer de la une' : 'Mettre à la une', onEdit: () => this.startEdit(p.id), onDelete: () => this.deleteContent(p.id), onFeature: () => this.toggleFeatured(p.id) }));
           const filteredBlogPosts = rawBlogPosts.filter(matchesBlog);
+          // Pills de filtre catégorie sur les articles déjà publiés.
+          const blogCatsPresent = Array.from(new Set(rawBlogPosts.map((p) => p.cat || 'dev')));
+          const blogFilterDefs = [{ value: 'all', label: 'Tous' }]
+            .concat(BLOG_CATS.filter((c) => blogCatsPresent.includes(c.value)))
+            .concat(blogCatsPresent.filter((v) => !BLOG_CATS.some((c) => c.value === v)).map((v) => ({ value: v, label: v })));
+          const blogListPills = blogFilterDefs.map((c) => {
+            const on = blogListCat === c.value;
+            const n = c.value === 'all' ? rawBlogPosts.length : rawBlogPosts.filter((p) => (p.cat || 'dev') === c.value).length;
+            return {
+              label: c.label, count: n || '',
+              onClick: () => this.setState({ blogListCat: c.value, blogPage: 1 }),
+              bg: on ? '#2FED7F' : 'rgba(255,255,255,.04)', color: on ? '#08111E' : '#C4CFDD', border: on ? '#2FED7F' : 'rgba(255,255,255,.14)',
+            };
+          });
 
           // Pagination Blog
           const blogPageSize = 5;
@@ -6633,7 +6785,9 @@
           // quel que soit son rôle. Un badge signale les rôles non-employé.
           const ROLE_LABELS = { patron: 'Direction', chef: 'Chef de projet' };
           // Employés seuls — planning & récap PDF ci-dessous s'appuient dessus.
-          const employees = s.accounts.filter((a) => a.role === 'employe');
+          // Planning / récurrences / récap : toute l'équipe, tous rôles confondus
+          // (direction, chefs de projet, employés), pas seulement role === 'employe'.
+          const employees = s.accounts;
           const rawSoldesList = s.accounts.map((a) => {
             const b = this.balanceOf(a.id);
             const lv = this.leaveBalanceOf(a.id);
@@ -6779,8 +6933,7 @@
           const weekLabel = 'Semaine du ' + fmtLong(wStart);
           // Direction : planning de toute l'équipe. Chef de projet : l'équipe
           // (lecture seule) + sa propre ligne éditable. Employé : soi uniquement.
-          const planningEmployees = isPatron ? employees
-            : isChef ? (sess ? [...employees, sess] : employees)
+          const planningEmployees = isManager ? employees
             : (sess ? [sess] : []);
           const halfLabel = (h) => (h === 'am' ? 'matin' : h === 'pm' ? 'après-midi' : '');
           // Priorité d'une case : absence > récup > présence saisie > règle
@@ -6943,6 +7096,55 @@
           else if (s.authMode === 'forgot') view = 'forgot';
           else view = 'login';
 
+          // ---- Veille (suggestions RSS) ----
+          const veilleAll = s.veille || [];
+          const vCounts = {};
+          veilleAll.forEach((x) => { vCounts[x.category] = (vCounts[x.category] || 0) + 1; });
+          const vCat = s.veilleCat || 'all';
+          const vQ = (s.veilleQuery || '').trim().toLowerCase();
+          const veilleFiltered = veilleAll.filter((it) => {
+            if (vCat !== 'all' && it.category !== vCat) return false;
+            if (vQ) { const hay = ((it.title || '') + ' ' + (it.excerpt || '')).toLowerCase(); if (hay.indexOf(vQ) === -1) return false; }
+            return true;
+          });
+          const veillePills = VEILLE_CATS.map((c) => {
+            const on = vCat === c.value;
+            const n = c.value === 'all' ? veilleAll.length : (vCounts[c.value] || 0);
+            return {
+              label: c.label, count: n || '',
+              onClick: () => this.setState({ veilleCat: c.value, veillePage: 1 }),
+              bg: on ? '#2FED7F' : 'rgba(255,255,255,.04)',
+              color: on ? '#08111E' : '#C4CFDD',
+              border: on ? '#2FED7F' : 'rgba(255,255,255,.14)',
+            };
+          });
+          // Pagination des suggestions.
+          const VEILLE_PAGE_SIZE = 9;
+          const veilleTotalPages = Math.max(1, Math.ceil(veilleFiltered.length / VEILLE_PAGE_SIZE));
+          const veillePageNum = Math.min(Math.max(1, s.veillePage || 1), veilleTotalPages);
+          const veillePageSlice = veilleFiltered.slice((veillePageNum - 1) * VEILLE_PAGE_SIZE, veillePageNum * VEILLE_PAGE_SIZE);
+          const veilleCards = veillePageSlice.map((it) => {
+            const d = it.published_at ? new Date(it.published_at) : null;
+            return {
+              id: it.id, title: it.title || '', excerpt: it.excerpt || '',
+              source: it.source || '', link: it.link || '', image: it.image || '',
+              noImage: !it.image, catLabel: veilleCatLabel(it.category),
+              dateLabel: d ? d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
+              publishing: s.veillePublishId === it.id,
+              publishLabel: s.veillePublishId === it.id ? 'Publication…' : 'Publier',
+              previewLabel: s.veillePreviewLoading === it.id ? '…' : 'Aperçu',
+              onPreview: () => this.previewVeille(it.id),
+              onPublish: () => this.publishNow(it.id),
+              onIgnore: () => this.setVeilleStatus(it.id, 'ignored'),
+            };
+          });
+
+          // Formulaire de création/édition en pop-up (déclutter l'onglet Blog).
+          const formModalOpen = isContent && (!!s.showFormModal || s.editingId !== null);
+          const formOpenerBtn = isContent && s.editingId === null;
+          const formOpenerLabel = tab === 'blog' ? '+ Rédiger un article manuellement'
+            : (tab === 'portfolio' ? '+ Ajouter un projet' : '+ Ajouter un témoignage');
+
           return {
             // login
             locked: view === 'login', unlocked: view === 'app',
@@ -7031,13 +7233,36 @@
 
             // section flags
             showEspace: tab === 'espace', showValidation: tab === 'validation',
-            showSoldes: tab === 'soldes', showPlanning: tab === 'planning', showContent: isContent,
+            showSoldes: tab === 'soldes', showPlanning: tab === 'planning', showContent: isContent && !isChef,
             // Gestion d'équipe (ajout / édition de comptes) : patron uniquement.
             canManageTeam: isPatron,
             showNewsletter: tab === 'newsletter',
             showContacts: tab === 'contacts',
             showSocials: tab === 'socials',
             tabPortfolio: tab === 'portfolio', tabBlog: tab === 'blog', tabTestimonials: tab === 'testimonials',
+            // Suggestions RSS (dans l'onglet Blog)
+            veillePills, veilleCards, veilleEmpty: veilleCards.length === 0,
+            veilleBusy: !!s.veilleBusy,
+            onVeilleRefresh: () => this.refreshVeille(),
+            veilleRefreshLabel: s.veilleBusy ? 'Actualisation…' : '↻ Rafraîchir les suggestions',
+            veilleShowPagination: veilleTotalPages > 1,
+            veillePageLabel: veillePageNum + ' / ' + veilleTotalPages,
+            veillePrevDisabled: veillePageNum <= 1,
+            veilleNextDisabled: veillePageNum >= veilleTotalPages,
+            veillePrevClick: () => this.setState({ veillePage: Math.max(1, veillePageNum - 1) }),
+            veilleNextClick: () => this.setState({ veillePage: Math.min(veilleTotalPages, veillePageNum + 1) }),
+            // Pop-up d'aperçu d'un article
+            veillePreviewOpen: !!s.veillePreview,
+            vpTitle: s.veillePreview ? s.veillePreview.title : '',
+            vpContent: s.veillePreview ? s.veillePreview.content : '',
+            vpImage: s.veillePreview ? s.veillePreview.image : '',
+            vpHasImage: !!(s.veillePreview && s.veillePreview.image),
+            vpCatLabel: s.veillePreview ? veilleCatLabel(s.veillePreview.cat) : '',
+            vpDate: s.veillePreview ? s.veillePreview.date : '',
+            vpHasSource: !!(s.veillePreview && s.veillePreview.source),
+            vpSource: s.veillePreview ? s.veillePreview.source : '',
+            vpSourceHost: (() => { const src = s.veillePreview && s.veillePreview.source; if (!src) return ''; try { return new URL(src).hostname.replace(/^www\./, ''); } catch (e) { return src; } })(),
+            closeVeillePreview: () => this.setState({ veillePreview: null }),
             showContentSearch: tab === 'portfolio' || tab === 'blog' || tab === 'testimonials',
             contentSearchQuery: s.contentSearchQuery || '',
             onContentSearch: (e) => this.setState({
@@ -7060,7 +7285,13 @@
             portfolioPrevStyle: arrowBtnStyle(portfolioPage <= 1),
             portfolioNextStyle: arrowBtnStyle(portfolioPage >= portfolioTotalPages),
             showBlogPagination: blogTotalPages > 1,
-            blogPageItems,
+            blogPageItems, blogListPills,
+            formModalOpen, formOpenerBtn, formOpenerLabel,
+            onOpenForm: () => this.setState({ showFormModal: true }),
+            closeFormModal: () => this.setState({ showFormModal: false, editingId: null, form: this.blankForm(), catAdding: false }),
+            blogHeroFieldsVisible: !!s.showBlogHero,
+            onToggleBlogHero: () => this.setState((st) => ({ showBlogHero: !st.showBlogHero })),
+            blogHeroToggleLabel: s.showBlogHero ? 'Masquer' : 'Modifier',
             prevBlogClick: goToBlogPage(blogPage - 1),
             nextBlogClick: goToBlogPage(blogPage + 1),
             blogPrevDisabled: blogPage <= 1,
@@ -7416,14 +7647,14 @@
             submitLabel: editing ? 'Enregistrer' : (cMeta.sub || ''),
             listTitle: cMeta.list || '', countLabel: cMeta.countLabel || '', emptyText: cMeta.empty || '',
             currentCount: curContent.length, isEmpty: curContent.length === 0,
-            fTitle: f.title, fDesc: f.desc, fR1v: f.r1v, fR1l: f.r1l, fR2v: f.r2v, fR2l: f.r2l,
+            fTitle: f.title, fDesc: f.desc, fContent: f.content, fSource: f.source, fR1v: f.r1v, fR1l: f.r1l, fR2v: f.r2v, fR2l: f.r2l,
             fSectorChips: sectorChips, hasSectorChips: sectorChips.length > 0, fSectorDraft: f.sectorDraft,
             fTechChips: techChips, hasTechChips: techChips.length > 0, fTechDraft: f.techDraft,
             onSectorDraft: setField('sectorDraft'), onAddSector: addChip('sectorList', 'sectorDraft'), onSectorKey: chipKey('sectorList', 'sectorDraft'),
             onTechDraft: setField('techDraft'), onAddTech: addChip('techList', 'techDraft'), onTechKey: chipKey('techList', 'techDraft'),
             fQuote: f.quote, fAuthor: f.author, fCompany: f.company, fName: f.name, fRole: f.role,
             fImage: f.image, hasImage: !!f.image, noImage: !f.image,
-            onField_title: setField('title'), onField_desc: setField('desc'),
+            onField_title: setField('title'), onField_desc: setField('desc'), onField_content: setField('content'), onField_source: setField('source'),
             onField_r1v: setField('r1v'), onField_r1l: setField('r1l'), onField_r2v: setField('r2v'), onField_r2l: setField('r2l'),
             onField_quote: setField('quote'), onField_author: setField('author'), onField_company: setField('company'),
             onField_name: setField('name'), onField_role: setField('role'),
@@ -7893,7 +8124,7 @@
           const M = 36;
           const y = this.recapHeader(doc, 'Récapitulatif RH — équipe', per.label, M);
 
-          const employees = this.state.accounts.filter((a) => a.role === 'employe')
+          const employees = this.state.accounts.slice()
             .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
           const body = employees.map((a) => {
             const bal = this.balanceOf(a.id);
@@ -8223,6 +8454,77 @@
           } catch (err) { this.notify(err.message, 'Erreur', 'error'); }
         }
 
+        // ===== VEILLE (suggestions RSS) =====
+        async loadVeille() {
+          try {
+            const items = await api('/feeds/items?status=new');
+            this.setState({ veille: Array.isArray(items) ? items : [] });
+            setTimeout(() => this.paintImgs(), 40);
+          } catch (e) { /* session gérée ailleurs */ }
+        }
+        async refreshVeille() {
+          if (this.state.veilleBusy) return;
+          this.setState({ veilleBusy: true });
+          try {
+            const sum = await api('/feeds/refresh', { method: 'POST' });
+            await this.loadVeille();
+            const dead = (sum.feeds || []).filter((f) => !f.ok);
+            const msg = (sum.added || 0) + ' nouvel(le)(s) suggestion(s).'
+              + (dead.length ? ' Flux hors-service : ' + dead.map((d) => d.label).join(', ') + '.' : '');
+            this.notify(msg, 'Veille actualisée', dead.length ? 'error' : 'success');
+          } catch (e) { this.notify(e.message, 'Erreur', 'error'); }
+          finally { this.setState({ veilleBusy: false }); }
+        }
+        async setVeilleStatus(id, status) {
+          try { await api('/feeds/items/' + id, { method: 'PATCH', body: { status } }); }
+          catch (e) { this.notify(e.message, 'Erreur', 'error'); return; }
+          this.setState((st) => ({ veille: (st.veille || []).filter((x) => x.id !== id) }));
+        }
+        // Publier en 1 clic : enrichit (photo + contenu complet), crée l'article
+        // sur le blog directement (le flow blog existant envoie aussi la
+        // newsletter aux abonnés), puis retire la suggestion de la liste.
+        async publishNow(id) {
+          if (this.state.veillePublishId) return; // évite le double-clic
+          this.setState({ veillePublishId: id });
+          try {
+            const pre = await api('/feeds/items/' + id + '/prefill');
+            const data = {
+              cat: pre.cat || 'dev', title: (pre.title || '').trim(), excerpt: (pre.excerpt || '').trim(),
+              content: (pre.content || '').trim(), date: (pre.date || '').trim(), read: (pre.read || '').trim(),
+              image: pre.image || '', featured: false, source: (pre.source || '').trim(),
+            };
+            await api('/content/blog', { method: 'POST', body: data });          // -> en ligne + newsletter
+            try { await api('/feeds/items/' + id, { method: 'PATCH', body: { status: 'published' } }); } catch (e) {}
+            const blog = await api('/content/blog');
+            this.setState((st) => ({
+              blog,
+              veille: (st.veille || []).filter((x) => x.id !== id),
+              veillePublishId: null,
+            }));
+            this.notify('« ' + data.title.slice(0, 60) + ' » est en ligne sur le blog.', 'Publié', 'success');
+          } catch (e) {
+            this.setState({ veillePublishId: null });
+            this.notify(e.message, 'Erreur', 'error');
+          }
+        }
+        // Aperçu : ouvre l'article (photo + contenu enrichi) dans une pop-up de
+        // l'admin, sans quitter la page ni ouvrir le lien source.
+        async previewVeille(id) {
+          if (this.state.veillePreviewLoading) return;
+          this.setState({ veillePreviewLoading: id });
+          try {
+            const pre = await api('/feeds/items/' + id + '/prefill');
+            this.setState({ veillePreview: {
+              title: pre.title || '', content: pre.content || '', image: pre.image || '',
+              source: pre.source || '', cat: pre.cat || '', date: pre.date || '', read: pre.read || '',
+            }, veillePreviewLoading: null });
+            setTimeout(() => this.paintImgs(), 40);
+          } catch (e) {
+            this.setState({ veillePreviewLoading: null });
+            this.notify(e.message, 'Erreur', 'error');
+          }
+        }
+
         // ===== CONTENT =====
         buildContent(tab, f, existing) {
           if (tab === 'portfolio') {
@@ -8241,7 +8543,7 @@
             return { sector, title: f.title.trim(), desc: f.desc.trim(), image: f.image || '', tech, results, featured: !!f.featured };
           }
           if (tab === 'blog') {
-            return { cat: f.cat || 'dev', title: f.title.trim(), excerpt: (f.desc || '').trim(), date: (f.adate || '').trim(), read: (f.aread || '').trim(), image: f.image || '', featured: !!f.featured };
+            return { cat: f.cat || 'dev', title: f.title.trim(), excerpt: (f.desc || '').trim(), content: (f.content || '').trim(), date: (f.adate || '').trim(), read: (f.aread || '').trim(), image: f.image || '', featured: !!f.featured, source: (f.source || '').trim() };
           }
           if (tab === 'testimonials') {
             return { quote: f.quote.trim(), author: f.author.trim(), company: f.company.trim(), initials: codInitials(f.author), bg: existing && existing.bg ? existing.bg : PAL[this.state.testimonials.length % 4] };
@@ -8266,14 +8568,14 @@
             // Refetch the list so ids, ordering and the single-"à la une"
             // rule are exactly what the server persisted.
             const list = await api('/content/' + tab);
-            this.setState({ [tab]: list, editingId: null, form: this.blankForm(), catAdding: false });
+            this.setState({ [tab]: list, editingId: null, form: this.blankForm(), catAdding: false, showFormModal: false });
           } catch (err) { this.notify(err.message, 'Erreur', 'error'); }
         }
         startEdit(id) {
           const tab = this.state.tab; const p = this.state[tab].find((x) => x.id === id); if (!p) return;
           let form = this.blankForm();
           if (tab === 'portfolio') { const r = p.results || []; const toList = (v) => Array.isArray(v) ? v.filter(Boolean) : (v ? [String(v)] : []); form = { ...form, sectorList: toList(p.sector), sectorDraft: '', title: p.title || '', desc: p.desc || '', techList: toList(p.tech), techDraft: '', r1v: r[0] ? r[0].v : '', r1l: r[0] ? r[0].l : '', r2v: r[1] ? r[1].v : '', r2l: r[1] ? r[1].l : '', image: p.image || '', featured: !!p.featured }; }
-          else if (tab === 'blog') { form = { ...form, cat: p.cat || 'dev', title: p.title || '', desc: p.excerpt || '', adate: p.date || '', aread: p.read || '', image: p.image || '', featured: !!p.featured }; }
+          else if (tab === 'blog') { form = { ...form, cat: p.cat || 'dev', title: p.title || '', desc: p.excerpt || '', content: p.content || '', adate: p.date || '', aread: p.read || '', image: p.image || '', featured: !!p.featured, source: p.source || '' }; }
           else if (tab === 'testimonials') { form = { ...form, quote: p.quote || '', author: p.author || '', company: p.company || '' }; }
           else { form = { ...form, name: p.name || '', role: p.role || '', image: p.image || '' }; }
           this.setState({ editingId: id, form, catAdding: false });

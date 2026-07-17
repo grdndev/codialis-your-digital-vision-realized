@@ -15,7 +15,12 @@ import settingsRoutes from './routes/settings.js';
 import newsletterRoutes from './routes/newsletter.js';
 import contactRoutes from './routes/contact.js';
 import recapRoutes from './routes/recap.js';
+import feedsRoutes from './routes/feeds.js';
 import { startRecapScheduler } from './recap-cron.js';
+import { assertSecrets, baseHelmet, adminSecurity, noStore } from './middleware/security.js';
+
+// Refuse to start with a missing/placeholder JWT secret.
+assertSecrets();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // New layout: repo/backend/src/index.js -> repo/frontend/{www,assets,public}
@@ -23,9 +28,16 @@ const frontRoot = join(__dirname, '..', '..', 'frontend');
 const siteRoot = join(frontRoot, 'www'); // the .dc.html pages, index.html, support.js…
 
 const app = express();
+// Behind a reverse proxy in production: trust it so rate-limit sees the real
+// client IP and the Secure cookie flag works.
+if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
+app.disable('x-powered-by');
+app.use(baseHelmet); // security headers + CSP for the whole site
 app.use(express.json({ limit: '8mb' })); // images arrive as data URLs
 app.use(cookieParser());
 
+// Authenticated API payloads must never be cached by a proxy or the browser.
+app.use('/api', noStore);
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/accounts', accountsRoutes);
@@ -38,6 +50,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/recap', recapRoutes);
+app.use('/api/feeds', feedsRoutes);
 
 // Anything else that hit /api is a genuine 404, not a static file.
 app.use('/api', (req, res) => res.status(404).json({ error: 'Route API inconnue' }));
@@ -63,6 +76,10 @@ app.use((req, res, next) => {
   }
   next();
 });
+// Harden the admin console specifically — stricter CSP, deny framing, no cache.
+// Covers both the clean /admin URL and the raw .dc.html path that static serves.
+app.use(['/admin', '/Admin.dc.html'], adminSecurity);
+
 for (const [route, file] of Object.entries(PAGES)) {
   app.get(route, (req, res) => res.sendFile(join(siteRoot, file)));
 }

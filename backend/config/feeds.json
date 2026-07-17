@@ -1,0 +1,71 @@
+{
+  "$comment": "Flux RSS de veille B2B (dev/SaaS/IA/funding/startup/cyber/data/opensource). Éditable sans toucher au code. maxAgeDays = fenêtre de fraîcheur (on ignore les articles plus vieux). denyKeywords = titres/résumés à exclure (grand public, bons plans, sorties produit…). refine = reclasse un article par mots-clés pour les flux multi-thématiques. Catégories front: development, ia, saas, funding, design, cyber, data, opensource.",
+  "maxAgeDays": 60,
+  "denyKeywords": [
+    "bon plan", "bons plans", "soldes", "promo", "promotion", "code promo",
+    "réduction", "remise", "cdiscount", "fnac", "boulanger", "darty",
+    "black friday", "french days", "cyber monday", "pas cher", "meilleur prix",
+    "bon prix", "à prix", "économisez", "aliexpress", "précommande", "précommander",
+    "date de sortie", "bande-annonce", "trailer", "forfait mobile", "forfait sans engagement"
+  ],
+  "feeds": [
+    { "label": "Dev.to", "url": "https://dev.to/feed", "category": "development" },
+    { "label": "Korben", "url": "https://korben.info/feed", "category": "development" },
+
+    { "label": "Actu IA", "url": "https://www.actuia.com/feed/", "category": "ia" },
+    { "label": "Le Monde Informatique – IA", "url": "https://www.lemondeinformatique.fr/flux-rss/thematique/intelligence-artificielle/rss.xml", "category": "ia" },
+
+    { "label": "Siècle Digital", "url": "https://siecledigital.fr/feed/", "category": "saas",
+      "refine": [
+        { "category": "ia", "keywords": ["intelligence artificielle", "ia générative", "llm", "chatgpt", "agent ia", "modèle d'ia", "openai", "anthropic"] },
+        { "category": "funding", "keywords": ["levée de fonds", "lève", "série a", "série b", "millions d'euros", "tour de table"] }
+      ] },
+    { "label": "Blog du Modérateur", "url": "https://www.blogdumoderateur.com/feed/", "category": "design" },
+    { "label": "UX Republic", "url": "https://uxrepublic.com/feed/", "category": "design" },
+
+    { "label": "Le Monde Informatique – Sécurité", "url": "https://www.lemondeinformatique.fr/flux-rss/thematique/securite/rss.xml", "category": "cyber" },
+    { "label": "ZATAZ", "url": "https://www.zataz.com/feed/", "category": "cyber" },
+
+    { "label": "Le Monde Informatique – Data", "url": "https://www.lemondeinformatique.fr/flux-rss/thematique/data/rss.xml", "category": "data" },
+
+    { "label": "LinuxFr", "url": "https://linuxfr.org/news.atom", "category": "opensource" },
+    { "label": "Framablog", "url": "https://framablog.org/feed/", "category": "opensource" },
+
+    { "label": "Maddyness", "url": "https://www.maddyness.com/feed/", "category": "startups",
+      "refine": [
+        { "category": "funding", "keywords": ["levée de fonds", "lève", "série a", "série b", "seed", "millions d'euros", "millions de dollars", "tour de table", "pre-seed", "amorçage"] }
+      ] },
+    { "label": "EU-Startups", "url": "https://www.eu-startups.com/feed/", "category": "funding",
+      "refine": [
+        { "category": "saas", "keywords": ["saas", "software", "b2b platform"] }
+      ] },
+
+    { "label": "Developpez", "url": "https://www.developpez.com/index/rss", "category": "development" },
+
+    { "label": "Silicon.fr", "url": "https://www.silicon.fr/feed", "category": "saas",
+      "refine": [
+        { "category": "data", "keywords": ["data", "donnée", "datacenter", "big data", "analytics", "entrepôt", "data lake", "finops", "base de données"] },
+        { "category": "cyber", "keywords": ["cyberattaque", "sécurité", "ransomware", "faille", "vulnérabilité", "piratage", "rgpd"] },
+        { "category": "ia", "keywords": ["intelligence artificielle", "ia générative", "llm", "openai", "gpt", "agent ia"] }
+      ] },
+
+    { "label": "LeBigData", "url": "https://www.lebigdata.fr/feed", "category": "data",
+      "refine": [
+        { "category": "ia", "keywords": ["chatgpt", "llm", "ia générative", "gemini", "openai", "intelligence artificielle", "modèle"] }
+      ] },
+
+    { "label": "Undernews", "url": "https://www.undernews.fr/feed", "category": "cyber" },
+
+    { "label": "Tech.eu", "url": "https://tech.eu/feed/", "category": "funding",
+      "refine": [
+        { "category": "startups", "keywords": ["scaleup", "launches", "expands", "partners", "acquires"] }
+      ] },
+
+    { "label": "FrenchWeb", "url": "https://www.frenchweb.fr/feed", "category": "startups",
+      "refine": [
+        { "category": "funding", "keywords": ["levée de fonds", "lève", "série a", "série b", "seed", "millions d'euros", "tour de table", "amorçage"] },
+        { "category": "ia", "keywords": ["intelligence artificielle", "ia générative", "llm"] },
+        { "category": "saas", "keywords": ["saas", "logiciel", "plateforme b2b"] }
+      ] }
+  ]
+}

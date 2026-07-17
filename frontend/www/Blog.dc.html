@@ -1330,6 +1330,12 @@
               >
                 {{ modalExcerpt }}
               </p>
+              <sc-if value="{{ modalHasSource }}" hint-placeholder-val="{{ false }}">
+                <p style="margin: 18px 0 0; font-size: 13px; color: #8fa0b5;">
+                  via
+                  <a href="{{ modalSource }}" target="_blank" rel="noopener noreferrer" style="color: #2fed7f; text-decoration: none;">{{ modalSourceHost }} ↗</a>
+                </p>
+              </sc-if>
             </div>
           </div>
         </sc-if>
@@ -1361,6 +1367,11 @@
             { key: 'saas', label: t('SaaS', 'SaaS') },
             { key: 'funding', label: t('Financement', 'Funding') },
             { key: 'design', label: t('Design UX', 'UX Design') },
+            { key: 'cyber', label: t('Cybersécurité', 'Cybersecurity') },
+            { key: 'startups', label: t('Startups', 'Startups') },
+            { key: 'data', label: t('Data', 'Data') },
+            { key: 'mobile', label: t('Mobile', 'Mobile') },
+            { key: 'opensource', label: t('Open Source', 'Open Source') },
           ];
 
           const catLabelOf = (k) => (catDefs.find((c) => c.key === k) || {}).label || k || '';
@@ -1384,6 +1395,7 @@
             id: p.id, cat: p.cat || 'dev', slot: p.slot || ('blog-' + p.id),
             date: p.date || '', read: p.read || '',
             title: p.title || '', excerpt: p.excerpt || '',
+            content: p.content || '', source: p.source || '',
             image: p.image || '', featured: !!p.featured,
           }));
           const customFeatured = custom.find((p) => p.featured);
@@ -1400,7 +1412,7 @@
                   noImage: !customFeatured.image, catLabel,
                   excerptDisplay: c.display, excerptTruncated: c.truncated,
                 };
-                it.openModal = openPost({ id: it.id, title: it.title, excerpt: it.excerpt, catLabel, date: it.date, read: it.read });
+                it.openModal = openPost({ id: it.id, title: it.title, excerpt: it.excerpt, content: it.content, source: it.source, catLabel, date: it.date, read: it.read });
                 return it;
               })()
             : null;
@@ -1419,7 +1431,7 @@
             const c = clampDesc(p.excerpt);
             const catLabel = catLabelOf(p.cat);
             const item = { ...p, catLabel, noImage: !p.image, excerptDisplay: c.display, excerptTruncated: c.truncated };
-            item.openModal = openPost({ id: p.id, title: p.title, excerpt: p.excerpt, catLabel, date: p.date, read: p.read });
+            item.openModal = openPost({ id: p.id, title: p.title, excerpt: p.excerpt, content: p.content, source: p.source, catLabel, date: p.date, read: p.read });
             return item;
           });
           const featuredVisible = !!activeFeatured && active === 'all' && !q;
@@ -1544,8 +1556,11 @@
 
             modalOpen: !!this.state.modalPost,
             modalTitle: this.state.modalPost ? this.state.modalPost.title : '',
-            modalExcerpt: this.state.modalPost ? this.state.modalPost.excerpt : '',
+            modalExcerpt: this.state.modalPost ? (this.state.modalPost.content || this.state.modalPost.excerpt) : '',
             modalCatLabel: this.state.modalPost ? this.state.modalPost.catLabel : '',
+            modalHasSource: !!(this.state.modalPost && this.state.modalPost.source),
+            modalSource: this.state.modalPost ? (this.state.modalPost.source || '') : '',
+            modalSourceHost: (() => { const s = this.state.modalPost && this.state.modalPost.source; if (!s) return ''; try { return new URL(s).hostname.replace(/^www\./, ''); } catch (e) { return s; } })(),
             modalDate: this.state.modalPost ? this.state.modalPost.date : '',
             modalRead: this.state.modalPost ? this.state.modalPost.read : '',
             modalHasMeta: !!(this.state.modalPost && (this.state.modalPost.date || this.state.modalPost.read)),

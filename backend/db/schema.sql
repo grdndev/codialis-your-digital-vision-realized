@@ -205,3 +205,27 @@ CREATE TABLE IF NOT EXISTS contact_requests (
 );
 CREATE INDEX IF NOT EXISTS contact_requests_created_idx ON contact_requests(created_at DESC);
 
+
+-- Veille / curation : articles agrégés depuis les flux RSS (backend/config/feeds.json).
+-- Seuls titre + résumé + lien viennent du flux ; content/image sont enrichis à la
+-- demande (fetch og:image + corps de l'article) au moment de préparer la publication.
+--   status : new (à trier) | ignored (rejeté) | later (à voir) | published (publié sur le blog)
+--   guid   : identifiant du flux (fallback = link) — clé de déduplication entre refreshs.
+--   category : catégorie par défaut du flux, re-catégorisable manuellement au review.
+CREATE TABLE IF NOT EXISTS feed_items (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  guid         TEXT NOT NULL UNIQUE,
+  source       TEXT NOT NULL,
+  category     TEXT NOT NULL,
+  title        TEXT NOT NULL,
+  excerpt      TEXT NOT NULL DEFAULT '',
+  content      TEXT NOT NULL DEFAULT '',
+  image        TEXT NOT NULL DEFAULT '',
+  link         TEXT NOT NULL,
+  published_at TIMESTAMPTZ,
+  status       TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'ignored', 'later', 'published')),
+  fetched_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS feed_items_status_idx   ON feed_items(status);
+CREATE INDEX IF NOT EXISTS feed_items_category_idx ON feed_items(category);
+CREATE INDEX IF NOT EXISTS feed_items_pubdate_idx  ON feed_items(published_at DESC);

@@ -58,6 +58,16 @@
               transform: none;
             }
           }
+          @keyframes cod-pop {
+            from {
+              opacity: 0;
+              transform: translateY(18px) scale(0.97);
+            }
+            to {
+              opacity: 1;
+              transform: none;
+            }
+          }
           @keyframes cod-neon {
             0%,
             100% {
@@ -345,10 +355,12 @@
                 "
               >
                 <div
+                  onClick="{{ openFeatured }}"
                   style="
                     position: relative;
                     min-height: 340px;
                     aspect-ratio: 16/11;
+                    cursor: pointer;
                   "
                 >
                   <sc-if
@@ -616,10 +628,12 @@
                     style-hover="border-color:rgba(47,237,127,.5);box-shadow:0 30px 55px -26px rgba(0,0,0,.7);transform:translateY(-4px);"
                   >
                     <div
+                      onClick="{{ p.openModal }}"
                       style="
                         position: relative;
                         aspect-ratio: 16/10;
                         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                        cursor: pointer;
                       "
                     >
                       <sc-if
@@ -1210,15 +1224,16 @@
               style="
                 position: relative;
                 width: 100%;
-                max-width: 640px;
-                max-height: 88vh;
+                max-width: 780px;
+                max-height: 90vh;
                 overflow-y: auto;
+                overflow-x: hidden;
                 box-sizing: border-box;
-                padding: clamp(28px, 4vw, 48px);
-                border-radius: 20px;
+                border-radius: 22px;
                 background: #0e1626;
                 border: 1px solid rgba(255, 255, 255, 0.12);
-                box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+                box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6);
+                animation: cod-pop 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
               "
             >
               <button
@@ -1229,90 +1244,260 @@
                   position: absolute;
                   top: 16px;
                   right: 16px;
-                  width: 38px;
-                  height: 38px;
+                  z-index: 3;
+                  width: 40px;
+                  height: 40px;
                   border-radius: 50%;
-                  border: 1px solid rgba(255, 255, 255, 0.16);
-                  background: rgba(255, 255, 255, 0.04);
+                  border: 1px solid rgba(255, 255, 255, 0.2);
+                  background: rgba(8, 17, 30, 0.55);
+                  backdrop-filter: blur(8px);
+                  -webkit-backdrop-filter: blur(8px);
                   color: #eaf0f7;
                   cursor: pointer;
                   font-size: 18px;
                   line-height: 1;
+                  transition:
+                    background 0.2s,
+                    border-color 0.2s,
+                    color 0.2s;
                 "
                 style-hover="background:#2FED7F;border-color:#2FED7F;color:#08111E;"
               >
                 ✕
               </button>
-              <div
-                style="
-                  display: flex;
-                  flex-wrap: wrap;
-                  gap: 6px;
-                  margin-bottom: 16px;
-                  padding-right: 40px;
-                "
-              >
-                <sc-for
-                  list="{{ modalSectors }}"
-                  as="sct"
-                  hint-placeholder-count="1"
+
+              <!-- HEADER : image + overlay (titre + secteurs) -->
+              <sc-if value="{{ modalHasImage }}" hint-placeholder-val="{{ false }}">
+                <div
+                  style="
+                    position: relative;
+                    width: 100%;
+                    aspect-ratio: 16/8;
+                    overflow: hidden;
+                  "
                 >
-                  <span
+                  <div
+                    class="cod-img"
+                    data-img="{{ modalImage }}"
                     style="
-                      font-family: &quot;IBM Plex Mono&quot;, monospace;
-                      font-size: 11px;
-                      letter-spacing: 0.06em;
-                      color: #08111e;
-                      background: #2fed7f;
-                      padding: 4px 10px;
-                      border-radius: 100px;
+                      position: absolute;
+                      inset: 0;
+                      background-size: cover;
+                      background-position: center;
                     "
-                    >{{ sct }}</span
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      inset: 0;
+                      background: linear-gradient(
+                        180deg,
+                        rgba(14, 22, 38, 0) 30%,
+                        rgba(14, 22, 38, 0.72) 78%,
+                        #0e1626 100%
+                      );
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      left: 0;
+                      right: 0;
+                      bottom: 0;
+                      padding: clamp(22px, 3.5vw, 36px);
+                    "
                   >
-                </sc-for>
-              </div>
-              <h3
-                style="
-                  font-family: &quot;Space Grotesk&quot;, sans-serif;
-                  font-weight: 600;
-                  font-size: clamp(22px, 2.6vw, 28px);
-                  line-height: 1.2;
-                  color: #fff;
-                  margin: 0 0 16px;
-                "
-              >
-                {{ modalTitle }}
-              </h3>
-              <p
-                style="
-                  font-size: 15.5px;
-                  line-height: 1.7;
-                  color: #c4cfdd;
-                  margin: 0 0 24px;
-                  white-space: pre-wrap;
-                "
-              >
-                {{ modalDesc }}
-              </p>
-              <div style="display: flex; flex-wrap: wrap; gap: 7px">
-                <sc-for
-                  list="{{ modalTech }}"
-                  as="t"
-                  hint-placeholder-count="3"
+                    <div
+                      style="
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 6px;
+                        margin-bottom: 14px;
+                      "
+                    >
+                      <sc-for
+                        list="{{ modalSectors }}"
+                        as="sct"
+                        hint-placeholder-count="1"
+                      >
+                        <span
+                          style="
+                            font-family: &quot;IBM Plex Mono&quot;, monospace;
+                            font-size: 11px;
+                            letter-spacing: 0.06em;
+                            color: #08111e;
+                            background: #2fed7f;
+                            padding: 4px 10px;
+                            border-radius: 100px;
+                          "
+                          >{{ sct }}</span
+                        >
+                      </sc-for>
+                    </div>
+                    <h3
+                      style="
+                        font-family: &quot;Space Grotesk&quot;, sans-serif;
+                        font-weight: 600;
+                        font-size: clamp(24px, 3vw, 34px);
+                        line-height: 1.14;
+                        letter-spacing: -0.015em;
+                        color: #fff;
+                        margin: 0;
+                        text-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
+                      "
+                    >
+                      {{ modalTitle }}
+                    </h3>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- CORPS -->
+              <div style="padding: clamp(26px, 4vw, 44px)">
+                <!-- Titre + secteurs de repli (aucune image) -->
+                <sc-if value="{{ modalNoImage }}" hint-placeholder-val="{{ true }}">
+                  <div
+                    style="
+                      display: flex;
+                      flex-wrap: wrap;
+                      gap: 6px;
+                      margin-bottom: 16px;
+                      padding-right: 44px;
+                    "
+                  >
+                    <sc-for
+                      list="{{ modalSectors }}"
+                      as="sct"
+                      hint-placeholder-count="1"
+                    >
+                      <span
+                        style="
+                          font-family: &quot;IBM Plex Mono&quot;, monospace;
+                          font-size: 11px;
+                          letter-spacing: 0.06em;
+                          color: #08111e;
+                          background: #2fed7f;
+                          padding: 4px 10px;
+                          border-radius: 100px;
+                        "
+                        >{{ sct }}</span
+                      >
+                    </sc-for>
+                  </div>
+                  <h3
+                    style="
+                      font-family: &quot;Space Grotesk&quot;, sans-serif;
+                      font-weight: 600;
+                      font-size: clamp(22px, 2.8vw, 30px);
+                      line-height: 1.16;
+                      letter-spacing: -0.015em;
+                      color: #fff;
+                      margin: 0 0 20px;
+                      padding-right: 44px;
+                    "
+                  >
+                    {{ modalTitle }}
+                  </h3>
+                </sc-if>
+
+                <!-- Résultats clés -->
+                <sc-if value="{{ modalHasResults }}" hint-placeholder-val="{{ false }}">
+                  <div
+                    style="
+                      display: flex;
+                      flex-wrap: wrap;
+                      gap: 20px 36px;
+                      padding: 20px 22px;
+                      margin-bottom: 26px;
+                      border-radius: 14px;
+                      background: rgba(47, 237, 127, 0.06);
+                      border: 1px solid rgba(47, 237, 127, 0.18);
+                    "
+                  >
+                    <sc-for
+                      list="{{ modalResults }}"
+                      as="r"
+                      hint-placeholder-count="3"
+                    >
+                      <div>
+                        <div
+                          style="
+                            font-family: &quot;Space Grotesk&quot;, sans-serif;
+                            font-weight: 700;
+                            font-size: 30px;
+                            color: #2fed7f;
+                            line-height: 1;
+                          "
+                        >
+                          {{ r.v }}
+                        </div>
+                        <div
+                          style="
+                            margin-top: 6px;
+                            font-size: 13px;
+                            color: #8fa0b5;
+                          "
+                        >
+                          {{ r.l }}
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+
+                <p
+                  style="
+                    font-size: 16px;
+                    line-height: 1.75;
+                    color: #c4cfdd;
+                    margin: 0 0 28px;
+                    white-space: pre-wrap;
+                  "
                 >
-                  <span
+                  {{ modalDesc }}
+                </p>
+
+                <sc-if value="{{ modalHasTech }}" hint-placeholder-val="{{ false }}">
+                  <div
                     style="
-                      font-family: &quot;IBM Plex Mono&quot;, monospace;
-                      font-size: 10.5px;
-                      letter-spacing: 0.04em;
-                      color: #b7c2d2;
-                      padding: 4px 9px;
-                      border: 1px solid rgba(255, 255, 255, 0.12);
-                      border-radius: 6px;
+                      padding-top: 22px;
+                      border-top: 1px solid rgba(255, 255, 255, 0.08);
                     "
-                    >{{ t }}</span
                   >
-                </sc-for>
+                    <div
+                      style="
+                        font-family: &quot;IBM Plex Mono&quot;, monospace;
+                        font-size: 11px;
+                        letter-spacing: 0.16em;
+                        text-transform: uppercase;
+                        color: #5c6b80;
+                        margin-bottom: 12px;
+                      "
+                    >
+                      Stack technique
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 7px">
+                      <sc-for
+                        list="{{ modalTech }}"
+                        as="t"
+                        hint-placeholder-count="3"
+                      >
+                        <span
+                          style="
+                            font-family: &quot;IBM Plex Mono&quot;, monospace;
+                            font-size: 11px;
+                            letter-spacing: 0.04em;
+                            color: #b7c2d2;
+                            padding: 5px 10px;
+                            border: 1px solid rgba(255, 255, 255, 0.12);
+                            border-radius: 7px;
+                          "
+                          >{{ t }}</span
+                        >
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
               </div>
             </div>
           </div>
@@ -1401,12 +1586,14 @@
             ? featuredDesc.slice(0, DESC_CLAMP).replace(/\s+\S*$/, '') + ' …'
             : featuredDesc;
           const featuredModalItem = {
+            id: featItem ? featItem.id : null,
             title: featuredTitle, desc: featuredDesc,
             sectors: featItem ? featItem.sectors : toSectors(feat.sector),
-            tech: featuredTech,
+            tech: featuredTech, image: featuredImage,
+            results: featuredResults,
           };
-          const openFeatured = featuredTruncated ? openP(featuredModalItem) : (() => {});
-          const featuredDescCursor = featuredTruncated ? 'pointer' : 'default';
+          const openFeatured = openP(featuredModalItem);
+          const featuredDescCursor = 'pointer';
           const navLinks = [
             { label: 'Expertise', href: '/#expertises', color: '#C4CFDD' },
             { label: 'Portfolio', href: '/portfolio', color: '#2FED7F' },
@@ -1437,6 +1624,12 @@
             modalDesc: this.state.modalProject ? this.state.modalProject.desc : '',
             modalSectors: this.state.modalProject ? this.state.modalProject.sectors : [],
             modalTech: this.state.modalProject ? this.state.modalProject.tech : [],
+            modalImage: this.state.modalProject ? (this.state.modalProject.image || '') : '',
+            modalHasImage: !!(this.state.modalProject && this.state.modalProject.image),
+            modalNoImage: !(this.state.modalProject && this.state.modalProject.image),
+            modalResults: this.state.modalProject ? (this.state.modalProject.results || []) : [],
+            modalHasResults: !!(this.state.modalProject && (this.state.modalProject.results || []).length),
+            modalHasTech: !!(this.state.modalProject && (this.state.modalProject.tech || []).length),
             closeModal: () => this.setState({ modalProject: null }),
             stopProp: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
           };

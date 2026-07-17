@@ -4,13 +4,14 @@ import { query } from '../db.js';
 import { signToken, cookieOptions, requireAuth, COOKIE_NAME } from '../middleware/auth.js';
 import { generatePassword, sendWelcomeEmail, sendResetEmail } from '../mail.js';
 import { createToken, peekToken, consumeTokenRow } from '../tokens.js';
+import { loginLimiter, sensitiveLimiter } from '../middleware/security.js';
 
 const router = Router();
 
 const MIN_PW = 8;
 
 // POST /api/auth/login { email, password }
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
   if (!email || !password) return res.status(400).json({ error: 'Email et mot de passe requis' });
@@ -42,7 +43,7 @@ router.get('/me', requireAuth, (req, res) => {
 // POST /api/auth/verify { token }
 // Confirms the address, generates the real password, emails the credentials,
 // and flags the account so the first login forces a password change.
-router.post('/verify', async (req, res) => {
+router.post('/verify', sensitiveLimiter, async (req, res) => {
   const token = String(req.body?.token || '');
   const row = await peekToken(token, 'verify');
   if (!row) return res.status(400).json({ error: 'Lien invalide ou expiré' });
@@ -79,7 +80,7 @@ router.post('/verify', async (req, res) => {
 
 // POST /api/auth/forgot { email }
 // Always answers 200 so it can't be used to enumerate registered addresses.
-router.post('/forgot', async (req, res) => {
+router.post('/forgot', sensitiveLimiter, async (req, res) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
   if (email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     const { rows } = await query('SELECT id, name, email_verified FROM users WHERE email = $1', [email]);
@@ -105,7 +106,7 @@ function validatePassword(password) {
 }
 
 // POST /api/auth/reset { token, password }
-router.post('/reset', async (req, res) => {
+router.post('/reset', sensitiveLimiter, async (req, res) => {
   const token = String(req.body?.token || '');
   const password = String(req.body?.password || '');
   const pwErr = validatePassword(password);
