@@ -32,6 +32,7 @@ router.use(requireAuth);
 router.get('/', async (req, res) => {
   const { rows } = await query(
     `SELECT id, name, prenom, nom, email, role, poste, email_verified, photo, featured,
+            to_char(created_at, 'YYYY-MM-DD') AS "createdAt",
             leave_balance::float AS "leaveBalance",
             to_char(leave_anchor, 'YYYY-MM-DD') AS "leaveAnchor",
             hours_balance::float AS "hoursBalance",
@@ -118,6 +119,31 @@ router.post('/', requirePatron, async (req, res) => {
   }
 
   res.status(201).json({ ...user, emailed: true, pending: true });
+});
+
+// POST /api/accounts/:id/resend-verify — patron re-sends the confirmation link
+// to an account that hasn't confirmed its address yet. Issues a fresh verify
+// token (invalidating any prior one) and re-emails it. Refused once the account
+// is already confirmed, so it can't be used to churn credentials.
+router.post('/:id/resend-verify', requirePatron, async (req, res) => {
+  const { id } = req.params;
+  const { rows } = await query(
+    'SELECT id, name, email, role, email_verified FROM users WHERE id = $1',
+    [id],
+  );
+  const user = rows[0];
+  if (!user) return res.status(404).json({ error: 'Compte introuvable' });
+  if (user.email_verified) return res.status(409).json({ error: 'Compte déjà confirmé' });
+
+  try {
+    const token = await createToken(user.id, 'verify');
+    await sendVerifyEmail({ name: user.name, email: user.email, role: user.role, token });
+  } catch (err) {
+    console.error('Brevo send failed:', err.message);
+    return res.status(502).json({ error: "Échec de l'envoi de l'email — réessayez" });
+  }
+
+  res.json({ ok: true, emailed: true });
 });
 
 // PATCH /api/accounts/:id — patron edits an account (everything but the password)

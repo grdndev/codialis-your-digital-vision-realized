@@ -237,9 +237,24 @@ export async function sendNewsletterToSubscribers(subscribers, { title, excerpt 
 }
 
 // Low-level Brevo send. Throws on API failure so callers can react.
-async function sendEmail({ email, name, subject, htmlContent }) {
+// `attachments` : [{ name, content }] où content est un Buffer OU une chaîne
+// base64 (Brevo attend du base64).
+async function sendEmail({ email, name, subject, htmlContent, attachments }) {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) throw new Error('BREVO_API_KEY manquant');
+
+  const payload = {
+    sender: { name: senderName(), email: senderEmail() },
+    to: [{ email, name }],
+    subject,
+    htmlContent,
+  };
+  if (attachments && attachments.length) {
+    payload.attachment = attachments.map((a) => ({
+      name: a.name,
+      content: Buffer.isBuffer(a.content) ? a.content.toString('base64') : a.content,
+    }));
+  }
 
   const res = await fetch(BREVO_URL, {
     method: 'POST',
@@ -248,12 +263,7 @@ async function sendEmail({ email, name, subject, htmlContent }) {
       'content-type': 'application/json',
       accept: 'application/json',
     },
-    body: JSON.stringify({
-      sender: { name: senderName(), email: senderEmail() },
-      to: [{ email, name }],
-      subject,
-      htmlContent,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
@@ -311,6 +321,32 @@ export async function sendHrNotifEmail({ email, name, subject, heading, intro, d
     email, name,
     subject,
     htmlContent: renderHrNotifEmail({ heading, name, intro, details, tone }),
+  });
+}
+
+// Récap mensuel : email accompagnant le PDF du mois écoulé.
+export function renderMonthlyRecapEmail({ name, periodLabel, isTeam }) {
+  const intro = isTeam
+    ? `Voici le récapitulatif RH de toute l'équipe pour ${periodLabel}, en pièce jointe (PDF).`
+    : `Voici votre récapitulatif d'activité pour ${periodLabel} (heures, congés, absences), en pièce jointe (PDF).`;
+  const body = `
+    <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:${BRAND.green}">Récapitulatif mensuel</p>
+    <h1 style="margin:0 0 18px 0;font-size:24px;line-height:1.3;font-weight:700;color:${BRAND.navy}">Bonjour ${escapeHtml(name)},</h1>
+    <p style="margin:0 0 22px 0;font-size:15px;color:${BRAND.ink}">${escapeHtml(intro)}</p>
+    ${ctaButton("Ouvrir l'espace Codialis", loginUrl())}
+    <p style="margin:22px 0 0 0;padding:14px 16px;background:#f4f6f8;border-left:3px solid ${BRAND.green};border-radius:0 8px 8px 0;font-size:13px;color:${BRAND.muted}">
+      Ce récapitulatif est envoyé automatiquement chaque début de mois. Pour toute question, contactez la direction.
+    </p>`;
+  return emailLayout({ preheader: `Votre récapitulatif ${periodLabel} Codialis`, bodyHtml: body });
+}
+
+// Envoie le récap mensuel avec le PDF en pièce jointe.
+export async function sendMonthlyRecapEmail({ email, name, periodLabel, pdf, isTeam = false }) {
+  return sendEmail({
+    email, name,
+    subject: `Récapitulatif ${periodLabel} — Codialis`,
+    htmlContent: renderMonthlyRecapEmail({ name, periodLabel, isTeam }),
+    attachments: [{ name: pdf.filename, content: pdf.buffer }],
   });
 }
 

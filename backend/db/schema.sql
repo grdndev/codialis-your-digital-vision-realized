@@ -74,6 +74,12 @@ CREATE TABLE IF NOT EXISTS entries (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS entries_employee_idx ON entries(employee_id);
+-- Heures sup : payées ou mises en récup. paid=true → la direction rémunère ces
+-- heures (paie), elles ne s'ajoutent donc PAS au solde d'heures récupérables.
+-- paid=false (défaut) → comportement historique : les heures sup alimentent le
+-- solde de récup. Sans objet pour kind='recup'. La direction tranche à la
+-- validation (comme le payé/non payé des congés).
+ALTER TABLE entries ADD COLUMN IF NOT EXISTS paid BOOLEAN NOT NULL DEFAULT false;
 
 CREATE TABLE IF NOT EXISTS presence (
   employee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

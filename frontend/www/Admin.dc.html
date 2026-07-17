@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="./support.js"></script>
     <script src="./responsive.js"></script>
+    <!-- Génération PDF des récapitulatifs RH (direction / chef). Vendorisé en
+         local (pas de CDN) : fonctionne hors-ligne. jsPDF expose window.jspdf. -->
+    <script src="./vendor/jspdf.umd.min.js"></script>
+    <script src="./vendor/jspdf.plugin.autotable.min.js"></script>
   </head>
   <body>
     <x-dc>
@@ -683,17 +687,31 @@
                     {{ sectionSubtitle }}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick="{{ onRefresh }}"
-                  disabled="{{ refreshDisabled }}"
-                  title="Recharger les données sans recharger la page"
-                  style="flex-shrink:0;display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:100px;border:1px solid rgba(255,255,255,0.16);background:transparent;color:#b7c2d2;font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:13.5px;cursor:pointer;transition:border-color .2s,color .2s;"
-                  style-hover="border-color:#2fed7f;color:#2fed7f;"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 6.7 3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-6.7-3L3 16"/><path d="M8 16H3v5"/></svg>
-                  {{ refreshLabel }}
-                </button>
+                <div style="flex-shrink:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+                  <sc-if value="{{ showEspace }}" hint-placeholder-val="{{ false }}">
+                    <button
+                      type="button"
+                      onClick="{{ onRecapSelf }}"
+                      title="Télécharger mon récapitulatif en PDF (mois / année)"
+                      style="flex-shrink:0;display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:100px;border:1px solid rgba(47,237,127,0.4);background:rgba(47,237,127,0.1);color:#2fed7f;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;cursor:pointer;transition:background .2s,border-color .2s;"
+                      style-hover="background:rgba(47,237,127,0.18);border-color:#2fed7f;"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                      Télécharger PDF
+                    </button>
+                  </sc-if>
+                  <button
+                    type="button"
+                    onClick="{{ onRefresh }}"
+                    disabled="{{ refreshDisabled }}"
+                    title="Recharger les données sans recharger la page"
+                    style="flex-shrink:0;display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:100px;border:1px solid rgba(255,255,255,0.16);background:transparent;color:#b7c2d2;font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:13.5px;cursor:pointer;transition:border-color .2s,color .2s;"
+                    style-hover="border-color:#2fed7f;color:#2fed7f;"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 6.7 3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-6.7-3L3 16"/><path d="M8 16H3v5"/></svg>
+                    {{ refreshLabel }}
+                  </button>
+                </div>
               </div>
 
               <!-- ===================== MON ESPACE (employé) ===================== -->
@@ -1346,7 +1364,8 @@
                           {{ e.metaLine }}
                         </div>
                       </div>
-                      <div style="display: flex; gap: 8px; flex-shrink: 0">
+                      <div style="display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end;">
+                        <sc-if value="{{ e.isSimpleApprove }}" hint-placeholder-val="{{ true }}">
                         <button
                           type="button"
                           onClick="{{ e.onApprove }}"
@@ -1371,6 +1390,55 @@
                         >
                           Valider
                         </button>
+                        </sc-if>
+                        <sc-if value="{{ e.isSup }}" hint-placeholder-val="{{ false }}">
+                        <button
+                          type="button"
+                          onClick="{{ e.onApproveRecup }}"
+                          title="Valider en récupération (ajouté au solde d'heures)"
+                          style="
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 7px;
+                            padding: 9px 15px;
+                            border-radius: 10px;
+                            border: 1px solid rgba(47, 237, 127, 0.4);
+                            background: rgba(47, 237, 127, 0.12);
+                            color: #2fed7f;
+                            font-family: &quot;Space Grotesk&quot;, sans-serif;
+                            font-weight: 600;
+                            font-size: 13.5px;
+                            cursor: pointer;
+                            transition: background 0.2s, color 0.2s;
+                          "
+                          style-hover="background:#2FED7F;color:#08111E;"
+                        >
+                          Valider en récup
+                        </button>
+                        <button
+                          type="button"
+                          onClick="{{ e.onApprovePaid }}"
+                          title="Valider en paie (heures rémunérées, hors solde de récup)"
+                          style="
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 7px;
+                            padding: 9px 15px;
+                            border-radius: 10px;
+                            border: 1px solid rgba(245, 200, 107, 0.45);
+                            background: rgba(245, 200, 107, 0.12);
+                            color: #f5c86b;
+                            font-family: &quot;Space Grotesk&quot;, sans-serif;
+                            font-weight: 600;
+                            font-size: 13.5px;
+                            cursor: pointer;
+                            transition: background 0.2s, color 0.2s;
+                          "
+                          style-hover="background:#f5c86b;color:#08111E;"
+                        >
+                          Valider &amp; payer
+                        </button>
+                        </sc-if>
                         <button
                           type="button"
                           onClick="{{ e.onRefuse }}"
@@ -1425,17 +1493,31 @@
                   id="cod-soldesgrid"
                 >
                   <div>
-                    <h2
-                      style="
-                        font-family: &quot;Space Grotesk&quot;, sans-serif;
-                        font-weight: 600;
-                        font-size: 19px;
-                        margin: 0 0 16px;
-                        color: #fff;
-                      "
-                    >
-                      Soldes par employé
-                    </h2>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 16px;">
+                      <h2
+                        style="
+                          font-family: &quot;Space Grotesk&quot;, sans-serif;
+                          font-weight: 600;
+                          font-size: 19px;
+                          margin: 0;
+                          color: #fff;
+                        "
+                      >
+                        Soldes par employé
+                      </h2>
+                      <sc-if value="{{ canExportTeam }}" hint-placeholder-val="{{ false }}">
+                        <button
+                          type="button"
+                          onClick="{{ onExportTeam }}"
+                          title="Exporter un récapitulatif PDF de toute l'équipe (RH)"
+                          style="display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:100px;border:1px solid rgba(47,237,127,0.4);background:rgba(47,237,127,0.1);color:#2fed7f;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:background 0.2s,border-color 0.2s;"
+                          style-hover="background:rgba(47,237,127,0.18);border-color:#2fed7f;"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                          Export RH (PDF)
+                        </button>
+                      </sc-if>
+                    </div>
                     <div style="position: relative; display: flex; align-items: center; margin-bottom: 16px;">
                       <span style="position: absolute; left: 16px; font-size: 16px; color: #66768c; pointer-events: none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></span>
                       <input
@@ -1483,7 +1565,7 @@
                             </sc-if>
                           </span>
                           <div style="flex: 1; min-width: 0">
-                            <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                               <div
                                 style="
                                   font-family:
@@ -1491,6 +1573,8 @@
                                   font-weight: 600;
                                   font-size: 15px;
                                   color: #fff;
+                                  min-width: 0;
+                                  overflow-wrap: anywhere;
                                 "
                               >
                                 {{ s.name }}
@@ -1503,6 +1587,26 @@
                                   title="À la une sur le site"
                                   style="flex-shrink:0;font-family:'Space Grotesk',sans-serif;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:rgba(245,200,107,0.14);color:#f5c86b;border:1px solid rgba(245,200,107,0.35);"
                                   >À la une</span
+                                >
+                              </sc-if>
+                              <sc-if
+                                value="{{ s.notVerified }}"
+                                hint-placeholder-val="{{ false }}"
+                              >
+                                <span
+                                  title="Le titulaire n'a pas encore confirmé son compte"
+                                  style="flex-shrink:0;font-family:'Space Grotesk',sans-serif;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:rgba(245,168,107,0.14);color:#f5a86b;border:1px solid rgba(245,168,107,0.35);"
+                                  >Non confirmé</span
+                                >
+                              </sc-if>
+                              <sc-if
+                                value="{{ s.isManagerRole }}"
+                                hint-placeholder-val="{{ false }}"
+                              >
+                                <span
+                                  title="Rôle dans l'équipe"
+                                  style="flex-shrink:0;font-family:'Space Grotesk',sans-serif;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:rgba(120,150,255,0.14);color:#8fa4ff;border:1px solid rgba(120,150,255,0.35);"
+                                  >{{ s.roleLabel }}</span
                                 >
                               </sc-if>
                             </div>
@@ -1578,95 +1682,15 @@
                               solde
                             </div>
                           </div>
-                          <sc-if value="{{ s.canManage }}" hint-placeholder-val="{{ false }}">
-                          <button
-                            type="button"
-                            onClick="{{ s.onFeature }}"
-                            aria-label="{{ s.featTitle }}"
-                            title="{{ s.featTitle }}"
-                            style="
-                              width: 32px;
-                              height: 32px;
-                              flex-shrink: 0;
-                              border-radius: 8px;
-                              border: 1px solid {{ s.featBorder }};
-                              background: {{ s.featBg }};
-                              color: {{ s.featColor }};
-                              cursor: pointer;
-                              display: flex;
-                              align-items: center;
-                              justify-content: center;
-                              transition:
-                                color 0.2s,
-                                border-color 0.2s,
-                                background 0.2s;
-                            "
-                            style-hover="border-color:#f5c86b;color:#f5c86b;"
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            >
-                              <path
-                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                              ></path>
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            onClick="{{ s.onEdit }}"
-                            aria-label="Modifier le compte"
-                            style="
-                              width: 32px;
-                              height: 32px;
-                              flex-shrink: 0;
-                              border-radius: 8px;
-                              border: 1px solid rgba(255, 255, 255, 0.14);
-                              background: transparent;
-                              color: #b7c2d2;
-                              cursor: pointer;
-                              display: flex;
-                              align-items: center;
-                              justify-content: center;
-                              transition:
-                                color 0.2s,
-                                border-color 0.2s;
-                            "
-                            style-hover="border-color:#2FED7F;color:#2FED7F;"
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            >
-                              <path
-                                d="M12 20h9"
-                              ></path>
-                              <path
-                                d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"
-                              ></path>
-                            </svg>
-                          </button>
-                          </sc-if>
-                          <sc-if
-                            value="{{ s.canDelete }}"
-                            hint-placeholder-val="{{ false }}"
-                          >
+                          <sc-if value="{{ s.hasMenu }}" hint-placeholder-val="{{ false }}">
+                          <div style="position:relative;flex-shrink:0;">
                             <button
                               type="button"
-                              onClick="{{ s.onDelete }}"
-                              aria-label="Supprimer le compte"
+                              onClick="{{ s.onToggleMenu }}"
+                              aria-label="Actions"
+                              aria-haspopup="true"
+                              aria-expanded="{{ s.menuOpen }}"
+                              title="Actions"
                               style="
                                 width: 32px;
                                 height: 32px;
@@ -1679,31 +1703,55 @@
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;
-                                transition:
-                                  color 0.2s,
-                                  border-color 0.2s;
+                                transition: color 0.2s, border-color 0.2s;
                               "
-                              style-hover="border-color:#ff6b6b;color:#ff6b6b;"
+                              style-hover="border-color:#2FED7F;color:#2FED7F;"
                             >
-                              <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                              >
-                                <path d="M3 6h18"></path>
-                                <path
-                                  d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                                ></path>
-                                <path
-                                  d="M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14"
-                                ></path>
-                              </svg>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg>
                             </button>
+                            <sc-if value="{{ s.menuOpen }}" hint-placeholder-val="{{ false }}">
+                              <div onClick="{{ s.onToggleMenu }}" style="position:fixed;inset:0;z-index:40;background:rgba(4,9,17,0.6);backdrop-filter:blur(2px);"></div>
+                              <div
+                                role="menu"
+                                style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:41;width:min(340px,calc(100vw - 40px));padding:8px;border-radius:14px;background:#111c2b;border:1px solid rgba(255,255,255,0.12);box-shadow:0 24px 60px rgba(0,0,0,0.55);display:flex;flex-direction:column;gap:2px;"
+                              >
+                                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px 10px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:6px;">
+                                  <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;color:#fff;overflow-wrap:anywhere;">{{ s.name }}</span>
+                                  <button type="button" onClick="{{ s.onToggleMenu }}" aria-label="Fermer" style="flex-shrink:0;width:26px;height:26px;border-radius:7px;border:1px solid rgba(255,255,255,0.14);background:transparent;color:#b7c2d2;cursor:pointer;display:flex;align-items:center;justify-content:center;" style-hover="border-color:#ff6b6b;color:#ff6b6b;">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                                  </button>
+                                </div>
+                                <sc-if value="{{ s.notVerified }}" hint-placeholder-val="{{ false }}">
+                                  <button type="button" role="menuitem" onClick="{{ s.onResendVerify }}" disabled="{{ s.resendBusy }}" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:none;border-radius:8px;background:transparent;color:#f5a86b;font-family:'Space Grotesk',sans-serif;font-size:13.5px;text-align:left;cursor:pointer;" style-hover="background:rgba(245,168,107,0.14);">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><path d="m22 6-10 7L2 6"></path></svg>
+                                    {{ s.resendTitle }}
+                                  </button>
+                                </sc-if>
+                                <sc-if value="{{ s.canManage }}" hint-placeholder-val="{{ false }}">
+                                  <button type="button" role="menuitem" onClick="{{ s.onFeature }}" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:none;border-radius:8px;background:transparent;color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:13.5px;text-align:left;cursor:pointer;" style-hover="background:rgba(245,200,107,0.14);color:#f5c86b;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                                    {{ s.featTitle }}
+                                  </button>
+                                  <button type="button" role="menuitem" onClick="{{ s.onEdit }}" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:none;border-radius:8px;background:transparent;color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:13.5px;text-align:left;cursor:pointer;" style-hover="background:rgba(47,237,127,0.14);color:#2FED7F;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+                                    Modifier le compte
+                                  </button>
+                                </sc-if>
+                                <sc-if value="{{ s.canRecap }}" hint-placeholder-val="{{ false }}">
+                                  <button type="button" role="menuitem" onClick="{{ s.onRecap }}" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:none;border-radius:8px;background:transparent;color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:13.5px;text-align:left;cursor:pointer;" style-hover="background:rgba(47,237,127,0.14);color:#2FED7F;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 18 15 15"></polyline></svg>
+                                    Récapitulatif PDF
+                                  </button>
+                                </sc-if>
+                                <sc-if value="{{ s.canDelete }}" hint-placeholder-val="{{ false }}">
+                                  <button type="button" role="menuitem" onClick="{{ s.onDelete }}" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:none;border-radius:8px;background:transparent;color:#ff8f8f;font-family:'Space Grotesk',sans-serif;font-size:13.5px;text-align:left;cursor:pointer;" style-hover="background:rgba(255,107,107,0.14);color:#ff6b6b;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14"></path></svg>
+                                    Supprimer le compte
+                                  </button>
+                                </sc-if>
+                              </div>
+                            </sc-if>
+                          </div>
                           </sc-if>
                         </div>
                       </sc-for>
@@ -3916,8 +3964,8 @@
                             >Date</span
                           >
                           <input
-                            type="text"
-                            value="{{ fAdate }}"
+                            type="date"
+                            value="{{ fAdateIso }}"
                             onInput="{{ onField_adate }}"
                             placeholder="3 juillet 2026"
                             style="
@@ -4211,35 +4259,6 @@
                         {{ countLabel }}</span
                       >
                     </div>
-
-                    <sc-if value="{{ tabPortfolio }}" hint-placeholder-val="{{ true }}">
-                      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding: 14px 18px; background: rgba(47, 237, 127, 0.08); border: 1px solid rgba(47, 237, 127, 0.22); border-radius: 14px; margin-bottom: 16px;">
-                        <div style="display: flex; align-items: center; gap: 10px; color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px;">
-                          <span style="display:inline-flex;align-items:center;justify-content:center;color:#2FED7F;">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                              <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                          </span>
-                          <span><strong style="color: #2FED7F; font-size: 17px;">{{ portfolioViews }}</strong> personne(s) ont vu le portfolio</span>
-                        </div>
-                        <div style="font-size: 13px; color: #8FA0B5;">Statistiques en direct</div>
-                      </div>
-                    </sc-if>
-                    <sc-if value="{{ tabBlog }}" hint-placeholder-val="{{ false }}">
-                      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding: 14px 18px; background: rgba(47, 237, 127, 0.08); border: 1px solid rgba(47, 237, 127, 0.22); border-radius: 14px; margin-bottom: 16px;">
-                        <div style="display: flex; align-items: center; gap: 10px; color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px;">
-                          <span style="display:inline-flex;align-items:center;justify-content:center;color:#2FED7F;">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                              <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                          </span>
-                          <span><strong style="color: #2FED7F; font-size: 17px;">{{ blogViews }}</strong> personne(s) ont vu le blog</span>
-                        </div>
-                        <div style="font-size: 13px; color: #8FA0B5;">Statistiques en direct</div>
-                      </div>
-                    </sc-if>
 
                     <sc-if value="{{ showContentSearch }}" hint-placeholder-val="{{ true }}">
                       <div style="position: relative; display: flex; align-items: center; margin-bottom: 16px;">
@@ -5806,6 +5825,59 @@
             </div>
           </div>
         </sc-if>
+
+        <!-- ===================== RÉCAP PDF POPUP ===================== -->
+        <sc-if value="{{ recapOpen }}" hint-placeholder-val="{{ false }}">
+          <div
+            onClick="{{ closeRecap }}"
+            style="position:fixed;inset:0;z-index:300;background:rgba(4,8,16,0.62);display:flex;align-items:center;justify-content:center;padding:20px;"
+          >
+            <div
+              onClick="{{ stopProp }}"
+              style="width:100%;max-width:420px;padding:26px;border-radius:18px;background:#0e1626;border:1px solid rgba(255,255,255,0.12);box-shadow:0 30px 70px -20px rgba(0,0,0,0.7);animation:cod-pop 0.18s ease both;"
+            >
+              <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;margin:0 0 4px;color:#fff;">
+                {{ recapTitle }}
+              </h3>
+              <div style="font-family:'Space Grotesk',sans-serif;font-size:12.5px;color:#5c6b80;margin-bottom:20px;">
+                Choisissez la période, puis téléchargez le PDF.
+              </div>
+              <div style="display:flex;flex-direction:column;gap:16px;">
+                <label style="display:flex;flex-direction:column;gap:6px;">
+                  <span style="font-family:'Space Grotesk',sans-serif;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8fa0b5;">Période</span>
+                  <select value="{{ recapScopeValue }}" onChange="{{ onRecapScope }}" style="width:100%;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;cursor:pointer;" style-focus="border-color:#2FED7F;">
+                    <option value="month">Un mois</option>
+                    <option value="year">Une année entière</option>
+                  </select>
+                </label>
+                <div style="display:flex;gap:12px;">
+                  <sc-if value="{{ recapScopeMonth }}" hint-placeholder-val="{{ true }}">
+                    <label style="display:flex;flex-direction:column;gap:6px;flex:1;">
+                      <span style="font-family:'Space Grotesk',sans-serif;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8fa0b5;">Mois</span>
+                      <select value="{{ recapMonth }}" onChange="{{ onRecapMonth }}" style="width:100%;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;cursor:pointer;" style-focus="border-color:#2FED7F;">
+                        <sc-for list="{{ recapMonthOptions }}" as="mo" hint-placeholder-count="12">
+                          <option value="{{ mo.value }}">{{ mo.label }}</option>
+                        </sc-for>
+                      </select>
+                    </label>
+                  </sc-if>
+                  <label style="display:flex;flex-direction:column;gap:6px;flex:1;">
+                    <span style="font-family:'Space Grotesk',sans-serif;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8fa0b5;">Année</span>
+                    <select value="{{ recapYear }}" onChange="{{ onRecapYear }}" style="width:100%;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#eaf0f7;font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;cursor:pointer;" style-focus="border-color:#2FED7F;">
+                      <sc-for list="{{ recapYearOptions }}" as="yo" hint-placeholder-count="5">
+                        <option value="{{ yo.value }}">{{ yo.label }}</option>
+                      </sc-for>
+                    </select>
+                  </label>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:4px;">
+                  <button type="button" onClick="{{ closeRecap }}" style="flex:1;padding:13px;border-radius:11px;border:1px solid rgba(255,255,255,0.16);background:transparent;color:#b7c2d2;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;cursor:pointer;">Annuler</button>
+                  <button type="button" onClick="{{ downloadRecap }}" style="flex:1;padding:13px;border-radius:11px;border:1px solid #2fed7f;background:#2fed7f;color:#08111e;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;cursor:pointer;">Télécharger PDF</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
       </div>
     </x-dc>
     <script
@@ -5947,12 +6019,20 @@
       }
       const DOW = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
       const MON = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+      // Noms de mois complets — utilisés dans les récapitulatifs PDF.
+      const MON_FULL = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+      // Options du sélecteur de mois (récap PDF) : { value: 1..12, label }.
+      const RECAP_MONTH_OPTIONS = MON_FULL.map((m, i) => ({ value: i + 1, label: m }));
+      const recapStatusLabel = (s) => (({ attente: 'En attente', valide: 'Validé', refuse: 'Refusé' })[s] || s || '');
       function pad2(n) { return (n < 10 ? '0' : '') + n; }
       function isoOf(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
       function parseIso(s) { const p = (s || '').split('-').map(Number); return new Date(p[0], (p[1] || 1) - 1, p[2] || 1); }
       function mondayOf(d) { const x = new Date(d); const wd = (x.getDay() + 6) % 7; x.setDate(x.getDate() - wd); x.setHours(0, 0, 0, 0); return x; }
       function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
       function fmtLong(d) { return pad2(d.getDate()) + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear(); }
+      // Blog date <-> ISO for the native calendar picker. Stored form = "3 juillet 2026".
+      function isoToFrDate(iso) { if (!iso) return ''; const p = String(iso).split('-').map(Number); if (!p[0]) return ''; return p[2] + ' ' + (MON_FULL[(p[1] || 1) - 1] || '').toLowerCase() + ' ' + p[0]; }
+      function frDateToIso(s) { if (!s) return ''; const m = String(s).trim().match(/^(\d{1,2})\s+(\S+)\s+(\d{4})$/); if (!m) return ''; const mon = MON_FULL.findIndex((x) => x.toLowerCase() === m[2].toLowerCase()); if (mon < 0) return ''; return m[3] + '-' + pad2(mon + 1) + '-' + pad2(Number(m[1])); }
       function codRound(n) { return Math.round((Number(n) || 0) * 100) / 100; }
       function codInitials(name) {
         const parts = (name || '').trim().split(/\s+/).filter(Boolean);
@@ -6070,6 +6150,8 @@
           validationFilter: 'tous', validationEmp: '', validationEmpOpen: false,
           newEmpPrenom: '', newEmpNom: '', newEmpEmail: '', newEmpPoste: '', newEmpRole: 'employe', newEmpPhoto: '', addEmpError: '', addEmpBusy: false, newPosteAdding: false,
           notif: null, confirmDel: null, editEmp: null, editEmpError: '', editEmpBusy: false, editPosteAdding: false,
+          // Récap PDF (direction / chef) : null, ou { mode:'employee'|'team', empId, empName, scope:'month'|'year', year, month }.
+          recap: null,
           weekStart: isoOf(mondayOf(new Date())),
           menu: null, menuHours: '7',
           absForm: { type: 'conge', start: '', end: '', half: '', motif: '', paid: true }, absEditId: null,
@@ -6181,9 +6263,13 @@
           // ne sont pas refusées (attente + validées), pour que le solde prenne
           // en compte les heures en attente et se décompte tout de suite sur le planning.
           const es = this.state.entries.filter((e) => e.employeeId === empId && (!anchor || e.date > anchor));
-          const sup = es.filter((e) => e.kind === 'sup' && e.status !== 'refuse').reduce((a, e) => a + (parseFloat(e.hours) || 0), 0);
+          const supAll = es.filter((e) => e.kind === 'sup' && e.status !== 'refuse');
+          // Heures sup payées (paie) : hors solde de récup. Récup-ables seulement
+          // celles non payées — aligné sur le back (availableHours).
+          const supPaid = supAll.filter((e) => e.paid === true).reduce((a, e) => a + (parseFloat(e.hours) || 0), 0);
+          const supRecup = supAll.filter((e) => e.paid !== true).reduce((a, e) => a + (parseFloat(e.hours) || 0), 0);
           const recup = es.filter((e) => e.kind === 'recup' && e.status !== 'refuse').reduce((a, e) => a + (parseFloat(e.hours) || 0), 0);
-          return { sup: codRound(sup), recup: codRound(recup), solde: codRound(base + sup - recup), base: codRound(base) };
+          return { sup: codRound(supRecup + supPaid), supRecup: codRound(supRecup), supPaid: codRound(supPaid), recup: codRound(recup), solde: codRound(base + supRecup - recup), base: codRound(base) };
         }
         // Solde de congés (jours) : valeur ancrée + 2,5 j/mois complet écoulé −
         // jours ouvrés de congés/absences PAYÉS (attente + validés) après l'ancre
@@ -6390,10 +6476,11 @@
             statusBg: ({ attente: 'rgba(245,200,107,.14)', valide: 'rgba(47,237,127,.14)', refuse: 'rgba(255,107,107,.14)' })[st] || 'rgba(245,200,107,.14)',
           });
           const entryRow = (e) => ({
-            kindLabel: e.kind === 'recup' ? 'Récupération' : 'Heures supp',
+            kindLabel: e.kind === 'recup' ? 'Récupération' : (e.paid === true ? 'Heures supp (payées)' : 'Heures supp'),
             hoursLabel: (e.kind === 'recup' ? '−' : '+') + (e.hours || 0) + 'h',
-            hoursColor: e.kind === 'recup' ? '#A7D8F0' : '#2FED7F',
-            metaLine: fmtLong(parseIso(e.date)) + (e.motif ? (' · ' + e.motif) : ''),
+            // Sup payée : ambre (paie), sup récup : vert, récup : bleu.
+            hoursColor: e.kind === 'recup' ? '#A7D8F0' : (e.paid === true ? '#F5C86B' : '#2FED7F'),
+            metaLine: fmtLong(parseIso(e.date)) + (e.motif ? (' · ' + e.motif) : '') + (e.kind === 'sup' && e.paid === true ? ' · payée' : ''),
             ...statusMeta(e.status),
           });
           const sortByDate = (a, b) => (a.date < b.date ? 1 : -1);
@@ -6436,7 +6523,9 @@
               isPending: false, onDelete: null, onGo: () => this.goToPlanningDate(r.startDate),
               searchHay: ((mt.label || '') + ' ' + dLabel + ' ' + (r.motif || '')).toLowerCase() };
           });
-          const rawRecap = [...myEntryRows, ...myAbsRows, ...myRecRows].sort((a, b) => (a.sortDate < b.sortDate ? 1 : -1));
+          // Tri par date CROISSANTE (plus ancien en haut) — heures sup, récup,
+          // congés et absences confondus.
+          const rawRecap = [...myEntryRows, ...myAbsRows, ...myRecRows].sort((a, b) => (a.sortDate < b.sortDate ? -1 : a.sortDate > b.sortDate ? 1 : 0));
           const espaceFilter = s.espaceFilter || 'tous';
           const espaceCounts = { tous: rawRecap.length, sup: 0, recup: 0, conge: 0, absence: 0, autre: 0 };
           rawRecap.forEach((r) => { espaceCounts[r.filterKey] = (espaceCounts[r.filterKey] || 0) + 1; });
@@ -6473,7 +6562,13 @@
           const pendingEntryItems = pendingAll.map((e) => ({
             ...entryRow(e), sortDate: e.date, empId: e.employeeId, empName: nameOf(e.employeeId), empInitials: codInitials(nameOf(e.employeeId)), avatarBg: this.avatarBg(e.employeeId),
             filterKey: e.kind === 'recup' ? 'recup' : 'sup',
-            onApprove: () => this.setEntryStatus(e.id, 'valide'), onRefuse: () => this.setEntryStatus(e.id, 'refuse'),
+            // Une heure sup se valide « en récup » (défaut) OU « payée ». Une récup
+            // n'a qu'une validation simple. onApprove reste le choix par défaut.
+            isSup: e.kind === 'sup', isSimpleApprove: e.kind !== 'sup',
+            onApprove: () => this.setEntryStatus(e.id, 'valide', e.kind === 'sup' ? false : undefined),
+            onApproveRecup: () => this.setEntryStatus(e.id, 'valide', false),
+            onApprovePaid: () => this.setEntryStatus(e.id, 'valide', true),
+            onRefuse: () => this.setEntryStatus(e.id, 'refuse'),
           }));
           const pendingAbsItems = pendingAbsAll.map((x) => ({
             kindLabel: absTypeMeta(x.type).label, hoursLabel: 'Absence', hoursColor: absTypeMeta(x.type).color,
@@ -6481,6 +6576,7 @@
             ...statusMeta('attente'), sortDate: x.startDate,
             filterKey: x.type === 'conge' ? 'conge' : (x.type === 'absence' ? 'absence' : 'autre'),
             empId: x.employeeId, empName: nameOf(x.employeeId), empInitials: codInitials(nameOf(x.employeeId)), avatarBg: this.avatarBg(x.employeeId),
+            isSup: false, isSimpleApprove: true,
             onApprove: () => this.setAbsenceStatus(x.id, 'valide'), onRefuse: () => this.setAbsenceStatus(x.id, 'refuse'),
           }));
           const rawPendingList = [...pendingEntryItems, ...pendingAbsItems].sort((a, b) => (a.sortDate < b.sortDate ? 1 : -1));
@@ -6532,8 +6628,13 @@
           }
 
           // ---- Patron soldes ----
+          // Toute l'équipe est listée (employés, chefs de projet, direction) —
+          // pas seulement les employés — pour qu'un compte reste visible ici
+          // quel que soit son rôle. Un badge signale les rôles non-employé.
+          const ROLE_LABELS = { patron: 'Direction', chef: 'Chef de projet' };
+          // Employés seuls — planning & récap PDF ci-dessous s'appuient dessus.
           const employees = s.accounts.filter((a) => a.role === 'employe');
-          const rawSoldesList = employees.map((a) => {
+          const rawSoldesList = s.accounts.map((a) => {
             const b = this.balanceOf(a.id);
             const lv = this.leaveBalanceOf(a.id);
             const pend = s.entries.filter((e) => e.employeeId === a.id && e.status === 'attente').length
@@ -6547,15 +6648,33 @@
               poste: a.poste || '', hasPoste: !!(a.poste || '').trim(), noPoste: !(a.poste || '').trim(),
               photo: a.photo || '', hasPhoto: !!a.photo,
               featured: !!a.featured,
+              roleLabel: ROLE_LABELS[a.role] || '',
+              isManagerRole: !!ROLE_LABELS[a.role],
               featBg: a.featured ? '#f5c86b' : 'transparent', featColor: a.featured ? '#08111e' : '#b7c2d2',
               featBorder: a.featured ? '#f5c86b' : 'rgba(255,255,255,.14)',
               featTitle: a.featured ? 'Retirer de la une' : 'Mettre à la une',
-              onFeature: () => this.toggleEmpFeatured(a),
-              onEdit: () => this.openEditEmp(a),
+              onFeature: () => { this.closeSoldesMenu(); this.toggleEmpFeatured(a); },
+              onEdit: () => { this.closeSoldesMenu(); this.openEditEmp(a); },
+              // Récap PDF : ouvert à la direction ET au chef de projet (lecture).
+              canRecap: isManager,
+              onRecap: () => { this.closeSoldesMenu(); this.openRecap(a); },
+              // Compte pas encore confirmé par son titulaire : on affiche un
+              // badge « Non confirmé » et un item de menu pour renvoyer l'email
+              // de confirmation, visibles tant que email_verified est faux.
+              notVerified: !a.email_verified,
+              resendBusy: s.resendVerifyId === a.id,
+              resendTitle: s.resendVerifyId === a.id ? 'Envoi…' : "Renvoyer l'email de confirmation",
+              onResendVerify: () => { this.closeSoldesMenu(); this.resendVerify(a); },
               // Le chef de projet a une vue équipe en LECTURE SEULE : pas de
               // gestion (à la une / édition / suppression), réservée au patron.
               canManage: isPatron,
-              canDelete: isPatron, onDelete: () => this.askDelete(a.id, a.name),
+              canDelete: isPatron, onDelete: () => { this.closeSoldesMenu(); this.askDelete(a.id, a.name); },
+              // Toutes les actions sont regroupées dans un menu ⋯ par ligne pour
+              // éviter la surcharge de boutons. menuOpen = ligne dont le menu est
+              // déplié (une seule à la fois).
+              hasMenu: isManager || isPatron,
+              menuOpen: s.soldesMenuId === a.id,
+              onToggleMenu: () => this.toggleSoldesMenu(a.id),
             };
           });
           const matchesSoldes = (a) => !q || (String(a.name || '') + ' ' + String(a.poste || '') + ' ' + String(a.solde || '') + ' ' + String(a.sup || '') + ' ' + String(a.recup || '')).toLowerCase().indexOf(q) !== -1;
@@ -6919,8 +7038,6 @@
             showContacts: tab === 'contacts',
             showSocials: tab === 'socials',
             tabPortfolio: tab === 'portfolio', tabBlog: tab === 'blog', tabTestimonials: tab === 'testimonials',
-            portfolioViews: Number((s.pageViews || {}).portfolio || 142),
-            blogViews: Number((s.pageViews || {}).blog || 318),
             showContentSearch: tab === 'portfolio' || tab === 'blog' || tab === 'testimonials',
             contentSearchQuery: s.contentSearchQuery || '',
             onContentSearch: (e) => this.setState({
@@ -7211,6 +7328,48 @@
             closeEditEmp: () => this.closeEditEmp(),
             saveEditEmp: () => this.saveEditEmp(),
 
+            // Récap PDF (direction / chef)
+            canExportTeam: isManager,
+            onExportTeam: () => this.openRecapTeam(),
+            onRecapSelf: () => this.openRecapSelf(),
+            recapOpen: !!s.recap,
+            recapIsTeam: !!(s.recap && s.recap.mode === 'team'),
+            recapTitle: s.recap ? (s.recap.mode === 'team' ? "Export RH — toute l'équipe" : 'Récapitulatif — ' + s.recap.empName) : '',
+            recapScopeValue: s.recap ? s.recap.scope : 'month',
+            recapScopeMonth: !!(s.recap && s.recap.scope === 'month'),
+            recapScopeYear: !!(s.recap && s.recap.scope === 'year'),
+            recapMonth: s.recap ? s.recap.month : (new Date().getMonth() + 1),
+            recapYear: s.recap ? s.recap.year : new Date().getFullYear(),
+            // Options bornées à la période réellement couverte par le profil :
+            // du mois de création du compte au mois courant (ni avant, ni futur).
+            recapMonthOptions: (() => {
+              if (!s.recap) return RECAP_MONTH_OPTIONS;
+              const now = new Date(); const curY = now.getFullYear(); const curM = now.getMonth() + 1;
+              const minIso = this.recapMinIso(s.recap);
+              const minY = Number(minIso.slice(0, 4)); const minM = Number(minIso.slice(5, 7));
+              return RECAP_MONTH_OPTIONS.filter((mo) => {
+                if (s.recap.year === minY && mo.value < minM) return false;
+                if (s.recap.year === curY && mo.value > curM) return false;
+                return true;
+              });
+            })(),
+            recapYearOptions: (() => {
+              const curY = new Date().getFullYear();
+              const minY = s.recap ? Number(this.recapMinIso(s.recap).slice(0, 4)) : curY;
+              const out = [];
+              for (let y = curY; y >= minY; y--) out.push({ value: y, label: String(y) });
+              return out;
+            })(),
+            onRecapScope: (e) => this.setRecapField('scope', e && e.target ? e.target.value : 'month'),
+            onRecapMonth: (e) => this.setRecapField('month', parseInt(e.target.value, 10)),
+            // Changer d'année peut rendre le mois choisi hors plage → on le recale.
+            onRecapYear: (e) => {
+              const y = parseInt(e.target.value, 10);
+              this.setState((st) => { const r = { ...st.recap, year: y }; r.month = this.clampRecapMonth(r); return { recap: r }; });
+            },
+            closeRecap: () => this.closeRecap(),
+            downloadRecap: () => this.downloadRecap(),
+
             // content
             projects, blogPosts, testimonials,
             statRows,
@@ -7240,7 +7399,7 @@
             catOptions,
             catListMode: !s.catAdding,
             catAdding: !!s.catAdding,
-            fCat: f.cat, fAdate: f.adate, fAread: f.aread, fFeatured: !!f.featured,
+            fCat: f.cat, fAdate: f.adate, fAdateIso: frDateToIso(f.adate), fAread: f.aread, fFeatured: !!f.featured,
             onField_cat: (e) => {
               const v = e && e.target ? e.target.value : '';
               if (v === '__add__') { this.setState((st) => ({ catAdding: true, form: { ...st.form, cat: '' } })); }
@@ -7248,7 +7407,8 @@
             },
             onNewCat: (e) => { const v = e && e.target ? e.target.value : ''; this.setState((st) => ({ form: { ...st.form, cat: v } })); },
             catBackToList: () => this.setState((st) => ({ catAdding: false, form: { ...st.form, cat: 'dev' } })),
-            onField_adate: setField('adate'), onField_aread: setField('aread'),
+            onField_adate: (e) => { const iso = e && e.target ? e.target.value : ''; const fr = isoToFrDate(iso); this.setState((st) => ({ form: { ...st.form, adate: fr } })); },
+            onField_aread: setField('aread'),
             onToggleFeatured: () => this.setState((st) => ({ form: { ...st.form, featured: !st.form.featured } })),
             isEditing: editing,
             formIcon: editing ? '✎' : '+',
@@ -7386,9 +7546,12 @@
           try { await api('/entries/' + id, { method: 'DELETE' }); } catch (err) { this.notify(err.message, 'Erreur', 'error'); return; }
           this.setState((st) => ({ entries: st.entries.filter((e) => e.id !== id) }));
         }
-        async setEntryStatus(id, status) {
+        // paid : true = heure sup payée (paie), false = mise en récup. Ignoré par
+        // le back pour une récup ou un refus. undefined = ne pas transmettre.
+        async setEntryStatus(id, status, paid) {
           try {
-            const updated = await api('/entries/' + id, { method: 'PATCH', body: { status } });
+            const body = paid === undefined ? { status } : { status, paid };
+            const updated = await api('/entries/' + id, { method: 'PATCH', body });
             this.setState((st) => ({ entries: st.entries.map((e) => (e.id === id ? updated : e)) }));
           } catch (err) { this.notify(err.message, 'Erreur', 'error'); }
         }
@@ -7432,6 +7595,338 @@
         }
         closeEditEmp() { this.setState({ editEmp: null, editEmpError: '', editPosteAdding: false }); }
         setEditEmpField(k, v) { this.setState((st) => ({ editEmp: { ...st.editEmp, [k]: v }, editEmpError: '' })); }
+
+        // ===== RÉCAP PDF (direction / chef) =====
+        // Ouvre la fenêtre de récap pour un employé (mois/année au choix), ou
+        // pour toute l'équipe (export RH). Les données sont déjà chargées dans
+        // l'état (entries / absences / presence / recurrences) : le PDF est
+        // construit côté client via jsPDF, sans appel serveur.
+        openRecap(a) {
+          const now = new Date();
+          this.setState({ recap: { mode: 'employee', empId: a.id, empName: a.name, scope: 'month', year: now.getFullYear(), month: now.getMonth() + 1 } });
+        }
+        openRecapTeam() {
+          const now = new Date();
+          this.setState({ recap: { mode: 'team', empId: null, empName: '', scope: 'month', year: now.getFullYear(), month: now.getMonth() + 1 } });
+        }
+        // Un employé (ou chef) télécharge SON propre récap depuis « Mon espace ».
+        // Mêmes données/rendu que la vue direction, bornées à son compte.
+        openRecapSelf() {
+          const sess = this.state.session;
+          if (!sess) return;
+          const now = new Date();
+          // self=true : c'est l'employé qui télécharge SON recap → on y garde les
+          // demandes refusées (recap complet pour lui). Le PDF de la direction
+          // (openRecap) les exclut.
+          this.setState({ recap: { mode: 'employee', self: true, empId: sess.id, empName: sess.name, scope: 'month', year: now.getFullYear(), month: now.getMonth() + 1 } });
+        }
+        closeRecap() { this.setState({ recap: null }); }
+        setRecapField(k, v) { this.setState((st) => ({ recap: { ...st.recap, [k]: v } })); }
+
+        // Date ISO la plus ancienne « qui existe » pour un employé : sa création
+        // de compte (source de vérité), avec repli sur ses ancres de solde et sa
+        // plus vieille donnée si createdAt manque (comptes très anciens). Sert à
+        // n'autoriser dans le récap que des mois/années réellement couverts.
+        recapMinDateFor(empId) {
+          const acc = this.accountOf(empId);
+          let min = acc && acc.createdAt ? acc.createdAt : null;
+          const consider = (iso) => { if (iso && (!min || iso < min)) min = iso; };
+          if (acc) { consider(acc.leaveAnchor); consider(acc.hoursAnchor); }
+          this.state.entries.forEach((e) => { if (e.employeeId === empId) consider(e.date); });
+          this.state.absences.forEach((a) => { if (a.employeeId === empId) consider(a.startDate); });
+          this.state.recurrences.forEach((r) => { if (r.employeeId === empId) consider(r.startDate); });
+          return min || isoOf(new Date());
+        }
+        // Date la plus ancienne parmi tous les employés (export RH d'équipe).
+        recapTeamMinDate() {
+          const emps = this.state.accounts.filter((a) => a.role === 'employe');
+          let min = null;
+          for (const a of emps) { const d = this.recapMinDateFor(a.id); if (!min || d < min) min = d; }
+          return min || isoOf(new Date());
+        }
+        // Borne basse ISO de la fenêtre courante (employé ou équipe).
+        recapMinIso(r) { return r.mode === 'team' ? this.recapTeamMinDate() : this.recapMinDateFor(r.empId); }
+        // Ramène un mois choisi dans la plage valide de son année : pas avant le
+        // mois de création, pas après le mois courant.
+        clampRecapMonth(r) {
+          const now = new Date();
+          const curY = now.getFullYear(); const curM = now.getMonth() + 1;
+          const minIso = this.recapMinIso(r);
+          const minY = Number(minIso.slice(0, 4)); const minM = Number(minIso.slice(5, 7));
+          let m = r.month;
+          if (r.year === minY && m < minM) m = minM;
+          if (r.year === curY && m > curM) m = curM;
+          return m;
+        }
+
+        // Bornes ISO + libellé de la période choisie (mois complet ou année).
+        recapPeriod(r) {
+          if (r.scope === 'year') {
+            return { start: r.year + '-01-01', end: r.year + '-12-31', label: 'Année ' + r.year };
+          }
+          const m = pad2(r.month);
+          const last = new Date(r.year, r.month, 0).getDate();
+          return { start: r.year + '-' + m + '-01', end: r.year + '-' + m + '-' + pad2(last), label: MON_FULL[r.month - 1] + ' ' + r.year };
+        }
+        // Catégorie d'un jour ouvré pour un employé (même priorité que le
+        // planning : absence > récup > présence saisie > règle récurrente >
+        // férié > présent par défaut). null pour les week-ends (ignorés).
+        recapDayCategory(empId, d) {
+          const wd = (d.getDay() + 6) % 7;
+          if (wd >= 5) return null;
+          const iso = isoOf(d);
+          const s = this.state;
+          const abs = s.absences.find((a) => a.employeeId === empId && a.status !== 'refuse' && absenceCovers(a, d));
+          if (abs) return abs.type;
+          const rec = s.entries.find((e) => e.employeeId === empId && e.kind === 'recup' && e.date === iso && e.status !== 'refuse');
+          if (rec) return 'recup';
+          const p = (s.presence[empId] || {})[iso];
+          if (p === 'present' || p === 'tt' || p === 'conge') return p;
+          const rule = s.recurrences.find((r) => r.employeeId === empId && recurrenceMatches(r, d));
+          if (rule) return rule.effect;
+          if (holidayName(iso)) return 'ferie';
+          return 'present';
+        }
+        // Décompte des jours ouvrés par catégorie sur [start..end] (demi-journées
+        // comptées comme un jour ici ; le décompte fin du solde congés utilise
+        // leaveDaysInRange avec les demi-journées, voir recapLeaveTaken).
+        recapPresenceCounts(empId, startIso, endIso) {
+          const counts = { present: 0, tt: 0, conge: 0, formation: 0, absence: 0, recup: 0, ferie: 0 };
+          let d = parseIso(startIso);
+          const end = parseIso(endIso);
+          while (d <= end) {
+            const c = this.recapDayCategory(empId, d);
+            if (c && counts[c] != null) counts[c] += 1;
+            d = addDays(d, 1);
+          }
+          return counts;
+        }
+        // Totaux heures sup / récup (non refusées) sur la période.
+        recapEntrySums(empId, startIso, endIso) {
+          const es = this.state.entries.filter((e) => e.employeeId === empId && e.date >= startIso && e.date <= endIso && e.status !== 'refuse');
+          const sup = es.filter((e) => e.kind === 'sup');
+          const supPaid = sup.filter((e) => e.paid === true).reduce((a, e) => a + (parseFloat(e.hours) || 0), 0);
+          const supRecup = sup.filter((e) => e.paid !== true).reduce((a, e) => a + (parseFloat(e.hours) || 0), 0);
+          const recup = es.filter((e) => e.kind === 'recup').reduce((a, e) => a + (parseFloat(e.hours) || 0), 0);
+          return { sup: codRound(supPaid + supRecup), supPaid: codRound(supPaid), supRecup: codRound(supRecup), recup: codRound(recup) };
+        }
+        // Jours ouvrés de congés/absences PAYÉS (non refusés) posés sur la
+        // période — absences ponctuelles + règles « daily », bornées à [start..end].
+        recapLeaveTaken(empId, startIso, endIso) {
+          let taken = 0;
+          for (const a of this.state.absences) {
+            if (a.employeeId !== empId || a.status === 'refuse' || a.paid === false) continue;
+            if (a.type !== 'conge' && a.type !== 'absence') continue;
+            const s = a.startDate > startIso ? a.startDate : startIso;
+            const e = a.endDate < endIso ? a.endDate : endIso;
+            if (s > e) continue;
+            const hd = a.startDate === a.endDate ? a.halfDay : null;
+            taken += leaveDaysInRange(s, e, hd, null);
+          }
+          for (const r of this.state.recurrences) {
+            if (r.employeeId !== empId || r.paid === false || r.freq !== 'daily') continue;
+            if (r.effect !== 'conge' && r.effect !== 'absence') continue;
+            const rEnd = r.endDate || endIso;
+            const s = r.startDate > startIso ? r.startDate : startIso;
+            const e = rEnd < endIso ? rEnd : endIso;
+            if (!s || s > e) continue;
+            taken += leaveDaysInRange(s, e, null, null);
+          }
+          return codRound(taken);
+        }
+        // Construit et télécharge le PDF selon le mode courant de la fenêtre.
+        downloadRecap() {
+          const r = this.state.recap;
+          if (!r) return;
+          if (!(window.jspdf && window.jspdf.jsPDF)) {
+            this.notify('La bibliothèque PDF n’a pas pu être chargée. Rechargez la page et réessayez.', 'PDF indisponible', 'error');
+            return;
+          }
+          // Filet de sécurité : recale le mois dans la plage valide du profil
+          // avant de générer (le sélecteur l'empêche déjà, ceci couvre un état
+          // devenu incohérent).
+          const safe = r.scope === 'month' ? { ...r, month: this.clampRecapMonth(r) } : r;
+          const per = this.recapPeriod(safe);
+          if (safe.mode === 'team') this.buildTeamPdf(per);
+          else this.buildEmployeePdf(safe, per);
+          this.closeRecap();
+        }
+        // Nom de fichier propre : minuscules, sans accents ni espaces.
+        recapSlug(str) {
+          return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'recap';
+        }
+        // T\u00e9l\u00e9chargement direct (blob + lien download). Force le nom de fichier et
+        // \u00e9vite l'ouverture dans un onglet. NB : si le navigateur est r\u00e9gl\u00e9 sur
+        // \u00ab Toujours demander o\u00f9 enregistrer \u00bb, il affichera quand m\u00eame le
+        // s\u00e9lecteur de dossier \u2014 c'est un r\u00e9glage navigateur, pas contr\u00f4lable ici.
+        saveDoc(doc, filename) {
+          const blob = doc.output('blob');
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+        }
+        // En-tête commun (titre + période + mention Codialis). Renvoie le Y de départ.
+        recapHeader(doc, title, subtitle, margin) {
+          doc.setFillColor(47, 237, 127);
+          doc.rect(margin, 34, 4, 22, 'F');
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(17);
+          doc.setTextColor(20, 24, 32);
+          doc.text(title, margin + 14, 50);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(12);
+          doc.setTextColor(90, 100, 115);
+          doc.text(subtitle, margin + 14, 68);
+          doc.setFontSize(9);
+          doc.setTextColor(140, 150, 165);
+          doc.text('Codialis · document généré le ' + fmtLong(new Date()), margin + 14, 84);
+          return 108;
+        }
+        // ----- PDF d'un employé : synthèse + heures + absences -----
+        buildEmployeePdf(r, per) {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+          const M = 40;
+          let y = this.recapHeader(doc, 'Récapitulatif — ' + r.empName, per.label, M);
+
+          const bal = this.balanceOf(r.empId);
+          const lv = this.leaveBalanceOf(r.empId);
+          const sums = this.recapEntrySums(r.empId, per.start, per.end);
+          const taken = this.recapLeaveTaken(r.empId, per.start, per.end);
+          const c = this.recapPresenceCounts(r.empId, per.start, per.end);
+
+          const GREEN = { fillColor: [47, 237, 127], textColor: [8, 17, 30] };
+          doc.autoTable({
+            startY: y,
+            head: [['Synthèse — ' + per.label, '']],
+            body: [
+              ['Heures supp. mises en récup', sums.supRecup + ' h'],
+              ['Heures supp. payées (paie)', sums.supPaid + ' h'],
+              ['Total heures supplémentaires', sums.sup + ' h'],
+              ['Heures de récupération prises', sums.recup + ' h'],
+              ['Congés / absences pris (payés)', taken + ' j'],
+              ['Jours présents', String(c.present)],
+              ['Télétravail (jours)', String(c.tt)],
+              ['Congé (jours)', String(c.conge)],
+              ['Formation (jours)', String(c.formation)],
+              ['Absent (jours)', String(c.absence)],
+              ['Récupérations (jours)', String(c.recup)],
+              ['Jours fériés (ouvrés)', String(c.ferie)],
+              ['Solde d’heures (actuel)', bal.solde + ' h'],
+              ['Solde de congés (actuel)', lv.defined ? (lv.solde + ' j') : 'non défini'],
+            ],
+            theme: 'grid',
+            styles: { fontSize: 10, cellPadding: 5 },
+            headStyles: GREEN,
+            columnStyles: { 0: { cellWidth: 320 }, 1: { halign: 'right', fontStyle: 'bold' } },
+            margin: { left: M, right: M },
+          });
+          y = doc.lastAutoTable.finalY + 22;
+
+          // Détail heures sup / récup
+          // Recap perso de l'employé (r.self) : on garde les refusées. Recap
+          // direction : on les exclut.
+          const eRows = this.state.entries
+            .filter((e) => e.employeeId === r.empId && (r.self || e.status !== 'refuse') && e.date >= per.start && e.date <= per.end)
+            .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+            .map((e) => [
+              fmtLong(parseIso(e.date)),
+              e.kind === 'sup' ? 'Heures supp' : 'Récup',
+              codRound(e.hours) + ' h',
+              e.kind === 'sup' ? (e.paid === true ? 'Payée' : 'Récup') : '—',
+              recapStatusLabel(e.status), e.motif || '',
+            ]);
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(20, 24, 32);
+          doc.text('Heures supplémentaires & récupérations', M, y); y += 8;
+          if (eRows.length) {
+            doc.autoTable({
+              startY: y, head: [['Date', 'Type', 'Heures', 'Traitement', 'Statut', 'Motif']], body: eRows,
+              theme: 'striped', styles: { fontSize: 9, cellPadding: 4 }, headStyles: GREEN,
+              columnStyles: { 2: { halign: 'right' } }, margin: { left: M, right: M },
+            });
+            y = doc.lastAutoTable.finalY + 22;
+          } else {
+            doc.setFont('helvetica', 'italic'); doc.setFontSize(9); doc.setTextColor(120, 130, 145);
+            y += 14; doc.text('Aucune heure déclarée sur la période.', M, y); y += 18;
+          }
+
+          // Détail congés / absences
+          const aRows = this.state.absences
+            .filter((a) => a.employeeId === r.empId && (r.self || a.status !== 'refuse') && a.startDate <= per.end && a.endDate >= per.start)
+            .sort((a, b) => (a.startDate < b.startDate ? -1 : a.startDate > b.startDate ? 1 : 0))
+            .map((a) => {
+              const label = (ATYPE[a.type] && ATYPE[a.type].label) || a.type;
+              const half = a.startDate === a.endDate ? (a.halfDay === 'am' ? 'Matin' : a.halfDay === 'pm' ? 'Après-midi' : 'Journée') : '';
+              const s = a.startDate > per.start ? a.startDate : per.start;
+              const e = a.endDate < per.end ? a.endDate : per.end;
+              const hd = a.startDate === a.endDate ? a.halfDay : null;
+              const jours = leaveDaysInRange(s, e, hd, null);
+              return [label, fmtLong(parseIso(a.startDate)), fmtLong(parseIso(a.endDate)), half, a.paid === false ? 'Non payé' : 'Payé', recapStatusLabel(a.status), jours + ' j'];
+            });
+          if (y > 700) { doc.addPage(); y = 50; }
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(20, 24, 32);
+          doc.text('Congés & absences', M, y); y += 8;
+          if (aRows.length) {
+            doc.autoTable({
+              startY: y, head: [['Type', 'Début', 'Fin', 'Durée', 'Paie', 'Statut', 'Jours ouvrés']], body: aRows,
+              theme: 'striped', styles: { fontSize: 9, cellPadding: 4 }, headStyles: GREEN,
+              columnStyles: { 6: { halign: 'right' } }, margin: { left: M, right: M },
+            });
+          } else {
+            doc.setFont('helvetica', 'italic'); doc.setFontSize(9); doc.setTextColor(120, 130, 145);
+            y += 14; doc.text('Aucun congé ni absence sur la période.', M, y);
+          }
+
+          // Nom de fichier avec la période en français (ex. recap-jean-juillet-2026.pdf).
+          this.saveDoc(doc, 'recap-' + this.recapSlug(r.empName) + '-' + this.recapSlug(per.label) + '.pdf');
+        }
+        // ----- PDF de toute l'équipe : une ligne par employé -----
+        buildTeamPdf(per) {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
+          const M = 36;
+          const y = this.recapHeader(doc, 'Récapitulatif RH — équipe', per.label, M);
+
+          const employees = this.state.accounts.filter((a) => a.role === 'employe')
+            .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+          const body = employees.map((a) => {
+            const bal = this.balanceOf(a.id);
+            const lv = this.leaveBalanceOf(a.id);
+            const sums = this.recapEntrySums(a.id, per.start, per.end);
+            const taken = this.recapLeaveTaken(a.id, per.start, per.end);
+            const c = this.recapPresenceCounts(a.id, per.start, per.end);
+            return [
+              a.name, sums.supRecup + ' h', sums.supPaid + ' h', sums.recup + ' h', taken + ' j',
+              String(c.present), String(c.tt), String(c.formation), String(c.absence),
+              bal.solde + ' h', lv.defined ? (lv.solde + ' j') : '—',
+            ];
+          });
+          if (!body.length) body.push(['Aucun employé', '', '', '', '', '', '', '', '', '', '']);
+          doc.autoTable({
+            startY: y,
+            head: [['Employé', 'Sup récup', 'Sup payées', 'Récup', 'Congés', 'Présents', 'TT', 'Formation', 'Absent', 'Solde h', 'Solde congés']],
+            body,
+            theme: 'grid', styles: { fontSize: 9, cellPadding: 5 },
+            headStyles: { fillColor: [47, 237, 127], textColor: [8, 17, 30] },
+            columnStyles: {
+              1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' },
+              4: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'right' },
+              7: { halign: 'right' }, 8: { halign: 'right' }, 9: { halign: 'right' }, 10: { halign: 'right' },
+            },
+            margin: { left: M, right: M },
+          });
+          let fy = doc.lastAutoTable.finalY + 18;
+          doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(130, 140, 155);
+          doc.text('Sup récup / Sup payées / Récup / Congés : cumul sur la période. Solde h / Solde congés : valeurs actuelles au jour de l’export.', M, fy);
+
+          this.saveDoc(doc, 'recap-equipe-' + this.recapSlug(per.label) + '.pdf');
+        }
         async saveEditEmp() {
           const e = this.state.editEmp;
           if (!e) return;
@@ -7475,6 +7970,24 @@
             } });
             this.setState((st) => ({ accounts: st.accounts.map((x) => (x.id === acc.id ? acc : x)) }));
           } catch (err) { this.notify(err.message, 'Erreur', 'error'); }
+        }
+        // Menu ⋯ de la liste « Équipe & soldes » : une seule ligne ouverte à la
+        // fois (soldesMenuId = id de la ligne, ou null si tout est fermé).
+        toggleSoldesMenu(id) { this.setState((st) => ({ soldesMenuId: st.soldesMenuId === id ? null : id })); }
+        closeSoldesMenu() { this.setState({ soldesMenuId: null }); }
+        // Renvoie l'email de confirmation à un compte pas encore validé.
+        // resendVerifyId sert à désactiver le bouton pendant l'envoi.
+        async resendVerify(a) {
+          if (this.state.resendVerifyId) return;
+          this.setState({ resendVerifyId: a.id });
+          try {
+            await api('/accounts/' + a.id + '/resend-verify', { method: 'POST' });
+            this.notify('Un email de confirmation a été renvoyé à ' + a.email + '.', 'Email envoyé', 'success');
+          } catch (err) {
+            this.notify(err.message, 'Envoi impossible', 'error');
+          } finally {
+            this.setState({ resendVerifyId: null });
+          }
         }
         // Notification popup — replaces window.alert across the admin.
         notify(message, title, tone) { this.setState({ notif: { message, title: title || 'Information', tone: tone || 'info' } }); }

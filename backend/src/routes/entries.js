@@ -15,8 +15,19 @@ const SELECT = `
          to_char(entry_date, 'YYYY-MM-DD') AS date,
          hours::float AS hours,
          motif,
-         status
+         status,
+         paid
   FROM entries`;
+
+// Payé/récup : seul le patron le fixe, et seulement pour une heure sup. Une
+// demande d'employé part « récup » (paid=false) — la direction tranche à la
+// validation. Sans objet pour une récup.
+function paidFrom(req, kind, fallback = false) {
+  if (kind !== 'sup') return false;
+  if (req.user.role !== 'patron') return fallback;
+  if (req.body?.paid === undefined) return fallback;
+  return req.body.paid === true;
+}
 
 // GET /api/entries — direction/chef de projet voient tout, employé voit le sien
 router.get('/', async (req, res) => {
@@ -48,28 +59,34 @@ router.post('/', async (req, res) => {
   // La direction a plein pouvoir : ses saisies sont validées d'office, sans
   // repasser par l'étape de validation. Un employé part toujours en 'attente'.
   const status = req.user.role === 'patron' ? 'valide' : 'attente';
+  const paid = paidFrom(req, kind);
 
   const { rows } = await query(
-    `INSERT INTO entries (employee_id, kind, entry_date, hours, motif, status)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO entries (employee_id, kind, entry_date, hours, motif, status, paid)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING id, employee_id AS "employeeId", kind,
-               to_char(entry_date,'YYYY-MM-DD') AS date, hours::float AS hours, motif, status`,
-    [employeeId, kind, date, hours, motif, status],
+               to_char(entry_date,'YYYY-MM-DD') AS date, hours::float AS hours, motif, status, paid`,
+    [employeeId, kind, date, hours, motif, status, paid],
   );
   // Notification email (employé → patrons, patron → employé). Fire-and-forget.
   notifyEntryCreated({ entry: rows[0], actor: req.user }).catch((err) => console.error('notifyEntryCreated:', err?.message || err));
   res.status(201).json(rows[0]);
 });
 
-// PATCH /api/entries/:id { status } — patron validates/refuses
+// PATCH /api/entries/:id { status, paid } — patron validates/refuses. Pour une
+// heure sup, il tranche aussi payé (paie) vs récup au moment de la décision.
 router.patch('/:id', requirePatron, async (req, res) => {
   const status = req.body?.status;
   if (!['attente', 'valide', 'refuse'].includes(status)) return res.status(400).json({ error: 'Statut invalide' });
+  // Le champ paid ne concerne qu'une heure sup ; on lit son kind d'abord.
+  const { rows: cur } = await query('SELECT kind, paid FROM entries WHERE id = $1', [req.params.id]);
+  if (cur.length === 0) return res.status(404).json({ error: 'Demande introuvable' });
+  const paid = paidFrom(req, cur[0].kind, cur[0].paid);
   const { rows } = await query(
-    `UPDATE entries SET status = $1 WHERE id = $2
+    `UPDATE entries SET status = $1, paid = $2 WHERE id = $3
      RETURNING id, employee_id AS "employeeId", kind,
-               to_char(entry_date,'YYYY-MM-DD') AS date, hours::float AS hours, motif, status`,
-    [status, req.params.id],
+               to_char(entry_date,'YYYY-MM-DD') AS date, hours::float AS hours, motif, status, paid`,
+    [status, paid, req.params.id],
   );
   if (rows.length === 0) return res.status(404).json({ error: 'Demande introuvable' });
   // L'employé est prévenu du verdict (validé / refusé). Fire-and-forget.

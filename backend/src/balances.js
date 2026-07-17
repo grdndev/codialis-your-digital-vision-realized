@@ -37,7 +37,7 @@ function frenchHolidays(year) {
   HOLIDAY_CACHE[year] = map;
   return map;
 }
-function isHoliday(iso) {
+export function isHoliday(iso) {
   const y = Number(String(iso).slice(0, 4));
   return y ? !!frenchHolidays(y)[iso] : false;
 }
@@ -85,14 +85,15 @@ export async function availableHours(employeeId, excludeId = null) {
   const anchor = urows[0].anchor; // peut être null (comportement historique)
 
   const { rows } = await query(
-    `SELECT kind, status, hours::float AS hours, to_char(entry_date, 'YYYY-MM-DD') AS date
+    `SELECT kind, status, paid, hours::float AS hours, to_char(entry_date, 'YYYY-MM-DD') AS date
      FROM entries WHERE employee_id = $1 AND ($2::uuid IS NULL OR id <> $2)`,
     [employeeId, excludeId],
   );
   let avail = base;
   for (const e of rows) {
     if (anchor && e.date <= anchor) continue;
-    if (e.kind === 'sup' && e.status !== 'refuse') avail += e.hours;
+    // Une heure sup PAYÉE est rémunérée : elle n'alimente pas le solde de récup.
+    if (e.kind === 'sup' && e.status !== 'refuse' && e.paid !== true) avail += e.hours;
     else if (e.kind === 'recup' && e.status !== 'refuse') avail -= e.hours;
   }
   return { defined: true, available: Math.round(avail * 100) / 100 };
