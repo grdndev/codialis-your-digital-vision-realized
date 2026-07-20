@@ -101,6 +101,41 @@
               opacity: 1;
             }
           }
+          /* La barre supérieure de l'admin (logo + rôle + nom + Déconnexion)
+             déborde sur mobile : on resserre les espacements et on masque le
+             nom pour garder le bouton Déconnexion visible. */
+          @media (max-width: 600px) {
+            #cod-adminbar {
+              gap: 9px !important;
+              padding-left: 14px !important;
+              padding-right: 14px !important;
+            }
+            #cod-adminbar .cod-adminbar-name {
+              display: none !important;
+            }
+            #cod-adminbar .cod-adminbar-right {
+              gap: 8px !important;
+            }
+            /* Lignes de contenu (articles blog, projets portfolio) : la
+               colonne d'actions (à la une / modifier / supprimer) passe sous
+               la vignette + le texte, en ligne alignée à droite, pour ne plus
+               écraser le titre. */
+            /* Empêche le blowout : les items de grille/flex ont min-width:auto
+               par défaut, donc l'action en largeur 100% gonfle toute la chaîne
+               au-delà du viewport. On autorise le rétrécissement partout. */
+            #cod-contentgrid,
+            #cod-contentgrid * {
+              min-width: 0 !important;
+            }
+            .cod-contentrow {
+              flex-wrap: wrap !important;
+            }
+            .cod-contentrow .cod-contentrow-actions {
+              flex-direction: row !important;
+              width: 100% !important;
+              justify-content: flex-end !important;
+            }
+          }
         </style>
       </helmet>
 
@@ -546,6 +581,7 @@
         <sc-if value="{{ unlocked }}" hint-placeholder-val="{{ false }}">
           <div style="min-height: 100vh">
             <div
+              id="cod-adminbar"
               style="
                 position: sticky;
                 top: 0;
@@ -570,6 +606,7 @@
                 >{{ roleLabel }}</span
               >
               <div
+                class="cod-adminbar-right"
                 style="
                   margin-left: auto;
                   display: flex;
@@ -595,6 +632,7 @@
                     >{{ meInitials }}</span
                   >
                   <span
+                    class="cod-adminbar-name"
                     style="
                       font-family: &quot;Space Grotesk&quot;, sans-serif;
                       font-weight: 600;
@@ -4414,6 +4452,7 @@
                           hint-placeholder-count="0"
                         >
                           <div
+                            class="cod-contentrow"
                             style="display:flex;gap:14px;padding:14px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid {{ p.rowBorder }};transition:border-color .2s;"
                           >
                             <div
@@ -4558,6 +4597,7 @@
                               </div>
                             </div>
                             <div
+                              class="cod-contentrow-actions"
                               style="
                                 display: flex;
                                 flex-direction: column;
@@ -4713,6 +4753,7 @@
                           hint-placeholder-count="0"
                         >
                           <div
+                            class="cod-contentrow"
                             style="display:flex;gap:14px;padding:14px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid {{ p.rowBorder }};transition:border-color .2s;"
                           >
                             <div
@@ -4868,6 +4909,7 @@
                               </div>
                             </div>
                             <div
+                              class="cod-contentrow-actions"
                               style="
                                 display: flex;
                                 flex-direction: column;
@@ -5018,6 +5060,7 @@
                           hint-placeholder-count="0"
                         >
                           <div
+                            class="cod-contentrow"
                             style="display:flex;gap:14px;padding:16px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid {{ t.rowBorder }};transition:border-color .2s;"
                           >
                             <span
@@ -5056,6 +5099,7 @@
                               </div>
                             </div>
                             <div
+                              class="cod-contentrow-actions"
                               style="
                                 display: flex;
                                 flex-direction: column;
@@ -7001,14 +7045,14 @@
           // Détaille la règle sans répéter le statut (affiché dans la puce colorée).
           const recWhen = (r) => {
             if (r.freq === 'daily') {
-              if (r.startDate && r.endDate) return 'du ' + r.startDate + ' au ' + r.endDate;
-              if (r.endDate) return 'chaque jour ouvré · jusqu’au ' + r.endDate;
-              return 'chaque jour ouvré · à partir du ' + r.startDate;
+              if (r.startDate && r.endDate) return 'du ' + isoToFrDate(r.startDate) + ' au ' + isoToFrDate(r.endDate);
+              if (r.endDate) return 'chaque jour ouvré · jusqu’au ' + isoToFrDate(r.endDate);
+              return 'chaque jour ouvré · à partir du ' + isoToFrDate(r.startDate);
             }
             const freq = ({ weekly: 'chaque semaine', biweekly: 'une semaine sur deux', monthly: 'chaque mois' })[r.freq] || r.freq;
             const when = r.freq === 'monthly' ? ('le ' + r.monthday) : (['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'][r.weekday] || '');
             let out = freq + ', ' + when + halfDaySuffix(r.halfDay);
-            if (r.endDate) out += ' · jusqu’au ' + r.endDate;
+            if (r.endDate) out += ' · jusqu’au ' + isoToFrDate(r.endDate);
             else out += ' · permanent';
             return out;
           };
