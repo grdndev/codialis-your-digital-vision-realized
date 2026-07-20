@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db.js';
 import { requireAuth, requirePatron, isManager } from '../middleware/auth.js';
-import { notifyRecurrenceCreated } from '../notify.js';
 import { availableLeave, leaveDaysInRange } from '../balances.js';
 
 const router = Router();
@@ -111,8 +110,8 @@ router.post('/', requirePatron, async (req, res) => {
       [empId, effect, freq, weekday, monthday, halfDay, startDate, endDate, motif, paid],
     );
     created.push(rows[0]);
-    // L'employé est prévenu que la direction a posé une règle sur son planning.
-    notifyRecurrenceCreated({ rule: rows[0] }).catch((err) => console.error('notifyRecurrenceCreated:', err?.message || err));
+    // Pas de notification par règle récurrente : source majeure de spam
+    // (1 email par employé par règle). La règle est visible dans le planning.
   }
   // Toujours un tableau (1 ou N règles créées) — le front normalise.
   res.status(201).json(created);

@@ -42,7 +42,7 @@ function dispatch(recipients, payload) {
 
 // Demande d'heures supp / récup créée.
 //  - créée par l'employé → tous les patrons (à valider)
-//  - créée par le patron pour un employé → l'employé
+//  - posée par le patron pour un employé (auto-validée) → l'employé (info)
 export async function notifyEntryCreated({ entry, actor }) {
   const kind = KIND_LABEL[entry.kind] || entry.kind;
   const details = [
@@ -65,9 +65,9 @@ export async function notifyEntryCreated({ entry, actor }) {
     });
   } else if (employee.email_verified) {
     dispatch([employee], {
-      subject: `Nouvelle demande — ${kind}`,
-      heading: 'Demande créée pour vous',
-      intro: `La direction a déposé une demande de ${kind.toLowerCase()} vous concernant.`,
+      subject: `${kind} ajoutée à votre planning`,
+      heading: 'Ajouté par la direction',
+      intro: `La direction a déposé un(e) ${kind.toLowerCase()} vous concernant (déjà validé).`,
       details,
       tone: 'green',
     });
@@ -98,7 +98,7 @@ export async function notifyEntryDecided({ entry }) {
 
 // Congé / absence créé(e).
 //  - demandé par l'employé → tous les patrons (à valider)
-//  - posé par le patron (auto-validé) → l'employé
+//  - posé par le patron (auto-validé) → l'employé (info)
 export async function notifyAbsenceCreated({ absence, actor }) {
   const type = TYPE_LABEL[absence.type] || absence.type;
   const when = period(absence.startDate, absence.endDate, absence.halfDay);
@@ -121,7 +121,7 @@ export async function notifyAbsenceCreated({ absence, actor }) {
     dispatch([employee], {
       subject: `${type} ajouté(e) à votre planning — ${when}`,
       heading: 'Planning mis à jour',
-      intro: `La direction a posé un(e) ${type.toLowerCase()} ${when} sur votre planning.`,
+      intro: `La direction a posé un(e) ${type.toLowerCase()} ${when} sur votre planning (déjà validé).`,
       details: [['Type', type], ['Période', when], ['Motif', absence.motif], ...paidLine],
       tone: 'green',
     });
@@ -146,26 +146,5 @@ export async function notifyAbsenceDecided({ absence }) {
       : `Votre demande (${type.toLowerCase()} ${when}) a été refusée par la direction.`,
     details: [['Type', type], ['Période', when], ['Motif', absence.motif], ...paidLine],
     tone: accepted ? 'green' : 'red',
-  });
-}
-
-// Règle récurrente posée par la direction (congé/absence sur période, TT
-// hebdomadaire…) → l'employé concerné.
-export async function notifyRecurrenceCreated({ rule }) {
-  const employee = await userById(rule.employeeId);
-  if (!employee || !employee.email_verified) return;
-  const type = TYPE_LABEL[rule.effect] || rule.effect;
-  const when = rule.freq === 'daily'
-    ? period(rule.startDate, rule.endDate, rule.halfDay)
-    : 'règle récurrente (voir planning)';
-  const paidLine = (rule.effect === 'conge' || rule.effect === 'absence')
-    ? [['Décompte', rule.paid === false ? 'Non payé (solde non décompté)' : 'Payé (décompté du solde)']]
-    : [];
-  dispatch([employee], {
-    subject: `${type} ajouté(e) à votre planning`,
-    heading: 'Planning mis à jour',
-    intro: `La direction a posé un(e) ${type.toLowerCase()} (${when}) sur votre planning.`,
-    details: [['Type', type], ['Période', when], ['Motif', rule.motif], ...paidLine],
-    tone: 'green',
   });
 }

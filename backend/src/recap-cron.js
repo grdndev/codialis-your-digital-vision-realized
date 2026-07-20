@@ -1,11 +1,12 @@
 // Envoi automatique du récapitulatif mensuel.
 // Chaque 1er du mois à 08:00 (Europe/Paris) :
-//   - chaque employé et chef de projet reçoit SON récap PDF du mois écoulé ;
-//   - la direction (patron) reçoit en plus le récap PDF de toute l'équipe.
+//   - la direction (patron) reçoit le récap PDF de toute l'équipe.
+// Les récaps individuels (employé / chef) ne sont plus envoyés par email pour
+// réduire les notifications — ils restent consultables dans l'application.
 // Le PDF est généré côté serveur (voir recap.js) et joint à l'email (Brevo).
 import cron from 'node-cron';
 import { query } from './db.js';
-import { monthPeriod, buildEmployeeRecapPdf, buildTeamRecapPdf } from './recap.js';
+import { monthPeriod, buildTeamRecapPdf } from './recap.js';
 import { sendMonthlyRecapEmail } from './mail.js';
 
 // Mois précédent (celui qui vient de se terminer) par rapport à `ref`.
@@ -29,18 +30,9 @@ export async function runMonthlyRecap({ year, month0, dryRun = false, onlyEmail 
   // onlyEmail : ne cible qu'un destinataire (test sans spammer toute l'équipe).
   const users = onlyEmail ? allUsers.filter((u) => u.email === onlyEmail) : allUsers;
 
-  // 1) Récap individuel : employés + chefs de projet.
-  for (const u of users.filter((x) => x.role === 'employe' || x.role === 'chef')) {
-    try {
-      const pdf = await buildEmployeeRecapPdf({ id: u.id, name: u.name }, period, { includeRefused: true });
-      if (!dryRun) await sendMonthlyRecapEmail({ email: u.email, name: u.name, periodLabel: period.label, pdf });
-      result.sent += 1;
-    } catch (err) {
-      result.failed += 1;
-      result.errors.push(`${u.email}: ${err?.message || err}`);
-      console.error('recap mensuel (employé) échec pour', u.email, err?.message || err);
-    }
-  }
+  // 1) Récap individuel (employés + chefs) : désactivé pour réduire les
+  //    notifications. Le récap reste consultable dans l'application ; seul le
+  //    récap équipe automatique (patron) est envoyé par email ci-dessous.
 
   // 2) Récap équipe : envoyé à chaque patron (généré une seule fois).
   const patrons = users.filter((x) => x.role === 'patron');

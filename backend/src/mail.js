@@ -291,24 +291,40 @@ export async function sendVerifyEmail({ name, email, role, token }) {
   });
 }
 
+// Palette de tons : accent lisible (texte/bord) + fond pastel doux.
+// Pensée pour rester contrastée sur fond blanc, sans agresser l'œil.
+const TONES = {
+  green: { accent: '#15803d', soft: '#e9f7ee', line: '#bfe6cd' },
+  amber: { accent: '#b45309', soft: '#fdf3e3', line: '#f2dcae' },
+  red:   { accent: '#c0392b', soft: '#fdecea', line: '#f3c8c2' },
+};
+
 // Notification RH générique (demande créée, demande validée/refusée…).
-// `details` : liste de paires [label, valeur] affichées dans la carte sombre.
+// `details` : liste de paires [label, valeur] affichées dans une carte claire.
 // `tone` : green (info/validé) | amber (à traiter) | red (refusé).
 export function renderHrNotifEmail({ heading, name, intro, details = [], tone = 'green' }) {
-  const toneColor = tone === 'red' ? '#e5484d' : tone === 'amber' ? '#f5c86b' : BRAND.green;
+  const t = TONES[tone] || TONES.green;
   const rows = details
     .filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== '')
-    .map(([label, value]) => `
-        <p style="margin:0 0 4px 0;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8a99ad">${escapeHtml(label)}</p>
-        <p style="margin:0 0 14px 0;font-family:'IBM Plex Mono',Consolas,monospace;font-size:15px;color:#ffffff">${escapeHtml(value)}</p>`)
+    .map(([label, value], i) => `
+        <tr>
+          <td style="padding:${i === 0 ? '0' : '10px'} 0 10px 0;border-top:${i === 0 ? 'none' : `1px solid ${BRAND.line}`};font-size:12px;font-weight:600;letter-spacing:.02em;color:${BRAND.muted};white-space:nowrap;vertical-align:top;width:38%">${escapeHtml(label)}</td>
+          <td style="padding:${i === 0 ? '0' : '10px'} 0 10px 0;border-top:${i === 0 ? 'none' : `1px solid ${BRAND.line}`};font-size:14px;font-weight:600;color:${BRAND.ink};text-align:right;vertical-align:top">${escapeHtml(value)}</td>
+        </tr>`)
     .join('');
+  const badge = `
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0">
+      <tr><td style="background:${t.soft};border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${t.accent}">${escapeHtml(heading)}</td></tr>
+    </table>`;
   const body = `
-    <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:${toneColor}">${escapeHtml(heading)}</p>
-    <h1 style="margin:0 0 18px 0;font-size:24px;line-height:1.3;font-weight:700;color:${BRAND.navy}">Bonjour ${escapeHtml(name)},</h1>
-    <p style="margin:0 0 22px 0;font-size:15px;color:${BRAND.ink}">${escapeHtml(intro)}</p>
+    ${badge}
+    <h1 style="margin:0 0 14px 0;font-size:23px;line-height:1.3;font-weight:700;color:${BRAND.navy}">Bonjour ${escapeHtml(name)},</h1>
+    <p style="margin:0 0 24px 0;font-size:15px;color:${BRAND.ink}">${escapeHtml(intro)}</p>
     ${rows ? `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BRAND.panel};border-radius:12px;margin:0 0 26px 0">
-      <tr><td style="padding:22px 24px 8px 24px">${rows}</td></tr>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BRAND.page};border:1px solid ${BRAND.line};border-left:4px solid ${t.accent};border-radius:10px;margin:0 0 28px 0">
+      <tr><td style="padding:18px 22px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rows}</table>
+      </td></tr>
     </table>` : ''}
     ${ctaButton("Ouvrir l'espace Codialis", loginUrl())}`;
   return emailLayout({ preheader: intro, bodyHtml: body });
