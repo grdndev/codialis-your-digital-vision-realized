@@ -36,8 +36,8 @@ router.get('/items', async (req, res) => {
   let sql = 'SELECT id, guid, source, category, title, excerpt, image, link, published_at, status FROM feed_items WHERE status = $1';
   // Fenêtre de fraîcheur : uniquement les articles récents (sans date = gardés).
   const params0 = params.length;
-  params.push(String(getMaxAgeDays()));
-  sql += ` AND (published_at IS NULL OR published_at >= now() - ($${params0 + 1} || ' days')::interval)`;
+  params.push(getMaxAgeDays());
+  sql += ` AND (published_at IS NULL OR published_at >= now() - INTERVAL $${params0 + 1} DAY)`;
   if (req.query.category && req.query.category !== 'all') {
     params.push(req.query.category);
     sql += ` AND category = $${params.length}`;
@@ -47,7 +47,8 @@ router.get('/items', async (req, res) => {
     params.push(`%${q}%`);
     sql += ` AND (title ILIKE $${params.length} OR excerpt ILIKE $${params.length})`;
   }
-  sql += ' ORDER BY published_at DESC NULLS LAST, fetched_at DESC LIMIT 200';
+  // MySQL sorts NULLs last on DESC, so no explicit NULLS LAST needed.
+  sql += ' ORDER BY published_at DESC, fetched_at DESC LIMIT 200';
   const { rows } = await query(sql, params);
   res.json(rows);
 });
@@ -119,10 +120,8 @@ router.patch('/items/:id', async (req, res) => {
   }
   if (!fields.length) return res.status(400).json({ error: 'Rien à mettre à jour' });
   params.push(req.params.id);
-  const { rows } = await query(
-    `UPDATE feed_items SET ${fields.join(', ')} WHERE id = $${params.length} RETURNING id, status, category`,
-    params,
-  );
+  await query(`UPDATE feed_items SET ${fields.join(', ')} WHERE id = $${params.length}`, params);
+  const { rows } = await query('SELECT id, status, category FROM feed_items WHERE id = $1', [req.params.id]);
   if (!rows.length) return res.status(404).json({ error: 'Introuvable' });
   res.json(rows[0]);
 });

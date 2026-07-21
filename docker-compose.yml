@@ -1,18 +1,19 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: mysql:8.4
     container_name: codialis-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: codialis
-      POSTGRES_PASSWORD: codialis_dev
-      POSTGRES_DB: codialis
+      MYSQL_ROOT_PASSWORD: root_dev
+      MYSQL_DATABASE: codialis
+      MYSQL_USER: codialis
+      MYSQL_PASSWORD: codialis_dev
     ports:
-      - "5433:5432"
+      - "3307:3306"
     volumes:
-      - codialis_pgdata:/var/lib/postgresql/data
+      - codialis_mysqldata:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U codialis -d codialis"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "codialis", "-pcodialis_dev"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -37,4 +38,4 @@ services:
       - /repo/backend/node_modules
 
 volumes:
-  codialis_pgdata:
+  codialis_mysqldata:

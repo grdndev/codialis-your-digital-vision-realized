@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { randomUUID } from 'node:crypto';
 import { query } from '../db.js';
 import { requireAuth, requireManager } from '../middleware/auth.js';
 
@@ -17,13 +18,13 @@ router.post('/', async (req, res) => {
   if (!name || !message) return res.status(400).json({ error: 'Nom et message obligatoires' });
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'Email invalide' });
 
-  const { rows } = await query(
-    `INSERT INTO contact_requests (name, company, email, phone, project, budget, message)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
-     RETURNING id`,
-    [name, clip(b.company, 200), email, clip(b.phone, 60), clip(b.project, 100), clip(b.budget, 60), message],
+  const id = randomUUID();
+  await query(
+    `INSERT INTO contact_requests (id, name, company, email, phone, project, budget, message)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [id, name, clip(b.company, 200), email, clip(b.phone, 60), clip(b.project, 100), clip(b.budget, 60), message],
   );
-  res.status(201).json({ ok: true, id: rows[0].id });
+  res.status(201).json({ ok: true, id });
 });
 
 // Tout ce qui suit est réservé au patron.

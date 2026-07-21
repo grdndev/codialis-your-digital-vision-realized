@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { randomUUID } from 'node:crypto';
 import { query } from '../db.js';
 import { requireAuth, requirePatron, isManager } from '../middleware/auth.js';
 import { availableLeave, leaveDaysInRange } from '../balances.js';
@@ -19,6 +20,9 @@ const SELECT = `
          motif,
          paid
   FROM recurrences`;
+
+// MySQL has no RETURNING: after an INSERT we re-read the row by id.
+const SELECT_ONE = `${SELECT} WHERE id = $1`;
 
 // GET /api/recurrences — direction/chef de projet voient tout, employé voit le sien.
 router.get('/', async (req, res) => {
@@ -101,14 +105,13 @@ router.post('/', requirePatron, async (req, res) => {
 
   const created = [];
   for (const empId of targets) {
-    const { rows } = await query(
-      `INSERT INTO recurrences (employee_id, effect, freq, weekday, monthday, half_day, start_date, end_date, motif, paid)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-       RETURNING id, employee_id AS "employeeId", effect, freq, weekday, monthday,
-                 half_day AS "halfDay", to_char(start_date,'YYYY-MM-DD') AS "startDate",
-                 to_char(end_date,'YYYY-MM-DD') AS "endDate", motif, paid`,
-      [empId, effect, freq, weekday, monthday, halfDay, startDate, endDate, motif, paid],
+    const id = randomUUID();
+    await query(
+      `INSERT INTO recurrences (id, employee_id, effect, freq, weekday, monthday, half_day, start_date, end_date, motif, paid)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      [id, empId, effect, freq, weekday, monthday, halfDay, startDate, endDate, motif, paid],
     );
+    const { rows } = await query(SELECT_ONE, [id]);
     created.push(rows[0]);
     // Pas de notification par règle récurrente : source majeure de spam
     // (1 email par employé par règle). La règle est visible dans le planning.

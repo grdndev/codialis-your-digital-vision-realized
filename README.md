@@ -1,27 +1,27 @@
 # Codialis — Site & Admin
 
-Site vitrine Codialis (pages statiques) + backend Express/Postgres pour l'admin (auth JWT, RH, contenu du site).
+Site vitrine Codialis (pages statiques) + backend Express/MySQL pour l'admin (auth JWT, RH, contenu du site).
 
 ## Stack
 
 - **Frontend** : pages HTML statiques (`.dc.html`), servies par Express avec URLs propres.
 - **Backend** : Node.js (ESM) + Express 4, JWT (`jsonwebtoken`) + `bcrypt`, cookies HTTPOnly.
-- **Base de données** : PostgreSQL 16 (`pg`).
-- **Dev/Prod** : Docker Compose (Postgres + serveur avec reload live).
+- **Base de données** : MySQL 8 (`mysql2`).
+- **Dev/Prod** : Docker Compose (MySQL + serveur avec reload live).
 
 ## Structure
 
 ```
 .
-├── docker-compose.yml       # Postgres + serveur
+├── docker-compose.yml       # MySQL + serveur
 ├── backend/
 │   ├── Dockerfile
 │   ├── package.json
 │   ├── .env.example         # copier en .env
-│   ├── db/schema.sql        # schéma Postgres
+│   ├── db/schema.sql        # schéma MySQL
 │   └── src/
 │       ├── index.js         # entrée Express, routage pages + API
-│       ├── db.js            # pool pg
+│       ├── db.js            # pool mysql2 + shim compat Postgres->MySQL
 │       ├── initdb.js        # applique schema.sql
 │       ├── seed-admin.js    # crée le premier patron
 │       ├── middleware/auth.js
@@ -39,7 +39,7 @@ Site vitrine Codialis (pages statiques) + backend Express/Postgres pour l'admin 
 | `users`    | Comptes — rôle `patron` ou `employe`, mot de passe hashé bcrypt.  |
 | `entries`  | Heures sup / récup — `attente`/`valide`/`refuse`.                  |
 | `presence` | Présence journalière — `present`/`tt`/`conge`.                    |
-| `content`  | Contenu du site (portfolio/blog/testimonials/team), `data` JSONB. |
+| `content`  | Contenu du site (portfolio/blog/testimonials/team), `data` JSON.  |
 
 ## Pages
 
@@ -66,32 +66,57 @@ Toutes préfixées `/api` :
 - `/api/presence` — présence.
 - `/api/content` — contenu du site.
 
+> 🚀 **Déploiement production (Hostinger, sans Docker)** : voir [`README.prod.md`](./README.prod.md).
+
 ## Démarrage (Docker)
 
+### 1. Config (une seule fois)
+
 ```bash
-cp backend/.env.example backend/.env   # puis éditer JWT_SECRET, ADMIN_*
-docker compose up --build
+cp backend/.env.example backend/.env   # puis éditer JWT_SECRET (≥32 car.), ADMIN_EMAIL, ADMIN_PASSWORD
 ```
 
-Postgres exposé sur `5433`, serveur sur `3001` → http://localhost:3001
-
-Init DB + premier admin (une fois, DB lancée) :
+### 2. Lancer
 
 ```bash
-docker compose exec server npm run db:init
+docker compose up --build      # ajouter -d pour tourner en arrière-plan
+```
+
+- MySQL exposé sur `3307`, serveur sur `3001` → http://localhost:3001
+- Le **schéma s'applique tout seul** au démarrage (voir `db.js`) — pas de `db:init` à lancer.
+
+### 3. Créer le premier admin (obligatoire au 1er lancement)
+
+Une base neuve est **vide** : sans cette commande, aucun compte n'existe et le login échoue.
+
+```bash
 docker compose exec server npm run db:seed-admin
 ```
 
+Crée le patron avec `ADMIN_EMAIL` / `ADMIN_PASSWORD` du `.env`. Se connecter sur http://localhost:3001/admin.
+Relancer la commande **réinitialise le mot de passe** de l'admin sur `ADMIN_PASSWORD` (pratique si tu l'as perdu).
+
+### Commandes utiles
+
+```bash
+docker compose logs -f server                    # suivre les logs
+docker compose restart server                    # redémarrer le serveur
+docker compose down                              # arrêter (garde les données)
+docker compose down -v && docker compose up -d   # RESET total (efface la base)
+docker compose exec server npm run db:seed-admin # -> re-seed après un reset
+```
+
+> ⚠️ Après `down -v` la base est repartie de zéro : **relancer `db:seed-admin`**, sinon plus de compte pour se connecter.
+
 ## Démarrage (local, sans Docker)
 
-Postgres requis (voir `DATABASE_URL` dans `.env`).
+MySQL requis. Mettre `DATABASE_URL` sur `localhost:3307` dans `.env` (au lieu de `db:3306`).
 
 ```bash
 cd backend
 npm install
-cp .env.example .env        # éditer
-npm run db:init
-npm run db:seed-admin
+cp .env.example .env        # éditer DATABASE_URL, JWT_SECRET, ADMIN_*
+npm run db:seed-admin       # crée l'admin (schéma auto-appliqué)
 npm run dev                 # nodemon
 ```
 
@@ -100,7 +125,7 @@ npm run dev                 # nodemon
 | Variable         | Description                                          |
 |------------------|------------------------------------------------------|
 | `PORT`           | Port du serveur (défaut `3001`).                     |
-| `DATABASE_URL`   | Connexion Postgres.                                  |
+| `DATABASE_URL`   | Connexion MySQL.                                     |
 | `JWT_SECRET`     | Secret de signature JWT (long, aléatoire).           |
 | `JWT_EXPIRES`    | Durée du token (ex. `12h`).                          |
 | `ADMIN_*`        | Premier patron, utilisé par `db:seed-admin`.         |

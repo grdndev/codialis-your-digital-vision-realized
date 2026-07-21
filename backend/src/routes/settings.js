@@ -12,7 +12,7 @@ const validKey = (k) => KEYS.includes(k);
 // Returns the stored object, or {} when nothing has been saved yet.
 router.get('/:key', async (req, res) => {
   if (!validKey(req.params.key)) return res.status(404).json({ error: 'Clé inconnue' });
-  const { rows } = await query('SELECT data FROM settings WHERE key = $1', [req.params.key]);
+  const { rows } = await query('SELECT data FROM settings WHERE `key` = $1', [req.params.key]);
   res.json(rows.length ? rows[0].data : {});
 });
 
@@ -24,12 +24,12 @@ router.put('/:key', async (req, res) => {
   const { key } = req.params;
   if (!validKey(key)) return res.status(404).json({ error: 'Clé inconnue' });
   const data = req.body && typeof req.body === 'object' ? req.body : {};
-  const { rows } = await query(
-    `INSERT INTO settings (key, data) VALUES ($1, $2)
-     ON CONFLICT (key) DO UPDATE SET data = $2, updated_at = now()
-     RETURNING data`,
-    [key, data],
+  await query(
+    'INSERT INTO settings (`key`, data) VALUES ($1, $2) ' +
+      'ON DUPLICATE KEY UPDATE data = VALUES(data), updated_at = CURRENT_TIMESTAMP',
+    [key, JSON.stringify(data)],
   );
+  const { rows } = await query('SELECT data FROM settings WHERE `key` = $1', [key]);
   res.json(rows[0].data);
 });
 

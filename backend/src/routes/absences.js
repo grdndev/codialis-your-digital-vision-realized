@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { randomUUID } from 'node:crypto';
 import { query } from '../db.js';
 import { requireAuth, isManager } from '../middleware/auth.js';
 import { notifyAbsenceCreated, notifyAbsenceDecided } from '../notify.js';
@@ -33,11 +34,8 @@ const SELECT = `
          paid
   FROM absences`;
 
-const RETURNING = `
-     RETURNING id, employee_id AS "employeeId", type,
-               to_char(start_date,'YYYY-MM-DD') AS "startDate",
-               to_char(end_date,'YYYY-MM-DD') AS "endDate",
-               half_day AS "halfDay", motif, status, paid`;
+// MySQL has no RETURNING: after an INSERT/UPDATE we re-read the row by id.
+const SELECT_ONE = `${SELECT} WHERE id = $1`;
 
 // Payé/non payé : chacun peut poser sa demande en « non payé » (utile quand le
 // solde de congés est nul ou non défini). Le patron tranche à la validation ;
@@ -93,11 +91,13 @@ router.post('/', async (req, res) => {
   const check = await canPostLeave(employeeId, { type, paid, startDate, endDate, halfDay });
   if (!check.ok) return res.status(400).json({ error: leaveError(check) });
 
-  const { rows } = await query(
-    `INSERT INTO absences (employee_id, type, start_date, end_date, half_day, motif, status, paid)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)${RETURNING}`,
-    [employeeId, type, startDate, endDate, halfDay, motif, status, paid],
+  const id = randomUUID();
+  await query(
+    `INSERT INTO absences (id, employee_id, type, start_date, end_date, half_day, motif, status, paid)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+    [id, employeeId, type, startDate, endDate, halfDay, motif, status, paid],
   );
+  const { rows } = await query(SELECT_ONE, [id]);
   // Notification email (employé → patrons, patron → employé). Fire-and-forget.
   notifyAbsenceCreated({ absence: rows[0], actor: req.user }).catch((err) => console.error('notifyAbsenceCreated:', err?.message || err));
   res.status(201).json(rows[0]);
@@ -147,11 +147,12 @@ router.patch('/:id', async (req, res) => {
     // Revérifie le solde en ignorant cette absence (on la remplace).
     const check = await canPostLeave(existing.employee_id, { type, paid, startDate, endDate, halfDay, excludeAbsenceId: req.params.id });
     if (!check.ok) return res.status(400).json({ error: leaveError(check) });
-    const { rows } = await query(
+    await query(
       `UPDATE absences SET type = $1, start_date = $2, end_date = $3, half_day = $4, motif = $5, status = $6, paid = $7
-       WHERE id = $8${RETURNING}`,
+       WHERE id = $8`,
       [type, startDate, endDate, halfDay, motif, status, paid, req.params.id],
     );
+    const { rows } = await query(SELECT_ONE, [req.params.id]);
     return res.json(rows[0]);
   }
 
@@ -169,10 +170,11 @@ router.patch('/:id', async (req, res) => {
     });
     if (!check.ok) return res.status(400).json({ error: leaveError(check) });
   }
-  const { rows } = await query(
-    `UPDATE absences SET status = $1, paid = $2 WHERE id = $3${RETURNING}`,
+  await query(
+    `UPDATE absences SET status = $1, paid = $2 WHERE id = $3`,
     [status, paid, req.params.id],
   );
+  const { rows } = await query(SELECT_ONE, [req.params.id]);
   // L'employé est prévenu du verdict (validé / refusé). Fire-and-forget.
   if (status !== 'attente') {
     notifyAbsenceDecided({ absence: rows[0] }).catch((err) => console.error('notifyAbsenceDecided:', err?.message || err));
@@ -191,8 +193,8 @@ router.delete('/:id', async (req, res) => {
     }
   }
   const sql = req.user.role === 'patron'
-    ? 'DELETE FROM absences WHERE id = $1 RETURNING id'
-    : 'DELETE FROM absences WHERE id = $1 AND employee_id = $2 RETURNING id';
+    ? 'DELETE FROM absences WHERE id = $1'
+    : 'DELETE FROM absences WHERE id = $1 AND employee_id = $2';
   const params = req.user.role === 'patron' ? [req.params.id] : [req.params.id, req.user.id];
   const { rowCount } = await query(sql, params);
   if (rowCount === 0) return res.status(404).json({ error: 'Absence introuvable' });

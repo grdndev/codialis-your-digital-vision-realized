@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { randomUUID } from 'node:crypto';
 import { query } from '../db.js';
 import { requireAuth, requireManager } from '../middleware/auth.js';
 import { sendNewsletterToSubscribers } from '../mail.js';
@@ -27,7 +28,7 @@ router.get('/:type', async (req, res) => {
   if (!req.query.admin && (req.params.type === 'portfolio' || req.params.type === 'blog')) {
     query(
       `INSERT INTO page_views (page, count) VALUES ($1, 1)
-       ON CONFLICT (page) DO UPDATE SET count = page_views.count + 1`,
+       ON DUPLICATE KEY UPDATE count = count + 1`,
       [req.params.type],
     ).catch(() => {});
   }
@@ -42,10 +43,8 @@ router.get('/:type', async (req, res) => {
 router.post('/:type/:id/view', async (req, res) => {
   const { type, id } = req.params;
   if (!validType(type)) return res.status(404).json({ error: 'Type inconnu' });
-  const { rows } = await query(
-    'UPDATE content SET views = COALESCE(views, 0) + 1 WHERE id = $1 AND type = $2 RETURNING id, views',
-    [id, type],
-  );
+  await query('UPDATE content SET views = COALESCE(views, 0) + 1 WHERE id = $1 AND type = $2', [id, type]);
+  const { rows } = await query('SELECT id, views FROM content WHERE id = $1 AND type = $2', [id, type]);
   if (rows.length === 0) return res.status(404).json({ error: 'Introuvable' });
   res.json({ ok: true, views: Number(rows[0].views) });
 });
@@ -61,10 +60,9 @@ router.post('/:type', async (req, res) => {
   delete data.id;
   delete data.views;
 
-  const { rows } = await query(
-    'INSERT INTO content (type, data, views) VALUES ($1, $2, 0) RETURNING id, data, views',
-    [type, data],
-  );
+  const id = randomUUID();
+  await query('INSERT INTO content (id, type, data, views) VALUES ($1, $2, $3, 0)', [id, type, JSON.stringify(data)]);
+  const { rows } = await query('SELECT id, data, views FROM content WHERE id = $1', [id]);
   if ((type === 'blog' || type === 'portfolio') && data.featured) await unfeatureOthers(rows[0].id, type);
   if (type === 'blog') notifySubscribers(data);
   res.status(201).json(shape(rows[0]));
@@ -78,10 +76,8 @@ router.put('/:type/:id', async (req, res) => {
   delete data.id;
   delete data.views;
 
-  const { rows } = await query(
-    'UPDATE content SET data = $1 WHERE id = $2 AND type = $3 RETURNING id, data, views',
-    [data, id, type],
-  );
+  await query('UPDATE content SET data = $1 WHERE id = $2 AND type = $3', [JSON.stringify(data), id, type]);
+  const { rows } = await query('SELECT id, data, views FROM content WHERE id = $1 AND type = $2', [id, type]);
   if (rows.length === 0) return res.status(404).json({ error: 'Introuvable' });
   if ((type === 'blog' || type === 'portfolio') && data.featured) await unfeatureOthers(id, type);
   res.json(shape(rows[0]));
@@ -109,8 +105,8 @@ function notifySubscribers(post) {
 // Only one item of a given type may be "à la une" (blog article / portfolio project).
 async function unfeatureOthers(keepId, type) {
   await query(
-    `UPDATE content SET data = jsonb_set(data, '{featured}', 'false')
-     WHERE type = $2 AND id <> $1 AND (data->>'featured')::boolean IS TRUE`,
+    `UPDATE content SET data = JSON_SET(data, '$.featured', false)
+     WHERE type = $2 AND id <> $1 AND data->>'$.featured' = 'true'`,
     [keepId, type],
   );
 }

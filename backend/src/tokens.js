@@ -1,7 +1,7 @@
 // Single-use, expiring tokens for account verification and password reset.
 // The raw token travels only in the emailed link; the DB stores its SHA-256
 // hash, so a database leak can't be replayed against the endpoints.
-import { randomBytes, createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import { randomBytes, createHash, createHmac, timingSafeEqual, randomUUID } from 'node:crypto';
 import { query } from './db.js';
 
 // Lifetimes (minutes). Verification is generous; reset is short-lived.
@@ -22,9 +22,9 @@ export async function createToken(userId, kind) {
   );
   const raw = randomBytes(32).toString('hex');
   await query(
-    `INSERT INTO user_tokens (user_id, kind, token_hash, expires_at)
-     VALUES ($1, $2, $3, now() + ($4 || ' minutes')::interval)`,
-    [userId, kind, hashToken(raw), String(ttl)],
+    `INSERT INTO user_tokens (id, user_id, kind, token_hash, expires_at)
+     VALUES ($1, $2, $3, $4, now() + INTERVAL $5 MINUTE)`,
+    [randomUUID(), userId, kind, hashToken(raw), ttl],
   );
   return raw;
 }

@@ -40,7 +40,7 @@ router.put('/', async (req, res) => {
 
   await query(
     `INSERT INTO presence (employee_id, day, status) VALUES ($1, $2, $3)
-     ON CONFLICT (employee_id, day) DO UPDATE SET status = EXCLUDED.status`,
+     ON DUPLICATE KEY UPDATE status = VALUES(status)`,
     [employeeId, date, status],
   );
   res.json({ ok: true });

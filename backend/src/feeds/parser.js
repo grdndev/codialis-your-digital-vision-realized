@@ -6,7 +6,16 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import Parser from 'rss-parser';
 import { extract } from '@extractus/article-extractor';
+import { randomUUID } from 'node:crypto';
 import { query } from '../db.js';
+
+// RSS dates arrive as ISO/RFC strings; MySQL DATETIME wants a Date (mysql2
+// serialises it to 'YYYY-MM-DD HH:MM:SS'). Invalid/absent -> null.
+function toDate(v) {
+  if (!v) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = join(__dirname, '..', '..', 'config', 'feeds.json');
@@ -93,7 +102,7 @@ async function fetchFeed(feed, denyNorm, maxAgeDays) {
           content: it.contentEncoded || it.content || '', // corps complet si le flux le donne
           image: feedImage(it),
           link,
-          published_at: it.isoDate || it.pubDate || null,
+          published_at: toDate(it.isoDate || it.pubDate),
         };
       })
       .filter((x) => {
@@ -118,10 +127,9 @@ export async function refreshAll() {
   for (const r of results) {
     for (const it of r.items) {
       const { rowCount } = await query(
-        `INSERT INTO feed_items (guid, source, category, title, excerpt, content, image, link, published_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-         ON CONFLICT (guid) DO NOTHING`,
-        [it.guid, it.source, it.category, it.title, it.excerpt, it.content, it.image, it.link, it.published_at],
+        `INSERT IGNORE INTO feed_items (id, guid, source, category, title, excerpt, content, image, link, published_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        [randomUUID(), it.guid, it.source, it.category, it.title, it.excerpt, it.content, it.image, it.link, it.published_at],
       );
       added += rowCount;
     }
@@ -131,8 +139,8 @@ export async function refreshAll() {
   const purged = await query(
     `DELETE FROM feed_items
      WHERE status = 'new' AND published_at IS NOT NULL
-       AND published_at < now() - ($1 || ' days')::interval`,
-    [String(maxAgeDays)],
+       AND published_at < now() - INTERVAL $1 DAY`,
+    [maxAgeDays],
   );
   return {
     added,

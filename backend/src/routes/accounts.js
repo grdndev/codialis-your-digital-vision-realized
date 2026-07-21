@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { query } from '../db.js';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { requireAuth, requirePatron, isManager } from '../middleware/auth.js';
 
 // Rôles autorisés à la création/édition d'un compte.
@@ -61,16 +61,17 @@ router.patch('/:id/balances', requirePatron, async (req, res) => {
   }
   if (sets.length === 0) return res.status(400).json({ error: 'Aucun solde fourni' });
   params.push(id);
+  const { rowCount } = await query(`UPDATE users SET ${sets.join(', ')} WHERE id = $${params.length}`, params);
+  if (rowCount === 0) return res.status(404).json({ error: 'Compte introuvable' });
   const { rows } = await query(
-    `UPDATE users SET ${sets.join(', ')} WHERE id = $${params.length}
-     RETURNING id,
-               leave_balance::float AS "leaveBalance",
-               to_char(leave_anchor, 'YYYY-MM-DD') AS "leaveAnchor",
-               hours_balance::float AS "hoursBalance",
-               to_char(hours_anchor, 'YYYY-MM-DD') AS "hoursAnchor"`,
-    params,
+    `SELECT id,
+            leave_balance::float AS "leaveBalance",
+            to_char(leave_anchor, 'YYYY-MM-DD') AS "leaveAnchor",
+            hours_balance::float AS "hoursBalance",
+            to_char(hours_anchor, 'YYYY-MM-DD') AS "hoursAnchor"
+     FROM users WHERE id = $1`,
+    [id],
   );
-  if (rows.length === 0) return res.status(404).json({ error: 'Compte introuvable' });
   res.json(rows[0]);
 });
 
@@ -99,11 +100,15 @@ router.post('/', requirePatron, async (req, res) => {
   const photo = typeof req.body?.photo === 'string' ? req.body.photo : '';
   const featured = req.body?.featured === true;
   const placeholder = await bcrypt.hash(randomBytes(24).toString('hex'), 12);
+  const id = randomUUID();
+  await query(
+    `INSERT INTO users (id, name, prenom, nom, email, password_hash, role, poste, photo, featured, email_verified, must_change_password)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, false, false)`,
+    [id, name, prenom, nom, email, placeholder, role, poste, photo, featured],
+  );
   const { rows } = await query(
-    `INSERT INTO users (name, prenom, nom, email, password_hash, role, poste, photo, featured, email_verified, must_change_password)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false, false)
-     RETURNING id, name, prenom, nom, email, role, poste, email_verified, photo, featured`,
-    [name, prenom, nom, email, placeholder, role, poste, photo, featured],
+    'SELECT id, name, prenom, nom, email, role, poste, email_verified, photo, featured FROM users WHERE id = $1',
+    [id],
   );
   const user = rows[0];
 
@@ -174,11 +179,14 @@ router.patch('/:id', requirePatron, async (req, res) => {
 
   const photo = typeof req.body?.photo === 'string' ? req.body.photo : '';
   const featured = req.body?.featured === true;
-  const { rows } = await query(
+  await query(
     `UPDATE users SET name = $1, prenom = $2, nom = $3, email = $4, poste = $5, role = $6, photo = $7, featured = $8
-     WHERE id = $9
-     RETURNING id, name, prenom, nom, email, role, poste, email_verified, photo, featured`,
+     WHERE id = $9`,
     [name, prenom, nom, email, poste, role, photo, featured, id],
+  );
+  const { rows } = await query(
+    'SELECT id, name, prenom, nom, email, role, poste, email_verified, photo, featured FROM users WHERE id = $1',
+    [id],
   );
   res.json(rows[0]);
 });

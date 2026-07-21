@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Express + Postgres backend for the Codialis admin (auth JWT/bcrypt, HR data, site content)",
+  "description": "Express + MySQL backend for the Codialis admin (auth JWT/bcrypt, HR data, site content)",
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon --legacy-watch --watch src --ext js,json src/index.js",
@@ -21,8 +21,8 @@
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
+    "mysql2": "^3.11.5",
     "node-cron": "^3.0.3",
-    "pg": "^8.13.1",
     "rss-parser": "^3.13.0"
   },
   "devDependencies": {

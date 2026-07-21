@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { randomUUID } from 'node:crypto';
 import { query } from '../db.js';
 import { requireAuth, requirePatron, isManager } from '../middleware/auth.js';
 import { notifyEntryCreated, notifyEntryDecided } from '../notify.js';
@@ -18,6 +19,9 @@ const SELECT = `
          status,
          paid
   FROM entries`;
+
+// MySQL has no RETURNING: after an INSERT/UPDATE we re-read the row by id.
+const SELECT_ONE = `${SELECT} WHERE id = $1`;
 
 // Payé/récup : seul le patron le fixe, et seulement pour une heure sup. Une
 // demande d'employé part « récup » (paid=false) — la direction tranche à la
@@ -61,13 +65,13 @@ router.post('/', async (req, res) => {
   const status = req.user.role === 'patron' ? 'valide' : 'attente';
   const paid = paidFrom(req, kind);
 
-  const { rows } = await query(
-    `INSERT INTO entries (employee_id, kind, entry_date, hours, motif, status, paid)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
-     RETURNING id, employee_id AS "employeeId", kind,
-               to_char(entry_date,'YYYY-MM-DD') AS date, hours::float AS hours, motif, status, paid`,
-    [employeeId, kind, date, hours, motif, status, paid],
+  const id = randomUUID();
+  await query(
+    `INSERT INTO entries (id, employee_id, kind, entry_date, hours, motif, status, paid)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [id, employeeId, kind, date, hours, motif, status, paid],
   );
+  const { rows } = await query(SELECT_ONE, [id]);
   // Notification email (employé → patrons, patron → employé). Fire-and-forget.
   notifyEntryCreated({ entry: rows[0], actor: req.user }).catch((err) => console.error('notifyEntryCreated:', err?.message || err));
   res.status(201).json(rows[0]);
@@ -82,12 +86,11 @@ router.patch('/:id', requirePatron, async (req, res) => {
   const { rows: cur } = await query('SELECT kind, paid FROM entries WHERE id = $1', [req.params.id]);
   if (cur.length === 0) return res.status(404).json({ error: 'Demande introuvable' });
   const paid = paidFrom(req, cur[0].kind, cur[0].paid);
-  const { rows } = await query(
-    `UPDATE entries SET status = $1, paid = $2 WHERE id = $3
-     RETURNING id, employee_id AS "employeeId", kind,
-               to_char(entry_date,'YYYY-MM-DD') AS date, hours::float AS hours, motif, status, paid`,
+  await query(
+    `UPDATE entries SET status = $1, paid = $2 WHERE id = $3`,
     [status, paid, req.params.id],
   );
+  const { rows } = await query(SELECT_ONE, [req.params.id]);
   if (rows.length === 0) return res.status(404).json({ error: 'Demande introuvable' });
   // L'employé est prévenu du verdict (validé / refusé). Fire-and-forget.
   if (status !== 'attente') {
@@ -107,8 +110,8 @@ router.delete('/:id', async (req, res) => {
     }
   }
   const sql = req.user.role === 'patron'
-    ? 'DELETE FROM entries WHERE id = $1 RETURNING id'
-    : 'DELETE FROM entries WHERE id = $1 AND employee_id = $2 RETURNING id';
+    ? 'DELETE FROM entries WHERE id = $1'
+    : 'DELETE FROM entries WHERE id = $1 AND employee_id = $2';
   const params = req.user.role === 'patron' ? [req.params.id] : [req.params.id, req.user.id];
   const { rowCount } = await query(sql, params);
   if (rowCount === 0) return res.status(404).json({ error: 'Demande introuvable' });

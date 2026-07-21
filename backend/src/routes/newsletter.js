@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { randomUUID } from 'node:crypto';
 import { query } from '../db.js';
 import { requireAuth, requireManager } from '../middleware/auth.js';
 import { verifyUnsubscribe } from '../tokens.js';
@@ -11,8 +12,8 @@ router.post('/subscribe', async (req, res) => {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'Email invalide' });
 
   await query(
-    'INSERT INTO newsletter_subscribers (email) VALUES ($1) ON CONFLICT (email) DO NOTHING',
-    [email],
+    'INSERT IGNORE INTO newsletter_subscribers (id, email) VALUES ($1, $2)',
+    [randomUUID(), email],
   );
   res.status(201).json({ ok: true });
 });
