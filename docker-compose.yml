@@ -10,6 +10,10 @@ services:
       MYSQL_PASSWORD: codialis_dev
     volumes:
       - codialis_mysqldata:/var/lib/mysql
+    networks:
+      proxy:
+        aliases:
+          - db
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "codialis", "-pcodialis_dev"]
       interval: 5s
