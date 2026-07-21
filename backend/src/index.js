@@ -1,3 +1,8 @@
+// Doit être importé AVANT les routes : patche express pour que toute promesse
+// rejetée dans un handler `async` soit routée vers le gestionnaire d'erreur
+// central (réponse 500 propre) au lieu de devenir une unhandledRejection qui
+// tuait le process entier.
+import "express-async-errors";
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -86,6 +91,16 @@ app.use((err, req, res, next) => {
   console.error(err);
   if (res.headersSent) return next(err);
   res.status(500).json({ error: "Erreur serveur" });
+});
+
+// Filet de sécurité pour tout rejet/exception NON capturé par express (tâches
+// planifiées, timers, callbacks). On log au lieu de laisser Node tuer le process
+// — un seul rejet ne doit jamais mettre toute l'API à terre.
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled promise rejection (serveur maintenu en vie):", reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception (serveur maintenu en vie):", err);
 });
 
 const port = process.env.PORT || 3001;

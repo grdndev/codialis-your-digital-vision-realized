@@ -31,7 +31,11 @@ CREATE TABLE IF NOT EXISTS users (
   leave_anchor  DATE,
   hours_balance DECIMAL(7,2),
   hours_anchor  DATE,
-  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- La liste des comptes trie par (role DESC, name ASC) en sélectionnant `photo`
+  -- (LONGTEXT). Index descendant/ascendant explicite -> pas de filesort, donc la
+  -- photo ne passe jamais dans le buffer de tri (ER_OUT_OF_SORTMEMORY).
+  INDEX users_role_name_idx (role DESC, name ASC)
 );
 
 -- Jetons à usage unique et expirants (vérification de compte / reset). Seul le
@@ -62,6 +66,7 @@ CREATE TABLE IF NOT EXISTS entries (
   paid        TINYINT(1) NOT NULL DEFAULT 0,
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX entries_employee_idx (employee_id),
+  INDEX entries_date_idx (entry_date DESC, created_at DESC),
   CONSTRAINT entries_employee_fk FOREIGN KEY (employee_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -93,6 +98,7 @@ CREATE TABLE IF NOT EXISTS recurrences (
   paid        TINYINT(1) NOT NULL DEFAULT 1,
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX recurrences_emp_idx (employee_id),
+  INDEX recurrences_created_idx (created_at DESC),
   CONSTRAINT recurrences_employee_fk FOREIGN KEY (employee_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -111,6 +117,7 @@ CREATE TABLE IF NOT EXISTS absences (
   paid        TINYINT(1) NOT NULL DEFAULT 1,
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX absences_employee_idx (employee_id),
+  INDEX absences_date_idx (start_date DESC, created_at DESC),
   CONSTRAINT absences_employee_fk FOREIGN KEY (employee_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -123,7 +130,11 @@ CREATE TABLE IF NOT EXISTS content (
   views      BIGINT NOT NULL DEFAULT 0,
   position   BIGINT NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX content_type_idx (type)
+  -- Composite (type, created_at) : la liste publique filtre par type et trie par
+  -- created_at DESC. Sans lui, MySQL fait un filesort qui bufferise la colonne
+  -- `data` (JSON) -> ER_OUT_OF_SORTMEMORY. Le préfixe `type` couvre aussi les
+  -- lookups par type seul (remplace l'ancien content_type_idx).
+  INDEX content_type_created_idx (type, created_at)
 );
 
 -- Singletons de page (hero, cas à la une…), clés par un nom stable. `key` est un
@@ -137,7 +148,8 @@ CREATE TABLE IF NOT EXISTS settings (
 CREATE TABLE IF NOT EXISTS newsletter_subscribers (
   id         CHAR(36) PRIMARY KEY,
   email      VARCHAR(320) NOT NULL UNIQUE,
-  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX newsletter_created_idx (created_at DESC)
 );
 
 CREATE TABLE IF NOT EXISTS page_views (
@@ -179,5 +191,9 @@ CREATE TABLE IF NOT EXISTS feed_items (
   fetched_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX feed_items_status_idx (status),
   INDEX feed_items_category_idx (category),
-  INDEX feed_items_pubdate_idx (published_at)
+  INDEX feed_items_pubdate_idx (published_at),
+  -- Liste /items : WHERE status=? ORDER BY published_at DESC, fetched_at DESC.
+  -- Cet index couvre filtre + tri exactement -> pas de filesort, donc `excerpt`
+  -- (TEXT) ne passe jamais dans le buffer de tri.
+  INDEX feed_items_status_pub_idx (status, published_at DESC, fetched_at DESC)
 );

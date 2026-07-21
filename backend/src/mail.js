@@ -20,7 +20,8 @@ function senderEmail() {
 function loginUrl() {
   return process.env.APP_LOGIN_URL || "https://codialis.com/admin";
 }
-// Same origin the backend is served on (frontend + API share one Express app).
+// Origin of the public FRONTEND (static site + admin app). Used for links a
+// human opens in a browser and that the frontend then handles (login, blog).
 function siteOrigin() {
   try {
     return new URL(loginUrl()).origin;
@@ -28,12 +29,26 @@ function siteOrigin() {
     return "https://codialis.com";
   }
 }
+// Origin of the BACKEND/API — a SEPARATE host now (the frontend is static and
+// proxies nothing). Links that hit an Express route directly (e.g. the
+// unsubscribe GET, which renders its own HTML) must target this, not siteOrigin.
+function apiOrigin() {
+  const explicit = process.env.APP_API_URL;
+  if (explicit) {
+    try {
+      return new URL(explicit).origin;
+    } catch {
+      /* fall through to default */
+    }
+  }
+  return "https://landingback.codialis.com";
+}
 function blogUrl() {
   return process.env.APP_BLOG_URL || `${siteOrigin()}/blog`;
 }
 function unsubscribeUrl(email) {
   const token = signUnsubscribe(email);
-  return `${siteOrigin()}/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}&token=${token}`;
+  return `${apiOrigin()}/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}&token=${token}`;
 }
 // Optional hosted logo (white wordmark PNG). If unset, the header falls back to
 // an HTML wordmark that renders even when the client blocks remote images.

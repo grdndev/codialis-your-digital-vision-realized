@@ -72,6 +72,21 @@ async function run(text, params) {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const schemaSql = readFileSync(join(__dirname, '..', 'db', 'schema.sql'), 'utf8');
 
+// Applique une liste de DDL d'index, en avalant l'erreur « déjà existant » pour
+// que le boot soit idempotent (aucun CREATE INDEX IF NOT EXISTS en MySQL).
+async function ensureIndexes(statements) {
+  for (const ddl of statements) {
+    try {
+      await pool.query(ddl);
+    } catch (err) {
+      // 1061 = Duplicate key name (index déjà présent) -> normal, on ignore.
+      if (err && err.errno === 1061) continue;
+      // Autre erreur : on log mais on ne bloque pas le démarrage du serveur.
+      console.error('ensureIndexes error:', ddl, '->', err.message);
+    }
+  }
+}
+
 let dbReadyPromise = null;
 async function ensureDbReady() {
   if (dbReadyPromise) return dbReadyPromise;
@@ -80,6 +95,21 @@ async function ensureDbReady() {
     // indexes declared inline). multipleStatements (set on the pool) lets the
     // whole file run in one call.
     await pool.query(schemaSql);
+    // Migrations d'index sur les bases DÉJÀ créées : `CREATE TABLE IF NOT EXISTS`
+    // ne touche pas une table existante, et MySQL n'a pas de CREATE INDEX IF NOT
+    // EXISTS. On ajoute donc chaque index à la main et on ignore l'erreur 1061
+    // (« Duplicate key name ») pour rester idempotent. Ces index évitent les
+    // filesort qui bufferisent de grosses colonnes (JSON/TEXT/LONGTEXT) et
+    // provoquaient ER_OUT_OF_SORTMEMORY.
+    await ensureIndexes([
+      'ALTER TABLE content ADD INDEX content_type_created_idx (type, created_at)',
+      'ALTER TABLE users ADD INDEX users_role_name_idx (role DESC, name ASC)',
+      'ALTER TABLE feed_items ADD INDEX feed_items_status_pub_idx (status, published_at DESC, fetched_at DESC)',
+      'ALTER TABLE entries ADD INDEX entries_date_idx (entry_date DESC, created_at DESC)',
+      'ALTER TABLE absences ADD INDEX absences_date_idx (start_date DESC, created_at DESC)',
+      'ALTER TABLE recurrences ADD INDEX recurrences_created_idx (created_at DESC)',
+      'ALTER TABLE newsletter_subscribers ADD INDEX newsletter_created_idx (created_at DESC)',
+    ]);
     // Seed defaults that aren't part of the schema.
     await pool.query(
       "INSERT IGNORE INTO page_views (page, count) VALUES ('portfolio', 142), ('blog', 318)",
