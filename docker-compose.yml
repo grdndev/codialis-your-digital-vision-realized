@@ -1,5 +1,5 @@
 services:
-  db:
+  codialis.db:
     image: mysql:8.4
     container_name: codialis-db
     restart: unless-stopped
@@ -8,8 +8,6 @@ services:
       MYSQL_DATABASE: codialis
       MYSQL_USER: codialis
       MYSQL_PASSWORD: codialis_dev
-    ports:
-      - "3307:3306"
     volumes:
       - codialis_mysqldata:/var/lib/mysql
     healthcheck:
@@ -18,24 +16,33 @@ services:
       timeout: 5s
       retries: 10
 
-  server:
+  codialis.backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
     container_name: codialis-server
     restart: unless-stopped
     depends_on:
-      db:
+      codialis.db:
         condition: service_healthy
     # All config (incl. DATABASE_URL) loaded from backend/.env (gitignored).
     env_file:
       - backend/.env
-    ports:
-      - "3001:3001"
+    networks:
+      - proxy
     volumes:
       # live source reload; anonymous volume keeps node_modules inside container
       - .:/repo
       - /repo/backend/node_modules
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.codialis_landingpage.rule=Host(`landingback.codialis.com`)"
+      - "traefik.http.routers.codialis_landingpage.entrypoints=websecure"
+      - "traefik.http.routers.codialis_landingpage.tls.certresolver=myresolver"
+      - "traefik.http.services.codialis_landingpage.loadbalancer.server.port=3001"
 
+networks:
+  proxy:
+    external: true
 volumes:
   codialis_mysqldata:
