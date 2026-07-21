@@ -1,0 +1,33 @@
+# ============================================================================
+# Codialis — front-end statique (Hostinger / Apache)
+# Le back-end (API) tourne ailleurs : https://landingback.codialis.com
+# ============================================================================
+
+DirectoryIndex index.html
+
+# --- URLs propres : /contact -> Contact.dc.html -----------------------------
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Laisser passer les fichiers et dossiers qui existent déjà (assets, .dc.html…)
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  RewriteRule ^portfolio/?$   Portfolio.dc.html   [L]
+  RewriteRule ^blog/?$        Blog.dc.html        [L]
+  RewriteRule ^contact/?$     Contact.dc.html     [L]
+  RewriteRule ^financement/?$ Financement.dc.html [L]
+  RewriteRule ^legal/?$       Legal.dc.html       [L]
+  RewriteRule ^admin/?$       Admin.dc.html       [L]
+</IfModule>
+
+# --- En-têtes de sécurité (remplacent le helmet du back qui servait le site) -
+<IfModule mod_headers.c>
+  # CSP : le dc-runtime (support.js) charge React/ReactDOM/Babel depuis unpkg et
+  # exige 'unsafe-inline'/'unsafe-eval'. connect-src DOIT lister l'API distante,
+  # sinon le navigateur bloque chaque fetch vers landingback.codialis.com.
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://assets.calendly.com; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.calendly.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://landingback.codialis.com https://calendly.com https://cdn.jsdelivr.net; frame-src 'self' https://calendly.com; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Content-Type-Options "nosniff"
+</IfModule>

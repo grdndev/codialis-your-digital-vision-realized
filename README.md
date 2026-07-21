@@ -28,7 +28,7 @@ Site vitrine Codialis (pages statiques) + backend Express/MySQL pour l'admin (au
 │       └── routes/          # auth, accounts, entries, presence, content
 └── frontend/
     ├── www/                 # index.html + pages *.dc.html + scripts
-    ├── assets/              # servi sous /assets
+    ├── ../assets/              # servi sous /../assets
     └── public/              # servi sous /public
 ```
 
@@ -82,7 +82,7 @@ cp backend/.env.example backend/.env   # puis éditer JWT_SECRET (≥32 car.), A
 docker compose up --build      # ajouter -d pour tourner en arrière-plan
 ```
 
-- MySQL exposé sur `3307`, serveur sur `3001` → http://localhost:3001
+- MySQL exposé sur `3307`, serveur sur `3001` → https://landingback.codialis.com
 - Le **schéma s'applique tout seul** au démarrage (voir `db.js`) — pas de `db:init` à lancer.
 
 ### 3. Créer le premier admin (obligatoire au 1er lancement)
@@ -93,7 +93,7 @@ Une base neuve est **vide** : sans cette commande, aucun compte n'existe et le l
 docker compose exec server npm run db:seed-admin
 ```
 
-Crée le patron avec `ADMIN_EMAIL` / `ADMIN_PASSWORD` du `.env`. Se connecter sur http://localhost:3001/admin.
+Crée le patron avec `ADMIN_EMAIL` / `ADMIN_PASSWORD` du `.env`. Se connecter sur https://landingback.codialis.com/admin.
 Relancer la commande **réinitialise le mot de passe** de l'admin sur `ADMIN_PASSWORD` (pratique si tu l'as perdu).
 
 ### Commandes utiles

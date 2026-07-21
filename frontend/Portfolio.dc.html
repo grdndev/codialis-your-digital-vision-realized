@@ -123,7 +123,7 @@
             "
           >
             <img
-              src="assets/codialis-white.png"
+              src="/assets/codialis-white.png"
               alt="Codialis"
               style="height: 26px; width: auto; display: block"
             />
@@ -991,7 +991,7 @@
           >
             <div>
               <img
-                src="assets/codialis-white.png"
+                src="/assets/codialis-white.png"
                 alt="Codialis"
                 style="
                   height: 28px;
@@ -1012,7 +1012,10 @@
                 Les plateformes digitales qui font avancer les entreprises.
                 Architecture-first, construites pour durer.
               </p>
-              <div data-cod-footer-socials style="display: flex; gap: 12px; margin-top: 22px">
+              <div
+                data-cod-footer-socials
+                style="display: flex; gap: 12px; margin-top: 22px"
+              >
                 <a
                   href="https://www.linkedin.com/company/109392264/"
                   target="_blank"
@@ -1267,7 +1270,10 @@
               </button>
 
               <!-- HEADER : image + overlay (titre + secteurs) -->
-              <sc-if value="{{ modalHasImage }}" hint-placeholder-val="{{ false }}">
+              <sc-if
+                value="{{ modalHasImage }}"
+                hint-placeholder-val="{{ false }}"
+              >
                 <div
                   style="
                     position: relative;
@@ -1355,7 +1361,10 @@
               <!-- CORPS -->
               <div style="padding: clamp(26px, 4vw, 44px)">
                 <!-- Titre + secteurs de repli (aucune image) -->
-                <sc-if value="{{ modalNoImage }}" hint-placeholder-val="{{ true }}">
+                <sc-if
+                  value="{{ modalNoImage }}"
+                  hint-placeholder-val="{{ true }}"
+                >
                   <div
                     style="
                       display: flex;
@@ -1401,7 +1410,10 @@
                 </sc-if>
 
                 <!-- Résultats clés -->
-                <sc-if value="{{ modalHasResults }}" hint-placeholder-val="{{ false }}">
+                <sc-if
+                  value="{{ modalHasResults }}"
+                  hint-placeholder-val="{{ false }}"
+                >
                   <div
                     style="
                       display: flex;
@@ -1457,7 +1469,10 @@
                   {{ modalDesc }}
                 </p>
 
-                <sc-if value="{{ modalHasTech }}" hint-placeholder-val="{{ false }}">
+                <sc-if
+                  value="{{ modalHasTech }}"
+                  hint-placeholder-val="{{ false }}"
+                >
                   <div
                     style="
                       padding-top: 22px;
@@ -1635,7 +1650,7 @@
           };
         }
         componentDidMount() {
-          const apiBase = location.port === '3001' ? '' : 'http://localhost:3001';
+          const apiBase = location.port === '3001' ? '' : 'https://landingback.codialis.com';
           fetch(apiBase + '/api/content/portfolio')
             .then((r) => (r.ok ? r.json() : []))
             .then((list) => { if (Array.isArray(list) && list.length) this.setState({ custom: list }); })

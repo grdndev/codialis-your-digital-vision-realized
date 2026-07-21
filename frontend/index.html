@@ -188,7 +188,7 @@
             "
           >
             <img
-              src="assets/codialis-white.png"
+              src="/assets/codialis-white.png"
               alt="Codialis"
               style="height: 26px; width: auto; display: block"
             />
@@ -758,7 +758,8 @@
                   color: #fff;
                 "
               >
-                Quatre expertises,<br /> <br />une même exigence.
+                Quatre expertises,<br />
+                <br />une même exigence.
               </h2>
             </div>
 
@@ -1673,151 +1674,148 @@
 
         <!-- TÉMOIGNAGES (bleu foncé B) -->
         <sc-if value="{{ hasTestimonials }}" hint-placeholder-val="{{ true }}">
-        <section
-          id="temoignages"
-          data-screen-label="Témoignages"
-          style="
-            position: relative;
-            padding: clamp(80px, 10vw, 140px) clamp(20px, 5vw, 64px);
-            scroll-margin-top: 90px;
-            overflow: hidden;
-            background: #0a101e;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-          "
-        >
-          <div
-            data-parallax="0.1"
-            style="
-              position: absolute;
-              top: 10%;
-              left: -90px;
-              width: 520px;
-              height: 420px;
-              z-index: 0;
-              background: radial-gradient(
-                circle,
-                rgba(47, 237, 127, 0.11),
-                transparent 62%
-              );
-              filter: blur(16px);
-              pointer-events: none;
-            "
-          ></div>
-          <span
-            data-parallax="0.22"
-            style="
-              position: absolute;
-              bottom: 14%;
-              right: 7%;
-              z-index: 0;
-              font-family: &quot;IBM Plex Mono&quot;, monospace;
-              font-weight: 500;
-              font-size: 40px;
-              color: rgba(47, 237, 127, 0.1);
-              pointer-events: none;
-            "
-            >&lt;/&gt;</span
-          >
-          <div
+          <section
+            id="temoignages"
+            data-screen-label="Témoignages"
             style="
               position: relative;
-              z-index: 1;
-              max-width: 1200px;
-              margin: 0 auto;
+              padding: clamp(80px, 10vw, 140px) clamp(20px, 5vw, 64px);
+              scroll-margin-top: 90px;
+              overflow: hidden;
+              background: #0a101e;
+              border-top: 1px solid rgba(255, 255, 255, 0.06);
             "
           >
             <div
+              data-parallax="0.1"
               style="
-                max-width: 680px;
-                margin-bottom: clamp(40px, 5vw, 60px);
+                position: absolute;
+                top: 10%;
+                left: -90px;
+                width: 520px;
+                height: 420px;
+                z-index: 0;
+                background: radial-gradient(
+                  circle,
+                  rgba(47, 237, 127, 0.11),
+                  transparent 62%
+                );
+                filter: blur(16px);
+                pointer-events: none;
+              "
+            ></div>
+            <span
+              data-parallax="0.22"
+              style="
+                position: absolute;
+                bottom: 14%;
+                right: 7%;
+                z-index: 0;
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-weight: 500;
+                font-size: 40px;
+                color: rgba(47, 237, 127, 0.1);
+                pointer-events: none;
+              "
+              >&lt;/&gt;</span
+            >
+            <div
+              style="
+                position: relative;
+                z-index: 1;
+                max-width: 1200px;
+                margin: 0 auto;
               "
             >
               <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 10px;
-                  margin-bottom: 18px;
-                "
-              >
-                <span
-                  style="width: 26px; height: 1px; background: #2fed7f"
-                ></span>
-                <span
-                  style="
-                    font-family: &quot;IBM Plex Mono&quot;, monospace;
-                    font-size: 13px;
-                    letter-spacing: 0.2em;
-                    text-transform: uppercase;
-                    color: #2fed7f;
-                  "
-                  >Témoignages</span
-                >
-              </div>
-              <h2
-                style="
-                  font-family: &quot;Space Grotesk&quot;, sans-serif;
-                  font-weight: 600;
-                  font-size: clamp(30px, 4.4vw, 52px);
-                  line-height: 1.06;
-                  letter-spacing: -0.015em;
-                  margin: 0;
-                  color: #fff;
-                "
-              >
-                Ce que disent<br />nos clients.
-              </h2>
-            </div>
-
-            <div>
-              <div
-                style="
-                  position: relative;
-                  overflow: hidden;
-                  border-radius: 18px;
-                "
+                style="max-width: 680px; margin-bottom: clamp(40px, 5vw, 60px)"
               >
                 <div
-                  style="display:flex;transition:transform .55s cubic-bezier(.4,0,.2,1);transform:{{ trackTransform }};"
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    margin-bottom: 18px;
+                  "
                 >
-                  <sc-for
-                    list="{{ testimonials }}"
-                    as="t"
-                    hint-placeholder-count="3"
+                  <span
+                    style="width: 26px; height: 1px; background: #2fed7f"
+                  ></span>
+                  <span
+                    style="
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 13px;
+                      letter-spacing: 0.2em;
+                      text-transform: uppercase;
+                      color: #2fed7f;
+                    "
+                    >Témoignages</span
                   >
-                    <figure
-                      style="
-                        flex: 0 0 100%;
-                        box-sizing: border-box;
-                        margin: 0;
-                        display: flex;
-                        flex-direction: column;
-                        padding: clamp(32px, 4.5vw, 56px);
-                        border-radius: 18px;
-                        background: linear-gradient(
-                          160deg,
-                          rgba(255, 255, 255, 0.05),
-                          rgba(255, 255, 255, 0.012)
-                        );
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                      "
+                </div>
+                <h2
+                  style="
+                    font-family: &quot;Space Grotesk&quot;, sans-serif;
+                    font-weight: 600;
+                    font-size: clamp(30px, 4.4vw, 52px);
+                    line-height: 1.06;
+                    letter-spacing: -0.015em;
+                    margin: 0;
+                    color: #fff;
+                  "
+                >
+                  Ce que disent<br />nos clients.
+                </h2>
+              </div>
+
+              <div>
+                <div
+                  style="
+                    position: relative;
+                    overflow: hidden;
+                    border-radius: 18px;
+                  "
+                >
+                  <div
+                    style="display:flex;transition:transform .55s cubic-bezier(.4,0,.2,1);transform:{{ trackTransform }};"
+                  >
+                    <sc-for
+                      list="{{ testimonials }}"
+                      as="t"
+                      hint-placeholder-count="3"
                     >
-                      <span
+                      <figure
                         style="
-                          font-family: &quot;Space Grotesk&quot;, sans-serif;
-                          font-weight: 700;
-                          font-size: 60px;
-                          line-height: 0.5;
-                          color: rgba(47, 237, 127, 0.5);
-                          height: 34px;
+                          flex: 0 0 100%;
+                          box-sizing: border-box;
+                          margin: 0;
+                          display: flex;
+                          flex-direction: column;
+                          padding: clamp(32px, 4.5vw, 56px);
+                          border-radius: 18px;
+                          background: linear-gradient(
+                            160deg,
+                            rgba(255, 255, 255, 0.05),
+                            rgba(255, 255, 255, 0.012)
+                          );
+                          border: 1px solid rgba(255, 255, 255, 0.1);
                         "
-                        >"</span
                       >
-                      <blockquote
-                        onClick="{{ t.openModal }}"
-                        title="{{ t.quote }}"
-                        style="
-                          font-family: &quot;Space Grotesk&quot;, sans-serif;
+                        <span
+                          style="
+                            font-family: &quot;Space Grotesk&quot;, sans-serif;
+                            font-weight: 700;
+                            font-size: 60px;
+                            line-height: 0.5;
+                            color: rgba(47, 237, 127, 0.5);
+                            height: 34px;
+                          "
+                          >"</span
+                        >
+                        <blockquote
+                          onClick="{{ t.openModal }}"
+                          title="{{ t.quote }}"
+                          style='
+                          font-family: "Space Grotesk", sans-serif;
                           font-weight: 500;
                           font-size: clamp(19px, 2.1vw, 26px);
                           line-height: 1.5;
@@ -1831,148 +1829,149 @@
                           -webkit-line-clamp: 4;
                           overflow: hidden;
                           min-height: 6em;
-                        "
-                      >
-                        {{ t.display }}
-                      </blockquote>
-                      <div style="min-height: 22px; margin: 0 0 24px">
-                        <sc-if value="{{ t.truncated }}">
-                          <button
-                            type="button"
-                            onClick="{{ t.openModal }}"
-                            style="
-                              align-self: flex-start;
-                              padding: 0;
-                              border: 0;
-                              background: transparent;
-                              color: #2fed7f;
-                              font-family: &quot;Space Grotesk&quot;, sans-serif;
-                              font-weight: 600;
-                              font-size: 14px;
-                              letter-spacing: 0.02em;
-                              cursor: pointer;
-                            "
-                            style-hover="color:#7ff2b3;"
-                          >
-                            Lire la suite →
-                          </button>
-                        </sc-if>
-                      </div>
-                      <figcaption
-                        style="
-                          display: flex;
-                          align-items: center;
-                          gap: 14px;
-                          margin-top: auto;
-                          padding-top: 24px;
-                          border-top: 1px solid rgba(255, 255, 255, 0.08);
-                        "
-                      >
-                        <span
-                          style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:{{ t.bg }};display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;color:#08111E;"
-                          >{{ t.initials }}</span
+                        '
                         >
-                        <span style="line-height: 1.35">
+                          {{ t.display }}
+                        </blockquote>
+                        <div style="min-height: 22px; margin: 0 0 24px">
+                          <sc-if value="{{ t.truncated }}">
+                            <button
+                              type="button"
+                              onClick="{{ t.openModal }}"
+                              style="
+                                align-self: flex-start;
+                                padding: 0;
+                                border: 0;
+                                background: transparent;
+                                color: #2fed7f;
+                                font-family:
+                                  &quot;Space Grotesk&quot;, sans-serif;
+                                font-weight: 600;
+                                font-size: 14px;
+                                letter-spacing: 0.02em;
+                                cursor: pointer;
+                              "
+                              style-hover="color:#7ff2b3;"
+                            >
+                              Lire la suite →
+                            </button>
+                          </sc-if>
+                        </div>
+                        <figcaption
+                          style="
+                            display: flex;
+                            align-items: center;
+                            gap: 14px;
+                            margin-top: auto;
+                            padding-top: 24px;
+                            border-top: 1px solid rgba(255, 255, 255, 0.08);
+                          "
+                        >
                           <span
-                            style="
-                              display: block;
-                              font-family:
-                                &quot;Space Grotesk&quot;, sans-serif;
-                              font-weight: 600;
-                              font-size: 16px;
-                              color: #fff;
-                            "
-                            >{{ t.author }}</span
+                            style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:{{ t.bg }};display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;color:#08111E;"
+                            >{{ t.initials }}</span
                           >
-                          <span
-                            style="
-                              display: block;
-                              font-size: 13.5px;
-                              color: #8fa0b5;
-                            "
-                            >{{ t.company }}</span
-                          >
-                        </span>
-                      </figcaption>
-                    </figure>
-                  </sc-for>
+                          <span style="line-height: 1.35">
+                            <span
+                              style="
+                                display: block;
+                                font-family:
+                                  &quot;Space Grotesk&quot;, sans-serif;
+                                font-weight: 600;
+                                font-size: 16px;
+                                color: #fff;
+                              "
+                              >{{ t.author }}</span
+                            >
+                            <span
+                              style="
+                                display: block;
+                                font-size: 13.5px;
+                                color: #8fa0b5;
+                              "
+                              >{{ t.company }}</span
+                            >
+                          </span>
+                        </figcaption>
+                      </figure>
+                    </sc-for>
+                  </div>
                 </div>
-              </div>
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  gap: 22px;
-                  margin-top: 30px;
-                "
-              >
-                <button
-                  type="button"
-                  onClick="{{ tPrev }}"
-                  aria-label="Précédent"
+                <div
                   style="
-                    width: 46px;
-                    height: 46px;
-                    flex-shrink: 0;
-                    border-radius: 50%;
-                    border: 1px solid rgba(255, 255, 255, 0.16);
-                    background: rgba(255, 255, 255, 0.04);
-                    color: #eaf0f7;
-                    cursor: pointer;
-                    font-size: 18px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    transition:
-                      background 0.25s,
-                      border-color 0.25s,
-                      color 0.25s;
+                    gap: 22px;
+                    margin-top: 30px;
                   "
-                  style-hover="background:#2FED7F;border-color:#2FED7F;color:#08111E;"
                 >
-                  ←
-                </button>
-                <div style="display: flex; align-items: center; gap: 9px">
-                  <sc-for list="{{ dots }}" as="d" hint-placeholder-count="3">
-                    <button
-                      type="button"
-                      onClick="{{ d.onClick }}"
-                      aria-label="Aller au témoignage"
-                      style="height:8px;width:{{ d.w }};border:0;padding:0;border-radius:100px;background:{{ d.bg }};cursor:pointer;transition:width .3s,background .3s;"
-                    ></button>
-                  </sc-for>
+                  <button
+                    type="button"
+                    onClick="{{ tPrev }}"
+                    aria-label="Précédent"
+                    style="
+                      width: 46px;
+                      height: 46px;
+                      flex-shrink: 0;
+                      border-radius: 50%;
+                      border: 1px solid rgba(255, 255, 255, 0.16);
+                      background: rgba(255, 255, 255, 0.04);
+                      color: #eaf0f7;
+                      cursor: pointer;
+                      font-size: 18px;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      transition:
+                        background 0.25s,
+                        border-color 0.25s,
+                        color 0.25s;
+                    "
+                    style-hover="background:#2FED7F;border-color:#2FED7F;color:#08111E;"
+                  >
+                    ←
+                  </button>
+                  <div style="display: flex; align-items: center; gap: 9px">
+                    <sc-for list="{{ dots }}" as="d" hint-placeholder-count="3">
+                      <button
+                        type="button"
+                        onClick="{{ d.onClick }}"
+                        aria-label="Aller au témoignage"
+                        style="height:8px;width:{{ d.w }};border:0;padding:0;border-radius:100px;background:{{ d.bg }};cursor:pointer;transition:width .3s,background .3s;"
+                      ></button>
+                    </sc-for>
+                  </div>
+                  <button
+                    type="button"
+                    onClick="{{ tNext }}"
+                    aria-label="Suivant"
+                    style="
+                      width: 46px;
+                      height: 46px;
+                      flex-shrink: 0;
+                      border-radius: 50%;
+                      border: 1px solid rgba(255, 255, 255, 0.16);
+                      background: rgba(255, 255, 255, 0.04);
+                      color: #eaf0f7;
+                      cursor: pointer;
+                      font-size: 18px;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      transition:
+                        background 0.25s,
+                        border-color 0.25s,
+                        color 0.25s;
+                    "
+                    style-hover="background:#2FED7F;border-color:#2FED7F;color:#08111E;"
+                  >
+                    →
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick="{{ tNext }}"
-                  aria-label="Suivant"
-                  style="
-                    width: 46px;
-                    height: 46px;
-                    flex-shrink: 0;
-                    border-radius: 50%;
-                    border: 1px solid rgba(255, 255, 255, 0.16);
-                    background: rgba(255, 255, 255, 0.04);
-                    color: #eaf0f7;
-                    cursor: pointer;
-                    font-size: 18px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition:
-                      background 0.25s,
-                      border-color 0.25s,
-                      color 0.25s;
-                  "
-                  style-hover="background:#2FED7F;border-color:#2FED7F;color:#08111E;"
-                >
-                  →
-                </button>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
         </sc-if>
 
         <!-- CONFIANCE (bleu foncé B) -->
@@ -2120,7 +2119,7 @@
                   "
                 >
                   <img
-                    src="assets/logo-numeum.png"
+                    src="/assets/logo-numeum.png"
                     alt="Membre Numeum"
                     style="height: 92px; width: auto; display: block"
                   />
@@ -2176,7 +2175,7 @@
                   "
                 >
                   <img
-                    src="assets/logo-francenum.png"
+                    src="/assets/logo-francenum.png"
                     alt="Labellisée France Num"
                     style="height: 54px; width: auto; display: block"
                   />
@@ -2448,7 +2447,7 @@
           >
             <div>
               <img
-                src="assets/codialis-white.png"
+                src="/assets/codialis-white.png"
                 alt="Codialis"
                 style="
                   height: 28px;
@@ -2469,7 +2468,10 @@
                 Les plateformes digitales qui font avancer les entreprises.
                 Architecture-first, construites pour durer.
               </p>
-              <div data-cod-footer-socials style="display: flex; gap: 12px; margin-top: 22px">
+              <div
+                data-cod-footer-socials
+                style="display: flex; gap: 12px; margin-top: 22px"
+              >
                 <a
                   href="https://www.linkedin.com/company/109392264/"
                   target="_blank"
@@ -2812,7 +2814,7 @@
             bg: i === ti ? '#2FED7F' : 'rgba(255,255,255,.22)',
           }));
           const defaultTeam = [
-            { slot: 'team-jg', initials: 'JG', name: 'Jayan Grondin', role: 'Fondateur · Architecte', bg: '#2FED7F', image: 'assets/jayan-grondin.png' },
+            { slot: 'team-jg', initials: 'JG', name: 'Jayan Grondin', role: 'Fondateur · Architecte', bg: '#2FED7F', image: '/assets/jayan-grondin.png' },
             { slot: 'team-gw', initials: 'GW', name: 'Gabrielle Walgraef', role: 'Lead Développement', bg: '#7FE6C4' },
             { slot: 'team-dly', initials: 'DL', name: 'Denis Lam-Yam', role: 'Ingénieur IA · Data', bg: '#A7D8F0' },
             { slot: 'team-lm', initials: 'LM', name: 'Luc Moutanin', role: 'Apprenti Ingénieur IA · Data', bg: '#C9C2F5' },
@@ -2895,7 +2897,7 @@
           });
         }
         componentDidMount() {
-          const apiBase = location.port === '3001' ? '' : 'http://localhost:3001';
+          const apiBase = location.port === '3001' ? '' : 'https://landingback.codialis.com';
           // L'équipe affichée vient des comptes marqués « à la une » dans
           // l'admin (plus de liste content/team). On calcule ici l'avatar
           // (initiales + couleur) que l'ancienne liste fournissait.
@@ -3263,24 +3265,29 @@
         function scrollNow(behavior) {
           var el = target();
           if (!el) return false;
-          el.scrollIntoView({ behavior: behavior || 'instant', block: 'start' });
+          el.scrollIntoView({
+            behavior: behavior || "instant",
+            block: "start",
+          });
           return true;
         }
         // On load the element appears late (async render) and its final
         // position keeps shifting as content mounts — so once it exists, keep
         // re-aligning for a short settle window instead of scrolling just once.
         if (location.hash) {
-          var elapsed = 0;      // total ticks (cap at 6s)
-          var since = -1;        // ticks since element first appeared
+          var elapsed = 0; // total ticks (cap at 6s)
+          var since = -1; // ticks since element first appeared
           var iv = setInterval(function () {
             elapsed++;
-            if (scrollNow('instant') && since < 0) since = 0;
+            if (scrollNow("instant") && since < 0) since = 0;
             if (since >= 0) since++;
             // stop ~1.2s after first appearance, or 6s hard cap
             if (since > 12 || elapsed > 60) clearInterval(iv);
           }, 100);
         }
-        window.addEventListener('hashchange', function () { scrollNow('smooth'); });
+        window.addEventListener("hashchange", function () {
+          scrollNow("smooth");
+        });
       })();
     </script>
   </body>

@@ -116,7 +116,7 @@
             "
           >
             <img
-              src="assets/codialis-white.png"
+              src="/assets/codialis-white.png"
               alt="Codialis"
               style="height: 26px; width: auto; display: block"
             />
@@ -1002,7 +1002,7 @@
           >
             <div>
               <img
-                src="assets/codialis-white.png"
+                src="/assets/codialis-white.png"
                 alt="Codialis"
                 style="
                   height: 28px;
@@ -1023,7 +1023,10 @@
                 Les plateformes digitales qui font avancer les entreprises.
                 Architecture-first, construites pour durer.
               </p>
-              <div data-cod-footer-socials style="display: flex; gap: 12px; margin-top: 22px">
+              <div
+                data-cod-footer-socials
+                style="display: flex; gap: 12px; margin-top: 22px"
+              >
                 <a
                   href="https://www.linkedin.com/company/109392264/"
                   target="_blank"
@@ -1330,10 +1333,19 @@
               >
                 {{ modalExcerpt }}
               </p>
-              <sc-if value="{{ modalHasSource }}" hint-placeholder-val="{{ false }}">
-                <p style="margin: 18px 0 0; font-size: 13px; color: #8fa0b5;">
+              <sc-if
+                value="{{ modalHasSource }}"
+                hint-placeholder-val="{{ false }}"
+              >
+                <p style="margin: 18px 0 0; font-size: 13px; color: #8fa0b5">
                   via
-                  <a href="{{ modalSource }}" target="_blank" rel="noopener noreferrer" style="color: #2fed7f; text-decoration: none;">{{ modalSourceHost }} ↗</a>
+                  <a
+                    href="{{ modalSource }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="color: #2fed7f; text-decoration: none"
+                    >{{ modalSourceHost }} ↗</a
+                  >
                 </p>
               </sc-if>
             </div>
@@ -1540,7 +1552,7 @@
               try { email = new FormData(form).get('email').toString().trim(); } catch (err) {}
               if (!email) return;
               this.setState({ nlBusy: true, nlError: '' });
-              const apiBase = location.port === '3001' ? '' : 'http://localhost:3001';
+              const apiBase = location.port === '3001' ? '' : 'https://landingback.codialis.com';
               fetch(apiBase + '/api/newsletter/subscribe', {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
@@ -1570,7 +1582,7 @@
         }
 
         componentDidMount() {
-          const apiBase = location.port === '3001' ? '' : 'http://localhost:3001';
+          const apiBase = location.port === '3001' ? '' : 'https://landingback.codialis.com';
           fetch(apiBase + '/api/content/blog')
             .then((r) => (r.ok ? r.json() : []))
             .then((list) => { if (Array.isArray(list) && list.length) this.setState({ custom: list }); })

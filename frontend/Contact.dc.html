@@ -134,7 +134,7 @@
             "
           >
             <img
-              src="assets/codialis-white.png"
+              src="/assets/codialis-white.png"
               alt="Codialis"
               style="height: 26px; width: auto; display: block"
             />
@@ -1429,7 +1429,7 @@
           >
             <div>
               <img
-                src="assets/codialis-white.png"
+                src="/assets/codialis-white.png"
                 alt="Codialis"
                 style="
                   height: 28px;
@@ -1450,7 +1450,10 @@
                 Les plateformes digitales qui font avancer les entreprises.
                 Architecture-first, construites pour durer.
               </p>
-              <div data-cod-footer-socials style="display: flex; gap: 12px; margin-top: 22px">
+              <div
+                data-cod-footer-socials
+                style="display: flex; gap: 12px; margin-top: 22px"
+              >
                 <a
                   href="https://www.linkedin.com/company/109392264/"
                   target="_blank"
@@ -1740,7 +1743,7 @@
               this.setState({ submitted: true, sentName: name });
               try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) {}
               try {
-                const apiBase = location.port === '3001' ? '' : 'http://localhost:3001';
+                const apiBase = location.port === '3001' ? '' : 'https://landingback.codialis.com';
                 fetch(apiBase + '/api/contact', {
                   method: 'POST',
                   headers: { 'content-type': 'application/json' },
@@ -1839,7 +1842,7 @@
         // En cas d'échec ou d'absence, on garde les valeurs par défaut de l'état.
         loadSocials() {
           try {
-            const apiBase = location.port === '3001' ? '' : 'http://localhost:3001';
+            const apiBase = location.port === '3001' ? '' : 'https://landingback.codialis.com';
             fetch(apiBase + '/api/settings/contact_socials')
               .then((r) => (r.ok ? r.json() : null))
               .then((data) => {

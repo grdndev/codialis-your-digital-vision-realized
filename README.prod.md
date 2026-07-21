@@ -29,7 +29,7 @@ un **MySQL managé** créé dans hPanel.
 │   ├── src/index.js  <- fichier de démarrage
 │   ├── db/schema.sql
 │   └── .env          <- secrets (ou variables via hPanel)
-└── frontend/         <- servi par le backend (www, assets, public)
+└── frontend/         <- servi par le backend (www, ../assets, public)
 ```
 
 ---
@@ -171,7 +171,7 @@ curl -s https://ton-domaine.com/api/health > /dev/null
 | Cookie de session pas gardé (déconnexion)  | `NODE_ENV=production` manquant (cookie `Secure` + `trust proxy`).   |
 | `npm install` casse sur `bcrypt`           | Compilation native impossible → remplacer par `bcryptjs` (même API, import à changer). |
 | Page `/admin` ou pages blanches            | CSP doit autoriser `unpkg` (déjà géré par `baseHelmet`) — vérifier qu'aucun proxy ne réécrit les en-têtes. |
-| 404 sur les images `/assets` ou `/public`  | Dossier `frontend/` pas déployé à côté de `backend/`.              |
+| 404 sur les images `/../assets` ou `/public`  | Dossier `frontend/` pas déployé à côté de `backend/`.              |
 
 ---
 

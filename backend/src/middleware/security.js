@@ -1,7 +1,7 @@
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
-const isProd = process.env.NODE_ENV === 'production';
+const isProd = process.env.NODE_ENV === "production";
 
 // Fail fast: a missing or default JWT secret means anyone can forge a valid
 // admin session. Refuse to boot rather than run with a guessable secret.
@@ -10,8 +10,8 @@ export function assertSecrets() {
   const weak = !secret || secret.length < 32 || /change_?me/i.test(secret);
   if (weak) {
     throw new Error(
-      'JWT_SECRET is missing, too short (<32 chars), or still the placeholder. ' +
-        'Generate one: node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'hex\'))"',
+      "JWT_SECRET is missing, too short (<32 chars), or still the placeholder. " +
+        "Generate one: node -e \"console.log(require('crypto').randomBytes(48).toString('hex'))\"",
     );
   }
 }
@@ -30,14 +30,30 @@ export const baseHelmet = helmet({
       // and binds template handlers as inline on* attributes. The framework
       // cannot run without them, so the CSP's XSS value here comes from the
       // remaining directives (origin allowlist, frame-ancestors, object-src…).
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://unpkg.com', 'https://cdn.jsdelivr.net', 'https://assets.calendly.com'],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "'unsafe-eval'",
+        "https://unpkg.com",
+        "https://cdn.jsdelivr.net",
+        "https://../assets.calendly.com",
+      ],
       scriptSrcAttr: ["'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://assets.calendly.com'],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
-      imgSrc: ["'self'", 'data:', 'https:'],
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://fonts.googleapis.com",
+        "https://../assets.calendly.com",
+      ],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+      imgSrc: ["'self'", "data:", "https:"],
       // world map fetches its TopoJSON atlas from jsdelivr at runtime (index.html)
-      connectSrc: ["'self'", 'https://calendly.com', 'https://cdn.jsdelivr.net'],
-      frameSrc: ["'self'", 'https://calendly.com'],
+      connectSrc: [
+        "'self'",
+        "https://calendly.com",
+        "https://cdn.jsdelivr.net",
+      ],
+      frameSrc: ["'self'", "https://calendly.com"],
       frameAncestors: ["'self'"],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
@@ -48,7 +64,7 @@ export const baseHelmet = helmet({
   crossOriginEmbedderPolicy: false,
   // HSTS only makes sense once served over HTTPS in production.
   hsts: isProd ? { maxAge: 15552000, includeSubDomains: true } : false,
-  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
 });
 
 // The admin console must never be embedded in a frame and forbids proxy/browser
@@ -66,11 +82,16 @@ export function adminSecurity(req, res, next) {
         // Admin console runs the same dc-runtime — see the note on baseHelmet.
         // unpkg is required (React/ReactDOM/Babel); the tighter allowlist still
         // drops jsdelivr/Calendly (admin uses neither) and forbids framing.
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://unpkg.com'],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "'unsafe-eval'",
+          "https://unpkg.com",
+        ],
         scriptSrcAttr: ["'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-        fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
-        imgSrc: ["'self'", 'data:', 'https:'],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+        imgSrc: ["'self'", "data:", "https:"],
         connectSrc: ["'self'"],
         frameAncestors: ["'none'"],
         objectSrc: ["'none'"],
@@ -81,10 +102,10 @@ export function adminSecurity(req, res, next) {
     },
     crossOriginEmbedderPolicy: false,
     hsts: isProd ? { maxAge: 15552000, includeSubDomains: true } : false,
-    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-    frameguard: { action: 'deny' },
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    frameguard: { action: "deny" },
   })(req, res, () => {
-    res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.setHeader("Cache-Control", "no-store, max-age=0");
     next();
   });
 }
@@ -92,7 +113,7 @@ export function adminSecurity(req, res, next) {
 // Never let a proxy or browser cache authenticated API payloads (HR data,
 // account lists, etc.).
 export function noStore(req, res, next) {
-  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader("Cache-Control", "no-store, max-age=0");
   next();
 }
 
@@ -104,7 +125,9 @@ export const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
-  message: { error: 'Trop de tentatives de connexion — réessayez dans 15 minutes' },
+  message: {
+    error: "Trop de tentatives de connexion — réessayez dans 15 minutes",
+  },
 });
 
 // Tighter cap on the account-recovery / verification endpoints to stop email
@@ -114,5 +137,5 @@ export const sensitiveLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Trop de requêtes — réessayez plus tard' },
+  message: { error: "Trop de requêtes — réessayez plus tard" },
 });
