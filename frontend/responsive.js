@@ -25,6 +25,14 @@
     "  .cod-mobilebar{display:flex !important;}",
     "}",
 
+    /* Desktop pill: keep the SAME look as the 16" version on every computer
+       screen, and guarantee the "Prendre RDV" CTA never leaves the pill.
+       The pill is centered and uniformly scaled down (--codnav-scale, set in
+       JS) to fit the viewport. !important so the scale survives DCLogic
+       re-rendering the nav's inline style. */
+    "#cod-nav{left:50% !important;transform:translateX(-50%) scale(var(--codnav-scale,1)) !important;",
+    "  transform-origin:50% 0 !important;max-width:none !important;width:max-content !important;}",
+
     /* Phone: auto-fit grids and small form pairs go single column. */
     "@media (max-width:600px){",
     '  [style*="minmax("]{grid-template-columns:1fr !important;}',
@@ -192,11 +200,58 @@
     return true;
   }
 
+  // ---- 3. Fit the desktop pill (scale-to-fit, identical look everywhere) --
+  // offsetWidth ignores CSS transforms, so it always reports the pill's true
+  // (unscaled) content width. We derive the scale that makes it fit the
+  // viewport minus 16px gutters each side, capped at 1 (never enlarge), so
+  // the CTA can never spill outside the pill.
+  var fitScheduled = false;
+  function fitNav() {
+    var nav = document.getElementById("cod-nav");
+    if (!nav || window.innerWidth <= MOBILE) return; // pill hidden on mobile
+    var natural = nav.offsetWidth;
+    if (!natural) return;
+    var avail = window.innerWidth - 16;
+    var s = natural > avail ? Math.round((avail / natural) * 1000) / 1000 : 1;
+    document.documentElement.style.setProperty("--codnav-scale", s);
+  }
+  function scheduleFit() {
+    if (fitScheduled) return;
+    fitScheduled = true;
+    requestAnimationFrame(function () {
+      fitScheduled = false;
+      fitNav();
+    });
+  }
+
+  function initFit() {
+    var nav = document.getElementById("cod-nav");
+    if (!nav) return false;
+    fitNav();
+    // Recompute when the nav's contents change (the FR/EN toggle changes the
+    // link labels, hence the natural width). We only mutate :root's custom
+    // property, never the nav, so this observer cannot loop.
+    new MutationObserver(scheduleFit).observe(nav, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+    window.addEventListener("resize", scheduleFit);
+    // Web fonts load after first paint and widen the text; recompute then.
+    if (document.fonts && document.fonts.ready)
+      document.fonts.ready.then(scheduleFit);
+    return true;
+  }
+
   function init() {
-    if (build()) return;
+    var built = build();
+    var fitted = initFit();
+    if (built && fitted) return;
     var tries = 0;
     var t = setInterval(function () {
-      if (build() || ++tries > 40) clearInterval(t);
+      built = built || build();
+      fitted = fitted || initFit();
+      if ((built && fitted) || ++tries > 40) clearInterval(t);
     }, 150);
   }
   if (document.readyState === "loading")

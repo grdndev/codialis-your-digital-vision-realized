@@ -155,12 +155,13 @@
         <nav
           id="cod-nav"
           style="
+           
             position: fixed;
             top: 18px;
-            left: 50%;
             transform: translateX(-50%);
             z-index: 100;
             display: flex;
+            justify-content: space-between;
             align-items: center;
             gap: clamp(14px, 2vw, 28px);
             padding: 9px 9px 9px 22px;
@@ -238,7 +239,7 @@
             >
               EN
             </button>
-          </div>
+           </div>
           <a
             href="https://calendly.com/contact-codialis/30min"
             style="
@@ -262,6 +263,7 @@
               >→</span
             ></a
           >
+          
         </nav>
 
         <!-- HERO (spotlight vert) -->
@@ -2835,11 +2837,11 @@
               { initials: 'LM', bg: '#C9C2F5' },
             ],
             navLinks: [
-              { label: 'Expertise', href: '#expertises' },
-              { label: 'Portfolio', href: '/portfolio' },
-              { label: 'Blog', href: '/blog' },
-              { label: 'Financement', href: '/financement' },
-              { label: 'Contact', href: '/contact' },
+              { label: 'Expertise', href: '#expertises', color: '#2FED7F' },
+              { label: 'Portfolio', href: '/portfolio', color: '#C4CFDD' },
+              { label: 'Blog', href: '/blog', color: '#C4CFDD' },
+              { label: 'Financement', href: '/financement', color: '#C4CFDD' },
+              { label: 'Contact', href: '/contact', color: '#C4CFDD' },
             ],
             heroChecks: ['Membre Numeum', 'Labellisée France Num', 'Architecture-first'],
             footerExp: ['Développement SaaS', 'Applications mobiles', 'Intelligence artificielle', 'CRM & ERP sur mesure'],

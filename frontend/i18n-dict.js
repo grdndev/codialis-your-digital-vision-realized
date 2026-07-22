@@ -203,7 +203,7 @@ window.__CODIALIS_I18N__ = {
   "Le site www.codialis.com est susceptible d'utiliser des cookies à des fins de mesure d'audience, d'amélioration de l'expérience utilisateur ou de mémorisation de préférences de navigation.": "The website www.codialis.com may use cookies for the purposes of audience measurement, improving the user experience, or remembering browsing preferences.",
   "Le site www.codialis.com peut contenir des liens vers des sites tiers. CODIALIS n'exerce aucun contrôle sur ces sites et décline toute responsabilité quant à leur contenu, leur disponibilité ou leur politique de confidentialité.": "The website www.codialis.com may contain links to third-party sites. CODIALIS exercises no control over these sites and disclaims all liability regarding their content, availability or privacy policy.",
   "Le site www.codialis.com peut utiliser les types de cookies suivants :": "The website www.codialis.com may use the following types of cookies:",
-  "Lead Développement": "Development Lead",
+  "Cheffe de projet": "Projet Lead",
   "Les champs marqués d'un": "Fields marked with a",
   "les cookies de mesure d'audience (statistiques de fréquentation anonymisées) ;": "audience-measurement cookies (anonymized traffic statistics);",
   "les cookies de préférences permettant de mémoriser vos choix de navigation.": "preference cookies that remember your browsing choices.",
