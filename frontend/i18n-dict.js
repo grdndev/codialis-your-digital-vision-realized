@@ -364,6 +364,7 @@ window.__CODIALIS_I18N__ = {
   "Votre message": "Your message",
   "Votre message est arrivé jusqu'à nous. Un membre de l'équipe revient vers vous sous 24h avec une première lecture de votre besoin.": "Your message has reached us. A member of the team will get back to you within 24 hours with an initial read of your needs.",
   "Votre projet mérite d'être financé.": "Your project deserves to be funded.",
+  "Votre projet mérite d'être": "Your project deserves to be",
   "Votre projet mérite un partenaire": "Your project deserves a partner",
   "Votre projet mérite un partenaire qui a fait ses preuves.": "Your project deserves a partner with a proven track record.",
   "Votre projet sera le prochain.": "Your project will be next.",
