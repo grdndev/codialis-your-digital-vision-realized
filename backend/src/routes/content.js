@@ -36,6 +36,10 @@ router.get('/:type', async (req, res) => {
     'SELECT id, data, views FROM content WHERE type = $1 ORDER BY created_at DESC',
     [req.params.type],
   );
+  // Contenu public peu changeant : autoriser le cache navigateur (override du
+  // no-store global). Le navigateur sert depuis son cache pendant 60s puis
+  // rafraîchit en fond -> chargement quasi instantané sur visites répétées.
+  res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
   res.json(rows.map(shape));
 });
 

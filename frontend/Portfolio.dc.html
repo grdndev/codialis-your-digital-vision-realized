@@ -8,10 +8,16 @@
     <script src="./i18n-dict.js"></script>
     <script src="./i18n.js"></script>
     <script src="./footer-socials.js"></script>
+    <title>Codialis</title>
   </head>
   <body>
     <x-dc>
       <helmet>
+        <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon_io/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon_io/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon_io/favicon-16x16.png" />
+        <link rel="icon" href="/assets/favicon_io/favicon.ico" sizes="any" />
+        <link rel="manifest" href="/assets/favicon_io/site.webmanifest" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -85,7 +91,7 @@
         <script src="image-slot.js"></script>
       </helmet>
 
-      <div style="position: relative; width: 100%; max-width: 100%">
+      <div style="position: relative; width: 100%; max-width: 100%; min-height: 100vh; opacity: {{ pageOpacity }}; transition: opacity 0.35s ease;">
         <!-- NAV -->
         <nav
           id="cod-nav"
@@ -96,6 +102,7 @@
             transform: translateX(-50%);
             z-index: 100;
             display: flex;
+            justify-content: space-between;
             align-items: center;
             gap: clamp(14px, 2vw, 28px);
             padding: 9px 9px 9px 22px;
@@ -817,69 +824,6 @@
               </div>
             </sc-if>
 
-            <sc-if value="{{ noPortfolio }}" hint-placeholder-val="{{ false }}">
-              <div
-                data-reveal=""
-                style="
-                  opacity: 0;
-                  transform: translateY(28px);
-                  transition:
-                    opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-                    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
-                  margin: clamp(40px, 6vw, 80px) 0;
-                  padding: clamp(40px, 6vw, 72px) clamp(24px, 4vw, 48px);
-                  text-align: center;
-                  border-radius: 20px;
-                  border: 1px dashed rgba(47, 237, 127, 0.32);
-                  background: linear-gradient(
-                    160deg,
-                    rgba(47, 237, 127, 0.06),
-                    rgba(255, 255, 255, 0.012)
-                  );
-                "
-              >
-                <span
-                  style="
-                    display: inline-block;
-                    font-family: &quot;IBM Plex Mono&quot;, monospace;
-                    font-size: 11px;
-                    letter-spacing: 0.16em;
-                    text-transform: uppercase;
-                    color: #2fed7f;
-                    background: rgba(47, 237, 127, 0.12);
-                    padding: 5px 12px;
-                    border-radius: 100px;
-                    margin-bottom: 18px;
-                  "
-                  >En cours d'ajout</span
-                >
-                <h2
-                  style="
-                    font-family: &quot;Space Grotesk&quot;, sans-serif;
-                    font-weight: 600;
-                    font-size: clamp(22px, 3vw, 34px);
-                    line-height: 1.12;
-                    letter-spacing: -0.015em;
-                    margin: 0 0 12px;
-                    color: #fff;
-                  "
-                >
-                  Nos réalisations arrivent bientôt.
-                </h2>
-                <p
-                  style="
-                    font-size: 15px;
-                    line-height: 1.6;
-                    color: #98a6ba;
-                    margin: 0 auto;
-                    max-width: 520px;
-                  "
-                >
-                  Nous préparons la sélection de nos projets. Revenez très
-                  prochainement — ou contactez-nous pour discuter du vôtre.
-                </p>
-              </div>
-            </sc-if>
           </div>
         </section>
 
@@ -1527,7 +1471,7 @@
       data-props='{"$preview":{"width":1280,"height":900},"reduceMotion":{"editor":"boolean","default":false,"tsType":"boolean","section":"Accessibilité"}}'
     >
       class Component extends DCLogic {
-        state = { lang: (window.CodialisI18n ? window.CodialisI18n.get() : 'fr'), custom: [], settings: {}, modalProject: null };
+        state = { lang: (window.CodialisI18n ? window.CodialisI18n.get() : 'fr'), custom: [], settings: {}, modalProject: null, ready: false };
         renderVals() {
           const lang = this.state.lang;
           const setLang = (l) => () => { try { localStorage.setItem('codialis-lang', l); } catch (e) {} location.reload(); };
@@ -1617,6 +1561,7 @@
             { label: 'Contact', href: '/contact', color: '#C4CFDD' },
           ];
           return {
+            pageOpacity: this.state.ready ? '1' : '0',
             year: new Date().getFullYear(),
             setLangFr: setLang('fr'),
             setLangEn: setLang('en'),
@@ -1651,14 +1596,36 @@
         }
         componentDidMount() {
           const apiBase = location.port === '3001' ? '' : 'https://landingback.codialis.com';
-          fetch(apiBase + '/api/content/portfolio')
-            .then((r) => (r.ok ? r.json() : []))
-            .then((list) => { if (Array.isArray(list) && list.length) this.setState({ custom: list }); })
-            .catch(() => {});
-          fetch(apiBase + '/api/settings/portfolio_page')
-            .then((r) => (r.ok ? r.json() : {}))
-            .then((cfg) => { if (cfg && typeof cfg === 'object') this.setState({ settings: cfg }); })
-            .catch(() => {});
+          const CK = 'codialis-portfolio-cache';
+          // 1) Cache localStorage : on affiche IMMÉDIATEMENT les dernières
+          // données connues (stale-while-revalidate), page instantanée.
+          try {
+            const cached = JSON.parse(localStorage.getItem(CK) || 'null');
+            if (cached && typeof cached === 'object') {
+              const st = { ready: true };
+              if (Array.isArray(cached.custom) && cached.custom.length) st.custom = cached.custom;
+              if (cached.settings && typeof cached.settings === 'object') st.settings = cached.settings;
+              this.setState(st);
+            }
+          } catch (e) {}
+          // 2) Fetch frais en fond : met à jour l'affichage + rafraîchit le cache.
+          Promise.all([
+            fetch(apiBase + '/api/content/portfolio').then((r) => (r.ok ? r.json() : [])).catch(() => []),
+            fetch(apiBase + '/api/settings/portfolio_page').then((r) => (r.ok ? r.json() : {})).catch(() => ({})),
+          ]).then(([list, cfg]) => {
+            const st = { ready: true };
+            if (Array.isArray(list) && list.length) st.custom = list;
+            if (cfg && typeof cfg === 'object') st.settings = cfg;
+            this.setState(st);
+            try {
+              localStorage.setItem(CK, JSON.stringify({
+                custom: st.custom || this.state.custom || [],
+                settings: st.settings || this.state.settings || {},
+              }));
+            } catch (e) {}
+          });
+          // Filet de sécurité : sans cache et si l'API tarde/échoue, on affiche quand même.
+          setTimeout(() => { if (!this.state.ready) this.setState({ ready: true }); }, 3000);
           this.paintImgs();
           setTimeout(() => this.paintImgs(), 300);
           const reduce = this.props.reduceMotion === true;
@@ -1695,7 +1662,14 @@
         }
         componentDidUpdate() {
           this.paintImgs();
-          if (this._observeReveals) this._observeReveals();
+          // Données chargées via fetch : on affiche tout de suite les cartes,
+          // sans attendre le scroll ni la transition d'apparition.
+          document.querySelectorAll('[data-reveal]').forEach((el) => {
+            if (el.getAttribute('data-revealed') === '1') return;
+            el.style.opacity = '1';
+            el.style.transform = 'none';
+            el.setAttribute('data-revealed', '1');
+          });
         }
         paintImgs() {
           document.querySelectorAll('.cod-img').forEach((el) => {

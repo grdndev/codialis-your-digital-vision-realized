@@ -8,10 +8,16 @@
     <script src="./i18n-dict.js"></script>
     <script src="./i18n.js"></script>
     <script src="./footer-socials.js"></script>
+    <title>Codialis</title>
   </head>
   <body>
     <x-dc>
       <helmet>
+        <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon_io/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon_io/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon_io/favicon-16x16.png" />
+        <link rel="icon" href="/assets/favicon_io/favicon.ico" sizes="any" />
+        <link rel="manifest" href="/assets/favicon_io/site.webmanifest" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -155,9 +161,9 @@
         <nav
           id="cod-nav"
           style="
-           
             position: fixed;
             top: 18px;
+            left: 50%;
             transform: translateX(-50%);
             z-index: 100;
             display: flex;
@@ -676,6 +682,112 @@
           </div>
         </header>
 
+        <!-- CAROUSEL LOGOS CLIENTS (géré depuis /admin › Logos clients) -->
+        <sc-if value="{{ hasLogos }}" hint-placeholder-val="{{ false }}">
+          <section
+            style="
+              position: relative;
+              padding: clamp(34px, 4vw, 54px) 0;
+              background: #0b1220;
+              overflow: hidden;
+              border-top: 1px solid rgba(255, 255, 255, 0.06);
+            "
+          >
+            <style>
+              @keyframes cod-logos-scroll {
+                from { transform: translateX(0); }
+                to { transform: translateX(-50%); }
+              }
+              .cod-logos-mask {
+                -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+                mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+              }
+              .cod-logos-track {
+                display: flex;
+                align-items: center;
+                gap: clamp(40px, 6vw, 88px);
+                width: max-content;
+                animation: cod-logos-scroll 42s linear infinite;
+              }
+              .cod-logos-track:hover { animation-play-state: paused; }
+              @media (prefers-reduced-motion: reduce) {
+                .cod-logos-track { animation: none; }
+              }
+              .cod-logo-item {
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+              }
+              .cod-logo-img {
+                width: clamp(150px, 18vw, 240px);
+                height: clamp(52px, 6vw, 80px);
+                background-size: contain;
+                background-position: center;
+                background-repeat: no-repeat;
+                opacity: 0.72;
+                filter: grayscale(1) brightness(1.55);
+                transition: opacity 0.3s, filter 0.3s;
+              }
+              .cod-logo-item:hover .cod-logo-img {
+                opacity: 1;
+                filter: grayscale(0) brightness(1);
+              }
+            </style>
+            <div
+              style="
+                max-width: 1200px;
+                margin: 0 auto clamp(22px, 3vw, 30px);
+                padding: 0 clamp(20px, 5vw, 64px);
+                text-align: center;
+              "
+            >
+              <div
+                style="
+                  font-family: 'IBM Plex Mono', monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.18em;
+                  text-transform: uppercase;
+                  color: #2fed7f;
+                "
+              >
+                Ils nous font confiance
+              </div>
+            </div>
+            <div class="cod-logos-mask">
+              <div class="cod-logos-track">
+                <sc-for list="{{ logosTrack }}" as="l" hint-placeholder-count="6">
+                  <sc-if value="{{ l.hasHref }}" hint-placeholder-val="{{ false }}">
+                    <a
+                      class="cod-logo-item"
+                      href="{{ l.href }}"
+                      target="_blank"
+                      rel="noopener"
+                      title="{{ l.name }}"
+                    >
+                      <div
+                        class="cod-img cod-logo-img"
+                        data-img="{{ l.image }}"
+                        role="img"
+                        aria-label="{{ l.name }}"
+                      ></div>
+                    </a>
+                  </sc-if>
+                  <sc-if value="{{ l.noHref }}" hint-placeholder-val="{{ true }}">
+                    <div class="cod-logo-item">
+                      <div
+                        class="cod-img cod-logo-img"
+                        data-img="{{ l.image }}"
+                        role="img"
+                        aria-label="{{ l.name }}"
+                      ></div>
+                    </div>
+                  </sc-if>
+                </sc-for>
+              </div>
+            </div>
+          </section>
+        </sc-if>
+
         <!-- EXPERTISES (bleu foncé B) -->
         <section
           id="expertises"
@@ -760,7 +872,7 @@
                   color: #fff;
                 "
               >
-                Quatre expertises,<br />
+                Quatre expertises,
                 <br />une même exigence.
               </h2>
             </div>
@@ -2785,7 +2897,7 @@
       data-props='{"reduceMotion":{"editor":"boolean","default":false,"tsType":"boolean","section":"Accessibilité"}}'
     >
       class Component extends DCLogic {
-        state = { lang: (window.CodialisI18n ? window.CodialisI18n.get() : 'fr'), tIndex: 0, customTesti: [], customTeam: [], modalTesti: null };
+        state = { lang: (window.CodialisI18n ? window.CodialisI18n.get() : 'fr'), tIndex: 0, customTesti: [], customTeam: [], modalTesti: null, homeLogos: [] };
         renderVals() {
           const lang = this.state.lang;
           const setLang = (l) => () => { try { localStorage.setItem('codialis-lang', l); } catch (e) {} location.reload(); };
@@ -2822,8 +2934,23 @@
             { slot: 'team-lm', initials: 'LM', name: 'Luc Moutanin', role: 'Apprenti Ingénieur IA · Data', bg: '#C9C2F5' },
           ];
           const team = ((this.state.customTeam && this.state.customTeam.length) ? this.state.customTeam : defaultTeam).map((m, i) => ({ ...m, noImage: !m.image, bg: m.bg || '#2FED7F', delay: i * 550 }));
+          const logos = (this.state.homeLogos || []).map((l) => {
+            const hasHref = !!(l.href && String(l.href).trim());
+            return {
+              image: l.image || '',
+              name: l.name || '',
+              href: l.href || '',
+              hasHref,
+              noHref: !hasHref,
+            };
+          });
+          // Duplique la liste pour un défilement en boucle fluide (marquee).
+          const logosTrack = logos.length ? logos.concat(logos) : [];
           return {
             year: new Date().getFullYear(),
+            logos,
+            logosTrack,
+            hasLogos: logos.length > 0,
             setLangFr: setLang('fr'),
             setLangEn: setLang('en'),
             frBg: lang === 'fr' ? '#2FED7F' : 'transparent',
@@ -2913,8 +3040,10 @@
           Promise.all([
             fetch(apiBase + '/api/content/testimonials').then((r) => (r.ok ? r.json() : [])).catch(() => []),
             fetch(apiBase + '/api/accounts/featured').then((r) => (r.ok ? r.json() : [])).catch(() => []),
-          ]).then(([rt, rm]) => {
+            fetch(apiBase + '/api/settings/home_logos').then((r) => (r.ok ? r.json() : {})).catch(() => ({})),
+          ]).then(([rt, rm, rl]) => {
             const patch = {};
+            if (rl && Array.isArray(rl.items)) patch.homeLogos = rl.items.filter((x) => x && x.image);
             if (Array.isArray(rt) && rt.length) patch.customTesti = rt;
             if (Array.isArray(rm) && rm.length) {
               patch.customTeam = rm.map((m, i) => ({
@@ -3053,6 +3182,10 @@
             { name: 'Montréal', c: [-73.57, 45.50], w: .8 },
             { name: 'Singapour', c: [103.82, 1.35], w: .8 },
             { name: 'La Réunion', c: [55.53, -21.11], w: .95 },
+            { name: 'Martinique', c: [-61.02, 14.64], w: .8 },
+            { name: 'Côte d\'Ivoire', c: [-5.55, 7.54], w: .85 },
+            { name: 'Congo', c: [15.83, -4.27], w: .8 },
+            { name: 'Congo RDC', c: [23.65, -2.88], w: .85 },
           ];
           const nEl = document.getElementById('cod-mapn');
           if (nEl) nEl.textContent = String(locs.length);

@@ -5,6 +5,11 @@
 
 DirectoryIndex index.html
 
+# --- MIME du manifeste PWA (favicons) ---------------------------------------
+<IfModule mod_mime.c>
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
 # --- URLs propres : /contact -> Contact.dc.html -----------------------------
 <IfModule mod_rewrite.c>
   RewriteEngine On

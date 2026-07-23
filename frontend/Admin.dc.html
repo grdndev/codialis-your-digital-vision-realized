@@ -9,10 +9,16 @@
          local (pas de CDN) : fonctionne hors-ligne. jsPDF expose window.jspdf. -->
     <script src="./vendor/jspdf.umd.min.js"></script>
     <script src="./vendor/jspdf.plugin.autotable.min.js"></script>
+    <title>Codialis</title>
   </head>
   <body>
     <x-dc>
       <helmet>
+        <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon_io/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon_io/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon_io/favicon-16x16.png" />
+        <link rel="icon" href="/assets/favicon_io/favicon.ico" sizes="any" />
+        <link rel="manifest" href="/assets/favicon_io/site.webmanifest" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -10034,6 +10040,236 @@
                   </div>
                 </div>
               </sc-if>
+
+              <!-- ===== SECTION LOGOS CLIENTS ===== -->
+              <sc-if value="{{ showLogos }}" hint-placeholder-val="{{ false }}">
+                <div style="max-width: 760px">
+                  <p
+                    style="
+                      font-size: 13px;
+                      line-height: 1.55;
+                      color: #8fa0b5;
+                      margin: 0 0 18px;
+                    "
+                  >
+                    Ces logos défilent dans le carrousel « Ils nous font
+                    confiance » sur la page d'accueil. Ajoutez une image (PNG
+                    transparent conseillé), un nom, et un lien facultatif.
+                  </p>
+                  <sc-if value="{{ logosEmpty }}" hint-placeholder-val="{{ false }}">
+                    <p style="font-size: 14px; color: #8fa0b5">
+                      Aucun logo pour le moment. Cliquez sur « Ajouter un logo ».
+                    </p>
+                  </sc-if>
+                  <div style="display: flex; flex-direction: column; gap: 12px">
+                    <sc-for list="{{ logoRows }}" as="l" hint-placeholder-count="2">
+                      <div
+                        style="
+                          display: flex;
+                          gap: 10px;
+                          align-items: center;
+                          flex-wrap: wrap;
+                          padding: 10px;
+                          border-radius: 12px;
+                          border: 1px solid rgba(255, 255, 255, 0.1);
+                          background: rgba(255, 255, 255, 0.02);
+                        "
+                      >
+                        <label
+                          style="
+                            position: relative;
+                            width: 120px;
+                            height: 56px;
+                            flex-shrink: 0;
+                            border-radius: 10px;
+                            border: 1px dashed rgba(255, 255, 255, 0.2);
+                            background: rgba(255, 255, 255, 0.03);
+                            overflow: hidden;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                          "
+                          style-hover="border-color:#2FED7F;"
+                        >
+                          <sc-if value="{{ l.hasImage }}" hint-placeholder-val="{{ false }}">
+                            <div
+                              class="cod-img"
+                              data-img="{{ l.image }}"
+                              style="
+                                position: absolute;
+                                inset: 6px;
+                                background-size: contain;
+                                background-position: center;
+                                background-repeat: no-repeat;
+                              "
+                            ></div>
+                          </sc-if>
+                          <sc-if value="{{ l.noImage }}" hint-placeholder-val="{{ true }}">
+                            <span
+                              style="
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                gap: 4px;
+                                color: #5c6b80;
+                                pointer-events: none;
+                              "
+                            >
+                              <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                                <circle cx="9" cy="9" r="2"></circle>
+                                <path d="m21 15-3.5-3.5L9 20"></path>
+                              </svg>
+                              <span style="font-size: 11px">Logo</span>
+                            </span>
+                          </sc-if>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange="{{ l.onFile }}"
+                            style="
+                              position: absolute;
+                              inset: 0;
+                              opacity: 0;
+                              cursor: pointer;
+                            "
+                          />
+                        </label>
+                        <input
+                          type="text"
+                          value="{{ l.name }}"
+                          onInput="{{ l.onName }}"
+                          placeholder="Nom de l'entreprise"
+                          aria-label="Nom"
+                          style="
+                            flex: 1;
+                            min-width: 150px;
+                            padding: 11px 12px;
+                            border-radius: 10px;
+                            background: rgba(255, 255, 255, 0.04);
+                            border: 1px solid rgba(255, 255, 255, 0.12);
+                            color: #eaf0f7;
+                            font-family: &quot;Space Grotesk&quot;, sans-serif;
+                            font-size: 14px;
+                            outline: none;
+                            transition: border-color 0.2s;
+                          "
+                          style-focus="border-color:#2FED7F;"
+                        />
+                        <input
+                          type="text"
+                          value="{{ l.href }}"
+                          onInput="{{ l.onHref }}"
+                          placeholder="https://… (facultatif)"
+                          aria-label="Lien"
+                          style="
+                            flex: 1;
+                            min-width: 150px;
+                            padding: 11px 12px;
+                            border-radius: 10px;
+                            background: rgba(255, 255, 255, 0.04);
+                            border: 1px solid rgba(255, 255, 255, 0.12);
+                            color: #2fed7f;
+                            font-family: &quot;Space Grotesk&quot;, sans-serif;
+                            font-size: 14px;
+                            outline: none;
+                            transition: border-color 0.2s;
+                          "
+                          style-focus="border-color:#2FED7F;"
+                        />
+                        <button
+                          type="button"
+                          onClick="{{ l.onRemove }}"
+                          title="Supprimer"
+                          style="
+                            flex-shrink: 0;
+                            width: 40px;
+                            height: 40px;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            border-radius: 10px;
+                            border: 1px solid rgba(255, 107, 107, 0.4);
+                            background: rgba(255, 107, 107, 0.08);
+                            color: #ff6b6b;
+                            cursor: pointer;
+                          "
+                          style-hover="background:rgba(255,107,107,.18);"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M18 6 6 18" />
+                            <path d="m6 6 12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      gap: 10px;
+                      margin-top: 18px;
+                      flex-wrap: wrap;
+                    "
+                  >
+                    <button
+                      type="button"
+                      onClick="{{ onAddLogo }}"
+                      style="
+                        padding: 11px 18px;
+                        border-radius: 10px;
+                        border: 1px solid rgba(255, 255, 255, 0.16);
+                        background: rgba(255, 255, 255, 0.05);
+                        color: #eaf0f7;
+                        font-family: &quot;Space Grotesk&quot;, sans-serif;
+                        font-weight: 600;
+                        font-size: 14px;
+                        cursor: pointer;
+                      "
+                      style-hover="border-color:#2FED7F;color:#2FED7F;"
+                    >
+                      ＋ Ajouter un logo
+                    </button>
+                    <button
+                      type="button"
+                      onClick="{{ onSaveLogos }}"
+                      disabled="{{ logosBusy }}"
+                      style="
+                        padding: 11px 20px;
+                        border-radius: 10px;
+                        border: none;
+                        background: #2fed7f;
+                        color: #08111e;
+                        font-family: &quot;Space Grotesk&quot;, sans-serif;
+                        font-weight: 600;
+                        font-size: 14px;
+                        cursor: pointer;
+                      "
+                    >
+                      {{ logosSaveLabel }}
+                    </button>
+                  </div>
+                </div>
+              </sc-if>
             </div>
           </div>
         </sc-if>
@@ -12322,6 +12558,7 @@
           portfolioSettings: {}, portfolioStats: PORTFOLIO_STAT_DEFAULTS.map((x) => ({ ...x })), statsBusy: false,
           blogSettings: {}, blogHero: { ...BLOG_HERO_DEFAULTS }, blogHeroBusy: false,
           socials: SOCIAL_DEFAULTS.map((x) => ({ ...x })), socialsBusy: false,
+          logos: [], logosBusy: false,
           entries: [], presence: {}, absences: [], recurrences: [],
           tab: 'espace',
           editingId: null, form: this.blankForm(), catAdding: false,
@@ -12395,23 +12632,27 @@
             // Direction ET chef de projet chargent le contenu du site (portfolio,
             // blog, témoignages, réseaux, newsletter, demandes de contact).
             if (role === 'patron' || role === 'chef') {
-              const [portfolio, blog, testimonials, portfolioSettings, blogSettings, newsletterSubs, contactRequests, pageViewsData, socialsData, veille0] = await Promise.all([
+              const [portfolio, blog, testimonials, portfolioSettings, blogSettings, newsletterSubs, contactRequests, pageViewsData, socialsData, veille0, logosData] = await Promise.all([
                 api('/content/portfolio?admin=1'), api('/content/blog?admin=1'),
                 api('/content/testimonials?admin=1'), api('/settings/portfolio_page'), api('/settings/blog_page'), api('/newsletter'), api('/contact'),
                 api('/content/stats/page-views').catch(() => null),
                 api('/settings/contact_socials').catch(() => null),
                 api('/feeds/items?status=new').catch(() => []),
+                api('/settings/home_logos').catch(() => null),
               ]);
               const socials = socialsData && Array.isArray(socialsData.items) && socialsData.items.length
                 ? socialsData.items.map((x) => ({ name: x.name || '', icon: x.icon || 'linkedin', href: x.href || '' }))
                 : SOCIAL_DEFAULTS.map((x) => ({ ...x }));
+              const logos = logosData && Array.isArray(logosData.items)
+                ? logosData.items.map((x) => ({ image: x.image || '', name: x.name || '', href: x.href || '' }))
+                : [];
               const heroStats = portfolioSettings && portfolioSettings.hero && Array.isArray(portfolioSettings.hero.stats) && portfolioSettings.hero.stats.length
                 ? portfolioSettings.hero.stats.map((x) => ({ v: x.v || '', suffix: x.suffix || '', l: x.l || '' }))
                 : PORTFOLIO_STAT_DEFAULTS.map((x) => ({ ...x }));
               const bh = (blogSettings && blogSettings.hero) || {};
               const blogHero = { kicker: bh.kicker || BLOG_HERO_DEFAULTS.kicker, lead: bh.lead || BLOG_HERO_DEFAULTS.lead, accent: bh.accent || BLOG_HERO_DEFAULTS.accent, sub: bh.sub || BLOG_HERO_DEFAULTS.sub };
               const pageViews = pageViewsData ? { portfolio: Number(pageViewsData.portfolio || 0), blog: Number(pageViewsData.blog || 0) } : { portfolio: 142, blog: 318 };
-              Object.assign(patch, { portfolio, blog, testimonials, portfolioSettings: portfolioSettings || {}, portfolioStats: heroStats, blogSettings: blogSettings || {}, blogHero, socials, newsletterSubs, contactRequests, pageViews, veille: Array.isArray(veille0) ? veille0 : [] });
+              Object.assign(patch, { portfolio, blog, testimonials, portfolioSettings: portfolioSettings || {}, portfolioStats: heroStats, blogSettings: blogSettings || {}, blogHero, socials, logos, newsletterSubs, contactRequests, pageViews, veille: Array.isArray(veille0) ? veille0 : [] });
             }
             this.setState(patch);
           } catch (e) { /* session likely expired; me() will fail next action */ }
@@ -12507,6 +12748,7 @@
             { key: 'blog', label: 'Blog', count: s.blog.length || '' },
             { key: 'testimonials', label: 'Témoignages', count: s.testimonials.length || '' },
             { key: 'socials', label: 'Réseaux', count: (s.socials || []).length || '' },
+            { key: 'logos', label: 'Logos clients', count: (s.logos || []).length || '' },
             { key: 'contacts', label: 'Demandes', count: s.contactRequests.filter((c) => c.status === 'nouveau').length || '' },
             { key: 'newsletter', label: 'Newsletter', count: s.newsletterSubs.length || '' },
           ];
@@ -12553,6 +12795,7 @@
             blog: { title: 'Gestion du blog', sub: 'Articles publiés sur la page Blog. Cochez « à la une » pour choisir l\u2019article vedette.' },
             testimonials: { title: 'Gestion des témoignages', sub: 'Témoignages affichés sur la page d\u2019accueil.' },
             socials: { title: 'Réseaux sociaux', sub: 'Liens affichés dans la section « Suivez-nous » de la page Contact.' },
+            logos: { title: 'Logos clients', sub: 'Logos défilant dans le carrousel « Ils nous font confiance » de la page d’accueil.' },
             contacts: { title: 'Demandes de contact', sub: 'Messages reçus via le formulaire de la page Contact. Suivez et traitez chaque demande client.' },
             newsletter: { title: 'Newsletter', sub: 'Abonnés inscrits depuis la page Blog. Un email leur est envoyé automatiquement à chaque publication d’article.' },
           }[tab] || { title: '', sub: '' };
@@ -13292,6 +13535,7 @@
             showNewsletter: tab === 'newsletter',
             showContacts: tab === 'contacts',
             showSocials: tab === 'socials',
+            showLogos: tab === 'logos',
             tabPortfolio: tab === 'portfolio', tabBlog: tab === 'blog', tabTestimonials: tab === 'testimonials',
             // Suggestions RSS (dans l'onglet Blog)
             veillePills, veilleCards, veilleEmpty: veilleCards.length === 0,
@@ -13682,6 +13926,20 @@
             socialsSaveLabel: s.socialsBusy ? 'Enregistrement…' : 'Enregistrer les réseaux',
             onAddSocial: () => this.addSocial(),
             onSaveSocials: (e) => { if (e) e.preventDefault(); this.saveSocials(); },
+            // Logos clients (carrousel page d'accueil)
+            logoRows: (s.logos || []).map((it, i) => ({
+              image: it.image || '', name: it.name || '', href: it.href || '',
+              hasImage: !!it.image, noImage: !it.image,
+              onName: (e) => this.setLogo(i, 'name', e && e.target ? e.target.value : ''),
+              onHref: (e) => this.setLogo(i, 'href', e && e.target ? e.target.value : ''),
+              onFile: (e) => { const f = e.target.files && e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => this.setLogo(i, 'image', r.result); r.readAsDataURL(f); },
+              onRemove: () => this.removeLogo(i),
+            })),
+            logosEmpty: (s.logos || []).length === 0,
+            logosBusy: !!s.logosBusy,
+            logosSaveLabel: s.logosBusy ? 'Enregistrement…' : 'Enregistrer les logos',
+            onAddLogo: () => this.addLogo(),
+            onSaveLogos: (e) => { if (e) e.preventDefault(); this.saveLogos(); },
             catOptions,
             catListMode: !s.catAdding,
             catAdding: !!s.catAdding,
@@ -14734,6 +14992,30 @@
             this.setState({ socialsBusy: false });
             this.notify('Réseaux sociaux enregistrés.', 'Enregistré', 'success');
           } catch (err) { this.setState({ socialsBusy: false }); this.notify(err.message, 'Erreur', 'error'); }
+        }
+        // ===== Logos clients (carrousel page d'accueil) =====
+        setLogo(i, key, val) {
+          this.setState((st) => ({
+            logos: st.logos.map((x, j) => (j === i ? { ...x, [key]: val } : x)),
+          }));
+        }
+        addLogo() {
+          this.setState((st) => ({ logos: [...st.logos, { image: '', name: '', href: '' }] }));
+        }
+        removeLogo(i) {
+          this.setState((st) => ({ logos: st.logos.filter((_, j) => j !== i) }));
+        }
+        async saveLogos() {
+          // On ne garde que les entrées avec une image ; nom et lien facultatifs.
+          const items = this.state.logos
+            .map((x) => ({ image: x.image || '', name: (x.name || '').trim(), href: (x.href || '').trim() }))
+            .filter((x) => x.image);
+          this.setState({ logosBusy: true });
+          try {
+            await api('/settings/home_logos', { method: 'PUT', body: { items } });
+            this.setState({ logosBusy: false });
+            this.notify('Logos clients enregistrés.', 'Enregistré', 'success');
+          } catch (err) { this.setState({ logosBusy: false }); this.notify(err.message, 'Erreur', 'error'); }
         }
       }
     </script>

@@ -5,7 +5,7 @@ import { requireAuth, requireManager } from '../middleware/auth.js';
 const router = Router();
 
 // Allowed singleton keys. Add new page-level blobs here.
-const KEYS = ['portfolio_page', 'blog_page', 'contact_socials'];
+const KEYS = ['portfolio_page', 'blog_page', 'contact_socials', 'home_logos'];
 const validKey = (k) => KEYS.includes(k);
 
 // GET /api/settings/:key — PUBLIC (consumed by public pages).
@@ -13,6 +13,9 @@ const validKey = (k) => KEYS.includes(k);
 router.get('/:key', async (req, res) => {
   if (!validKey(req.params.key)) return res.status(404).json({ error: 'Clé inconnue' });
   const { rows } = await query('SELECT data FROM settings WHERE `key` = $1', [req.params.key]);
+  // Réglages de page publics : cacheables côté navigateur (override du no-store
+  // global) pour accélérer les visites répétées.
+  res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
   res.json(rows.length ? rows[0].data : {});
 });
 

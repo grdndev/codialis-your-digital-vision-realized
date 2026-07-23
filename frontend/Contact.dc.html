@@ -8,10 +8,16 @@
     <script src="./i18n-dict.js"></script>
     <script src="./i18n.js"></script>
     <script src="./footer-socials.js"></script>
+    <title>Codialis</title>
   </head>
   <body>
     <x-dc>
       <helmet>
+        <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon_io/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon_io/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon_io/favicon-16x16.png" />
+        <link rel="icon" href="/assets/favicon_io/favicon.ico" sizes="any" />
+        <link rel="manifest" href="/assets/favicon_io/site.webmanifest" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -107,6 +113,7 @@
             transform: translateX(-50%);
             z-index: 100;
             display: flex;
+            justify-content: space-between;
             align-items: center;
             gap: clamp(14px, 2vw, 28px);
             padding: 9px 9px 9px 22px;

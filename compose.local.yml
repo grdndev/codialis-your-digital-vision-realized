@@ -1,0 +1,68 @@
+# Local dev stack: MySQL + backend (API on :3001) + Apache frontend on :3001 host.
+# Apache proxies /api -> backend so the whole site is single-origin (matches the
+# index.html apiBase rule: location.port === '3001' -> relative '/api').
+# Run:  docker compose -f compose.local.yml up -d --build
+services:
+  db:
+    image: mysql:8.4
+    container_name: codialis-db-local
+    environment:
+      MYSQL_ROOT_PASSWORD: root_dev
+      MYSQL_DATABASE: codialis
+      MYSQL_USER: codialis
+      MYSQL_PASSWORD: codialis_dev
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "codialis", "-pcodialis_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: codialis-backend-local
+    environment:
+      DATABASE_URL: mysql://codialis:codialis_dev@db:3306/codialis
+      PORT: "3001"
+      NODE_ENV: development
+      JWT_SECRET: 9f3a1c7e5b2d80463a4b09591b952b13c39d4b68caa37058bea4b52f09ff1a9c
+      JWT_EXPIRES: 12h
+      ADMIN_NAME: Direction
+      ADMIN_EMAIL: admin@codialis.com
+      ADMIN_PASSWORD: admin1234
+      CORS_ORIGINS: http://localhost:3001
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/repo
+      - /repo/backend/node_modules
+    expose:
+      - "3001"
+
+  frontend:
+    image: httpd:2.4-alpine
+    container_name: codialis-frontend-local
+    depends_on:
+      - backend
+    ports:
+      - "3001:80"
+    volumes:
+      - ./frontend:/usr/local/apache2/htdocs:ro
+      - ./compose-proxy.conf:/usr/local/apache2/conf/extra/zz-proxy.conf:ro
+    command:
+      - sh
+      - -c
+      - >
+        sed -i
+        -e 's|^#\(LoadModule rewrite_module .*\)|\1|'
+        -e 's|^#\(LoadModule headers_module .*\)|\1|'
+        -e 's|^#\(LoadModule proxy_module .*\)|\1|'
+        -e 's|^#\(LoadModule proxy_http_module .*\)|\1|'
+        -e 's|AllowOverride None|AllowOverride All|g'
+        conf/httpd.conf &&
+        echo 'Include conf/extra/zz-proxy.conf' >> conf/httpd.conf &&
+        httpd-foreground

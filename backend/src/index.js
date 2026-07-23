@@ -15,6 +15,7 @@ import presenceRoutes from "./routes/presence.js";
 import recurrencesRoutes from "./routes/recurrences.js";
 import absencesRoutes from "./routes/absences.js";
 import contentRoutes from "./routes/content.js";
+import { query } from "./db.js";
 import settingsRoutes from "./routes/settings.js";
 import newsletterRoutes from "./routes/newsletter.js";
 import contactRoutes from "./routes/contact.js";
@@ -106,6 +107,12 @@ process.on("uncaughtException", (err) => {
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
   console.log(`Codialis server on http://localhost:${port}`);
+  // Préchauffe la base au démarrage : la toute première requête déclenche sinon
+  // le rejeu complet du schéma + migrations d'index (lent). On paie ce coût au
+  // boot, pas sur le dos du premier visiteur.
+  query("SELECT 1")
+    .then(() => console.log("DB warm"))
+    .catch((e) => console.error("DB warmup failed:", e.message));
   // Planifie l'envoi automatique du récap mensuel (1er du mois, 08:00 Paris).
   startRecapScheduler();
 });
