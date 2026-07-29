@@ -287,6 +287,8 @@ window.__CODIALIS_I18N__ = {
   "Prendre rendez-vous": "Book a meeting",
   "Projet": "Project",
   "Projet à la une": "Featured project",
+  "Projets livrés": "Projects delivered",
+  "50+ projets livrés — voir le portfolio": "50+ projects delivered — view the portfolio",
   "projet.": "project.",
   "projets livrés": "projects delivered",
   "Propriété intellectuelle": "Intellectual property",

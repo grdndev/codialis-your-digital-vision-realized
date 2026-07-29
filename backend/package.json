@@ -8,7 +8,8 @@
     "start": "node src/index.js",
     "dev": "nodemon --legacy-watch --watch src --ext js,json src/index.js",
     "db:init": "node src/initdb.js",
-    "db:seed-admin": "node src/seed-admin.js"
+    "db:seed-admin": "node src/seed-admin.js",
+    "db:seed-portfolio": "node src/seed-portfolio.js"
   },
   "dependencies": {
     "@extractus/article-extractor": "^8.0.16",
