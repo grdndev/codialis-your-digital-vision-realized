@@ -3,7 +3,10 @@
 > Codialis est une société française de conseil et d'ingénierie informatique qui conçoit des solutions digitales sur mesure : SaaS, applications mobiles, intelligence artificielle et CRM/ERP.
 
 ## Services
-
+- [Développement SaaS sur mesure](https://codialis.com/developpement-saas): Plateformes SaaS cloud-native et multi-tenant, approche architecture-first, scalabilité sans dette technique.
+- [Développement d'applications mobiles](https://codialis.com/application-mobile): Applications iOS et Android en React Native ou Flutter, connectées aux systèmes existants via API.
+- [Agence IA — intelligence artificielle sur mesure](https://codialis.com/agence-ia): Intégration de LLM et RAG, automatisation de processus, analyse prédictive, computer vision et ML Ops.
+- [CRM, ERP sur mesure et intégration API](https://codialis.com/crm-erp-api): CRM et ERP sur mesure, intégration Odoo et Salesforce, synchronisation de données via API, tableaux de bord.
 - [Accueil — expertises et méthode](https://codialis.com/): Les quatre domaines d'expertise de Codialis (développement SaaS, applications mobiles, intelligence artificielle, CRM & ERP sur mesure), la méthode en 4 étapes et l'équipe d'ingénieurs.
 - [Financement de projet digital](https://codialis.com/financement): Aides et dispositifs pour financer un projet SaaS, mobile ou IA ; Codialis accompagne le montage du dossier de financement.
 

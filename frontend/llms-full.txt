@@ -67,6 +67,10 @@ Par le formulaire sur https://codialis.com/contact, par e-mail à contact@codial
 ## Pages du site
 
 - https://codialis.com/ — Accueil : expertises, méthode, équipe, témoignages clients
+- https://codialis.com/developpement-saas — Développement SaaS sur mesure (cloud-native, multi-tenant)
+- https://codialis.com/application-mobile — Applications mobiles iOS et Android (React Native, Flutter)
+- https://codialis.com/agence-ia — Agence IA : LLM/RAG, automatisation, computer vision, ML Ops
+- https://codialis.com/crm-erp-api — CRM, ERP sur mesure et intégration API (Odoo, Salesforce)
 - https://codialis.com/portfolio — Portfolio des réalisations
 - https://codialis.com/blog — Blog : ingénierie logicielle, IA, SaaS, financement de l'innovation
 - https://codialis.com/financement — Financement de projet digital
