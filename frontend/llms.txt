@@ -1,14 +1,47 @@
 # Codialis
 
-> Codialis est une société de conseil et d'ingénierie informatique (EURL, France) spécialisée dans la conception de solutions digitales sur mesure : plateformes SaaS, applications web et mobiles, intelligence artificielle et automatisation (CRM / ERP inclus).
+> Codialis est une société française de conseil et d'ingénierie informatique qui conçoit des solutions digitales sur mesure : SaaS, applications mobiles, intelligence artificielle et CRM/ERP.
 
-Contact : contact@codialis.com — https://codialis.com/contact
+## Services
 
-## Pages
+- [Accueil — expertises et méthode](https://codialis.com/): Les quatre domaines d'expertise de Codialis (développement SaaS, applications mobiles, intelligence artificielle, CRM & ERP sur mesure), la méthode en 4 étapes et l'équipe d'ingénieurs.
+- [Financement de projet digital](https://codialis.com/financement): Aides et dispositifs pour financer un projet SaaS, mobile ou IA ; Codialis accompagne le montage du dossier de financement.
 
-- [Accueil](https://codialis.com/) : présentation des quatre expertises (Développement SaaS, Applications mobiles, Intelligence artificielle, Automatisation), méthode d'ingénieurs, équipe et témoignages clients.
-- [Portfolio](https://codialis.com/portfolio) : réalisations et projets livrés.
-- [Blog](https://codialis.com/blog) : articles sur l'ingénierie logicielle, l'IA, le SaaS et le financement de l'innovation.
-- [Financement](https://codialis.com/financement) : aides et dispositifs pour financer un projet digital ; accompagnement au montage de dossier.
-- [Contact](https://codialis.com/contact) : formulaire de contact et prise de rendez-vous.
-- [Mentions légales](https://codialis.com/legal) : informations légales et politique de confidentialité.
+## Réalisations
+
+- [Portfolio](https://codialis.com/portfolio): Sélection de plateformes SaaS, applications et outils métier conçus, développés et mis en production par Codialis — plus de 50 projets livrés.
+
+## Blog
+
+- [Blog](https://codialis.com/blog): Articles sur l'ingénierie logicielle, l'intelligence artificielle, le SaaS et le financement de l'innovation.
+
+## Contact
+
+- [Contact](https://codialis.com/contact): Formulaire de contact et prise de rendez-vous — réponse sous 24 h, premier échange gratuit, sans engagement.
+
+## Legal
+
+- [Mentions légales & confidentialité](https://codialis.com/legal): Informations légales sur l'éditeur (CODIALIS EURL), propriété intellectuelle, données personnelles et cookies.
+
+## Key Facts
+
+- Raison sociale : CODIALIS, EURL au capital de 1 000 € — SIREN 991 679 457, RCS Créteil, TVA FR77991679457.
+- Siège social : 88 Rue du Génie, 94400 Vitry-sur-Seine, France (Île-de-France) ; interventions dans toute la France.
+- Dirigeant et fondateur : Jayan Grondin.
+- Activité : conseil en systèmes et logiciels informatiques (code NAF 62.02A).
+- 4 domaines d'expertise : développement SaaS cloud-native, applications mobiles (React Native, Flutter, iOS, Android), intelligence artificielle (LLM/RAG, computer vision, ML Ops), CRM & ERP sur mesure (Odoo, Salesforce, intégrations API).
+- Plus de 50 projets livrés ; 100 % sur-mesure ; membre Numeum ; labellisée France Num.
+- Méthode en 4 étapes : cadrage & architecture, conception & design, développement itératif, déploiement & suivi.
+
+## Contact details
+
+- Site : https://codialis.com
+- E-mail : contact@codialis.com
+- Téléphone : +33 7 83 90 57 17
+- Rendez-vous : https://calendly.com/contact-codialis/30min
+- LinkedIn : https://www.linkedin.com/company/109392264/
+- Instagram : https://www.instagram.com/codialis.dev/
+
+## Optional
+
+- [Version détaillée pour les IA](https://codialis.com/llms-full.txt): Présentation complète de Codialis — services, méthode, chiffres clés et questions fréquentes.

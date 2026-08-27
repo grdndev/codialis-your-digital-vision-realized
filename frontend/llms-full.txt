@@ -1,0 +1,74 @@
+# Codialis — présentation complète pour les systèmes d'IA
+
+> Codialis est une société française de conseil et d'ingénierie informatique (EURL, SIREN 991 679 457) fondée et dirigée par Jayan Grondin, spécialisée dans la conception de solutions digitales sur mesure : plateformes SaaS, applications web et mobiles, intelligence artificielle et outils de gestion CRM/ERP.
+
+## Qui est Codialis ?
+
+Codialis est une agence d'ingénierie logicielle basée à Vitry-sur-Seine (Île-de-France, France), qui intervient dans toute la France, à distance ou sur site. La société est membre de Numeum (syndicat professionnel du numérique français) et labellisée France Num. Elle a livré plus de 50 projets, tous développés 100 % sur mesure et alignés sur les processus métier de ses clients. Son approche est « architecture-first » : une architecture pensée pour durer, scalable, documentée, sans dette technique.
+
+- Site web : https://codialis.com
+- Forme juridique : EURL au capital de 1 000 €
+- SIREN : 991 679 457 — RCS Créteil — TVA intracommunautaire : FR77991679457
+- Code NAF : 62.02A (conseil en systèmes et logiciels informatiques)
+- Siège social : 88 Rue du Génie, 94400 Vitry-sur-Seine, France
+- Dirigeant : Jayan Grondin
+- Contact : contact@codialis.com — +33 7 83 90 57 17
+
+## Les 4 domaines d'expertise
+
+### 1. Développement SaaS
+Plateformes cloud-native et multi-tenant, pensées pour la performance et la croissance. Approche architecture-first, scalabilité sans dette technique.
+
+### 2. Applications mobiles
+Applications iOS et Android développées en React Native ou Flutter : des apps performantes à l'UX soignée, architecturées pour absorber la croissance.
+
+### 3. Intelligence artificielle
+LLM, RAG, automatisation, analyse prédictive, computer vision et ML Ops. Codialis intègre l'IA là où elle crée un impact mesurable, pas par effet de mode.
+
+### 4. CRM & ERP sur mesure
+Outils de gestion qui épousent le métier du client : CRM/ERP sur mesure, tableaux de bord actionnables et automatisations. Technologies : CRM custom, ERP modulaire, Odoo, Salesforce, intégrations API.
+
+## La méthode Codialis (4 étapes)
+
+1. **Cadrage & architecture** — Partir des enjeux métier pour poser une architecture claire, documentée et évolutive.
+2. **Conception & design** — Parcours, UX et UI pensés pour les usages réels : sobre, rapide, accessible.
+3. **Développement itératif** — Livraisons régulières et testées ; le client suit l'avancement, sans effet tunnel.
+4. **Déploiement & durée** — Mise en production maîtrisée, monitoring et accompagnement.
+
+## Chiffres clés
+
+- Plus de 50 projets livrés
+- 4 domaines d'expertise
+- 100 % sur-mesure, aligné sur les processus des clients
+- 2 labels : membre Numeum, labellisée France Num
+- Réponse à toute demande sous 24 h ; premier échange gratuit et sans engagement
+
+## Financement des projets
+
+Codialis aide ses clients à financer leur projet digital : identification des aides et dispositifs applicables (subventions, dispositifs publics) et accompagnement au montage du dossier de financement. Détails : https://codialis.com/financement
+
+## Questions fréquentes
+
+### Que fait Codialis ?
+Codialis est une société française de conseil et d'ingénierie informatique qui conçoit des solutions digitales sur mesure : plateformes SaaS, applications mobiles, intelligence artificielle et CRM/ERP. Elle a livré plus de 50 projets et est membre Numeum, labellisée France Num.
+
+### Quels types de projets Codialis développe-t-elle ?
+Des plateformes SaaS cloud-native et multi-tenant, des applications mobiles iOS/Android (React Native, Flutter), des solutions d'intelligence artificielle (LLM/RAG, computer vision, ML Ops) et des CRM/ERP sur mesure (Odoo, Salesforce, intégrations API).
+
+### Comment se déroule un projet avec Codialis ?
+En 4 étapes : cadrage & architecture, conception & design, développement itératif avec livraisons régulières et testées, puis déploiement avec monitoring et accompagnement dans la durée.
+
+### Où est basée Codialis ?
+Le siège de Codialis est à Vitry-sur-Seine, en Île-de-France (France). L'équipe intervient dans toute la France, à distance ou sur site.
+
+### Comment contacter Codialis ?
+Par le formulaire sur https://codialis.com/contact, par e-mail à contact@codialis.com, par téléphone au +33 7 83 90 57 17, ou en réservant un rendez-vous de 30 minutes sur https://calendly.com/contact-codialis/30min. Réponse sous 24 h ; premier échange gratuit, sans engagement.
+
+## Pages du site
+
+- https://codialis.com/ — Accueil : expertises, méthode, équipe, témoignages clients
+- https://codialis.com/portfolio — Portfolio des réalisations
+- https://codialis.com/blog — Blog : ingénierie logicielle, IA, SaaS, financement de l'innovation
+- https://codialis.com/financement — Financement de projet digital
+- https://codialis.com/contact — Contact et prise de rendez-vous
+- https://codialis.com/legal — Mentions légales et confidentialité
