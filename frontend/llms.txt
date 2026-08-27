@@ -1,0 +1,14 @@
+# Codialis
+
+> Codialis est une société de conseil et d'ingénierie informatique (EURL, France) spécialisée dans la conception de solutions digitales sur mesure : plateformes SaaS, applications web et mobiles, intelligence artificielle et automatisation (CRM / ERP inclus).
+
+Contact : contact@codialis.com — https://codialis.com/contact
+
+## Pages
+
+- [Accueil](https://codialis.com/) : présentation des quatre expertises (Développement SaaS, Applications mobiles, Intelligence artificielle, Automatisation), méthode d'ingénieurs, équipe et témoignages clients.
+- [Portfolio](https://codialis.com/portfolio) : réalisations et projets livrés.
+- [Blog](https://codialis.com/blog) : articles sur l'ingénierie logicielle, l'IA, le SaaS et le financement de l'innovation.
+- [Financement](https://codialis.com/financement) : aides et dispositifs pour financer un projet digital ; accompagnement au montage de dossier.
+- [Contact](https://codialis.com/contact) : formulaire de contact et prise de rendez-vous.
+- [Mentions légales](https://codialis.com/legal) : informations légales et politique de confidentialité.

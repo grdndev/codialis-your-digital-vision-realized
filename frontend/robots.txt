@@ -1,0 +1,9 @@
+# robots.txt — codialis.com
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /Admin.dc.html
+Disallow: /Chatbot.dc.html
+Disallow: /api/
+
+Sitemap: https://codialis.com/sitemap.xml
