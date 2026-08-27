@@ -5,6 +5,9 @@
 
 DirectoryIndex index.html
 
+# --- SEO : page 404 personnalisée (statut 404 conservé) ----------------------
+ErrorDocument 404 /404.html
+
 # --- MIME du manifeste PWA (favicons) ---------------------------------------
 <IfModule mod_mime.c>
   AddType application/manifest+json .webmanifest
