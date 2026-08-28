@@ -12705,14 +12705,12 @@
           } else if (isChef) {
             // Le chef de projet : pas de validation, mais son propre espace de
             // demande (heures supp / congés) qui part en attente vers la direction.
-            // Pas de gestion du contenu du site (portfolio/blog/témoignages) :
-            // réservée à la direction.
-            const chefTabs = managerTabs.filter(
-              (t) => !['portfolio', 'blog', 'testimonials'].includes(t.key)
-            );
+            // Il gère tout le contenu du site (portfolio, blog, témoignages…)
+            // comme la direction — côté API ces routes sont déjà ouvertes aux
+            // deux rôles via requireManager (content.js, settings.js, feeds.js).
             tabDefs = [
               { key: 'espace', label: 'Ma demande', count: '' },
-              ...chefTabs,
+              ...managerTabs,
             ];
           } else {
             tabDefs = [
@@ -13467,7 +13465,7 @@
 
             // section flags
             showEspace: tab === 'espace', showValidation: tab === 'validation',
-            showSoldes: tab === 'soldes', showPlanning: tab === 'planning', showContent: isContent && !isChef,
+            showSoldes: tab === 'soldes', showPlanning: tab === 'planning', showContent: isContent,
             // Gestion d'équipe (ajout / édition de comptes) : patron uniquement.
             canManageTeam: isPatron,
             showNewsletter: tab === 'newsletter',
