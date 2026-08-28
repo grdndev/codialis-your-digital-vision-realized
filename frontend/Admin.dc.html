@@ -3306,28 +3306,6 @@
                                 {{ s.name }}
                               </div>
                               <sc-if
-                                value="{{ s.featured }}"
-                                hint-placeholder-val="{{ false }}"
-                              >
-                                <span
-                                  title="À la une sur le site"
-                                  style="
-                                    flex-shrink: 0;
-                                    font-family:
-                                      &quot;Space Grotesk&quot;, sans-serif;
-                                    font-size: 10px;
-                                    letter-spacing: 0.06em;
-                                    text-transform: uppercase;
-                                    padding: 2px 7px;
-                                    border-radius: 999px;
-                                    background: rgba(245, 200, 107, 0.14);
-                                    color: #f5c86b;
-                                    border: 1px solid rgba(245, 200, 107, 0.35);
-                                  "
-                                  >À la une</span
-                                >
-                              </sc-if>
-                              <sc-if
                                 value="{{ s.notVerified }}"
                                 hint-placeholder-val="{{ false }}"
                               >
@@ -3641,44 +3619,6 @@
                                     value="{{ s.canManage }}"
                                     hint-placeholder-val="{{ false }}"
                                   >
-                                    <button
-                                      type="button"
-                                      role="menuitem"
-                                      onClick="{{ s.onFeature }}"
-                                      style="
-                                        display: flex;
-                                        align-items: center;
-                                        gap: 10px;
-                                        width: 100%;
-                                        padding: 9px 10px;
-                                        border: none;
-                                        border-radius: 8px;
-                                        background: transparent;
-                                        color: #eaf0f7;
-                                        font-family:
-                                          &quot;Space Grotesk&quot;, sans-serif;
-                                        font-size: 13.5px;
-                                        text-align: left;
-                                        cursor: pointer;
-                                      "
-                                      style-hover="background:rgba(245,200,107,0.14);color:#f5c86b;"
-                                    >
-                                      <svg
-                                        width="15"
-                                        height="15"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                      >
-                                        <path
-                                          d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                                        ></path>
-                                      </svg>
-                                      {{ s.featTitle }}
-                                    </button>
                                     <button
                                       type="button"
                                       role="menuitem"
@@ -4262,8 +4202,8 @@
                                 line-height: 1.45;
                                 color: #5c6b80;
                               "
-                              >Affichée sur la page d'accueil si le membre est à
-                              la une.</span
+                              >Affichée sur la page d'accueil. Sans photo, les
+                              initiales du membre sont utilisées.</span
                             >
                             <sc-if
                               value="{{ newEmpHasPhoto }}"
@@ -11877,7 +11817,7 @@
                   payés validés décomptés, heures supp/récup validées ajustées).
                 </p>
 
-                <!-- ===== Vitrine : photo de profil + mise à la une ===== -->
+                <!-- ===== Vitrine : photo de profil ===== -->
                 <div
                   style="
                     height: 1px;
@@ -11981,8 +11921,8 @@
                     >
                     <span
                       style="font-size: 12px; line-height: 1.45; color: #5c6b80"
-                      >Affichée sur la page d'accueil si le membre est à la
-                      une.</span
+                      >Affichée sur la page d'accueil. Sans photo, les initiales
+                      du membre sont utilisées.</span
                     >
                     <sc-if
                       value="{{ editEmpHasPhoto }}"
@@ -12792,7 +12732,7 @@
           const META = {
             espace: { title: 'Mon espace', sub: 'Déclarez vos heures supplémentaires et suivez votre solde.' },
             validation: { title: 'Demandes à valider', sub: 'Validez ou refusez les heures supp et récupérations demandées par l\u2019équipe.' },
-            soldes: { title: 'Équipe & soldes', sub: isChef ? 'Vue en lecture seule des soldes d\u2019heures et de congés de l\u2019équipe. La gestion des comptes reste réservée à la direction.' : 'Soldes d\u2019heures et de congés par employé (+2,5 j de congés/mois, saisie du solde via le crayon) et gestion des comptes.' },
+            soldes: { title: 'Équipe & soldes', sub: isChef ? 'Vue en lecture seule des soldes d\u2019heures et de congés de l\u2019équipe. La gestion des comptes reste réservée à la direction.' : 'Soldes d\u2019heures et de congés par employé (+2,5 j de congés/mois, saisie du solde via le crayon) et gestion des comptes. Tous les comptes sont affich\u00e9s dans la section \u00ab L\u2019\u00e9quipe \u00bb de la page d\u2019accueil.' },
             planning: { title: 'Planning de présence', sub: 'Cliquez sur une case pour définir la présence ou demander une récupération.' },
             portfolio: { title: 'Gestion du portfolio', sub: 'Projets de la section « Autres réalisations ».' },
             blog: { title: 'Gestion du blog', sub: 'Articles publiés sur la page Blog. Cochez « à la une » pour choisir l\u2019article vedette.' },
@@ -13100,13 +13040,8 @@
               congesTitle: lv.defined ? 'Solde de congés (payés)' : 'Solde de congés non défini — cliquez sur ✎ pour le saisir',
               poste: a.poste || '', hasPoste: !!(a.poste || '').trim(), noPoste: !(a.poste || '').trim(),
               photo: a.photo || '', hasPhoto: !!a.photo,
-              featured: !!a.featured,
               roleLabel: ROLE_LABELS[a.role] || '',
               isManagerRole: !!ROLE_LABELS[a.role],
-              featBg: a.featured ? '#f5c86b' : 'transparent', featColor: a.featured ? '#08111e' : '#b7c2d2',
-              featBorder: a.featured ? '#f5c86b' : 'rgba(255,255,255,.14)',
-              featTitle: a.featured ? 'Retirer de la une' : 'Mettre à la une',
-              onFeature: () => { this.closeSoldesMenu(); this.toggleEmpFeatured(a); },
               onEdit: () => { this.closeSoldesMenu(); this.openEditEmp(a); },
               // Récap PDF : ouvert à la direction ET au chef de projet (lecture).
               canRecap: isManager,
@@ -13119,7 +13054,7 @@
               resendTitle: s.resendVerifyId === a.id ? 'Envoi…' : "Renvoyer l'email de confirmation",
               onResendVerify: () => { this.closeSoldesMenu(); this.resendVerify(a); },
               // Le chef de projet a une vue équipe en LECTURE SEULE : pas de
-              // gestion (à la une / édition / suppression), réservée au patron.
+              // gestion (édition / suppression), réservée au patron.
               canManage: isPatron,
               canDelete: isPatron, onDelete: () => { this.closeSoldesMenu(); this.askDelete(a.id, a.name); },
               // Toutes les actions sont regroupées dans un menu ⋯ par ligne pour
@@ -13836,7 +13771,6 @@
             editEmpPhoto: s.editEmp ? (s.editEmp.photo || '') : '',
             editEmpHasPhoto: !!(s.editEmp && s.editEmp.photo),
             editEmpNoPhoto: !(s.editEmp && s.editEmp.photo),
-            editEmpFeatured: !!(s.editEmp && s.editEmp.featured),
             editEmpLeave: s.editEmp ? (s.editEmp.leave == null ? '' : s.editEmp.leave) : '',
             editEmpHours: s.editEmp ? (s.editEmp.hours == null ? '' : s.editEmp.hours) : '',
             onEditEmpLeave: (e) => this.setEditEmpField('leave', e && e.target ? e.target.value : ''),
@@ -13846,7 +13780,6 @@
             editPosteAdding: !!s.editPosteAdding,
             onEditEmpFile: (e) => { const file = e.target.files && e.target.files[0]; if (!file) return; const r = new FileReader(); r.onload = () => this.setEditEmpField('photo', r.result); r.readAsDataURL(file); },
             onEditEmpClearPhoto: () => this.setEditEmpField('photo', ''),
-            onToggleEditEmpFeatured: () => this.setState((st) => ({ editEmp: { ...st.editEmp, featured: !(st.editEmp && st.editEmp.featured) }, editEmpError: '' })),
             onEditEmpPrenom: (e) => this.setEditEmpField('prenom', e.target.value),
             onEditEmpNom: (e) => this.setEditEmpField('nom', e.target.value),
             onEditEmpEmail: (e) => this.setEditEmpField('email', e.target.value),
@@ -14138,7 +14071,7 @@
           const hb = this.balanceOf(a.id);
           const leaveVal = lv.defined ? String(lv.solde) : '';
           const hoursVal = String(hb.solde);
-          this.setState({ editEmp: { id: a.id, prenom: a.prenom || '', nom: a.nom || '', email: a.email || '', poste: a.poste || '', role: a.role || 'employe', photo: a.photo || '', featured: !!a.featured, leave: leaveVal, leaveInit: leaveVal, hours: hoursVal, hoursInit: hoursVal }, editEmpError: '', editEmpBusy: false, editPosteAdding: false });
+          this.setState({ editEmp: { id: a.id, prenom: a.prenom || '', nom: a.nom || '', email: a.email || '', poste: a.poste || '', role: a.role || 'employe', photo: a.photo || '', leave: leaveVal, leaveInit: leaveVal, hours: hoursVal, hoursInit: hoursVal }, editEmpError: '', editEmpBusy: false, editPosteAdding: false });
         }
         closeEditEmp() { this.setState({ editEmp: null, editEmpError: '', editPosteAdding: false }); }
         setEditEmpField(k, v) { this.setState((st) => ({ editEmp: { ...st.editEmp, [k]: v }, editEmpError: '' })); }
@@ -14497,7 +14430,7 @@
           }
           this.setState({ editEmpError: '', editEmpBusy: true });
           try {
-            const acc = await api('/accounts/' + e.id, { method: 'PATCH', body: { prenom, nom, email, poste: (e.poste || '').trim(), role: e.role, photo: e.photo || '', featured: !!e.featured } });
+            const acc = await api('/accounts/' + e.id, { method: 'PATCH', body: { prenom, nom, email, poste: (e.poste || '').trim(), role: e.role, photo: e.photo || '' } });
             let merged = acc;
             if (Object.keys(balances).length) {
               const bal = await api('/accounts/' + e.id + '/balances', { method: 'PATCH', body: balances });
@@ -14505,18 +14438,6 @@
             }
             this.setState((st) => ({ accounts: st.accounts.map((a) => (a.id === merged.id ? { ...a, ...merged } : a)), editEmp: null, editEmpError: '', editEmpBusy: false }));
           } catch (err) { this.setState({ editEmpError: err.message, editEmpBusy: false }); }
-        }
-        // Quick "à la une" toggle from the team list — patches only the featured flag,
-        // reusing the account's existing fields (PATCH requires the full body).
-        async toggleEmpFeatured(a) {
-          try {
-            const acc = await api('/accounts/' + a.id, { method: 'PATCH', body: {
-              prenom: a.prenom || '', nom: a.nom || '', email: a.email || '',
-              poste: a.poste || '', role: a.role || 'employe', photo: a.photo || '',
-              featured: !a.featured,
-            } });
-            this.setState((st) => ({ accounts: st.accounts.map((x) => (x.id === acc.id ? acc : x)) }));
-          } catch (err) { this.notify(err.message, 'Erreur', 'error'); }
         }
         // Menu ⋯ de la liste « Équipe & soldes » : une seule ligne ouverte à la
         // fois (soldesMenuId = id de la ligne, ou null si tout est fermé).

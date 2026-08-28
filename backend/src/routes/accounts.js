@@ -12,13 +12,24 @@ import { createToken } from '../tokens.js';
 
 const router = Router();
 
-// GET /api/accounts/featured — PUBLIC (consumed by the public site's team
-// section). Only members flagged « à la une » are returned, and only their
-// display fields — never the email. Patron first, then alphabetical.
-router.get('/featured', async (req, res) => {
+// Ordre d'affichage de la vitrine : direction, puis chefs de projet, puis
+// employés. MySQL ne peut pas trier là-dessus sans filesort (voir plus bas), le
+// classement final se fait donc en JS sur un tableau de quelques lignes.
+const TEAM_RANK = { patron: 0, chef: 1, employe: 2 };
+
+// GET /api/accounts/team — PUBLIC (consumed by the public site's team section).
+// TOUTE l'équipe est publiée, direction comprise : il n'y a pas de sélection
+// « à la une ». Seuls les champs d'affichage sortent — jamais l'email ni le rôle.
+//
+// Le ORDER BY SQL reste (role DESC, name ASC) pour coller à l'index
+// users_role_name_idx : sans lui, MySQL trierait en filesort avec la colonne
+// `photo` (LONGTEXT) dans le buffer -> ER_OUT_OF_SORTMEMORY. Le tri par rôle
+// ci-dessous est stable, donc l'ordre alphabétique est conservé dans chaque rôle.
+router.get('/team', async (req, res) => {
   const { rows } = await query(
-    "SELECT id, name, poste, photo FROM users WHERE featured IS TRUE ORDER BY role DESC, name ASC",
+    'SELECT id, name, role, poste, photo FROM users ORDER BY role DESC, name ASC',
   );
+  rows.sort((a, b) => (TEAM_RANK[a.role] ?? 3) - (TEAM_RANK[b.role] ?? 3));
   res.json(rows.map((r) => ({ id: r.id, name: r.name, role: r.poste, image: r.photo })));
 });
 
@@ -31,7 +42,7 @@ router.use(requireAuth);
 // les autres).
 router.get('/', async (req, res) => {
   const { rows } = await query(
-    `SELECT id, name, prenom, nom, email, role, poste, email_verified, photo, featured,
+    `SELECT id, name, prenom, nom, email, role, poste, email_verified, photo,
             to_char(created_at, 'YYYY-MM-DD') AS "createdAt",
             leave_balance::float AS "leaveBalance",
             to_char(leave_anchor, 'YYYY-MM-DD') AS "leaveAnchor",
@@ -98,16 +109,15 @@ router.post('/', requirePatron, async (req, res) => {
   // Unusable placeholder hash: login can never match it until a real password
   // is set at verification time.
   const photo = typeof req.body?.photo === 'string' ? req.body.photo : '';
-  const featured = req.body?.featured === true;
   const placeholder = await bcrypt.hash(randomBytes(24).toString('hex'), 12);
   const id = randomUUID();
   await query(
-    `INSERT INTO users (id, name, prenom, nom, email, password_hash, role, poste, photo, featured, email_verified, must_change_password)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, false, false)`,
-    [id, name, prenom, nom, email, placeholder, role, poste, photo, featured],
+    `INSERT INTO users (id, name, prenom, nom, email, password_hash, role, poste, photo, email_verified, must_change_password)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false, false)`,
+    [id, name, prenom, nom, email, placeholder, role, poste, photo],
   );
   const { rows } = await query(
-    'SELECT id, name, prenom, nom, email, role, poste, email_verified, photo, featured FROM users WHERE id = $1',
+    'SELECT id, name, prenom, nom, email, role, poste, email_verified, photo FROM users WHERE id = $1',
     [id],
   );
   const user = rows[0];
@@ -178,14 +188,13 @@ router.patch('/:id', requirePatron, async (req, res) => {
   }
 
   const photo = typeof req.body?.photo === 'string' ? req.body.photo : '';
-  const featured = req.body?.featured === true;
   await query(
-    `UPDATE users SET name = $1, prenom = $2, nom = $3, email = $4, poste = $5, role = $6, photo = $7, featured = $8
-     WHERE id = $9`,
-    [name, prenom, nom, email, poste, role, photo, featured, id],
+    `UPDATE users SET name = $1, prenom = $2, nom = $3, email = $4, poste = $5, role = $6, photo = $7
+     WHERE id = $8`,
+    [name, prenom, nom, email, poste, role, photo, id],
   );
   const { rows } = await query(
-    'SELECT id, name, prenom, nom, email, role, poste, email_verified, photo, featured FROM users WHERE id = $1',
+    'SELECT id, name, prenom, nom, email, role, poste, email_verified, photo FROM users WHERE id = $1',
     [id],
   );
   res.json(rows[0]);

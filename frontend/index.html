@@ -1715,10 +1715,17 @@
               >
                 Les ingénieurs derrière vos projets.
               </h3>
+              <!-- Le nombre de colonnes suit la taille de l'équipe (teamCols)
+                   pour ne jamais laisser un membre seul sur la dernière ligne.
+                   La 1re déclaration est le repli valide avant hydratation
+                   (le navigateur ignore la 2de tant que {{ }} n'est pas résolu).
+                   Le `minmax(` est ce qui déclenche le passage à 1 colonne sous
+                   600px dans responsive.js — le garder dans les deux. -->
               <div
                 style="
                   display: grid;
-                  grid-template-columns: repeat(4, minmax(0, 1fr));
+                  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                  grid-template-columns: repeat({{ teamCols }}, minmax(0, 1fr));
                   justify-content: center;
                   gap: 20px;
                   max-width: 1000px;
@@ -3065,7 +3072,18 @@
             { slot: 'team-dly', initials: 'DL', name: 'Denis Lam-Yam', role: 'Ingénieur IA · Data', bg: '#A7D8F0' },
             { slot: 'team-lm', initials: 'LM', name: 'Luc Moutanin', role: 'Apprenti Ingénieur IA · Data', bg: '#C9C2F5' },
           ];
+          // defaultTeam ne sert que de repli (API injoignable ou base vide) : dès
+          // que /api/accounts/team répond, il renvoie TOUTE l'équipe, direction
+          // en tête, et remplace la liste ci-dessus.
           const team = ((this.state.customTeam && this.state.customTeam.length) ? this.state.customTeam : defaultTeam).map((m, i) => ({ ...m, noImage: !m.image, bg: m.bg || '#2FED7F', delay: i * 550 }));
+          // Colonnes de la grille équipe : 5 au maximum, et on évite une dernière
+          // ligne à un seul membre (6 -> 3+3 plutôt que 5+1).
+          const teamCols = (() => {
+            const n = team.length || 1;
+            if (n <= 5) return n;
+            for (let c = 5; c >= 3; c -= 1) if (n % c === 0) return c;
+            return 4;
+          })();
           const logos = (this.state.homeLogos || []).map((l) => {
             const hasHref = !!(l.href && String(l.href).trim());
             return {
@@ -3089,12 +3107,10 @@
             frColor: lang === 'fr' ? '#08111E' : '#8FA0B5',
             enBg: lang === 'en' ? '#2FED7F' : 'transparent',
             enColor: lang === 'en' ? '#08111E' : '#8FA0B5',
-            experts: [
-              { initials: 'JG', bg: '#2FED7F' },
-              { initials: 'GW', bg: '#7FE6C4' },
-              { initials: 'DLY', bg: '#A7D8F0' },
-              { initials: 'LM', bg: '#C9C2F5' },
-            ],
+            // Bandeau de pastilles du hero : dérivé de la même liste que la
+            // grille équipe pour qu'ils ne divergent jamais. Plafonné à 5, les
+            // pastilles se chevauchant, au-delà ça déborde du badge.
+            experts: team.slice(0, 5).map((m) => ({ initials: m.initials, bg: m.bg })),
             navLinks: [
               { label: 'Expertise', href: '#expertises', color: '#2FED7F' },
               { label: 'Portfolio', href: '/portfolio', color: '#C4CFDD' },
@@ -3111,6 +3127,7 @@
               { num: '04', delay: 1650, label: 'Clarté & transparence' },
             ],
             team,
+            teamCols,
             testimonialsUnused: null,
             hasTestimonials: testimonials.length > 0,
             testimonials,
@@ -3160,10 +3177,13 @@
         }
         componentDidMount() {
           const apiBase = location.port === '3001' ? '' : 'https://landingback.codialis.com';
-          // L'équipe affichée vient des comptes marqués « à la une » dans
-          // l'admin (plus de liste content/team). On calcule ici l'avatar
-          // (initiales + couleur) que l'ancienne liste fournissait.
-          const teamPal = ['#2FED7F', '#7FE6C4', '#A7D8F0', '#C9C2F5'];
+          // L'équipe affichée est TOUTE l'équipe : /api/accounts/team renvoie
+          // chaque compte de l'admin, direction en tête, puis chefs de projet,
+          // puis employés. On calcule ici l'avatar (initiales + couleur) que
+          // l'ancienne liste content/team fournissait.
+          // 5 teintes : au-delà de 4 membres la palette recyclait le vert du
+          // fondateur sur le 5e, qui se retrouvait en double sur la même ligne.
+          const teamPal = ['#2FED7F', '#7FE6C4', '#A7D8F0', '#C9C2F5', '#F5C86B'];
           const teamInitials = (name) => {
             const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
             if (!parts.length) return '—';
@@ -3172,7 +3192,7 @@
           };
           Promise.all([
             fetch(apiBase + '/api/content/testimonials').then((r) => (r.ok ? r.json() : [])).catch(() => []),
-            fetch(apiBase + '/api/accounts/featured').then((r) => (r.ok ? r.json() : [])).catch(() => []),
+            fetch(apiBase + '/api/accounts/team').then((r) => (r.ok ? r.json() : [])).catch(() => []),
             fetch(apiBase + '/api/settings/home_logos').then((r) => (r.ok ? r.json() : {})).catch(() => ({})),
           ]).then(([rt, rm, rl]) => {
             const patch = {};

@@ -22,9 +22,9 @@ CREATE TABLE IF NOT EXISTS users (
   -- des identifiants). must_change_password force le changement au 1er login.
   email_verified       TINYINT(1) NOT NULL DEFAULT 0,
   must_change_password TINYINT(1) NOT NULL DEFAULT 0,
-  -- Vitrine : photo de profil (data URL base64 -> LONGTEXT) et mise « à la une ».
+  -- Vitrine : photo de profil (data URL base64 -> LONGTEXT). Toute l'équipe est
+  -- publiée sur la page d'accueil, il n'y a pas de sélection « à la une ».
   photo         LONGTEXT NULL,
-  featured      TINYINT(1) NOT NULL DEFAULT 0,
   -- Soldes « à ancre » : la direction saisit un solde réel + la date devient
   -- l'ancre ; le solde affiché est recalculé (voir balances.js). NULL = non défini.
   leave_balance DECIMAL(6,2),

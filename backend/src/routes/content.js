@@ -6,8 +6,8 @@ import { sendNewsletterToSubscribers } from '../mail.js';
 
 const router = Router();
 
-// 'team' retiré : les membres de la vitrine viennent désormais des comptes
-// marqués « à la une » (voir GET /api/accounts/featured).
+// 'team' retiré : les membres de la vitrine sont désormais tous les comptes
+// (voir GET /api/accounts/team).
 const TYPES = ['portfolio', 'blog', 'testimonials'];
 const validType = (t) => TYPES.includes(t);
 
