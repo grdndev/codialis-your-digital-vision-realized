@@ -4,7 +4,7 @@
 
 ## Qui est Codialis ?
 
-Codialis est une agence d'ingénierie logicielle qui dispose de deux établissements actifs : son siège à Vitry-sur-Seine (Île-de-France) et un établissement à Saint-André, à La Réunion (97440). Elle intervient dans toute la France métropolitaine, à La Réunion et dans la zone océan Indien, à distance ou sur site. La société est membre de Numeum (syndicat professionnel du numérique français) et labellisée France Num. Elle a livré plus de 50 projets, tous développés 100 % sur mesure et alignés sur les processus métier de ses clients. Son approche est « architecture-first » : une architecture pensée pour durer, scalable, documentée, sans dette technique.
+Codialis est une agence d'ingénierie logicielle qui dispose de deux établissements actifs : son siège à Vitry-sur-Seine (Île-de-France) et un établissement à Saint-André, à La Réunion (97440). Elle intervient dans toute la France métropolitaine, à La Réunion et dans la zone océan Indien, à distance ou sur site, et accompagne des clients dans 11 pays sur 4 continents. La société est membre de Numeum (syndicat professionnel du numérique français) et labellisée France Num. Elle a livré plus de 50 projets, tous développés 100 % sur mesure et alignés sur les processus métier de ses clients. Son approche est « architecture-first » : une architecture pensée pour durer, scalable, documentée, sans dette technique.
 
 - Site web : https://codialis.com
 - Forme juridique : EURL au capital de 1 000 €
@@ -87,6 +87,8 @@ Secteurs : Billetterie Marketplace Événementiel — Technologies : NextJs, Tai
 - Plus de 50 projets livrés
 - 4 domaines d'expertise
 - 100 % sur-mesure, aligné sur les processus des clients
+- Clients dans 11 pays, sur 4 continents
+- 2 établissements : siège en Île-de-France et établissement à La Réunion
 - 2 labels : membre Numeum, labellisée France Num
 - Réponse à toute demande sous 24 h ; premier échange gratuit et sans engagement
 

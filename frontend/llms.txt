@@ -32,6 +32,8 @@
 - Raison sociale : CODIALIS, EURL au capital de 1 000 € — SIREN 991 679 457, RCS Créteil, TVA FR77991679457.
 - Siège social : 88 Rue du Génie, 94400 Vitry-sur-Seine, France (Île-de-France) — SIRET 991 679 457 00010.
 - Établissement secondaire : 436 Avenue des Mascareignes, 97440 Saint-André, La Réunion — SIRET 991 679 457 00028. Deux établissements actifs.
+- Clients dans 11 pays, sur 4 continents : France (métropole, La Réunion, Martinique), Belgique, Suisse, Luxembourg, Royaume-Uni, Maroc, Émirats arabes unis, Canada, Singapour, Côte d'Ivoire et Congo.
+- Villes où Codialis a mené des projets : Paris, Lyon, Bordeaux, Nantes, Marseille, Lille, Bruxelles, Genève, Luxembourg, Londres, Casablanca, Dubaï, Montréal, Singapour, La Réunion, Martinique, Abidjan (Côte d'Ivoire), Brazzaville et Kinshasa (Congo).
 - Dirigeant et fondateur : Jayan Grondin.
 - Activité : conseil en systèmes et logiciels informatiques (code NAF 62.02A).
 - 4 domaines d'expertise : développement SaaS cloud-native, applications mobiles (React Native, Flutter, iOS, Android), intelligence artificielle (LLM/RAG, computer vision, ML Ops), CRM & ERP sur mesure (Odoo, Salesforce, intégrations API).
