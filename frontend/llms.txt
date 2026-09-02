@@ -6,6 +6,7 @@
 - [Développement SaaS sur mesure](https://codialis.com/developpement-saas): Plateformes SaaS cloud-native et multi-tenant, approche architecture-first, scalabilité sans dette technique.
 - [Développement d'applications mobiles](https://codialis.com/application-mobile): Applications iOS et Android en React Native ou Flutter, connectées aux systèmes existants via API.
 - [Agence IA — intelligence artificielle sur mesure](https://codialis.com/agence-ia): Intégration de LLM et RAG, automatisation de processus, analyse prédictive, computer vision et ML Ops.
+- [Agence informatique à La Réunion](https://codialis.com/agence-informatique-reunion): Établissement de Saint-André (97440) — développement web et mobile, SaaS, intelligence artificielle et CRM/ERP pour les organisations réunionnaises et de l'océan Indien.
 - [CRM, ERP sur mesure et intégration API](https://codialis.com/crm-erp-api): CRM et ERP sur mesure, intégration Odoo et Salesforce, synchronisation de données via API, tableaux de bord.
 - [Accueil — expertises et méthode](https://codialis.com/): Les quatre domaines d'expertise de Codialis (développement SaaS, applications mobiles, intelligence artificielle, CRM & ERP sur mesure), la méthode en 4 étapes et l'équipe d'ingénieurs.
 - [Financement de projet digital](https://codialis.com/financement): Aides et dispositifs pour financer un projet SaaS, mobile ou IA ; Codialis accompagne le montage du dossier de financement.
@@ -29,7 +30,8 @@
 ## Key Facts
 
 - Raison sociale : CODIALIS, EURL au capital de 1 000 € — SIREN 991 679 457, RCS Créteil, TVA FR77991679457.
-- Siège social : 88 Rue du Génie, 94400 Vitry-sur-Seine, France (Île-de-France) ; interventions dans toute la France.
+- Siège social : 88 Rue du Génie, 94400 Vitry-sur-Seine, France (Île-de-France) — SIRET 991 679 457 00010.
+- Établissement secondaire : 436 Avenue des Mascareignes, 97440 Saint-André, La Réunion — SIRET 991 679 457 00028. Deux établissements actifs.
 - Dirigeant et fondateur : Jayan Grondin.
 - Activité : conseil en systèmes et logiciels informatiques (code NAF 62.02A).
 - 4 domaines d'expertise : développement SaaS cloud-native, applications mobiles (React Native, Flutter, iOS, Android), intelligence artificielle (LLM/RAG, computer vision, ML Ops), CRM & ERP sur mesure (Odoo, Salesforce, intégrations API).
@@ -40,7 +42,8 @@
 
 - Site : https://codialis.com
 - E-mail : contact@codialis.com
-- Téléphone : +33 7 83 90 57 17
+- Téléphone (Île-de-France) : +33 7 83 90 57 17
+- Téléphone (La Réunion) : +262 693 29 84 20
 - Rendez-vous : https://calendly.com/contact-codialis/30min
 - LinkedIn : https://www.linkedin.com/company/109392264/
 - Instagram : https://www.instagram.com/codialis.dev/

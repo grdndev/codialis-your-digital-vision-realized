@@ -27,6 +27,8 @@ ErrorDocument 404 /404.html
   # --- SEO : évite le contenu dupliqué (fichiers bruts -> URLs propres, 301) --
   RewriteCond %{THE_REQUEST} \s/index\.html [NC]
   RewriteRule ^index\.html$ / [R=301,L]
+  RewriteCond %{THE_REQUEST} \s/agence-informatique-reunion\.html [NC]
+  RewriteRule ^agence-informatique-reunion\.html$ /agence-informatique-reunion [R=301,L]
   RewriteCond %{THE_REQUEST} \s/developpement-saas\.html [NC]
   RewriteRule ^developpement-saas\.html$ /developpement-saas [R=301,L]
   RewriteCond %{THE_REQUEST} \s/application-mobile\.html [NC]
@@ -51,6 +53,7 @@ ErrorDocument 404 /404.html
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
+  RewriteRule ^agence-informatique-reunion/?$ agence-informatique-reunion.html [L]
   RewriteRule ^developpement-saas/?$  developpement-saas.html  [L]
   RewriteRule ^application-mobile/?$  application-mobile.html  [L]
   RewriteRule ^agence-ia/?$           agence-ia.html           [L]
