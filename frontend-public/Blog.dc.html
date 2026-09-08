@@ -1,0 +1,1704 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <script src="./support.js"></script>
+    <script src="./responsive.js"></script>
+    <script src="./i18n-dict.js"></script>
+    <script src="./i18n.js"></script>
+    <script src="./footer-socials.js"></script>
+    <title>Blog — Ingénierie logicielle, IA & SaaS | Codialis</title>
+    <meta name="description" content="Nos réflexions sur l'ingénierie logicielle, l'intelligence artificielle, le SaaS et le financement de l'innovation — sans jargon inutile." />
+    <link rel="canonical" href="https://codialis.com/blog" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Codialis" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:title" content="Blog — Ingénierie logicielle, IA & SaaS | Codialis" />
+    <meta property="og:description" content="Nos réflexions sur l'ingénierie logicielle, l'intelligence artificielle, le SaaS et le financement de l'innovation — sans jargon inutile." />
+    <meta property="og:url" content="https://codialis.com/blog" />
+    <meta property="og:image" content="https://codialis.com/assets/og-codialis.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Codialis — ingénierie logicielle sur mesure" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Blog — Ingénierie logicielle, IA & SaaS | Codialis" />
+    <meta name="twitter:description" content="Nos réflexions sur l'ingénierie logicielle, l'intelligence artificielle, le SaaS et le financement de l'innovation — sans jargon inutile." />
+    <meta name="twitter:image" content="https://codialis.com/assets/og-codialis.png" />
+    <meta name="theme-color" content="#0e1626" />
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://codialis.com/"}, {"@type": "ListItem", "position": 2, "name": "Blog", "item": "https://codialis.com/blog"}]}</script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon_io/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon_io/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon_io/favicon-16x16.png" />
+        <link rel="icon" href="/assets/favicon_io/favicon.ico" sizes="any" />
+        <link rel="manifest" href="/assets/favicon_io/site.webmanifest" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin=""
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap"
+          rel="stylesheet"
+        />
+        <style>
+          * {
+            box-sizing: border-box;
+          }
+          html {
+            scroll-behavior: smooth;
+          }
+          body {
+            margin: 0;
+            background: #0e1626;
+            color: #eaf0f7;
+            font-family: "IBM Plex Sans", sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+          }
+          a {
+            color: #2fed7f;
+            text-decoration: none;
+          }
+          a:hover {
+            color: #7ff2b3;
+          }
+          ::selection {
+            background: #2fed7f;
+            color: #08111e;
+          }
+          input::placeholder {
+            color: #66768c;
+          }
+          @keyframes cod-rise {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: none;
+            }
+          }
+          @keyframes cod-neon {
+            0%,
+            100% {
+              text-shadow:
+                0 0 9px rgba(47, 237, 127, 0.45),
+                0 0 24px rgba(47, 237, 127, 0.28);
+            }
+            50% {
+              text-shadow:
+                0 0 18px rgba(47, 237, 127, 0.85),
+                0 0 46px rgba(47, 237, 127, 0.5);
+            }
+          }
+        </style>
+        <script src="image-slot.js"></script>
+      </helmet>
+
+      <div style="position: relative; width: 100%; max-width: 100%">
+        <!-- NAV -->
+        <nav
+          id="cod-nav"
+          style="
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: clamp(14px, 2vw, 28px);
+            padding: 9px 9px 9px 22px;
+            border-radius: 100px;
+            background: rgba(16, 24, 40, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(18px) saturate(140%);
+            -webkit-backdrop-filter: blur(18px) saturate(140%);
+            box-shadow:
+              0 18px 50px -18px rgba(0, 0, 0, 0.65),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            max-width: calc(100vw - 32px);
+            transition:
+              box-shadow 0.4s,
+              background 0.4s;
+          "
+        >
+          <a
+            href="/"
+            style="
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              flex-shrink: 0;
+            "
+          >
+            <img
+              src="/assets/codialis-white.png"
+              alt="Codialis"
+              style="height: 26px; width: auto; display: block"
+            />
+          </a>
+          <div
+            class="cod-navlinks"
+            style="
+              display: flex;
+              align-items: center;
+              gap: clamp(6px, 1vw, 12px);
+              padding: 0 clamp(4px, 1vw, 10px);
+              border-left: 1px solid rgba(255, 255, 255, 0.1);
+              border-right: 1px solid rgba(255, 255, 255, 0.1);
+            "
+          >
+            <sc-for list="{{ navLinks }}" as="lk" hint-placeholder-count="5">
+              <a
+                href="{{ lk.href }}"
+                style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:14.5px;letter-spacing:.01em;color:{{ lk.color }};padding:8px 12px;border-radius:100px;transition:color .25s,background .25s;"
+                style-hover="color:#fff;background:rgba(255,255,255,.07);"
+                >{{ lk.label }}</a
+              >
+            </sc-for>
+          </div>
+          <div
+            class="cod-navtoggle"
+            style="
+              display: flex;
+              align-items: center;
+              background: rgba(255, 255, 255, 0.06);
+              border-radius: 100px;
+              padding: 3px;
+              flex-shrink: 0;
+            "
+          >
+            <button
+              type="button"
+              onClick="{{ setLangFr }}"
+              style="border:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;padding:5px 11px;border-radius:100px;transition:background .25s,color .25s;background:{{ frBg }};color:{{ frColor }};"
+            >
+              FR
+            </button>
+            <button
+              type="button"
+              onClick="{{ setLangEn }}"
+              style="border:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;padding:5px 11px;border-radius:100px;transition:background .25s,color .25s;background:{{ enBg }};color:{{ enColor }};"
+            >
+              EN
+            </button>
+          </div>
+          <a
+            href="/contact"
+            style="
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              padding: 11px 20px;
+              border-radius: 100px;
+              background: #2fed7f;
+              color: #08111e;
+              font-family: &quot;Space Grotesk&quot;, sans-serif;
+              font-weight: 600;
+              font-size: 14.5px;
+              flex-shrink: 0;
+              transition:
+                transform 0.25s,
+                box-shadow 0.25s;
+            "
+            style-hover="transform:translateY(-1px);box-shadow:0 12px 26px -8px rgba(47,237,127,.6);"
+            >{{ cta }}<span style="display: inline-block; font-size: 15px"
+              >→</span
+            ></a
+          >
+        </nav>
+
+        <!-- HERO -->
+        <header
+          data-screen-label="Blog — Hero"
+          style="
+            position: relative;
+            overflow: hidden;
+            padding: clamp(140px, 19vh, 220px) clamp(20px, 5vw, 64px)
+              clamp(48px, 6vw, 72px);
+            background:
+              radial-gradient(
+                120% 90% at 50% 0%,
+                rgba(47, 237, 127, 0.14),
+                rgba(14, 22, 38, 0) 55%
+              ),
+              #0e1626;
+          "
+        >
+          <div
+            style="
+              position: relative;
+              z-index: 1;
+              max-width: 1120px;
+              margin: 0 auto;
+            "
+          >
+            <div
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 20px;
+                animation: cod-rise 0.7s ease both;
+              "
+            >
+              <span
+                style="width: 26px; height: 1px; background: #2fed7f"
+              ></span>
+              <span
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 13px;
+                  letter-spacing: 0.2em;
+                  text-transform: uppercase;
+                  color: #2fed7f;
+                "
+                >{{ heroKicker }}</span
+              >
+            </div>
+            <h1
+              style="
+                font-family: &quot;Space Grotesk&quot;, sans-serif;
+                font-weight: 600;
+                font-size: clamp(38px, 6vw, 72px);
+                line-height: 1.04;
+                letter-spacing: -0.02em;
+                margin: 0 0 24px;
+                max-width: 18ch;
+                color: #edf3f7;
+                animation: cod-rise 0.8s ease both;
+                animation-delay: 0.08s;
+              "
+            >
+              {{ heroLead }}
+              <span style="color: #2fed7f">{{ heroAccent }}</span>
+            </h1>
+            <p
+              style="
+                font-size: 18px;
+                line-height: 1.7;
+                color: #a6b3c6;
+                margin: 0;
+                max-width: 60ch;
+                animation: cod-rise 0.8s ease both;
+                animation-delay: 0.16s;
+              "
+            >
+              {{ heroSub }}
+            </p>
+          </div>
+        </header>
+
+        <!-- FEATURED -->
+        <sc-if value="{{ featuredVisible }}" hint-placeholder-val="{{ true }}">
+          <section
+            data-screen-label="Blog — À la une"
+            style="
+              position: relative;
+              padding: clamp(8px, 2vw, 24px) clamp(20px, 5vw, 64px)
+                clamp(28px, 4vw, 44px);
+              background: #0e1626;
+            "
+          >
+            <div
+              onClick="{{ featured.openModal }}"
+              data-reveal=""
+              style="
+                opacity: 0;
+                transform: translateY(28px);
+                transition:
+                  opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  border-color 0.35s,
+                  box-shadow 0.35s;
+                display: block;
+                max-width: 1200px;
+                margin: 0 auto;
+                border-radius: 24px;
+                overflow: hidden;
+                border: 1px solid rgba(47, 237, 127, 0.24);
+                background: linear-gradient(
+                  160deg,
+                  rgba(47, 237, 127, 0.07),
+                  rgba(255, 255, 255, 0.015)
+                );
+                color: inherit;
+                cursor: pointer;
+              "
+              style-hover="border-color:rgba(47,237,127,.55);box-shadow:0 34px 60px -30px rgba(0,0,0,.75);transform:translateY(-3px);"
+            >
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                "
+              >
+                <div
+                  style="
+                    position: relative;
+                    min-height: 320px;
+                    aspect-ratio: 16/11;
+                    border-right: 1px solid rgba(255, 255, 255, 0.06);
+                  "
+                >
+                  <sc-if
+                    value="{{ featured.image }}"
+                    hint-placeholder-val="{{ false }}"
+                  >
+                    <div
+                      class="cod-img"
+                      data-img="{{ featured.image }}"
+                      style="
+                        position: absolute;
+                        inset: 0;
+                        background-size: cover;
+                        background-position: center;
+                      "
+                    ></div>
+                  </sc-if>
+                  <sc-if
+                    value="{{ featured.noImage }}"
+                    hint-placeholder-val="{{ true }}"
+                  >
+                    <image-slot
+                      id="{{ featured.slot }}"
+                      shape="rect"
+                      placeholder="Déposez l'illustration de l'article à la une"
+                    ></image-slot>
+                  </sc-if>
+                  <span
+                    style="
+                      position: absolute;
+                      top: 16px;
+                      left: 16px;
+                      z-index: 2;
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 11px;
+                      letter-spacing: 0.16em;
+                      text-transform: uppercase;
+                      color: #08111e;
+                      background: #2fed7f;
+                      padding: 5px 12px;
+                      border-radius: 100px;
+                    "
+                    >{{ featuredBadge }}</span
+                  >
+                </div>
+                <div
+                  style="
+                    padding: clamp(30px, 4vw, 52px);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                  "
+                >
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 12px;
+                      margin-bottom: 16px;
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 12px;
+                      letter-spacing: 0.05em;
+                      color: #5c6b80;
+                    "
+                  >
+                    <span style="color: #2fed7f">{{ featured.catLabel }}</span>
+                    <span
+                      style="
+                        width: 3px;
+                        height: 3px;
+                        border-radius: 50%;
+                        background: #5c6b80;
+                      "
+                    ></span>
+                    <span>{{ featured.date }}</span>
+                    <span
+                      style="
+                        width: 3px;
+                        height: 3px;
+                        border-radius: 50%;
+                        background: #5c6b80;
+                      "
+                    ></span>
+                    <span>{{ featured.read }} {{ readSuffix }}</span>
+                  </div>
+                  <h2
+                    style="
+                      font-family: &quot;Space Grotesk&quot;, sans-serif;
+                      font-weight: 600;
+                      font-size: clamp(26px, 3.4vw, 38px);
+                      line-height: 1.1;
+                      letter-spacing: -0.015em;
+                      margin: 0 0 16px;
+                      color: #fff;
+                    "
+                  >
+                    {{ featured.title }}
+                  </h2>
+                  <p
+                    style="
+                      font-size: 16px;
+                      line-height: 1.7;
+                      color: #98a6ba;
+                      margin: 0 0 26px;
+                    "
+                  >
+                    {{ featured.excerptDisplay }}
+                  </p>
+                  <span
+                    style="
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 10px;
+                      font-family: &quot;Space Grotesk&quot;, sans-serif;
+                      font-weight: 600;
+                      font-size: 15px;
+                      color: #2fed7f;
+                    "
+                    >{{ readLabel }}<span
+                      style="
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 26px;
+                        height: 26px;
+                        border-radius: 50%;
+                        background: rgba(47, 237, 127, 0.14);
+                        font-size: 13px;
+                      "
+                      >→</span
+                    ></span
+                  >
+                </div>
+              </div>
+            </div>
+          </section>
+        </sc-if>
+
+        <!-- TOOLBAR : recherche + filtres -->
+        <section
+          data-screen-label="Blog — Articles"
+          style="
+            position: relative;
+            padding: clamp(20px, 3vw, 32px) clamp(20px, 5vw, 64px)
+              clamp(80px, 10vw, 130px);
+            background: #0a101e;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+          "
+        >
+          <div style="max-width: 1200px; margin: 0 auto">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 18px;
+                margin: clamp(28px, 4vw, 48px) 0 clamp(22px, 3vw, 32px);
+              "
+            >
+              <h2
+                style="
+                  font-family: &quot;Space Grotesk&quot;, sans-serif;
+                  font-weight: 600;
+                  font-size: clamp(24px, 3vw, 34px);
+                  line-height: 1.08;
+                  letter-spacing: -0.015em;
+                  margin: 0;
+                  color: #fff;
+                "
+              >
+                {{ listHeading }}
+              </h2>
+              <div
+                style="
+                  position: relative;
+                  display: flex;
+                  align-items: center;
+                  min-width: min(320px, 100%);
+                  flex: 0 1 320px;
+                "
+              >
+                <span
+                  style="
+                    position: absolute;
+                    left: 14px;
+                    font-size: 15px;
+                    color: #66768c;
+                    pointer-events: none;
+                  "
+                  >⌕</span
+                >
+                <input
+                  type="text"
+                  value="{{ query }}"
+                  onChange="{{ onSearch }}"
+                  placeholder="{{ searchPlaceholder }}"
+                  style="
+                    width: 100%;
+                    padding: 12px 14px 12px 38px;
+                    border-radius: 100px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    color: #eaf0f7;
+                    font-family: &quot;IBM Plex Sans&quot;, sans-serif;
+                    font-size: 14.5px;
+                    outline: none;
+                    transition:
+                      border-color 0.25s,
+                      background 0.25s;
+                  "
+                  style-focus="border-color:rgba(47,237,127,.55);background:rgba(255,255,255,.08);"
+                />
+              </div>
+            </div>
+
+            <div
+              style="
+                display: flex;
+                flex-wrap: wrap;
+                gap: 9px;
+                margin-bottom: clamp(26px, 3vw, 36px);
+              "
+            >
+              <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6">
+                <button
+                  type="button"
+                  onClick="{{ c.onClick }}"
+                  style="{{ c.style }}"
+                >
+                  {{ c.label }}
+                </button>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+                  gap: 22px;
+                "
+              >
+                <sc-for list="{{ articles }}" as="a" hint-placeholder-count="6">
+                  <article
+                    onClick="{{ a.openModal }}"
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      border-radius: 18px;
+                      overflow: hidden;
+                      background: linear-gradient(
+                        160deg,
+                        rgba(255, 255, 255, 0.05),
+                        rgba(255, 255, 255, 0.012)
+                      );
+                      border: 1px solid rgba(255, 255, 255, 0.1);
+                      color: inherit;
+                      cursor: pointer;
+                      transition:
+                        transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1),
+                        border-color 0.35s,
+                        box-shadow 0.35s;
+                    "
+                    style-hover="border-color:rgba(47,237,127,.5);box-shadow:0 30px 55px -26px rgba(0,0,0,.7);transform:translateY(-4px);"
+                  >
+                    <div
+                      style="
+                        position: relative;
+                        aspect-ratio: 16/10;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                      "
+                    >
+                      <sc-if
+                        value="{{ a.image }}"
+                        hint-placeholder-val="{{ false }}"
+                      >
+                        <div
+                          class="cod-img"
+                          data-img="{{ a.image }}"
+                          style="
+                            position: absolute;
+                            inset: 0;
+                            background-size: cover;
+                            background-position: center;
+                          "
+                        ></div>
+                      </sc-if>
+                      <sc-if
+                        value="{{ a.noImage }}"
+                        hint-placeholder-val="{{ true }}"
+                      >
+                        <image-slot
+                          id="{{ a.slot }}"
+                          shape="rect"
+                          placeholder="Illustration"
+                        ></image-slot>
+                      </sc-if>
+                      <span
+                        style="
+                          position: absolute;
+                          top: 12px;
+                          left: 12px;
+                          z-index: 2;
+                          font-family: &quot;IBM Plex Mono&quot;, monospace;
+                          font-size: 11px;
+                          letter-spacing: 0.06em;
+                          color: #08111e;
+                          background: #2fed7f;
+                          padding: 4px 10px;
+                          border-radius: 100px;
+                          pointer-events: none;
+                        "
+                        >{{ a.catLabel }}</span
+                      >
+                    </div>
+                    <div
+                      style="
+                        padding: 24px 24px 26px;
+                        display: flex;
+                        flex-direction: column;
+                        flex: 1;
+                      "
+                    >
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 10px;
+                          margin-bottom: 12px;
+                          font-family: &quot;IBM Plex Mono&quot;, monospace;
+                          font-size: 11.5px;
+                          letter-spacing: 0.04em;
+                          color: #66768c;
+                        "
+                      >
+                        <span>{{ a.date }}</span>
+                        <span
+                          style="
+                            width: 3px;
+                            height: 3px;
+                            border-radius: 50%;
+                            background: #3a4658;
+                          "
+                        ></span>
+                        <span>{{ a.read }} {{ readSuffix }}</span>
+                      </div>
+                      <h3
+                        style="
+                          font-family: &quot;Space Grotesk&quot;, sans-serif;
+                          font-weight: 600;
+                          font-size: 20px;
+                          line-height: 1.22;
+                          color: #fff;
+                          margin: 0 0 12px;
+                        "
+                      >
+                        {{ a.title }}
+                      </h3>
+                      <p
+                        style="
+                          font-size: 14.5px;
+                          line-height: 1.6;
+                          color: #98a6ba;
+                          margin: 0 0 20px;
+                          flex: 1;
+                        "
+                      >
+                        {{ a.excerptDisplay }}
+                      </p>
+                      <span
+                        style="
+                          display: inline-flex;
+                          align-items: center;
+                          gap: 8px;
+                          font-family: &quot;Space Grotesk&quot;, sans-serif;
+                          font-weight: 600;
+                          font-size: 14px;
+                          color: #2fed7f;
+                        "
+                        >{{ readLabel }}<span style="font-size: 14px"
+                          >→</span
+                        ></span
+                      >
+                    </div>
+                  </article>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if
+              value="{{ showPagination }}"
+              hint-placeholder-val="{{ false }}"
+            >
+              <nav
+                aria-label="Pagination"
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  flex-wrap: wrap;
+                  gap: 8px;
+                  margin-top: clamp(32px, 4vw, 48px);
+                "
+              >
+                <button
+                  type="button"
+                  onClick="{{ prevClick }}"
+                  disabled="{{ prevDisabled }}"
+                  style="{{ prevStyle }}"
+                >
+                  ← {{ prevLabel }}
+                </button>
+                <sc-for
+                  list="{{ pageItems }}"
+                  as="pg"
+                  hint-placeholder-count="3"
+                >
+                  <button
+                    type="button"
+                    onClick="{{ pg.onClick }}"
+                    style="{{ pg.style }}"
+                  >
+                    {{ pg.label }}
+                  </button>
+                </sc-for>
+                <button
+                  type="button"
+                  onClick="{{ nextClick }}"
+                  disabled="{{ nextDisabled }}"
+                  style="{{ nextStyle }}"
+                >
+                  {{ nextLabel }} →
+                </button>
+              </nav>
+            </sc-if>
+
+            <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+              <div
+                style="
+                  padding: clamp(50px, 8vw, 90px) 20px;
+                  text-align: center;
+                  border: 1px dashed rgba(255, 255, 255, 0.14);
+                  border-radius: 18px;
+                "
+              >
+                <div
+                  style="font-size: 34px; margin-bottom: 14px; color: #3a4658"
+                >
+                  ⌕
+                </div>
+                <p style="font-size: 16px; color: #8fa0b5; margin: 0">
+                  {{ emptyText }}
+                </p>
+              </div>
+            </sc-if>
+          </div>
+        </section>
+
+        <!-- NEWSLETTER -->
+        <section
+          data-screen-label="Blog — Newsletter"
+          style="
+            position: relative;
+            overflow: hidden;
+            padding: clamp(64px, 8vw, 110px) clamp(20px, 5vw, 64px);
+            background: #0e1626;
+          "
+        >
+          <div
+            style="
+              position: absolute;
+              top: -120px;
+              left: 50%;
+              transform: translateX(-50%);
+              width: 640px;
+              height: 420px;
+              z-index: 0;
+              background: radial-gradient(
+                circle,
+                rgba(47, 237, 127, 0.12),
+                transparent 62%
+              );
+              filter: blur(12px);
+              pointer-events: none;
+            "
+          ></div>
+          <div
+            data-reveal=""
+            style="
+              opacity: 0;
+              transform: translateY(28px);
+              transition:
+                opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+              position: relative;
+              z-index: 1;
+              max-width: 640px;
+              margin: 0 auto;
+              text-align: center;
+            "
+          >
+            <div
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 18px;
+              "
+            >
+              <span
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #2fed7f;
+                  background: rgba(47, 237, 127, 0.12);
+                  padding: 5px 12px;
+                  border-radius: 100px;
+                "
+                >{{ nlKicker }}</span
+              >
+            </div>
+            <h2
+              style="
+                font-family: &quot;Space Grotesk&quot;, sans-serif;
+                font-weight: 600;
+                font-size: clamp(28px, 4.2vw, 46px);
+                line-height: 1.08;
+                letter-spacing: -0.02em;
+                margin: 0 0 16px;
+                color: #fff;
+              "
+            >
+              {{ nlTitle }}
+            </h2>
+            <p
+              style="
+                font-size: 16.5px;
+                line-height: 1.7;
+                color: #a6b3c6;
+                margin: 0 auto 34px;
+                max-width: 46ch;
+              "
+            >
+              {{ nlSub }}
+            </p>
+
+            <sc-if
+              value="{{ notSubscribed }}"
+              hint-placeholder-val="{{ true }}"
+            >
+              <form
+                onSubmit="{{ onSubscribe }}"
+                style="
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 10px;
+                  justify-content: center;
+                  max-width: 480px;
+                  margin: 0 auto;
+                "
+              >
+                <input
+                  type="email"
+                  name="email"
+                  required="required"
+                  placeholder="{{ nlPlaceholder }}"
+                  style="
+                    flex: 1 1 240px;
+                    padding: 15px 20px;
+                    border-radius: 11px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.14);
+                    color: #eaf0f7;
+                    font-family: &quot;IBM Plex Sans&quot;, sans-serif;
+                    font-size: 15px;
+                    outline: none;
+                    transition:
+                      border-color 0.25s,
+                      background 0.25s;
+                  "
+                  style-focus="border-color:rgba(47,237,127,.55);background:rgba(255,255,255,.08);"
+                />
+                <button
+                  type="submit"
+                  style="
+                    flex: 0 0 auto;
+                    padding: 15px 26px;
+                    border-radius: 11px;
+                    border: 0;
+                    cursor: pointer;
+                    background: #2fed7f;
+                    color: #08111e;
+                    font-family: &quot;Space Grotesk&quot;, sans-serif;
+                    font-weight: 600;
+                    font-size: 15px;
+                    transition:
+                      transform 0.25s,
+                      box-shadow 0.25s;
+                  "
+                  style-hover="transform:translateY(-2px);box-shadow:0 16px 36px -12px rgba(47,237,127,.6);"
+                >
+                  {{ nlButton }}
+                </button>
+              </form>
+              <sc-if
+                value="{{ hasNlError }}"
+                hint-placeholder-val="{{ false }}"
+              >
+                <p style="margin: 12px 0 0; font-size: 13px; color: #ff8080">
+                  {{ nlError }}
+                </p>
+              </sc-if>
+            </sc-if>
+
+            <sc-if value="{{ subscribed }}" hint-placeholder-val="{{ false }}">
+              <div
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 12px;
+                  padding: 15px 26px;
+                  border-radius: 11px;
+                  background: rgba(47, 237, 127, 0.1);
+                  border: 1px solid rgba(47, 237, 127, 0.35);
+                "
+              >
+                <span
+                  style="
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 26px;
+                    height: 26px;
+                    border-radius: 50%;
+                    background: #2fed7f;
+                    color: #08111e;
+                    font-size: 14px;
+                    font-weight: 700;
+                  "
+                  >✓</span
+                >
+                <span
+                  style="
+                    font-family: &quot;Space Grotesk&quot;, sans-serif;
+                    font-weight: 600;
+                    font-size: 15px;
+                    color: #eaf0f7;
+                  "
+                  >{{ nlThanks }}</span
+                >
+              </div>
+            </sc-if>
+          </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer
+          style="
+            position: relative;
+            padding: 64px clamp(20px, 5vw, 64px) 40px;
+            background: #0e1626;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+          "
+        >
+          <div
+            style="
+              max-width: 1200px;
+              margin: 0 auto;
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+              gap: 40px;
+              align-items: start;
+            "
+          >
+            <div>
+              <img
+                src="/assets/codialis-white.png"
+                alt="Codialis"
+                style="
+                  height: 28px;
+                  width: auto;
+                  display: block;
+                  margin-bottom: 18px;
+                "
+              />
+              <p
+                style="
+                  font-size: 14.5px;
+                  line-height: 1.65;
+                  color: #8291a6;
+                  margin: 0;
+                  max-width: 34ch;
+                "
+              >
+                Les plateformes digitales qui font avancer les entreprises.
+                Architecture-first, construites pour durer.
+              </p>
+              <a
+                href="/portfolio"
+                aria-label="50+ projets livrés — voir le portfolio"
+                style="
+                  display: inline-flex;
+                  align-items: baseline;
+                  gap: 8px;
+                  margin-top: 20px;
+                  padding: 8px 14px;
+                  border-radius: 999px;
+                  background: rgba(47, 237, 127, 0.09);
+                  border: 1px solid rgba(47, 237, 127, 0.3);
+                  color: #2fed7f;
+                  font-size: 13.5px;
+                  font-weight: 600;
+                  text-decoration: none;
+                  transition:
+                    background 0.2s,
+                    border-color 0.2s,
+                    transform 0.2s;
+                "
+                style-hover="background:rgba(47,237,127,.17);border-color:rgba(47,237,127,.55);transform:translateY(-1px);"
+              >
+                <span
+                  style="
+                    font-family: &quot;Space Grotesk&quot;, sans-serif;
+                    font-weight: 700;
+                    font-size: 16px;
+                  "
+                  >50+</span
+                >
+                projets livrés
+              </a>
+              <div
+                data-cod-footer-socials
+                style="display: flex; gap: 12px; margin-top: 22px"
+              >
+                <a
+                  href="https://www.linkedin.com/company/109392264/"
+                  target="_blank"
+                  rel="noopener"
+                  aria-label="LinkedIn"
+                  style="
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    color: #b7c2d2;
+                    transition:
+                      color 0.2s,
+                      background 0.2s,
+                      border-color 0.2s,
+                      transform 0.2s;
+                  "
+                  style-hover="color:#08111E;background:#2FED7F;border-color:#2FED7F;transform:translateY(-2px);"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M4.98 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM3 9h4v12H3zM9 9h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.3c0-1.26-.02-2.9-1.77-2.9-1.77 0-2.04 1.38-2.04 2.8V21H9z"
+                    ></path>
+                  </svg>
+                </a>
+                <a
+                  href="https://www.instagram.com/codialis.dev/"
+                  target="_blank"
+                  rel="noopener"
+                  aria-label="Instagram"
+                  style="
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    color: #b7c2d2;
+                    transition:
+                      color 0.2s,
+                      background 0.2s,
+                      border-color 0.2s,
+                      transform 0.2s;
+                  "
+                  style-hover="color:#08111E;background:#2FED7F;border-color:#2FED7F;transform:translateY(-2px);"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="2" y="2" width="20" height="20" rx="5"></rect>
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <circle
+                      cx="17.5"
+                      cy="6.5"
+                      r="1.2"
+                      fill="currentColor"
+                      stroke="none"
+                    ></circle>
+                  </svg>
+                </a>
+              </div>
+            </div>
+            <div>
+              <div
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #5c6b80;
+                  margin-bottom: 16px;
+                "
+              >
+                Expertises
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <sc-for
+                  list="{{ footerExp }}"
+                  as="f"
+                  hint-placeholder-count="4"
+                >
+                  <a
+                    href="/#expertises"
+                    style="
+                      font-size: 14.5px;
+                      color: #b7c2d2;
+                      transition: color 0.2s;
+                    "
+                    style-hover="color:#2FED7F;"
+                    >{{ f }}</a
+                  >
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #5c6b80;
+                  margin-bottom: 16px;
+                "
+              >
+                Confiance
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <span style="font-size: 14.5px; color: #b7c2d2"
+                  >Membre Numeum</span
+                >
+                <span style="font-size: 14.5px; color: #b7c2d2"
+                  >Labellisée France Num</span
+                >
+              </div>
+            </div>
+            <div>
+              <div
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #5c6b80;
+                  margin-bottom: 16px;
+                "
+              >
+                Contact
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <a
+                  href="mailto:contact@codialis.com"
+                  style="font-size: 14.5px; color: #b7c2d2"
+                  style-hover="color:#2FED7F;"
+                  >contact@codialis.com</a
+                >
+                <a
+                  href="https://calendly.com/contact-codialis/30min"
+                  style="font-size: 14.5px; color: #b7c2d2"
+                  style-hover="color:#2FED7F;"
+                  >Prendre rendez-vous</a
+                >
+              </div>
+            </div>
+          </div>
+          <div
+            style="
+              max-width: 1200px;
+              margin: 48px auto 0;
+              padding-top: 24px;
+              border-top: 1px solid rgba(255, 255, 255, 0.07);
+              display: flex;
+              flex-wrap: wrap;
+              gap: 12px;
+              justify-content: space-between;
+              font-family: &quot;IBM Plex Mono&quot;, monospace;
+              font-size: 12px;
+              letter-spacing: 0.06em;
+              color: #5c6b80;
+            "
+          >
+            <span>© {{ year }} Codialis. Tous droits réservés.</span>
+            <a
+              href="/legal"
+              style="color: #2fed7f; letter-spacing: 0.06em"
+              style-hover="color:#7ff2b3;"
+              >Mentions légales</a
+            >
+            <span>SaaS · Mobile · IA · CRM / ERP</span>
+          </div>
+        </footer>
+
+        <!-- POPUP ARTICLE (texte complet) -->
+        <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+          <div
+            onClick="{{ closeModal }}"
+            style="
+              position: fixed;
+              inset: 0;
+              z-index: 400;
+              background: rgba(4, 8, 16, 0.72);
+              backdrop-filter: blur(4px);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 20px;
+            "
+          >
+            <div
+              onClick="{{ stopProp }}"
+              style="
+                position: relative;
+                width: 100%;
+                max-width: 640px;
+                max-height: 88vh;
+                overflow-y: auto;
+                box-sizing: border-box;
+                padding: clamp(28px, 4vw, 48px);
+                border-radius: 20px;
+                background: #0e1626;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+              "
+            >
+              <button
+                type="button"
+                onClick="{{ closeModal }}"
+                aria-label="Fermer"
+                style="
+                  position: absolute;
+                  top: 16px;
+                  right: 16px;
+                  width: 38px;
+                  height: 38px;
+                  border-radius: 50%;
+                  border: 1px solid rgba(255, 255, 255, 0.16);
+                  background: rgba(255, 255, 255, 0.04);
+                  color: #eaf0f7;
+                  cursor: pointer;
+                  font-size: 18px;
+                  line-height: 1;
+                "
+                style-hover="background:#2FED7F;border-color:#2FED7F;color:#08111E;"
+              >
+                ✕
+              </button>
+              <div
+                style="
+                  display: flex;
+                  flex-wrap: wrap;
+                  align-items: center;
+                  gap: 12px;
+                  margin-bottom: 16px;
+                  padding-right: 40px;
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.05em;
+                  color: #5c6b80;
+                "
+              >
+                <span
+                  style="
+                    color: #08111e;
+                    background: #2fed7f;
+                    padding: 4px 10px;
+                    border-radius: 100px;
+                  "
+                  >{{ modalCatLabel }}</span
+                >
+                <sc-if
+                  value="{{ modalHasMeta }}"
+                  hint-placeholder-val="{{ false }}"
+                >
+                  <span>{{ modalDate }}</span>
+                  <span
+                    style="
+                      width: 3px;
+                      height: 3px;
+                      border-radius: 50%;
+                      background: #5c6b80;
+                    "
+                  ></span>
+                  <span>{{ modalRead }} {{ readSuffix }}</span>
+                </sc-if>
+              </div>
+              <h3
+                style="
+                  font-family: &quot;Space Grotesk&quot;, sans-serif;
+                  font-weight: 600;
+                  font-size: clamp(22px, 2.6vw, 28px);
+                  line-height: 1.2;
+                  color: #fff;
+                  margin: 0 0 16px;
+                "
+              >
+                {{ modalTitle }}
+              </h3>
+              <p
+                style="
+                  font-size: 15.5px;
+                  line-height: 1.7;
+                  color: #c4cfdd;
+                  margin: 0;
+                  white-space: pre-wrap;
+                "
+              >
+                {{ modalExcerpt }}
+              </p>
+              <sc-if
+                value="{{ modalHasSource }}"
+                hint-placeholder-val="{{ false }}"
+              >
+                <p style="margin: 18px 0 0; font-size: 13px; color: #8fa0b5">
+                  via
+                  <a
+                    href="{{ modalSource }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="color: #2fed7f; text-decoration: none"
+                    >{{ modalSourceHost }} ↗</a
+                  >
+                </p>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+
+        <dc-import name="Chatbot" hint-size="1px,1px"></dc-import>
+      </div>
+    </x-dc>
+    <script
+      type="text/x-dc"
+      data-dc-script
+      data-props='{"$preview":{"width":1280,"height":900}}'
+    >
+      class Component extends DCLogic {
+        state = { lang: (window.CodialisI18n ? window.CodialisI18n.get() : 'fr'), query: '', activeCat: 'all', page: 1, subscribed: false, nlError: '', nlBusy: false, custom: [], settings: {}, modalPost: null };
+
+        renderVals() {
+          const lang = this.state.lang;
+          const fr = lang === 'fr';
+          const setLang = (l) => () => { try { localStorage.setItem('codialis-lang', l); } catch (e) {} location.reload(); };
+          const t = (f, e) => (fr ? f : e);
+          // En-tête éditable depuis le back-office (settings blog_page.hero). Chaque
+          // champ rempli remplace le défaut bilingue ; vide = on garde le défaut.
+          const h = (this.state.settings || {}).hero || {};
+
+          const catDefs = [
+            { key: 'all', label: t('Tous', 'All') },
+            { key: 'dev', label: t('Développement', 'Development') },
+            { key: 'ia', label: t('IA', 'AI') },
+            { key: 'saas', label: t('SaaS', 'SaaS') },
+            { key: 'funding', label: t('Financement', 'Funding') },
+            { key: 'design', label: t('Design UX', 'UX Design') },
+            { key: 'cyber', label: t('Cybersécurité', 'Cybersecurity') },
+            { key: 'startups', label: t('Startups', 'Startups') },
+            { key: 'data', label: t('Data', 'Data') },
+            { key: 'mobile', label: t('Mobile', 'Mobile') },
+            { key: 'opensource', label: t('Open Source', 'Open Source') },
+          ];
+
+          const catLabelOf = (k) => (catDefs.find((c) => c.key === k) || {}).label || k || '';
+
+          // Extrait trop long : on tronque avec « … » et un clic ouvre la
+          // pop-up avec le texte complet (même principe que le portfolio).
+          const DESC_CLAMP = 160;
+          const openPost = (p) => () => {
+            this.setState({ modalPost: p });
+            if (p && p.id) fetch(apiBase + '/api/content/blog/' + p.id + '/view', { method: 'POST' }).catch(() => {});
+          };
+          const clampDesc = (txt) => {
+            const s = txt || '';
+            const truncated = s.length > DESC_CLAMP;
+            return { truncated, display: truncated ? s.slice(0, DESC_CLAMP).replace(/\s+\S*$/, '') + ' …' : s };
+          };
+
+          // Seuls les articles publiés depuis le back-office sont affichés (plus de
+          // contenu de démonstration).
+          const custom = (this.state.custom || []).map((p) => ({
+            id: p.id, cat: p.cat || 'dev', slot: p.slot || ('blog-' + p.id),
+            date: p.date || '', read: p.read || '',
+            title: p.title || '', excerpt: p.excerpt || '',
+            content: p.content || '', source: p.source || '',
+            image: p.image || '', featured: !!p.featured,
+          }));
+          const customFeatured = custom.find((p) => p.featured);
+          const customPosts = custom.filter((p) => !p.featured);
+
+          const allPosts = customPosts;
+
+          const activeFeatured = customFeatured
+            ? (() => {
+                const c = clampDesc(customFeatured.excerpt);
+                const catLabel = catLabelOf(customFeatured.cat);
+                const it = {
+                  ...customFeatured, slot: customFeatured.slot,
+                  noImage: !customFeatured.image, catLabel,
+                  excerptDisplay: c.display, excerptTruncated: c.truncated,
+                };
+                it.openModal = openPost({ id: it.id, title: it.title, excerpt: it.excerpt, content: it.content, source: it.source, catLabel, date: it.date, read: it.read });
+                return it;
+              })()
+            : null;
+
+          const q = (this.state.query || '').trim().toLowerCase();
+          const active = this.state.activeCat;
+          const matches = (p) => {
+            if (active !== 'all' && p.cat !== active) return false;
+            if (q) {
+              const hay = (p.title + ' ' + p.excerpt).toLowerCase();
+              if (hay.indexOf(q) === -1) return false;
+            }
+            return true;
+          };
+          const filtered = allPosts.filter(matches).map((p) => {
+            const c = clampDesc(p.excerpt);
+            const catLabel = catLabelOf(p.cat);
+            const item = { ...p, catLabel, noImage: !p.image, excerptDisplay: c.display, excerptTruncated: c.truncated };
+            item.openModal = openPost({ id: p.id, title: p.title, excerpt: p.excerpt, content: p.content, source: p.source, catLabel, date: p.date, read: p.read });
+            return item;
+          });
+          const featuredVisible = !!activeFeatured && active === 'all' && !q;
+
+          // Pagination
+          const pageSize = 6;
+          const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+          const page = Math.min(Math.max(1, this.state.page || 1), totalPages);
+          const articles = filtered.slice((page - 1) * pageSize, page * pageSize);
+          const goToPage = (n) => () => { this.setState({ page: n }); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+          const pageBtn = (on) => 'font-family:\'Space Grotesk\',sans-serif;font-weight:600;font-size:14px;min-width:40px;height:40px;padding:0 12px;border-radius:100px;cursor:pointer;transition:background .25s,color .25s,border-color .25s;'
+            + (on
+              ? 'background:#2FED7F;color:#08111E;border:1px solid #2FED7F;'
+              : 'background:rgba(255,255,255,.05);color:#B7C2D2;border:1px solid rgba(255,255,255,.12);');
+          const arrowBtn = (disabled) => 'font-family:\'Space Grotesk\',sans-serif;font-weight:600;font-size:14px;height:40px;padding:0 16px;border-radius:100px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);transition:background .25s,color .25s;'
+            + (disabled ? 'color:#3a4658;cursor:not-allowed;opacity:.5;' : 'color:#B7C2D2;cursor:pointer;');
+          const pageItems = [];
+          for (let i = 1; i <= totalPages; i++) {
+            pageItems.push({ label: String(i), style: pageBtn(i === page), onClick: goToPage(i) });
+          }
+          const prevDisabled = page <= 1;
+          const nextDisabled = page >= totalPages;
+
+          // Chips de filtre : catégories intégrées + catégories personnalisées présentes dans les articles.
+          const knownCatKeys = catDefs.map((c) => c.key);
+          const extraCatDefs = [...new Set(allPosts.map((p) => p.cat).filter(Boolean))]
+            .filter((k) => knownCatKeys.indexOf(k) === -1)
+            .map((k) => ({ key: k, label: k }));
+          const cats = [...catDefs, ...extraCatDefs].map((c) => {
+            const on = c.key === active;
+            const style = 'font-family:\'Space Grotesk\',sans-serif;font-weight:500;font-size:13.5px;letter-spacing:.01em;padding:9px 16px;border-radius:100px;cursor:pointer;transition:background .25s,color .25s,border-color .25s;'
+              + (on
+                ? 'background:#2FED7F;color:#08111E;border:1px solid #2FED7F;'
+                : 'background:rgba(255,255,255,.05);color:#B7C2D2;border:1px solid rgba(255,255,255,.12);');
+            return { key: c.key, label: c.label, style, onClick: () => this.setState({ activeCat: c.key, page: 1 }) };
+          });
+
+          const navLinks = [
+            { label: t('Expertise', 'Expertise'), href: '/#expertises', color: '#C4CFDD' },
+            { label: t('Portfolio', 'Portfolio'), href: '/portfolio', color: '#C4CFDD' },
+            { label: 'Blog', href: '/blog', color: '#2FED7F' },
+            { label: t('Financement', 'Funding'), href: '/financement', color: '#C4CFDD' },
+            { label: 'Contact', href: '/contact', color: '#C4CFDD' },
+          ];
+
+          return {
+            year: new Date().getFullYear(),
+            cta: t('Prendre RDV', 'Book a call'),
+            setLangFr: setLang('fr'),
+            setLangEn: setLang('en'),
+            frBg: fr ? '#2FED7F' : 'transparent',
+            frColor: fr ? '#08111E' : '#8FA0B5',
+            enBg: !fr ? '#2FED7F' : 'transparent',
+            enColor: !fr ? '#08111E' : '#8FA0B5',
+            navLinks,
+            footerExp: ['Développement SaaS', 'Applications mobiles', 'Intelligence artificielle', 'CRM & ERP sur mesure'],
+
+            heroKicker: h.kicker || t('Le blog', 'The blog'),
+            heroLead: h.lead || t("Idées, retours d'expérience &", 'Ideas, field notes &'),
+            heroAccent: h.accent || t('signaux faibles.', 'weak signals.'),
+            heroSub: h.sub || t(
+              "Nos réflexions sur l'ingénierie logicielle, l'IA, le SaaS et le financement de l'innovation — sans jargon inutile.",
+              'Our thinking on software engineering, AI, SaaS and innovation funding — without the needless jargon.'
+            ),
+
+            featured: activeFeatured,
+            featuredVisible,
+            featuredBadge: t('À la une', 'Featured'),
+            readSuffix: t('min de lecture', 'min read'),
+            readLabel: t("Lire l'article", 'Read article'),
+
+            listHeading: t('Tous les articles', 'All articles'),
+            searchPlaceholder: t('Rechercher un article…', 'Search articles…'),
+            query: this.state.query,
+            onSearch: (e) => this.setState({ query: e.target.value, page: 1 }),
+            cats,
+            articles,
+            hasResults: articles.length > 0,
+            isEmpty: articles.length === 0,
+            emptyText: t('Aucun article ne correspond à votre recherche.', 'No article matches your search.'),
+
+            showPagination: totalPages > 1,
+            pageItems,
+            prevClick: goToPage(page - 1),
+            nextClick: goToPage(page + 1),
+            prevDisabled,
+            nextDisabled,
+            prevStyle: arrowBtn(prevDisabled),
+            nextStyle: arrowBtn(nextDisabled),
+            prevLabel: t('Précédent', 'Prev'),
+            nextLabel: t('Suivant', 'Next'),
+
+            nlKicker: 'Newsletter',
+            nlTitle: t('Recevez nos analyses, une fois par mois.', 'Get our insights, once a month.'),
+            nlSub: t(
+              "Pas de spam — juste nos meilleurs articles et retours de terrain, directement dans votre boîte mail.",
+              'No spam — just our best articles and field notes, straight to your inbox.'
+            ),
+            nlPlaceholder: t('votre@email.com', 'you@email.com'),
+            nlButton: this.state.nlBusy ? t('Envoi…', 'Sending…') : t("S'abonner", 'Subscribe'),
+            nlThanks: t('Merci ! Vous êtes bien inscrit·e.', "Thanks! You're subscribed."),
+            onSubscribe: (e) => {
+              e.preventDefault();
+              const form = e.target;
+              let email = '';
+              try { email = new FormData(form).get('email').toString().trim(); } catch (err) {}
+              if (!email) return;
+              this.setState({ nlBusy: true, nlError: '' });
+              const apiBase = location.port === '3001' ? '' : 'https://landingback.codialis.com';
+              fetch(apiBase + '/api/newsletter/subscribe', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ email }),
+              })
+                .then((r) => { if (!r.ok) throw new Error(); this.setState({ subscribed: true, nlBusy: false }); })
+                .catch(() => this.setState({ nlBusy: false, nlError: t('Une erreur est survenue. Réessayez.', 'Something went wrong. Please try again.') }));
+            },
+            notSubscribed: !this.state.subscribed,
+            subscribed: this.state.subscribed,
+            hasNlError: !!this.state.nlError,
+            nlError: this.state.nlError,
+
+            modalOpen: !!this.state.modalPost,
+            modalTitle: this.state.modalPost ? this.state.modalPost.title : '',
+            modalExcerpt: this.state.modalPost ? (this.state.modalPost.content || this.state.modalPost.excerpt) : '',
+            modalCatLabel: this.state.modalPost ? this.state.modalPost.catLabel : '',
+            modalHasSource: !!(this.state.modalPost && this.state.modalPost.source),
+            modalSource: this.state.modalPost ? (this.state.modalPost.source || '') : '',
+            modalSourceHost: (() => { const s = this.state.modalPost && this.state.modalPost.source; if (!s) return ''; try { return new URL(s).hostname.replace(/^www\./, ''); } catch (e) { return s; } })(),
+            modalDate: this.state.modalPost ? this.state.modalPost.date : '',
+            modalRead: this.state.modalPost ? this.state.modalPost.read : '',
+            modalHasMeta: !!(this.state.modalPost && (this.state.modalPost.date || this.state.modalPost.read)),
+            closeModal: () => this.setState({ modalPost: null }),
+            stopProp: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
+          };
+        }
+
+        componentDidMount() {
+          const apiBase = location.port === '3001' ? '' : 'https://landingback.codialis.com';
+          fetch(apiBase + '/api/content/blog')
+            .then((r) => (r.ok ? r.json() : []))
+            .then((list) => { if (Array.isArray(list) && list.length) this.setState({ custom: list }); })
+            .catch(() => {});
+          fetch(apiBase + '/api/settings/blog_page')
+            .then((r) => (r.ok ? r.json() : {}))
+            .then((cfg) => { if (cfg && typeof cfg === 'object') this.setState({ settings: cfg }); })
+            .catch(() => {});
+          this.paintImgs();
+          setTimeout(() => this.paintImgs(), 300);
+
+          const nav = document.getElementById('cod-nav');
+          const onScroll = () => {
+            const y = window.scrollY || 0;
+            if (nav) {
+              nav.style.background = y > 24 ? 'rgba(12,19,32,.85)' : 'rgba(16,24,40,.72)';
+              nav.style.boxShadow = y > 24 ? '0 22px 60px -20px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.07)' : '0 18px 50px -18px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.06)';
+            }
+          };
+          let ticking = false;
+          window.addEventListener('scroll', () => { if (!ticking) { requestAnimationFrame(() => { onScroll(); ticking = false; }); ticking = true; } }, { passive: true });
+          onScroll();
+
+          const show = (el) => { el.style.opacity = '1'; el.style.transform = 'none'; el.setAttribute('data-revealed', '1'); };
+          if (!('IntersectionObserver' in window)) {
+            this._observeReveals = () => document.querySelectorAll('[data-reveal]:not([data-revealed])').forEach(show);
+          } else {
+            const io = new IntersectionObserver((entries) => {
+              entries.forEach((e) => { if (e.isIntersecting) { show(e.target); io.unobserve(e.target); } });
+            }, { threshold: 0.12 });
+            this._observeReveals = () => document.querySelectorAll('[data-reveal]:not([data-revealed])').forEach((el) => { el.setAttribute('data-revealed', 'pending'); io.observe(el); });
+          }
+          this._observeReveals();
+          setTimeout(() => this._observeReveals(), 300);
+
+          const applyResponsive = () => {
+            const wrap = document.querySelector('.cod-navlinks');
+            if (wrap) wrap.style.display = window.innerWidth > 900 ? 'flex' : 'none';
+          };
+          applyResponsive();
+          window.addEventListener('resize', applyResponsive);
+        }
+
+        componentDidUpdate() {
+          this.paintImgs();
+          if (this._observeReveals) this._observeReveals();
+        }
+
+        paintImgs() {
+          document.querySelectorAll('.cod-img').forEach((el) => {
+            const v = el.getAttribute('data-img') || '';
+            if (v && v.indexOf('{{') === -1) el.style.backgroundImage = 'url("' + v + '")';
+            else el.style.backgroundImage = 'none';
+          });
+        }
+      }
+    </script>
+  </body>
+</html>

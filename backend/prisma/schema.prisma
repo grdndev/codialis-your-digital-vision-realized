@@ -1,0 +1,922 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  DIR
+  PM
+  DEV
+  CLIENT
+}
+
+enum ProjectGroup {
+  DEV
+  FIN
+  WAR
+  MAI
+  CLO
+}
+
+enum TaskStatus {
+  A_FAIRE
+  EN_COURS
+  EN_REVUE
+  TERMINE
+}
+
+enum TicketType {
+  BUG
+  DEV
+}
+
+enum Severity {
+  BLOQUANT
+  MAJEUR
+  MINEUR
+}
+
+enum DevNature {
+  FRONT
+  BACK
+  API
+  DESIGN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  initials     String
+  role         Role
+  createdAt    DateTime @default(now())
+
+  // Vitrine (section « équipe » de la page d'accueil, via GET /api/accounts/team).
+  // `jobTitle` est l'intitulé affiché sous le nom — libre, contrairement à
+  // `role` qui est un rôle applicatif. `photo` est une data URL base64, d'où
+  // le LONGTEXT. Les deux sont facultatifs : sans photo le site affiche les
+  // initiales, sans intitulé il n'affiche rien sous le nom.
+  jobTitle     String?  @db.VarChar(255)
+  photo        String?  @db.LongText
+
+  clientId     String?
+  client       Client?  @relation(fields: [clientId], references: [id])
+
+  assignments      ProjectAssignment[]
+  leadEpics        Epic[]           @relation("EpicLead")
+  assignedTasks    Task[]           @relation("TaskAssignee")
+  taskComments     TaskComment[]
+  assignedTickets  Ticket[]         @relation("TicketAssignee")
+  createdTickets   Ticket[]         @relation("TicketCreator")
+  ticketComments   TicketComment[]
+
+  dealNotes        DealNote[]
+  messages         Message[]
+  threadMemberships ThreadParticipant[]
+  ownedApis        ApiCredential[]
+  customCategories CustomCategory[]
+  timeEntries      TimeEntry[]
+  decisions        Decision[]
+  teamProfitRows   TeamProfitSnapshot[]
+  hostedRdvs       Rdv[]
+  internalTasksAssigned InternalTask[] @relation("InternalTaskAssignee")
+  internalTasksGiven    InternalTask[] @relation("InternalTaskAssigner")
+  overtimeEntries OvertimeEntry[]
+  plannedShifts   PlannedShift[]
+  travelEntries   TravelEntry[]
+}
+
+model Client {
+  id           String    @id @default(cuid())
+  name         String    @unique
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+  createdAt    DateTime  @default(now())
+
+  users       User[]
+  projects    Project[]
+}
+
+model Project {
+  id          String       @id @default(cuid())
+  clientId    String
+  client      Client       @relation(fields: [clientId], references: [id])
+  name        String
+  initials    String
+  group       ProjectGroup
+  phaseLabel  String
+  description String       @default("") @db.Text
+  hoursSold   Float
+  hoursSpent  Float
+  progressPct Int
+  openedAt    DateTime
+  closedAt    DateTime?
+  deadlineAt  DateTime?
+  deadlineNote String?
+  lastActivityAt DateTime @default(now())
+  soldAmount  Float?
+  costAmount  Float?
+  createdAt   DateTime     @default(now())
+
+  epics       Epic[]
+  tickets     Ticket[]
+  assignments ProjectAssignment[]
+  apis        ApiCredential[]
+  clientQuestions ClientQuestion[]
+  urls        ProjectUrl[]
+  testAccounts TestAccount[]
+  mockups     Mockup[]
+  mockupSources MockupSource[]
+  cdcDocuments CdcDocument[]
+  techDocs    TechDoc[]
+  customCategories CustomCategory[]
+  invoices    Invoice[]
+  maintenanceContract MaintenanceContract?
+  messageThreads MessageThread[]
+  quote       Quote?
+  rdvs        Rdv[]
+  clientThreadMessages ClientThreadMessage[]
+  actionItems ActionItem[]
+  deals       Deal[]
+  timeEntries TimeEntry[]
+}
+
+model ProjectAssignment {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+}
+
+model Epic {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  objective   String?
+  estHours    Float
+  leadId      String?
+  lead        User?    @relation("EpicLead", fields: [leadId], references: [id])
+  dueAt       DateTime?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  tasks       Task[]
+  tickets     Ticket[]
+
+  @@index([projectId])
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  epicId      String
+  epic        Epic       @relation(fields: [epicId], references: [id], onDelete: Cascade)
+  title       String
+  description String     @default("") @db.Text
+  status      TaskStatus @default(A_FAIRE)
+  estHours    Float
+  spentHours  Float      @default(0)
+  assigneeId  String?
+  assignee    User?      @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  dueAt       DateTime?
+  order       Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  criteria    TaskCriterion[]
+  comments    TaskComment[]
+  attachments TaskAttachment[]
+  timeEntries TimeEntry[]
+
+  @@index([epicId])
+}
+
+model TaskCriterion {
+  id     String  @id @default(cuid())
+  taskId String
+  task   Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label  String
+  done   Boolean @default(false)
+  order  Int     @default(0)
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+}
+
+model TaskAttachment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  filename  String
+  meta      String   @default("")
+  createdAt DateTime @default(now())
+}
+
+model Ticket {
+  id          String      @id @default(cuid())
+  ref         String      @unique
+  projectId   String
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  epicId      String?
+  epic        Epic?       @relation(fields: [epicId], references: [id])
+  type        TicketType
+  severity    Severity?
+  devNature   DevNature?
+  status      TaskStatus  @default(A_FAIRE)
+  title       String
+  description String      @default("") @db.Text
+  steps       String      @default("") @db.Text
+  module      String?
+  estHours    Float
+  spentHours  Float       @default(0)
+  assigneeId  String?
+  assignee    User?       @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  creatorId   String?
+  creator     User?       @relation("TicketCreator", fields: [creatorId], references: [id])
+  clientReported Boolean  @default(false)
+  triageState TriageState @default(A_QUALIFIER)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  criteria    TicketCriterion[]
+  comments    TicketComment[]
+  attachments TicketAttachment[]
+  triageReplies TriageReply[]
+  timeEntries TimeEntry[]
+
+  @@index([projectId])
+  @@index([epicId])
+}
+
+model TicketCriterion {
+  id       String  @id @default(cuid())
+  ticketId String
+  ticket   Ticket  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  label    String
+  done     Boolean @default(false)
+  order    Int     @default(0)
+}
+
+model TicketComment {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+}
+
+model TicketAttachment {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  filename  String
+  meta      String   @default("")
+  createdAt DateTime @default(now())
+}
+
+enum TriageState {
+  A_QUALIFIER
+  A_CHIFFRER
+  TRANSMIS
+  DEVIS_ENVOYE
+  CLOS
+}
+
+model TriageReply {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorLabel String
+  body      String   @db.Text
+  mine      Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+enum DealStage {
+  CONTACT
+  QUALIFIE
+  DEVIS
+  NEGOCIATION
+  SIGNE
+  REFUSE
+}
+
+model Deal {
+  id             String    @id @default(cuid())
+  name           String
+  stage          DealStage
+  amount         Float
+  order          Int       @default(0)
+  note           String    @default("") @db.Text
+  nextAction     String    @default("")
+  probabilityPct Int       @default(0)
+  contactFirst   String?
+  contactLast    String?
+  contactEmail   String?
+  contactPhone   String?
+  source         String?
+  description    String    @default("") @db.Text
+  devHours       Float?
+  hourlyRate     Float?
+  lossReason     String?
+  lossDetail     String?
+  lostAt         DateTime?
+  lostBy         String?
+  projectId      String?
+  project        Project?  @relation(fields: [projectId], references: [id])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  notes DealNote[]
+}
+
+model DealNote {
+  id        String   @id @default(cuid())
+  dealId    String
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+}
+
+enum ThreadKind {
+  PROJECT
+  DIRECT
+  INTERNAL
+}
+
+model MessageThread {
+  id        String     @id @default(cuid())
+  kind      ThreadKind
+  projectId String?
+  project   Project?   @relation(fields: [projectId], references: [id])
+  title     String
+  createdAt DateTime   @default(now())
+
+  participants ThreadParticipant[]
+  messages     Message[]
+}
+
+model ThreadParticipant {
+  id         String        @id @default(cuid())
+  threadId   String
+  thread     MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt DateTime?
+
+  @@unique([threadId, userId])
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  threadId       String
+  thread         MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  authorId       String
+  author         User          @relation(fields: [authorId], references: [id])
+  body           String   @db.Text
+  citedTicketRef String?
+  citedLabel     String?
+  createdAt      DateTime      @default(now())
+}
+
+model ApiCredential {
+  id         String  @id @default(cuid())
+  projectId  String
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name       String
+  role       String
+  env        String
+  baseUrl    String
+  maskedKey  String
+  authType   String
+  ownerId    String?
+  owner      User?   @relation(fields: [ownerId], references: [id])
+  expiryNote String
+  order      Int     @default(0)
+}
+
+enum ClientQuestionStatus {
+  A_DEMANDER
+  DEMANDE
+  REPONDU
+}
+
+// A question the agency owes the client (or vice versa) — "did we ask about the
+// deadline yet?" — tracked per project so it doesn't live only in someone's memory
+// or an email thread.
+model ClientQuestion {
+  id         String               @id @default(cuid())
+  projectId  String
+  project    Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  question   String               @db.Text
+  status     ClientQuestionStatus @default(A_DEMANDER)
+  answer     String               @default("") @db.Text
+  askedAt    DateTime?
+  answeredAt DateTime?
+  createdAt  DateTime             @default(now())
+}
+
+model ProjectUrl {
+  id         String  @id @default(cuid())
+  projectId  String
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  env        String
+  url        String
+  access     String
+  deployNote String
+  order      Int     @default(0)
+}
+
+model TestAccount {
+  id             String  @id @default(cuid())
+  projectId      String
+  project        Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  role           String
+  login          String
+  passwordMasked String
+  env            String
+  note           String
+  order          Int     @default(0)
+}
+
+enum MockupStatus {
+  VALIDE
+  EN_INTEGRATION
+  A_VALIDER
+  BROUILLON
+}
+
+model Mockup {
+  id        String       @id @default(cuid())
+  projectId String
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  version   String
+  status    MockupStatus
+  updatedAt DateTime     @default(now())
+}
+
+model MockupSource {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  label     String
+  url       String
+  status    String
+}
+
+model CdcDocument {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  version   String
+  meta      String
+  status    String
+  sections  String  @default("[]") @db.Text
+  order     Int     @default(0)
+}
+
+model TechDoc {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  ext       String
+  meta      String
+  status    String
+  order     Int     @default(0)
+}
+
+enum CategoryVisibility {
+  TEAM
+  PM_ONLY
+}
+
+enum CategoryFormat {
+  TABLE
+  FILES
+  NOTES
+}
+
+model CustomCategory {
+  id         String             @id @default(cuid())
+  projectId  String
+  project    Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name       String
+  visibility CategoryVisibility
+  format     CategoryFormat
+  columns    String             @db.Text
+  authorId   String
+  author     User               @relation(fields: [authorId], references: [id])
+  createdAt  DateTime           @default(now())
+
+  rows CustomCategoryRow[]
+}
+
+model CustomCategoryRow {
+  id         String         @id @default(cuid())
+  categoryId String
+  category   CustomCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  data       String         @db.Text
+  order      Int            @default(0)
+}
+
+enum InvoiceStatus {
+  EN_ATTENTE
+  EN_RETARD
+  PAYEE
+}
+
+model Invoice {
+  id        String        @id @default(cuid())
+  projectId String
+  project   Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  ref       String        @unique
+  label     String
+  amount    Float
+  issuedAt  DateTime
+  dueAt     DateTime?
+  paidAt    DateTime?
+  status    InvoiceStatus
+}
+
+model MaintenanceContract {
+  id                 String  @id @default(cuid())
+  projectId          String  @unique
+  project            Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  monthlyPrice       Float
+  includedHours      Float
+  usedHoursThisMonth Float   @default(0)
+  renewalNote        String
+}
+
+enum AutomationMode {
+  AUTO
+  TO_VALIDATE
+}
+
+model AutomationRule {
+  id      String         @id @default(cuid())
+  title   String
+  trigger String
+  mode    AutomationMode
+  channel String
+  lastRun String
+  stat    String
+  order   Int            @default(0)
+}
+
+enum DraftStatus {
+  PENDING
+  SENT
+  IGNORED
+}
+
+model AutomationDraft {
+  id        String      @id @default(cuid())
+  toWho     String
+  kind      String
+  text      String      @db.Text
+  status    DraftStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+}
+
+model AutomationSignal {
+  id       String @id @default(cuid())
+  text     String
+  meta     String
+  severity String
+  order    Int    @default(0)
+}
+
+enum AbsenceMode {
+  OUVERT
+  HORAIRES
+  CONGES
+}
+
+model AbsenceSetting {
+  id           String      @id @default(cuid())
+  pmId         String      @unique
+  mode         AbsenceMode @default(OUVERT)
+  enabled      Boolean     @default(true)
+  rangeLabel   String      @default("")
+  substituteId String?
+  nextAbsence  String      @default("")
+  updatedAt    DateTime    @updatedAt
+}
+
+// A task assigned by a director directly to a teammate, outside any client
+// project — training, admin work, anything that isn't billable project time.
+model InternalTask {
+  id          String     @id @default(cuid())
+  title       String
+  description String     @default("") @db.Text
+  status      TaskStatus @default(A_FAIRE)
+  assigneeId  String
+  assignee    User       @relation("InternalTaskAssignee", fields: [assigneeId], references: [id], onDelete: Cascade)
+  assignerId  String
+  assigner    User       @relation("InternalTaskAssigner", fields: [assignerId], references: [id], onDelete: Cascade)
+  dueAt       DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+// Singleton row (a single instance is created in prisma/seed.ts) holding
+// business parameters that a director sets and revises over time — not
+// derived from other data, but real settings rather than literals baked
+// into a page component.
+model CompanySetting {
+  id                    String @id @default(cuid())
+  quarterlyTargetEUR    Float  @default(130000)
+  monthlyChargesEUR     Float  @default(21400)
+  monthlyRevenueTargetEUR Float @default(45000)
+}
+
+model Decision {
+  id        String   @id @default(cuid())
+  date      DateTime
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  title     String
+  detail    String   @db.Text
+  impact    String
+  tag       String
+  createdAt DateTime @default(now())
+}
+
+model TimeEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  taskId    String?
+  task      Task?    @relation(fields: [taskId], references: [id])
+  ticketId  String?
+  ticket    Ticket?  @relation(fields: [ticketId], references: [id])
+  label     String
+  date      DateTime
+  hours     Float
+  billable  Boolean  @default(true)
+  source    String
+}
+
+enum HrEntryStatus {
+  DECLARE
+  VALIDE
+}
+
+// RH — overtime a teammate declares themselves; a director validates it at
+// month-end rather than the app computing it from TimeEntry (worked hours vs.
+// contracted hours isn't modeled anywhere, so this stays a self-declared figure).
+model OvertimeEntry {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime
+  hours     Float
+  reason    String        @default("")
+  status    HrEntryStatus @default(DECLARE)
+  createdAt DateTime      @default(now())
+}
+
+enum ShiftKind {
+  BUREAU
+  TELETRAVAIL
+  CLIENT
+  ABSENCE
+}
+
+// One row per person per day — a lightweight planned-schedule grid, not a
+// full calendar. @@unique makes "set this day's status" an upsert.
+model PlannedShift {
+  id     String    @id @default(cuid())
+  userId String
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date   DateTime
+  kind   ShiftKind @default(BUREAU)
+  note   String    @default("")
+
+  @@unique([userId, date])
+}
+
+model TravelEntry {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startDate   DateTime
+  endDate     DateTime?
+  destination String
+  motif       String        @default("")
+  status      HrEntryStatus @default(DECLARE)
+  createdAt   DateTime      @default(now())
+}
+
+enum ActionCategory {
+  URGENT
+  RELANCE
+  DECISION
+}
+
+model ActionItem {
+  id              String         @id @default(cuid())
+  category        ActionCategory
+  tag             String
+  title           String
+  detail          String         @db.Text
+  dueLabel        String
+  amountLabel     String         @default("")
+  ctaLabel        String
+  done            Boolean        @default(false)
+  linkedProjectId String?
+  linkedProject   Project?       @relation(fields: [linkedProjectId], references: [id])
+  createdAt       DateTime       @default(now())
+}
+
+model TeamProfitSnapshot {
+  id              String @id @default(cuid())
+  userId          String
+  user            User   @relation(fields: [userId], references: [id])
+  period          String
+  billableHours   Float
+  internalHours   Float
+  billableRatePct Int
+  cost            Float
+  revenue         Float
+  marginPct       Int
+  note            String @default("")
+}
+
+model Quote {
+  id          String    @id @default(cuid())
+  projectId   String    @unique
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  ref         String
+  signedAt    DateTime?
+  totalAmount Float
+  totalHt     Float
+  hoursSold   Float
+  hourlyRate  Float
+  paidAmount  Float     @default(0)
+
+  lines    QuoteLine[]
+  schedule PaymentScheduleItem[]
+}
+
+model QuoteLine {
+  id      String @id @default(cuid())
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  ref     String?
+  label   String
+  detail  String @db.Text
+  hours   Float
+  amount  Float
+  status  String @default("")
+  order   Int    @default(0)
+}
+
+model PaymentScheduleItem {
+  id        String  @id @default(cuid())
+  quoteId   String
+  quote     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  label     String
+  amount    Float
+  whenLabel String
+  paid      Boolean @default(false)
+  order     Int     @default(0)
+}
+
+model Rdv {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  whenAt     DateTime
+  whereLabel String
+  hostId     String
+  host       User     @relation(fields: [hostId], references: [id])
+  cadence    String
+  agenda     String   @db.Text
+  isPast     Boolean  @default(false)
+  summary    String   @default("") @db.Text
+}
+
+model CashForecastItem {
+  id         String  @id @default(cuid())
+  monthLabel String
+  label      String
+  amount     Float
+  whenLabel  String
+  sure       Boolean
+  order      Int     @default(0)
+}
+
+model ClientThreadMessage {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fromClient Boolean
+  authorLabel String
+  body       String   @db.Text
+  auto       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Site vitrine (codialis.com)
+//
+// Le site public est statique et hébergé séparément : il lit ces tables via
+// les routes /api/content, /api/settings, /api/newsletter et /api/contact.
+//
+// Les cinq modèles ci-dessous sont mappés sur les tables de l'ancien backend
+// Express (noms snake_case) : la migration qui les crée est un
+// `CREATE TABLE IF NOT EXISTS`, donc une base qui contient déjà le contenu du
+// site le conserve tel quel — aucune reprise de données à faire.
+// ---------------------------------------------------------------------------
+
+// Contenu éditorial du site. La forme de chaque item vit dans `data` (JSON) :
+// le site public consomme l'objet à plat (`{ id, views, ...data }`), exactement
+// comme il le faisait quand ces objets étaient codés en dur dans les pages.
+//   type : portfolio | blog | testimonials
+model Content {
+  id        String   @id @default(uuid()) @db.Char(36)
+  type      String   @db.VarChar(16)
+  data      Json
+  views     BigInt   @default(0)
+  position  BigInt   @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
+
+  // Composite (type, created_at) : la liste publique filtre par type et trie
+  // par created_at. Sans lui MySQL fait un filesort qui bufferise la colonne
+  // `data` (JSON) -> ER_OUT_OF_SORTMEMORY.
+  @@index([type, createdAt], map: "content_type_created_idx")
+  @@map("content")
+}
+
+// Réglages de page (hero, cas à la une, logos, réseaux sociaux…), un blob JSON
+// par clé stable. `key` est un mot réservé MySQL, d'où les backticks générés.
+//   clés : portfolio_page | blog_page | contact_socials | home_logos
+model Setting {
+  key       String   @id @db.VarChar(191)
+  data      Json
+  updatedAt DateTime @default(now()) @map("updated_at") @db.DateTime(0)
+
+  @@map("settings")
+}
+
+// Compteur de vues par page publique (portfolio, blog).
+model PageView {
+  page  String @id @db.VarChar(191)
+  count BigInt @default(0)
+
+  @@map("page_views")
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(uuid()) @db.Char(36)
+  email     String   @unique @db.VarChar(320)
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
+
+  @@index([createdAt], map: "newsletter_created_idx")
+  @@map("newsletter_subscribers")
+}
+
+// Demandes issues du formulaire public /contact.
+//   status : nouveau (reçu) | en_cours (pris en charge) | traite (clos)
+model ContactRequest {
+  id        String   @id @default(uuid()) @db.Char(36)
+  name      String   @default("") @db.VarChar(200)
+  company   String   @default("") @db.VarChar(200)
+  email     String   @default("") @db.VarChar(320)
+  phone     String   @default("") @db.VarChar(60)
+  project   String   @default("") @db.VarChar(200)
+  budget    String   @default("") @db.VarChar(60)
+  message   String?  @db.Text
+  status    String   @default("nouveau") @db.VarChar(16)
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
+
+  @@index([createdAt], map: "contact_requests_created_idx")
+  @@map("contact_requests")
+}

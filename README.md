@@ -1,137 +1,85 @@
-# Codialis — Site & Admin
+# Codialis — site vitrine, back-office et API
 
-Site vitrine Codialis (pages statiques) + backend Express/MySQL pour l'admin (auth JWT, RH, contenu du site).
-
-## Stack
-
-- **Frontend** : pages HTML statiques (`.dc.html`), servies par Express avec URLs propres.
-- **Backend** : Node.js (ESM) + Express 4, JWT (`jsonwebtoken`) + `bcrypt`, cookies HTTPOnly.
-- **Base de données** : MySQL 8 (`mysql2`).
-- **Dev/Prod** : Docker Compose (MySQL + serveur avec reload live).
-
-## Structure
+Trois applications, un seul dépôt. La base de données n'est accessible que
+depuis une seule d'entre elles.
 
 ```
-.
-├── docker-compose.yml       # MySQL + serveur
-├── backend/
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── .env.example         # copier en .env
-│   ├── db/schema.sql        # schéma MySQL
-│   └── src/
-│       ├── index.js         # entrée Express, routage pages + API
-│       ├── db.js            # pool mysql2 + shim compat Postgres->MySQL
-│       ├── initdb.js        # applique schema.sql
-│       ├── seed-admin.js    # crée le premier patron
-│       ├── middleware/auth.js
-│       └── routes/          # auth, accounts, entries, presence, content
-└── frontend/
-    ├── www/                 # index.html + pages *.dc.html + scripts
-    ├── ../assets/              # servi sous /../assets
-    └── public/              # servi sous /public
+navigateur ──▶ frontend-public  ──HTTP──▶  backend ──▶ MySQL
+                (statique)                  (API)
+navigateur ──▶ frontend-admin   ──HTTP──▶  backend ──▶ MySQL
+                (Next.js)                   (API)
 ```
 
-## Modèle de données
+| Dossier | Rôle | Techno | Port (local) |
+|---|---|---|---|
+| [`frontend-public/`](frontend-public/) | Site vitrine : accueil, blog, portfolio, contact, pages de services. Entièrement public — aucune page privée | HTML statique + JS, servi par Apache | 3001 |
+| [`frontend-admin/`](frontend-admin/) | Back-office : 28 écrans (CRM, projets, tickets, RH, pilotage, gestion du site vitrine) + portail client | Next.js 16, App Router | 3002 |
+| [`backend/`](backend/) | **Toute** la donnée : routes publiques du site + API admin | Next.js 16 en route handlers, Prisma, MySQL | 3001 (interne) |
 
-| Table      | Rôle                                                              |
-|------------|-------------------------------------------------------------------|
-| `users`    | Comptes — rôle `patron` ou `employe`, mot de passe hashé bcrypt.  |
-| `entries`  | Heures sup / récup — `attente`/`valide`/`refuse`.                  |
-| `presence` | Présence journalière — `present`/`tt`/`conge`.                    |
-| `content`  | Contenu du site (portfolio/blog/testimonials/team), `data` JSON.  |
+`backend.backup/` conserve en lecture l'ancien serveur Express, remplacé.
 
-## Pages
-
-| URL            | Fichier             |
-|----------------|---------------------|
-| `/`            | `index.html`        |
-| `/portfolio`   | `Portfolio.dc.html` |
-| `/blog`        | `Blog.dc.html`      |
-| `/contact`     | `Contact.dc.html`   |
-| `/financement` | `Financement.dc.html` |
-| `/legal`       | `Legal.dc.html`     |
-| `/admin`       | `Admin.dc.html`     |
-
-Les chemins bruts `*.dc.html` restent servis (liens relatifs préservés).
-
-## API
-
-Toutes préfixées `/api` :
-
-- `GET  /api/health` — sonde.
-- `/api/auth` — connexion, session (JWT en cookie).
-- `/api/accounts` — gestion des comptes.
-- `/api/entries` — heures sup / récup.
-- `/api/presence` — présence.
-- `/api/content` — contenu du site.
-
-> 🚀 **Déploiement production (Hostinger, sans Docker)** : voir [`README.prod.md`](./README.prod.md).
-
-## Démarrage (Docker)
-
-### 1. Config (une seule fois)
+## Démarrage
 
 ```bash
-cp backend/.env.example backend/.env   # puis éditer JWT_SECRET (≥32 car.), ADMIN_EMAIL, ADMIN_PASSWORD
+docker compose -f compose.local.yml up -d --build
 ```
 
-### 2. Lancer
+- http://localhost:3001 — site vitrine (Apache relaie `/api` vers l'API, ce qui
+  garde le site en une seule origine)
+- http://localhost:3002 — back-office
+
+Puis appliquer le schéma et les données de démonstration :
 
 ```bash
-docker compose up --build      # ajouter -d pour tourner en arrière-plan
+docker compose -f compose.local.yml exec backend npx prisma migrate deploy
+docker compose -f compose.local.yml exec backend npx tsx prisma/seed.ts
 ```
 
-- MySQL exposé sur `3307`, serveur sur `3001` → https://landingback.codialis.com
-- Le **schéma s'applique tout seul** au démarrage (voir `db.js`) — pas de `db:init` à lancer.
+Comptes de démonstration (mot de passe `codialis2026`) : `claire@codialis.fr`
+(direction), `marion@codialis.fr` (cheffe de projet), `lea@codialis.fr`
+(développeuse), `sophie@topformation.fr` (portail client).
 
-### 3. Créer le premier admin (obligatoire au 1er lancement)
+Sans Docker, chaque application se lance indépendamment — voir
+[`backend/README.md`](backend/README.md) et
+[`frontend-admin/README.md`](frontend-admin/README.md).
 
-Une base neuve est **vide** : sans cette commande, aucun compte n'existe et le login échoue.
+> Le site vitrine **doit** rester sur le port 3001 en local : son JavaScript
+> teste `location.port === '3001'` pour décider d'appeler `/api` en relatif
+> plutôt que le domaine de production.
 
-```bash
-docker compose exec server npm run db:seed-admin
-```
+## Comment les trois applications communiquent
 
-Crée le patron avec `ADMIN_EMAIL` / `ADMIN_PASSWORD` du `.env`. Se connecter sur https://landingback.codialis.com/admin.
-Relancer la commande **réinitialise le mot de passe** de l'admin sur `ADMIN_PASSWORD` (pratique si tu l'as perdu).
+**Site vitrine → API.** Le site est statique et hébergé séparément (Hostinger) :
+chaque appel est cross-origin. Les routes concernées sont publiques en lecture
+et n'utilisent aucun cookie ; seules les origines listées dans `CORS_ORIGINS`
+reçoivent l'en-tête d'autorisation.
 
-### Commandes utiles
+**Back-office → API.** Le navigateur ne s'adresse qu'à `frontend-admin`. C'est
+son serveur Next qui appelle l'API, en relayant la session dans un en-tête
+`Authorization: Bearer`. Aucun cookie ne traverse une frontière d'origine, et
+l'URL de l'API n'est jamais exposée au navigateur. Le backend signe le JWT à la
+connexion et le renvoie dans le corps de la réponse ; `frontend-admin` le range
+en cookie httpOnly sur son propre domaine.
 
-```bash
-docker compose logs -f server                    # suivre les logs
-docker compose restart server                    # redémarrer le serveur
-docker compose down                              # arrêter (garde les données)
-docker compose down -v && docker compose up -d   # RESET total (efface la base)
-docker compose exec server npm run db:seed-admin # -> re-seed après un reset
-```
+**Les droits sont appliqués par l'API.** Les gardes de `frontend-admin` évitent
+d'afficher un écran interdit ; elles ne protègent pas les données. Chaque route
+revérifie le rôle, et deux cloisonnements vont plus loin : un développeur ne
+voit que les projets sur lesquels il est affecté, un client ne voit que le
+projet déduit de sa session.
 
-> ⚠️ Après `down -v` la base est repartie de zéro : **relancer `db:seed-admin`**, sinon plus de compte pour se connecter.
+## Production
 
-## Démarrage (local, sans Docker)
+`docker-compose.yml` monte la pile derrière Traefik :
 
-MySQL requis. Mettre `DATABASE_URL` sur `localhost:3307` dans `.env` (au lieu de `db:3306`).
+| Hôte | Service |
+|---|---|
+| `landingback.codialis.com` | API (`backend`) |
+| `admin.codialis.com` | back-office (`frontend-admin`) |
 
-```bash
-cd backend
-npm install
-cp .env.example .env        # éditer DATABASE_URL, JWT_SECRET, ADMIN_*
-npm run db:seed-admin       # crée l'admin (schéma auto-appliqué)
-npm run dev                 # nodemon
-```
+Le site vitrine est déployé à part, en fichiers statiques. Les secrets
+(`DATABASE_URL`, `AUTH_SECRET`, `CORS_ORIGINS`, `GOOGLE_API_KEY`) viennent de
+`backend/.env`, hors du dépôt.
 
-## Configuration (`backend/.env`)
-
-| Variable         | Description                                          |
-|------------------|------------------------------------------------------|
-| `PORT`           | Port du serveur (défaut `3001`).                     |
-| `DATABASE_URL`   | Connexion MySQL.                                     |
-| `JWT_SECRET`     | Secret de signature JWT (long, aléatoire).           |
-| `JWT_EXPIRES`    | Durée du token (ex. `12h`).                          |
-| `ADMIN_*`        | Premier patron, utilisé par `db:seed-admin`.         |
-| `NODE_ENV`       | `production` derrière HTTPS → cookie `Secure`.       |
-| `BREVO_API_KEY`  | Clé API Brevo (envoi des identifiants employé).      |
-| `BREVO_SENDER_*` | Nom + email expéditeur (email **validé** dans Brevo).|
-| `APP_LOGIN_URL`  | Lien de connexion inclus dans l'email d'accueil.     |
-
-`.env` jamais commité.
+`README.prod.md` décrit un déploiement Hostinger **de l'ancienne architecture
+Express** (un seul process Node servant l'API et les pages). Il n'est pas à jour
+pour la découpe actuelle.

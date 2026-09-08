@@ -1,7 +1,14 @@
-# Local dev stack: MySQL + backend (API on :3001) + Apache frontend on :3001 host.
-# Apache proxies /api -> backend so the whole site is single-origin (matches the
-# index.html apiBase rule: location.port === '3001' -> relative '/api').
-# Run:  docker compose -f compose.local.yml up -d --build
+# Pile de développement locale : MySQL + API + les deux frontends.
+#
+#   docker compose -f compose.local.yml up -d --build
+#
+#   http://localhost:3001  site vitrine (Apache, /api relayé vers l'API)
+#   http://localhost:3002  back-office (frontend-admin)
+#
+# Le site vitrine DOIT rester sur le port 3001 : son JavaScript teste
+# `location.port === '3001'` pour décider d'appeler /api en relatif plutôt que
+# le domaine de production. Apache relaie donc /api vers l'API, ce qui garde le
+# site en une seule origine (voir compose-proxy.conf).
 services:
   db:
     image: mysql:8.4
@@ -21,37 +28,43 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
     container_name: codialis-backend-local
     environment:
       DATABASE_URL: mysql://codialis:codialis_dev@db:3306/codialis
-      PORT: "3001"
-      NODE_ENV: development
-      JWT_SECRET: 9f3a1c7e5b2d80463a4b09591b952b13c39d4b68caa37058bea4b52f09ff1a9c
-      JWT_EXPIRES: 12h
-      ADMIN_NAME: Direction
-      ADMIN_EMAIL: admin@codialis.com
-      ADMIN_PASSWORD: admin1234
+      AUTH_SECRET: 9f3a1c7e5b2d80463a4b09591b952b13c39d4b68caa37058bea4b52f09ff1a9c
+      NODE_ENV: production
+      # Origines autorisées sur les routes publiques du site vitrine.
       CORS_ORIGINS: http://localhost:3001
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - .:/repo
-      - /repo/backend/node_modules
     expose:
       - "3001"
 
-  frontend:
+  frontend-admin:
+    build:
+      context: ./frontend-admin
+    container_name: codialis-admin-local
+    environment:
+      # URL interne : le navigateur ne l'appelle jamais, seul le serveur Next
+      # de frontend-admin s'y adresse.
+      BACKEND_URL: http://backend:3001
+      NODE_ENV: production
+    depends_on:
+      - backend
+    ports:
+      - "3002:3002"
+
+  frontend-public:
     image: httpd:2.4-alpine
-    container_name: codialis-frontend-local
+    container_name: codialis-public-local
     depends_on:
       - backend
     ports:
       - "3001:80"
     volumes:
-      - ./frontend:/usr/local/apache2/htdocs:ro
+      - ./frontend-public:/usr/local/apache2/htdocs:ro
       - ./compose-proxy.conf:/usr/local/apache2/conf/extra/zz-proxy.conf:ro
     command:
       - sh

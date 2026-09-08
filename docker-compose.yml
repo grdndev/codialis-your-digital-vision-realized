@@ -1,3 +1,10 @@
+# Pile de production derrière Traefik.
+#
+#   landingback.codialis.com  -> API (routes publiques du site + API admin)
+#   admin.codialis.com        -> back-office (frontend-admin)
+#
+# Le site vitrine (frontend-public) est statique et hébergé séparément
+# (Hostinger) : il n'apparaît pas ici, il appelle l'API en cross-origin.
 services:
   codialis.db:
     image: mysql:8.4
@@ -22,28 +29,45 @@ services:
 
   codialis.backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
-    container_name: codialis-server
+      context: ./backend
+    container_name: codialis-api
     restart: unless-stopped
     depends_on:
       codialis.db:
         condition: service_healthy
-    # All config (incl. DATABASE_URL) loaded from backend/.env (gitignored).
+    # Toute la configuration (DATABASE_URL, AUTH_SECRET, CORS_ORIGINS,
+    # GOOGLE_API_KEY) vient de backend/.env, hors du dépôt.
     env_file:
       - backend/.env
     networks:
       - proxy
-    volumes:
-      # live source reload; anonymous volume keeps node_modules inside container
-      - .:/repo
-      - /repo/backend/node_modules
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.codialis_landingpage.rule=Host(`landingback.codialis.com`)"
-      - "traefik.http.routers.codialis_landingpage.entrypoints=websecure"
-      - "traefik.http.routers.codialis_landingpage.tls.certresolver=myresolver"
-      - "traefik.http.services.codialis_landingpage.loadbalancer.server.port=3001"
+      - "traefik.http.routers.codialis_api.rule=Host(`landingback.codialis.com`)"
+      - "traefik.http.routers.codialis_api.entrypoints=websecure"
+      - "traefik.http.routers.codialis_api.tls.certresolver=myresolver"
+      - "traefik.http.services.codialis_api.loadbalancer.server.port=3001"
+
+  codialis.admin:
+    build:
+      context: ./frontend-admin
+    container_name: codialis-admin
+    restart: unless-stopped
+    depends_on:
+      - codialis.backend
+    environment:
+      # Appel interne au réseau Docker : l'API n'a pas besoin d'être joignable
+      # depuis l'extérieur pour que le back-office fonctionne.
+      BACKEND_URL: http://codialis.backend:3001
+      NODE_ENV: production
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.codialis_admin.rule=Host(`admin.codialis.com`)"
+      - "traefik.http.routers.codialis_admin.entrypoints=websecure"
+      - "traefik.http.routers.codialis_admin.tls.certresolver=myresolver"
+      - "traefik.http.services.codialis_admin.loadbalancer.server.port=3002"
 
 networks:
   proxy:
