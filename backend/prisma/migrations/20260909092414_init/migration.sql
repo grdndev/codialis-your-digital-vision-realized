@@ -7,6 +7,14 @@ CREATE TABLE `User` (
     `initials` VARCHAR(191) NOT NULL,
     `role` ENUM('DIR', 'PM', 'DEV', 'CLIENT') NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `jobTitle` VARCHAR(255) NULL,
+    `photo` LONGTEXT NULL,
+    `leaveBalance` DOUBLE NULL,
+    `leaveAnchor` DATE NULL,
+    `hoursBalance` DOUBLE NULL,
+    `hoursAnchor` DATE NULL,
+    `emailVerified` BOOLEAN NOT NULL DEFAULT true,
+    `mustChangePassword` BOOLEAN NOT NULL DEFAULT false,
     `clientId` VARCHAR(191) NULL,
 
     UNIQUE INDEX `User_email_key`(`email`),
@@ -34,7 +42,7 @@ CREATE TABLE `Project` (
     `initials` VARCHAR(191) NOT NULL,
     `group` ENUM('DEV', 'FIN', 'WAR', 'MAI', 'CLO') NOT NULL,
     `phaseLabel` VARCHAR(191) NOT NULL,
-    `description` TEXT NOT NULL DEFAULT '',
+    `description` TEXT NOT NULL,
     `hoursSold` DOUBLE NOT NULL,
     `hoursSpent` DOUBLE NOT NULL,
     `progressPct` INTEGER NOT NULL,
@@ -81,7 +89,7 @@ CREATE TABLE `Task` (
     `id` VARCHAR(191) NOT NULL,
     `epicId` VARCHAR(191) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
-    `description` TEXT NOT NULL DEFAULT '',
+    `description` TEXT NOT NULL,
     `status` ENUM('A_FAIRE', 'EN_COURS', 'EN_REVUE', 'TERMINE') NOT NULL DEFAULT 'A_FAIRE',
     `estHours` DOUBLE NOT NULL,
     `spentHours` DOUBLE NOT NULL DEFAULT 0,
@@ -139,8 +147,8 @@ CREATE TABLE `Ticket` (
     `devNature` ENUM('FRONT', 'BACK', 'API', 'DESIGN') NULL,
     `status` ENUM('A_FAIRE', 'EN_COURS', 'EN_REVUE', 'TERMINE') NOT NULL DEFAULT 'A_FAIRE',
     `title` VARCHAR(191) NOT NULL,
-    `description` TEXT NOT NULL DEFAULT '',
-    `steps` TEXT NOT NULL DEFAULT '',
+    `description` TEXT NOT NULL,
+    `steps` TEXT NOT NULL,
     `module` VARCHAR(191) NULL,
     `estHours` DOUBLE NOT NULL,
     `spentHours` DOUBLE NOT NULL DEFAULT 0,
@@ -209,7 +217,7 @@ CREATE TABLE `Deal` (
     `stage` ENUM('CONTACT', 'QUALIFIE', 'DEVIS', 'NEGOCIATION', 'SIGNE', 'REFUSE') NOT NULL,
     `amount` DOUBLE NOT NULL,
     `order` INTEGER NOT NULL DEFAULT 0,
-    `note` TEXT NOT NULL DEFAULT '',
+    `note` TEXT NOT NULL,
     `nextAction` VARCHAR(191) NOT NULL DEFAULT '',
     `probabilityPct` INTEGER NOT NULL DEFAULT 0,
     `contactFirst` VARCHAR(191) NULL,
@@ -217,7 +225,7 @@ CREATE TABLE `Deal` (
     `contactEmail` VARCHAR(191) NULL,
     `contactPhone` VARCHAR(191) NULL,
     `source` VARCHAR(191) NULL,
-    `description` TEXT NOT NULL DEFAULT '',
+    `description` TEXT NOT NULL,
     `devHours` DOUBLE NULL,
     `hourlyRate` DOUBLE NULL,
     `lossReason` VARCHAR(191) NULL,
@@ -300,7 +308,7 @@ CREATE TABLE `ClientQuestion` (
     `projectId` VARCHAR(191) NOT NULL,
     `question` TEXT NOT NULL,
     `status` ENUM('A_DEMANDER', 'DEMANDE', 'REPONDU') NOT NULL DEFAULT 'A_DEMANDER',
-    `answer` TEXT NOT NULL DEFAULT '',
+    `answer` TEXT NOT NULL,
     `askedAt` DATETIME(3) NULL,
     `answeredAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -494,7 +502,7 @@ CREATE TABLE `AbsenceSetting` (
 CREATE TABLE `InternalTask` (
     `id` VARCHAR(191) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
-    `description` TEXT NOT NULL DEFAULT '',
+    `description` TEXT NOT NULL,
     `status` ENUM('A_FAIRE', 'EN_COURS', 'EN_REVUE', 'TERMINE') NOT NULL DEFAULT 'A_FAIRE',
     `assigneeId` VARCHAR(191) NOT NULL,
     `assignerId` VARCHAR(191) NOT NULL,
@@ -546,15 +554,55 @@ CREATE TABLE `TimeEntry` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `OvertimeEntry` (
+CREATE TABLE `HoursEntry` (
     `id` VARCHAR(191) NOT NULL,
     `userId` VARCHAR(191) NOT NULL,
+    `kind` ENUM('SUP', 'RECUP') NOT NULL DEFAULT 'SUP',
     `date` DATETIME(3) NOT NULL,
     `hours` DOUBLE NOT NULL,
     `reason` VARCHAR(191) NOT NULL DEFAULT '',
-    `status` ENUM('DECLARE', 'VALIDE') NOT NULL DEFAULT 'DECLARE',
+    `status` ENUM('DECLARE', 'VALIDE', 'REFUSE') NOT NULL DEFAULT 'DECLARE',
+    `paid` BOOLEAN NOT NULL DEFAULT false,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    INDEX `HoursEntry_userId_idx`(`userId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Absence` (
+    `id` VARCHAR(191) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
+    `type` ENUM('TELETRAVAIL', 'CONGE', 'ABSENCE', 'FORMATION') NOT NULL,
+    `startDate` DATE NOT NULL,
+    `endDate` DATE NOT NULL,
+    `halfDay` ENUM('AM', 'PM') NULL,
+    `motif` VARCHAR(191) NOT NULL DEFAULT '',
+    `status` ENUM('DECLARE', 'VALIDE', 'REFUSE') NOT NULL DEFAULT 'DECLARE',
+    `paid` BOOLEAN NOT NULL DEFAULT true,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `Absence_userId_idx`(`userId`),
+    INDEX `Absence_startDate_idx`(`startDate`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `PresenceRecurrence` (
+    `id` VARCHAR(191) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
+    `effect` ENUM('PRESENT', 'TELETRAVAIL', 'CONGE', 'ABSENCE', 'FORMATION') NOT NULL,
+    `freq` ENUM('WEEKLY', 'BIWEEKLY', 'MONTHLY', 'DAILY') NOT NULL,
+    `weekday` INTEGER NULL,
+    `monthday` INTEGER NULL,
+    `halfDay` ENUM('AM', 'PM') NULL,
+    `startDate` DATE NOT NULL,
+    `endDate` DATE NULL,
+    `motif` VARCHAR(191) NOT NULL DEFAULT '',
+    `paid` BOOLEAN NOT NULL DEFAULT true,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `PresenceRecurrence_userId_idx`(`userId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -578,7 +626,7 @@ CREATE TABLE `TravelEntry` (
     `endDate` DATETIME(3) NULL,
     `destination` VARCHAR(191) NOT NULL,
     `motif` VARCHAR(191) NOT NULL DEFAULT '',
-    `status` ENUM('DECLARE', 'VALIDE') NOT NULL DEFAULT 'DECLARE',
+    `status` ENUM('DECLARE', 'VALIDE', 'REFUSE') NOT NULL DEFAULT 'DECLARE',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
@@ -671,7 +719,7 @@ CREATE TABLE `Rdv` (
     `cadence` VARCHAR(191) NOT NULL,
     `agenda` TEXT NOT NULL,
     `isPast` BOOLEAN NOT NULL DEFAULT false,
-    `summary` TEXT NOT NULL DEFAULT '',
+    `summary` TEXT NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -699,6 +747,100 @@ CREATE TABLE `ClientThreadMessage` (
     `auto` BOOLEAN NOT NULL DEFAULT false,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `content` (
+    `id` CHAR(36) NOT NULL,
+    `type` VARCHAR(16) NOT NULL,
+    `data` JSON NOT NULL,
+    `views` BIGINT NOT NULL DEFAULT 0,
+    `position` BIGINT NOT NULL DEFAULT 0,
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+
+    INDEX `content_type_created_idx`(`type`, `created_at`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `settings` (
+    `key` VARCHAR(191) NOT NULL,
+    `data` JSON NOT NULL,
+    `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+
+    PRIMARY KEY (`key`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `page_views` (
+    `page` VARCHAR(191) NOT NULL,
+    `count` BIGINT NOT NULL DEFAULT 0,
+
+    PRIMARY KEY (`page`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `newsletter_subscribers` (
+    `id` CHAR(36) NOT NULL,
+    `email` VARCHAR(320) NOT NULL,
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+
+    UNIQUE INDEX `newsletter_subscribers_email_key`(`email`),
+    INDEX `newsletter_created_idx`(`created_at`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `contact_requests` (
+    `id` CHAR(36) NOT NULL,
+    `name` VARCHAR(200) NOT NULL DEFAULT '',
+    `company` VARCHAR(200) NOT NULL DEFAULT '',
+    `email` VARCHAR(320) NOT NULL DEFAULT '',
+    `phone` VARCHAR(60) NOT NULL DEFAULT '',
+    `project` VARCHAR(200) NOT NULL DEFAULT '',
+    `budget` VARCHAR(60) NOT NULL DEFAULT '',
+    `message` TEXT NULL,
+    `status` VARCHAR(16) NOT NULL DEFAULT 'nouveau',
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+
+    INDEX `contact_requests_created_idx`(`created_at`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `FeedItem` (
+    `id` VARCHAR(191) NOT NULL,
+    `guid` VARCHAR(512) NOT NULL,
+    `source` VARCHAR(255) NOT NULL,
+    `category` VARCHAR(64) NOT NULL,
+    `title` VARCHAR(512) NOT NULL,
+    `excerpt` TEXT NULL,
+    `content` MEDIUMTEXT NULL,
+    `image` VARCHAR(2048) NULL,
+    `link` VARCHAR(1024) NOT NULL,
+    `publishedAt` DATETIME(3) NULL,
+    `status` ENUM('NEW', 'IGNORED', 'LATER', 'PUBLISHED') NOT NULL DEFAULT 'NEW',
+    `fetchedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    UNIQUE INDEX `FeedItem_guid_key`(`guid`),
+    INDEX `FeedItem_status_publishedAt_fetchedAt_idx`(`status`, `publishedAt`, `fetchedAt`),
+    INDEX `FeedItem_category_idx`(`category`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `UserToken` (
+    `id` VARCHAR(191) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
+    `kind` ENUM('VERIFY', 'RESET') NOT NULL,
+    `tokenHash` VARCHAR(64) NOT NULL,
+    `expiresAt` DATETIME(3) NOT NULL,
+    `usedAt` DATETIME(3) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `UserToken_tokenHash_idx`(`tokenHash`),
+    INDEX `UserToken_userId_idx`(`userId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -853,7 +995,13 @@ ALTER TABLE `TimeEntry` ADD CONSTRAINT `TimeEntry_taskId_fkey` FOREIGN KEY (`tas
 ALTER TABLE `TimeEntry` ADD CONSTRAINT `TimeEntry_ticketId_fkey` FOREIGN KEY (`ticketId`) REFERENCES `Ticket`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `OvertimeEntry` ADD CONSTRAINT `OvertimeEntry_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `HoursEntry` ADD CONSTRAINT `HoursEntry_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Absence` ADD CONSTRAINT `Absence_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `PresenceRecurrence` ADD CONSTRAINT `PresenceRecurrence_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `PlannedShift` ADD CONSTRAINT `PlannedShift_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -884,3 +1032,6 @@ ALTER TABLE `Rdv` ADD CONSTRAINT `Rdv_hostId_fkey` FOREIGN KEY (`hostId`) REFERE
 
 -- AddForeignKey
 ALTER TABLE `ClientThreadMessage` ADD CONSTRAINT `ClientThreadMessage_projectId_fkey` FOREIGN KEY (`projectId`) REFERENCES `Project`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `UserToken` ADD CONSTRAINT `UserToken_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
