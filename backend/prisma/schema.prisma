@@ -64,6 +64,23 @@ model User {
   jobTitle     String?  @db.VarChar(255)
   photo        String?  @db.LongText
 
+  // Soldes « à ancre » : la direction saisit un solde réel et la date du jour
+  // devient l'ancre ; l'affiché est recalculé à partir de là (voir
+  // src/lib/balances.ts). NULL = jamais défini — aucun congé payé ne peut alors
+  // être posé, il n'y aurait rien à décompter.
+  leaveBalance Float?
+  leaveAnchor  DateTime? @db.Date
+  hoursBalance Float?
+  hoursAnchor  DateTime? @db.Date
+
+  // Un compte créé par la direction démarre NON confirmé, avec un hash
+  // inutilisable : le mot de passe réel n'est engendré et envoyé qu'après que
+  // la personne a confirmé son adresse. Cela prouve l'adresse avant qu'un
+  // identifiant ne quitte le serveur. `mustChangePassword` force le changement
+  // à la première connexion.
+  emailVerified       Boolean @default(true)
+  mustChangePassword  Boolean @default(false)
+
   clientId     String?
   client       Client?  @relation(fields: [clientId], references: [id])
 
@@ -86,7 +103,10 @@ model User {
   hostedRdvs       Rdv[]
   internalTasksAssigned InternalTask[] @relation("InternalTaskAssignee")
   internalTasksGiven    InternalTask[] @relation("InternalTaskAssigner")
-  overtimeEntries OvertimeEntry[]
+  tokens          UserToken[]
+  hoursEntries    HoursEntry[]
+  absences        Absence[]
+  presenceRules   PresenceRecurrence[]
   plannedShifts   PlannedShift[]
   travelEntries   TravelEntry[]
 }
@@ -686,20 +706,108 @@ model TimeEntry {
 enum HrEntryStatus {
   DECLARE
   VALIDE
+  REFUSE
 }
 
-// RH — overtime a teammate declares themselves; a director validates it at
-// month-end rather than the app computing it from TimeEntry (worked hours vs.
-// contracted hours isn't modeled anywhere, so this stays a self-declared figure).
-model OvertimeEntry {
+// Sens d'une écriture d'heures : des heures supplémentaires alimentent le solde,
+// une récupération le consomme.
+enum HoursEntryKind {
+  SUP
+  RECUP
+}
+
+// RH — les heures déclarées par un membre de l'équipe, dans les deux sens. La
+// direction tranche à la validation. Le compte n'est pas dérivé de TimeEntry :
+// heures travaillées contre heures contractuelles n'est modélisé nulle part,
+// cela reste donc un chiffre déclaré.
+model HoursEntry {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      HoursEntryKind @default(SUP)
+  date      DateTime
+  hours     Float
+  reason    String         @default("")
+  status    HrEntryStatus  @default(DECLARE)
+  // Une heure sup PAYÉE est rémunérée : elle n'alimente pas le solde de récup.
+  // Sans objet pour une récupération.
+  paid      Boolean        @default(false)
+  createdAt DateTime       @default(now())
+
+  @@index([userId])
+}
+
+enum AbsenceType {
+  TELETRAVAIL
+  CONGE
+  ABSENCE
+  FORMATION
+}
+
+enum HalfDay {
+  AM
+  PM
+}
+
+// Absence ponctuelle sur une plage, avec circuit de validation. Un congé ou une
+// absence PAYÉ et non refusé décompte le solde de congés — y compris en attente,
+// pour qu'on ne puisse pas empiler des demandes qui, cumulées, passeraient sous
+// zéro (voir src/lib/balances.ts).
+model Absence {
   id        String        @id @default(cuid())
   userId    String
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date      DateTime
-  hours     Float
-  reason    String        @default("")
+  type      AbsenceType
+  startDate DateTime      @db.Date
+  endDate   DateTime      @db.Date
+  // Une demi-journée n'a de sens que sur une absence d'un seul jour.
+  halfDay   HalfDay?
+  motif     String        @default("")
   status    HrEntryStatus @default(DECLARE)
+  paid      Boolean       @default(true)
   createdAt DateTime      @default(now())
+
+  @@index([userId])
+  @@index([startDate])
+}
+
+enum RecurrenceEffect {
+  PRESENT
+  TELETRAVAIL
+  CONGE
+  ABSENCE
+  FORMATION
+}
+
+enum RecurrenceFreq {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  DAILY
+}
+
+// Règle de présence récurrente (« semaine type »). Elle reste virtuelle : rien
+// n'est écrit dans PlannedShift, le planning la déplie à la volée.
+model PresenceRecurrence {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  effect    RecurrenceEffect
+  freq      RecurrenceFreq
+  // weekday 0 = lundi … 6 = dimanche (WEEKLY / BIWEEKLY) ; monthday 1..31
+  // (MONTHLY). DAILY ne prend ni l'un ni l'autre : la période suffit.
+  // BIWEEKLY : la parité se compte depuis startDate.
+  weekday   Int?
+  monthday  Int?
+  halfDay   HalfDay?
+  startDate DateTime         @db.Date
+  endDate   DateTime?        @db.Date
+  motif     String           @default("")
+  // Seuls les congés/absences PAYÉS décomptent le solde de congés.
+  paid      Boolean          @default(true)
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
 }
 
 enum ShiftKind {
@@ -919,4 +1027,69 @@ model ContactRequest {
 
   @@index([createdAt], map: "contact_requests_created_idx")
   @@map("contact_requests")
+}
+
+// ---------------------------------------------------------------------------
+// Veille (curation de flux RSS)
+// ---------------------------------------------------------------------------
+
+enum FeedItemStatus {
+  NEW
+  IGNORED
+  LATER
+  PUBLISHED
+}
+
+// Un article agrégé depuis les flux de `config/feeds.json`. `guid` est
+// l'identifiant fourni par le flux : il sert à ne pas réimporter deux fois le
+// même article d'un rafraîchissement à l'autre, et à ne jamais réécrire un
+// article déjà trié (son statut et sa recatégorisation manuelle survivent).
+model FeedItem {
+  id          String         @id @default(cuid())
+  guid        String         @unique @db.VarChar(512)
+  source      String         @db.VarChar(255)
+  // Catégorie de veille, plus large que celles du blog : la publication en
+  // fait la correspondance (voir src/lib/feeds.ts).
+  category    String         @db.VarChar(64)
+  title       String         @db.VarChar(512)
+  excerpt     String?        @db.Text
+  // Corps complet quand le flux le fournit, sinon rempli à l'enrichissement.
+  content     String?        @db.MediumText
+  image       String?        @db.VarChar(2048)
+  link        String         @db.VarChar(1024)
+  publishedAt DateTime?
+  status      FeedItemStatus @default(NEW)
+  fetchedAt   DateTime       @default(now())
+
+  // La liste filtre par statut et trie par date de publication : cet index
+  // couvre exactement filtre + tri, donc pas de filesort qui bufferiserait la
+  // colonne `excerpt`.
+  @@index([status, publishedAt, fetchedAt])
+  @@index([category])
+}
+
+// ---------------------------------------------------------------------------
+// Jetons à usage unique (confirmation d'adresse, réinitialisation)
+// ---------------------------------------------------------------------------
+
+enum UserTokenKind {
+  VERIFY
+  RESET
+}
+
+// Seul le SHA-256 du jeton est stocké : le jeton en clair ne voyage que dans le
+// lien envoyé par e-mail. Une fuite de la base ne permet donc pas de rejouer
+// les liens. `usedAt` marque la consommation — un lien ne sert qu'une fois.
+model UserToken {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      UserTokenKind
+  tokenHash String        @db.VarChar(64)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime      @default(now())
+
+  @@index([tokenHash])
+  @@index([userId])
 }

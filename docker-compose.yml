@@ -5,6 +5,13 @@
 #
 # Le site vitrine (frontend-public) est statique et hébergé séparément
 # (Hostinger) : il n'apparaît pas ici, il appelle l'API en cross-origin.
+#
+# Le schéma n'est PAS appliqué au démarrage, à la différence de la pile locale.
+# Sur une base déjà en service, `prisma migrate deploy` exige un historique
+# baseliné (sinon P3005) : un crash-loop au boot serait pire qu'une étape
+# explicite. Après chaque déploiement qui ajoute une migration :
+#
+#   docker compose exec codialis.backend npx prisma migrate deploy
 services:
   codialis.db:
     image: mysql:8.4
@@ -40,7 +47,9 @@ services:
     env_file:
       - backend/.env
     networks:
-      - proxy
+      proxy:
+        aliases:
+          - api
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.codialis_api.rule=Host(`landingback.codialis.com`)"
@@ -57,8 +66,9 @@ services:
       - codialis.backend
     environment:
       # Appel interne au réseau Docker : l'API n'a pas besoin d'être joignable
-      # depuis l'extérieur pour que le back-office fonctionne.
-      BACKEND_URL: http://codialis.backend:3001
+      # depuis l'extérieur pour que le back-office fonctionne. `api` est l'alias
+      # réseau du service, plus sûr qu'un nom de service contenant un point.
+      BACKEND_URL: http://api:3001
       NODE_ENV: production
     networks:
       - proxy

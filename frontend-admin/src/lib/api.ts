@@ -113,3 +113,26 @@ export async function apiLogin(
   }
   return { ok: true, token: body.token, role: body.role };
 }
+
+// Appel d'une route publique du backend : ni session, ni redirection. Sert aux
+// pages ouvertes sans être connecté (mot de passe oublié, confirmation de
+// compte), où une redirection vers /login n'aurait aucun sens.
+export async function apiPublicPost<T = Record<string, unknown>>(
+  path: string,
+  body: unknown,
+): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
+  const res = await fetch(backendUrl(path), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+
+  const text = await res.text();
+  const parsed = text ? (JSON.parse(text, reviveDates) as Record<string, unknown>) : {};
+  if (!res.ok) {
+    const message = typeof parsed.error === "string" ? parsed.error : `Erreur ${res.status}`;
+    return { ok: false, error: message };
+  }
+  return { ok: true, data: parsed as T };
+}

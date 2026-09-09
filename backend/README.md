@@ -305,3 +305,119 @@ logos clients enregistrés s'affichent ; une modification se propage ; une
 suppression fait retomber la page sur le bloc `featured` des réglages. Le délai
 observé entre une écriture et son effet côté visiteur est le `max-age=60` des
 routes publiques, non un défaut.
+
+### Reprise depuis l'ancien backend Express
+
+L'ancien schéma et le nouveau cohabitent dans la même base (les tables du site
+vitrine portent d'ailleurs les mêmes noms, cf. plus haut). Deux conséquences au
+premier déploiement sur cette base.
+
+**1. `prisma migrate deploy` refuse de partir (P3005).** La base n'est pas vide
+— elle contient les tables de l'ancien Express — et Prisma n'y trouve aucun
+historique de migration. Il faut donc appliquer le SQL, puis déclarer les
+migrations comme appliquées :
+
+```bash
+for m in prisma/migrations/*/migration.sql; do mysql "$DB" < "$m"; done
+npx prisma migrate resolve --applied 20260904104301_init
+npx prisma migrate resolve --applied 20260908120000_public_site_api
+npx prisma migrate status   # doit dire "Database schema is up to date!"
+```
+
+Les migrations suivantes passeront ensuite par `migrate deploy` normalement.
+Le `CREATE TABLE IF NOT EXISTS` de la seconde migration est ce qui rend
+l'opération sûre : les tables du site déjà peuplées ne sont pas touchées.
+
+**2. Les comptes se reprennent avec leurs mots de passe.**
+
+```bash
+npx tsx prisma/import-legacy-users.ts --dry-run   # puis sans --dry-run
+```
+
+Le script lit la table `users` de l'ancien schéma et la reverse dans `User`.
+Il rapproche les comptes par e-mail, donc il est rejouable sans créer de
+doublon. Renseigner `LEGACY_DATABASE_URL` si l'ancienne base est ailleurs.
+
+Les mots de passe passent tels quels : l'ancien backend hashait avec `bcrypt`
+(prefixe `$2b$`), le nouveau verifie avec `bcryptjs`, qui lit `$2a$`, `$2b$` et
+`$2y$`. Personne n'a a en changer. Correspondance des roles : `patron` -> `DIR`,
+`chef` -> `PM`, `employe` -> `DEV`. `poste` devient `jobTitle`, donc l'intitule
+affiche sous le nom sur le site vitrine est conserve.
+
+Ne sont **pas** repris, faute d'equivalent : les soldes de conges et d'heures
+(le nouveau modele RH est declaratif, sans solde) et le drapeau "changement de
+mot de passe obligatoire". Un compte qui n'avait jamais confirme son e-mail
+portait un hash aleatoire inutilisable et ne pourra pas se connecter : il n'y a
+pas de "mot de passe oublie" dans le nouveau backend, son mot de passe doit
+etre reattribue a la main.
+
+### Veille RSS (`/api/admin/site/veille`)
+
+Reprise de l'ancien backend. Les sources vivent dans `config/feeds.json`,
+relu à chaque appel — l'éditer ne demande pas de redémarrage. Le fichier porte
+aussi `maxAgeDays` (fenêtre de fraîcheur) et `denyKeywords` (bruit grand public
+à exclure : bons plans, soldes, dates de sortie).
+
+Trois choses valent d'être connues :
+
+- **Un flux en panne n'interrompt pas les autres.** Chaque source est lue
+  séparément et son échec est rapporté dans le résumé du rafraîchissement.
+  Vérifié en conditions réelles : 16 des 20 flux configurés ont répondu, les 4
+  autres ont échoué (XML malformé, connexion refusée, 403) et le
+  rafraîchissement a tout de même importé 360 articles. Une veille qui tombe
+  entière parce qu'un seul site est hors service ne sert à rien.
+- **Le rafraîchissement ne réécrit jamais un article existant** (dédoublonnage
+  sur `guid`) : le statut et la recatégorisation manuelle survivent. Un second
+  passage ajoute 0 article.
+- **L'enrichissement est différé au moment de publier.** `refreshAll` ne lit que
+  le RSS ; aller chercher l'image et le corps sur la page source coûte une
+  requête HTTP par article et n'a de sens qu'une fois l'article retenu. Cette
+  récupération est bornée par une garde anti-SSRF : seules les URLs dont l'hôte
+  appartient à un flux configuré sont suivies.
+
+`/api/admin/site/veille/prefill` renvoie un brouillon prêt à pousser dans le
+blog, champ pour champ — catégorie traduite en catégorie de blog, durée de
+lecture estimée, source citée.
+
+### E-mails transactionnels (Brevo)
+
+`src/lib/mail.ts` porte les gabarits et l'envoi, `src/lib/tokens.ts` les jetons.
+Sans `BREVO_API_KEY`, rien ne part : la création de compte est refusée (elle en
+dépend) et les notifications sont simplement journalisées.
+
+**La création de compte n'émet aucun identifiant avant que l'adresse ne soit
+prouvée.** Le compte démarre avec un hash aléatoire que personne ne connaît et
+`emailVerified = false` ; un lien de confirmation part par e-mail ; le mot de
+passe réel n'est engendré et envoyé qu'au clic. Si l'envoi du premier e-mail
+échoue, la création est annulée — un compte que personne ne peut activer n'aide
+personne. Si l'envoi des identifiants échoue, rien n'est modifié et le même lien
+reste utilisable.
+
+Autres garde-fous :
+
+- `/api/auth/forgot` répond **toujours** 200 : une réponse différente selon que
+  l'adresse existe en ferait un énumérateur de comptes. Si l'envoi échoue, le
+  jeton émis est consommé aussitôt, pour ne pas laisser un lien valide dont nul
+  ne dispose.
+- Les jetons sont **stockés en SHA-256**, à usage unique et expirants (48 h pour
+  une confirmation, 1 h pour une réinitialisation). Une fuite de la base ne
+  permet pas de rejouer les liens.
+- Le mot de passe est validé **avant** que le jeton ne soit consommé : un mot de
+  passe refusé ne brûle pas le lien.
+- `/api/auth/change-password` exige le mot de passe actuel même connecté : une
+  session volée ne doit pas suffire à verrouiller le compte de son propriétaire.
+- La désinscription newsletter est signée par HMAC de l'adresse (pas de ligne en
+  base), et comparée en temps constant.
+
+**Vérifié de bout en bout** contre un faux serveur Brevo qui enregistre chaque
+message : création de compte → e-mail de confirmation (sans mot de passe
+dedans) → connexion impossible avant confirmation → confirmation → e-mail
+d'identifiants → connexion avec le mot de passe engendré → lien de confirmation
+inutilisable une seconde fois. Puis mot de passe oublié → e-mail →
+réinitialisation → connexion → lien mort. Puis les notifications RH (demande à
+la direction, verdict à l'auteur) et la newsletter à la publication d'un
+article, avec son lien de désinscription fonctionnel et un jeton falsifié
+refusé.
+
+Reste non repris : le **récap mensuel en PDF** de l'ancien backend, qui
+demandait une génération de PDF (jsPDF) et un planificateur.

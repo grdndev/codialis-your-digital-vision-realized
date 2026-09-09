@@ -1,9 +1,10 @@
 # frontend-admin — back-office Codialis
 
-Les 28 écrans du back-office : Dashboard, À traiter, Projets (liste / kanban /
+Les 32 écrans du back-office : Dashboard, À traiter, Projets (liste / kanban /
 fiche / détail de tâche), Prospection, Remontées client, Messagerie, Ressources,
 Tickets, Temps, RH, Pilotage, Rentabilité, Maintenance, Automatisations, la
-gestion du site vitrine (contenu, réglages, retours) et le portail client
+gestion du site vitrine (contenu, réglages, retours, veille), les comptes,
+le mot de passe, et le portail client
 (Avancement, Signalements, Mon projet, Rendez-vous, Échanges).
 
 Next.js 16 (App Router, TypeScript, Tailwind 4). **Aucun accès direct à la base
@@ -135,3 +136,19 @@ Deux comportements à connaître avant de s'inquiéter d'un bug :
 - **Une écriture met jusqu'à 60 secondes à apparaître** chez un visiteur qui a
   déjà chargé la page : les routes publiques sont cacheables
   (`max-age=60, stale-while-revalidate=300`), politique héritée et voulue.
+
+## Parcours par e-mail
+
+Trois pages sont accessibles **sans session** — `src/proxy.ts` les laisse
+passer explicitement, sans quoi les liens reçus par e-mail seraient
+inutilisables :
+
+| Page | Rôle |
+|---|---|
+| `/login` | connexion, avec le lien « mot de passe oublié » |
+| `/reset` | demande de lien, puis choix du nouveau mot de passe (`?token=`) |
+| `/verify` | confirmation d'un compte fraîchement créé (`?token=`) |
+
+Le mot de passe d'un nouveau compte n'apparaît jamais à l'écran : il est
+engendré et envoyé par le backend après confirmation de l'adresse. Voir
+`../backend/README.md` pour les garde-fous.

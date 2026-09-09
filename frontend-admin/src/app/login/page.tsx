@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { defaultPathFor } from "@/lib/nav";
@@ -23,6 +24,11 @@ export default async function LoginPage() {
         <div className="rounded-2xl border border-border bg-panel p-6 shadow-2xl">
           <LoginForm />
         </div>
+        <p className="mt-4 text-center text-xs">
+          <Link href="/reset" className="text-muted hover:text-text">
+            Mot de passe oublié ?
+          </Link>
+        </p>
         <p className="mt-6 text-center text-xs text-muted">
           Comptes de démonstration (mot de passe : <span className="text-text">codialis2026</span>)
           <br />

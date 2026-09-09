@@ -28,10 +28,10 @@ docker compose -f compose.local.yml up -d --build
   garde le site en une seule origine)
 - http://localhost:3002 — back-office
 
-Puis appliquer le schéma et les données de démonstration :
+Le schéma est appliqué au démarrage du backend. Pour les comptes et données de
+démonstration :
 
 ```bash
-docker compose -f compose.local.yml exec backend npx prisma migrate deploy
 docker compose -f compose.local.yml exec backend npx tsx prisma/seed.ts
 ```
 

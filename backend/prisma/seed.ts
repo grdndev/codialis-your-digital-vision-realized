@@ -748,9 +748,27 @@ async function main() {
     });
   }
 
-  // ---------- RH (heures supp, planning, déplacements) ----------
-  await prisma.overtimeEntry.create({ data: { userId: lea.id, date: d("2026-09-02"), hours: 2, reason: "Recette client en soirée sur Aiva", status: "DECLARE" } });
-  await prisma.overtimeEntry.create({ data: { userId: karim.id, date: d("2026-09-03"), hours: 1.5, reason: "Correctif urgent Oxy", status: "VALIDE" } });
+  // ---------- RH (heures, absences, planning, déplacements) ----------
+  // Les soldes sont « à ancre » : la valeur est le solde réel au jour de l'ancre,
+  // et le calcul repart de là (voir src/lib/balances.ts). Sans ancre, aucun
+  // congé payé ne peut être posé.
+  const leaveAnchor = new Date("2026-07-01");
+  for (const u of [lea, karim, marion]) {
+    await prisma.user.update({
+      where: { id: u.id },
+      data: { leaveBalance: 12, leaveAnchor, hoursBalance: 4, hoursAnchor: leaveAnchor },
+    });
+  }
+
+  await prisma.hoursEntry.create({ data: { userId: lea.id, kind: "SUP", date: d("2026-09-02"), hours: 2, reason: "Recette client en soirée sur Aiva", status: "DECLARE" } });
+  await prisma.hoursEntry.create({ data: { userId: karim.id, kind: "SUP", date: d("2026-09-03"), hours: 1.5, reason: "Correctif urgent Oxy", status: "VALIDE" } });
+  await prisma.hoursEntry.create({ data: { userId: karim.id, kind: "RECUP", date: d("2026-09-05"), hours: 1, reason: "Récupération après astreinte", status: "DECLARE" } });
+
+  await prisma.absence.create({ data: { userId: lea.id, type: "CONGE", startDate: new Date("2026-09-21"), endDate: new Date("2026-09-25"), motif: "Congés d'automne", status: "DECLARE" } });
+  await prisma.absence.create({ data: { userId: karim.id, type: "FORMATION", startDate: new Date("2026-09-17"), endDate: new Date("2026-09-17"), motif: "Certification Kubernetes", status: "VALIDE", paid: false } });
+
+  // Règle récurrente : elle reste virtuelle, le planning la déplie à la volée.
+  await prisma.presenceRecurrence.create({ data: { userId: lea.id, effect: "TELETRAVAIL", freq: "WEEKLY", weekday: 4, startDate: new Date("2026-09-01"), motif: "Télétravail du vendredi" } });
   await prisma.travelEntry.create({ data: { userId: marion.id, startDate: d("2026-09-08"), endDate: d("2026-09-08"), destination: "Top Formation, Lyon", motif: "Atelier de cadrage", status: "DECLARE" } });
   // PlannedShift is looked up by exact date equality against midnight-UTC values
   // (currentWeekdays() in src/lib/format.ts), unlike the T09:00 convention `d()`

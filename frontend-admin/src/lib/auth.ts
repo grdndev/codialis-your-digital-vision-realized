@@ -11,6 +11,20 @@ export { SESSION_COOKIE };
 
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 30; // 30 jours
 
+// Le cookie de session est `Secure` en production. Le drapeau est surchargeable
+// parce qu'un navigateur refuse un cookie `Secure` servi en HTTP clair — sauf
+// sur `localhost`, qu'il considère comme une origine sûre. Une pile lancée sur
+// une autre machine et consultée en `http://<ip>:3002` perdrait donc le cookie,
+// et la connexion boucherait sans message. `SESSION_COOKIE_SECURE=false` lève
+// la contrainte pour ce cas ; ne jamais l'utiliser sur un domaine public.
+function cookieSecure(): boolean {
+  // Une valeur vide vaut « non défini » : c'est ce qu'attend un fichier
+  // d'environnement où la clé est présente mais laissée en blanc.
+  const override = process.env.SESSION_COOKIE_SECURE;
+  if (override) return override !== "false";
+  return process.env.NODE_ENV === "production";
+}
+
 // Le JWT est émis et signé par le backend ; frontend-admin ne connaît pas
 // AUTH_SECRET et ne le vérifie donc jamais lui-même. Il le stocke, le relaie,
 // et laisse le backend juger de sa validité.
@@ -19,7 +33,7 @@ export async function setSessionCookie(token: string) {
   store.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: cookieSecure(),
     path: "/",
     maxAge: SESSION_DURATION_SECONDS,
   });

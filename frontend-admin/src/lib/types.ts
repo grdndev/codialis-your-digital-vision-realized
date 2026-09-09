@@ -26,7 +26,7 @@ export type InvoiceStatus = "EN_ATTENTE" | "EN_RETARD" | "PAYEE";
 export type AutomationMode = "AUTO" | "TO_VALIDATE";
 export type DraftStatus = "PENDING" | "SENT" | "IGNORED";
 export type AbsenceMode = "OUVERT" | "HORAIRES" | "CONGES";
-export type HrEntryStatus = "DECLARE" | "VALIDE";
+export type HrEntryStatus = "DECLARE" | "VALIDE" | "REFUSE";
 export type ShiftKind = "BUREAU" | "TELETRAVAIL" | "CLIENT" | "ABSENCE";
 export type ActionCategory = "URGENT" | "RELANCE" | "DECISION";
 

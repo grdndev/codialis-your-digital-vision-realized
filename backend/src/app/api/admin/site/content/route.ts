@@ -2,7 +2,16 @@ import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { adminRoute, badRequest, jsonBody, notFound } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
-import { isContentType, shapeContent, type ContentType } from "@/lib/site-content";
+import {
+  isContentType,
+  shapeContent,
+  type ContentType,
+} from "@/lib/site-content";
+import {
+  mailConfigured,
+  notifySubscribers,
+  sendInBackground,
+} from "@/lib/mail";
 import {
   blogSchema,
   portfolioSchema,
@@ -73,9 +82,14 @@ async function withDerivedFields(
 ): Promise<Record<string, unknown>> {
   if (type !== "testimonials") return data;
 
-  const previousBg = existing && typeof existing.bg === "string" ? existing.bg : null;
+  const previousBg =
+    existing && typeof existing.bg === "string" ? existing.bg : null;
   if (previousBg) {
-    return { ...data, initials: initialsOf(String(data.author ?? "")), bg: previousBg };
+    return {
+      ...data,
+      initials: initialsOf(String(data.author ?? "")),
+      bg: previousBg,
+    };
   }
 
   const count = await prisma.content.count({ where: { type: "testimonials" } });
@@ -114,7 +128,9 @@ export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
   const type = body.type;
 
   if (body.action === "delete") {
-    const { count } = await prisma.content.deleteMany({ where: { id: body.id, type } });
+    const { count } = await prisma.content.deleteMany({
+      where: { id: body.id, type },
+    });
     if (count === 0) notFound("Contenu introuvable");
     return;
   }
@@ -138,6 +154,25 @@ export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
       select: { id: true },
     });
     if (data.featured === true) await unfeatureOthers(type, created.id);
+    // Publier un article prévient les abonnés — en tâche de fond : un échec
+    // Brevo ne doit pas faire croire que la publication a raté.
+    if (type === "blog" && mailConfigured()) {
+      const title = String(data.title ?? "");
+      const excerpt = String(data.excerpt ?? "");
+      const subscribers = await prisma.newsletterSubscriber.findMany({
+        select: { email: true },
+      });
+      if (subscribers.length > 0) {
+        sendInBackground("newsletter", async () => {
+          const { sent, total } = await notifySubscribers(
+            title,
+            excerpt,
+            subscribers.map((s) => s.email),
+          );
+          console.log(`Newsletter « ${title} » : ${sent}/${total} envoyé(s).`);
+        });
+      }
+    }
     return { ok: true, id: created.id };
   }
 
