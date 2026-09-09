@@ -457,6 +457,7 @@ async function main() {
         title: tr.title, description: tr.body ?? "", estHours: hoursFr(tr.est),
         assigneeId: tr.assignee ? userByFirst[tr.assignee].id : null,
         creatorId: null, clientReported: true, triageState: TRIAGE_STATE_MAP[tr.state],
+        steps: ""
       },
     });
     if (tr.hasShot) {
@@ -606,13 +607,13 @@ async function main() {
   await prisma.mockupSource.create({ data: { projectId: aiva.id, label: "Design system Codialis", url: "https://claude.design/codialis-design-system", status: "À jour" } });
 
   await prisma.cdcDocument.create({
-    data: { projectId: aiva.id, name: "Cahier des charges v3", version: "v3", meta: "42 pages · validé le 8 juin · signé", status: "En vigueur", order: 0 },
+    data: { projectId: aiva.id, name: "Cahier des charges v3", version: "v3", meta: "42 pages · validé le 8 juin · signé", status: "En vigueur", order: 0 , sections: "[]" },
   });
   await prisma.cdcDocument.create({
-    data: { projectId: aiva.id, name: "Spécifications fonctionnelles — paiement", version: "v1", meta: "11 pages · mis à jour le 14 août", status: "En vigueur", order: 1 },
+    data: { projectId: aiva.id, name: "Spécifications fonctionnelles — paiement", version: "v1", meta: "11 pages · mis à jour le 14 août", status: "En vigueur", order: 1 , sections: "[]" },
   });
   await prisma.cdcDocument.create({
-    data: { projectId: aiva.id, name: "Cahier des charges v2", version: "v2", meta: "38 pages · remplacé le 8 juin", status: "Archivé", order: 2 },
+    data: { projectId: aiva.id, name: "Cahier des charges v2", version: "v2", meta: "38 pages · remplacé le 8 juin", status: "Archivé", order: 2 , sections: "[]" },
   });
   const techDocDefs = [
     { name: "Modèle de données", ext: "PDF", meta: "6 pages · mis à jour le 2 juillet", status: "À jour" },
@@ -1028,7 +1029,7 @@ async function main() {
     { name: "Avenant A-402.pdf", meta: "PDF · 175 Ko · 27 août 2025", status: "À valider", order: 4 },
   ];
   for (const f of specFiles) {
-    await prisma.cdcDocument.create({ data: { projectId: topFormation.id, name: f.name, version: "", meta: f.meta, status: f.status, order: f.order } });
+    await prisma.cdcDocument.create({ data: { projectId: topFormation.id, name: f.name, version: "", meta: f.meta, status: f.status, order: f.order, sections: '[]' } });
   }
 
   // ---------- Client portal: Rendez-vous (Top Formation) ----------
@@ -1042,6 +1043,7 @@ async function main() {
         { label: "Export Excel des résultats", detail: "avenant A-402 · 9 h · 1 200 €", from: "devis en attente" },
         { label: "Recette client du 8 au 18 septembre", detail: "qui teste, sur quels parcours", from: "ajouté par Marion" },
       ]),
+      summary: ""
     },
   });
   const pastRdvDefs = [

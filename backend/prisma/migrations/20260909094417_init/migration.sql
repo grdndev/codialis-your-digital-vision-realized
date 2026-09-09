@@ -374,7 +374,7 @@ CREATE TABLE `CdcDocument` (
     `version` VARCHAR(191) NOT NULL,
     `meta` VARCHAR(191) NOT NULL,
     `status` VARCHAR(191) NOT NULL,
-    `sections` TEXT NOT NULL DEFAULT '[]',
+    `sections` TEXT NOT NULL,
     `order` INTEGER NOT NULL DEFAULT 0,
 
     PRIMARY KEY (`id`)

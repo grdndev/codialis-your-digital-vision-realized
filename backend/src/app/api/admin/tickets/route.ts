@@ -130,6 +130,7 @@ export const POST = adminRoute(
           prisma.ticket.create({
             data: {
               ref,
+              steps: "",
               projectId: body.projectId,
               epicId: body.epicId,
               type: body.type,

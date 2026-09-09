@@ -177,6 +177,7 @@ export const POST = adminRoute(["PM", "DIR"], async ({ user }, request) => {
           note: body.note,
           probabilityPct: STAGE_PROB.CONTACT,
           nextAction: STAGE_NEXT.CONTACT,
+          description: ""
         },
       });
       return;
@@ -229,6 +230,7 @@ export const POST = adminRoute(["PM", "DIR"], async ({ user }, request) => {
             contactEmail: cell(iEmail),
             contactPhone: cell(iPhone),
             source: cell(iSource),
+            description: ""
           },
         });
         imported++;

@@ -242,6 +242,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
           version: body.version,
           meta: body.meta,
           status: body.status,
+          sections: '[]'
         },
       });
       return;

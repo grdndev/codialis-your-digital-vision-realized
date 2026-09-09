@@ -513,7 +513,7 @@ model CdcDocument {
   version   String
   meta      String
   status    String
-  sections  String  @default("[]") @db.Text
+  sections  String  @db.Text
   order     Int     @default(0)
 }
 

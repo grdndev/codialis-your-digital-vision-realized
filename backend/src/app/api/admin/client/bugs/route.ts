@@ -72,6 +72,7 @@ export const POST = adminRoute(["CLIENT"], async ({ user }, request) => {
         clientReported: true,
         // Un bug part en qualification, une demande d'ajout part au chiffrage.
         triageState: body.type === "BUG" ? "A_QUALIFIER" : "A_CHIFFRER",
+        steps: ""
       },
     }),
   );

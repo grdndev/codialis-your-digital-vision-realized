@@ -191,6 +191,7 @@ export const POST = adminRoute(
           description: message?.body ?? "",
           estHours: 0,
           creatorId: user.id,
+          steps: "",
         },
       }),
     );

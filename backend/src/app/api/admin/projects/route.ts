@@ -126,6 +126,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
           estHours: body.estHours,
           assigneeId: body.assigneeId,
           order: count,
+          description: ""
         },
       });
       await recomputeProjectProgress(body.projectId);
@@ -184,7 +185,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
 
     case "add-client-question":
       await prisma.clientQuestion.create({
-        data: { projectId: body.projectId, question: body.question },
+        data: { projectId: body.projectId, question: body.question, answer: "" },
       });
       return;
 
