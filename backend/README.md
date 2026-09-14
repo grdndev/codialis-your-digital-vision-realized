@@ -54,6 +54,26 @@ Password for all: `codialis2026`
 | marc@ncd.fr | Client (NCD) | portal with empty states for devis/CDC/rendez-vous |
 | nadia@tapix.fr | Client (Tapix) | portal with empty states for devis/CDC/rendez-vous |
 
+## Mise en route sur une base vierge
+
+Une base fraîche ne contient que des comptes : tout le reste s'amorce depuis le
+back-office, dans cet ordre, parce que chaque étape conditionne la suivante.
+
+1. **Un client**, puis **un projet** — écran *Projets*, les deux formulaires en
+   bas de page. Presque tout le reste exige un `projectId` : sans projet, ni
+   ticket, ni facture, ni lot, ni tâche, ni ressource, ni contrat de
+   maintenance. Le formulaire projet reste désactivé tant qu'aucun client
+   n'existe, et le dit.
+2. **Les soldes de congés**, par la direction — écran *RH*. Poser une absence
+   est refusé tant qu'ils ne sont pas définis : un solde inconnu ne se décompte
+   pas.
+3. Le reste suit le fil du travail : lots et tâches sur la fiche projet, temps
+   sur *Temps*, tickets, factures.
+
+Une affaire signée en *Prospection* ouvre son client et son projet d'un bouton,
+et les deux restent reliés (`Deal.projectId`) : c'est l'autre entrée, pour ce
+qui vient du commercial.
+
 ## Stack notes
 
 - **Auth**: custom credentials + JWT signé (`src/lib/auth.ts`), **sans cookie** — le jeton est renvoyé dans le corps de `POST /api/auth/login` et vérifié ensuite dans l'en-tête `Authorization: Bearer`. Pas NextAuth — v5 is still beta and this app targets bleeding-edge Next.js 16, so a minimal `jose`-based session was safer than chasing compatibility.

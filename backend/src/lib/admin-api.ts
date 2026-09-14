@@ -1,6 +1,7 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { Prisma } from "@prisma/client";
 import type { Role } from "@prisma/client";
 import { authenticateRequest, type ApiUser } from "@/lib/auth";
 
@@ -35,6 +36,24 @@ function errorJson(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
+// Une contrainte violée n'est pas une panne : c'est une requête qui désigne
+// quelque chose d'inexistant ou de déjà pris. La laisser remonter en 500
+// affichait « Erreur serveur » à l'écran, là où la personne avait seulement
+// besoin de savoir ce qui clochait dans sa saisie.
+function prismaError(err: unknown): { message: string; status: number } | null {
+  if (!(err instanceof Prisma.PrismaClientKnownRequestError)) return null;
+  switch (err.code) {
+    case "P2002":
+      return { message: "Cette valeur est déjà utilisée", status: 400 };
+    case "P2003":
+      return { message: "Référence introuvable : l'élément lié n'existe pas", status: 400 };
+    case "P2025":
+      return { message: "Introuvable", status: 404 };
+    default:
+      return null;
+  }
+}
+
 // `roles` vide = toute session valide est acceptée (utilisé par /me).
 export function adminRoute<C>(
   roles: Role[],
@@ -58,6 +77,8 @@ export function adminRoute<C>(
       return NextResponse.json(data === undefined ? { ok: true } : data);
     } catch (err) {
       if (err instanceof HttpError) return errorJson(err.message, err.status);
+      const known = prismaError(err);
+      if (known) return errorJson(known.message, known.status);
       console.error(err);
       return errorJson("Erreur serveur", 500);
     }

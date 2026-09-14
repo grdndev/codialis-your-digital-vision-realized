@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { apiPost } from "@/lib/api";
+import { ApiError, apiPost } from "@/lib/api";
 import type { CsvImportResult } from "./types";
 import type { DealStage } from "@/lib/types";
 
@@ -13,6 +13,32 @@ function optionalNum(value: FormDataEntryValue | null): number | null {
   if (!value) return null;
   const n = parseFloat(String(value).replace(",", "."));
   return Number.isFinite(n) ? n : null;
+}
+
+// Ouvre le projet d'une affaire signée, et relie les deux. C'est le passage du
+// commercial au suivi : on enchaîne donc sur la fiche du projet créé.
+export async function convertDealToProjectAction(formData: FormData) {
+  const dealId = String(formData.get("dealId") ?? "");
+  const projectName = String(formData.get("projectName") ?? "").trim();
+  if (!dealId || !projectName) return;
+
+  let projectId: string;
+  try {
+    const created = await apiPost<{ projectId: string }>(CRM, {
+      action: "convert-to-project",
+      dealId,
+      clientId: String(formData.get("clientId") ?? "") || null,
+      clientName: String(formData.get("clientName") ?? "").trim(),
+      projectName,
+    });
+    projectId = created.projectId;
+  } catch (err) {
+    if (err instanceof ApiError) redirect(`/crm?deal=${dealId}&error=${encodeURIComponent(err.message)}`);
+    throw err;
+  }
+
+  revalidatePath("/crm");
+  redirect(`/projects/${projectId}`);
 }
 
 export async function moveDealAction(dealId: string, stage: DealStage) {

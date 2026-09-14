@@ -1,4 +1,4 @@
-import type { UserRef } from "@/lib/dto";
+import type { ClientRef, UserRef } from "@/lib/dto";
 import type { DealStage } from "@/lib/types";
 
 export type DealNoteRow = {
@@ -39,6 +39,9 @@ export type DealRow = {
 
 export type CrmScreen = {
   deals: DealRow[];
+  // Pour rattacher une affaire signée à un client déjà connu plutôt que d'en
+  // créer un doublon.
+  clients: ClientRef[];
   // Déjà résolu côté API : la valeur enregistrée, ou le défaut de l'agence.
   quarterlyTarget: number;
 };

@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { apiGet } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
+import type { ClientRef } from "@/lib/dto";
 import type { CrmScreen, DealRow } from "./types";
 import { fmtEUR, fmtDate, DEAL_STAGE_LABEL } from "@/lib/format";
 import { PipelineBoard, type BoardColumn } from "./pipeline-board";
-import { updateDealAction, setLossReasonAction, addDealNoteAction, createDealAction, updateQuarterlyTargetAction, importDealsCsvAction } from "./actions";
+import { updateDealAction, setLossReasonAction, addDealNoteAction, createDealAction, updateQuarterlyTargetAction, importDealsCsvAction, convertDealToProjectAction } from "./actions";
 import type { DealStage } from "@/lib/types";
 
 const STAGES: DealStage[] = ["CONTACT", "QUALIFIE", "DEVIS", "NEGOCIATION", "SIGNE", "REFUSE"];
@@ -16,12 +18,18 @@ const IMPORT_ERROR_LABEL: Record<string, string> = {
 export default async function CrmPage({
   searchParams,
 }: {
-  searchParams: Promise<{ deal?: string; imported?: string; skipped?: string; importError?: string }>;
+  searchParams: Promise<{
+    deal?: string;
+    imported?: string;
+    skipped?: string;
+    importError?: string;
+    error?: string;
+  }>;
 }) {
   await requireRole("PM", "DIR");
   const sp = await searchParams;
 
-  const { deals, quarterlyTarget } = await apiGet<CrmScreen>("/api/admin/crm");
+  const { deals, clients, quarterlyTarget } = await apiGet<CrmScreen>("/api/admin/crm");
 
   const signed = deals.filter((d) => d.stage === "SIGNE");
   const refused = deals.filter((d) => d.stage === "REFUSE");
@@ -118,7 +126,13 @@ export default async function CrmPage({
 
       <PipelineBoard columns={columns} selectedId={selected?.id} />
 
-      {selected ? <DealDetail deal={selected} /> : null}
+      {sp.error ? (
+        <p className="rounded-xl border border-red/30 bg-red/10 px-4 py-3 text-sm text-red">
+          {sp.error}
+        </p>
+      ) : null}
+
+      {selected ? <DealDetail deal={selected} clients={clients} /> : null}
     </div>
   );
 }
@@ -132,8 +146,9 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function DealDetail({ deal: d }: { deal: DealRow }) {
+function DealDetail({ deal: d, clients }: { deal: DealRow; clients: ClientRef[] }) {
   const isLost = d.stage === "REFUSE";
+  const isSigned = d.stage === "SIGNE";
   return (
     <div className="rounded-xl border border-border bg-panel p-5">
       <div className="flex items-center justify-between">
@@ -159,6 +174,49 @@ function DealDetail({ deal: d }: { deal: DealRow }) {
         </form>
 
         <div className="flex flex-col gap-4">
+          {isSigned ? (
+            d.projectId ? (
+              <p className="rounded-lg border border-mint/30 bg-mint/5 p-3 text-xs text-mint">
+                Projet ouvert pour cette affaire ·{" "}
+                <Link href={`/projects/${d.projectId}`} className="underline hover:brightness-110">
+                  voir la fiche
+                </Link>
+              </p>
+            ) : (
+              <form
+                action={convertDealToProjectAction}
+                className="flex flex-col gap-2 rounded-lg border border-mint/30 bg-mint/5 p-3"
+              >
+                <input type="hidden" name="dealId" value={d.id} />
+                <p className="text-xs font-medium text-mint">Ouvrir le projet</p>
+                <p className="text-[11px] text-muted">
+                  Le montant signé et le temps de dev estimé deviennent le vendu du projet.
+                </p>
+                <Field label="Client existant">
+                  <select name="clientId" defaultValue="" className="input">
+                    <option value="">— nouveau client —</option>
+                    {clients.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Nom du nouveau client">
+                  <input name="clientName" defaultValue={d.name} className="input" />
+                </Field>
+                <Field label="Nom du projet">
+                  <input name="projectName" defaultValue={d.name} required className="input" />
+                </Field>
+                <button
+                  type="submit"
+                  className="mt-1 rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg"
+                >
+                  Ouvrir le projet
+                </button>
+              </form>
+            )
+          ) : null}
           {isLost ? (
             <form action={setLossReasonAction} className="flex flex-col gap-2 rounded-lg border border-red/30 bg-red/5 p-3">
               <input type="hidden" name="dealId" value={d.id} />

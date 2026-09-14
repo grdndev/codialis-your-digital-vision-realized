@@ -37,7 +37,15 @@ export const GET = adminRoute(["PM", "DIR"], async () => {
     }),
     prisma.companySetting.findFirst(),
   ]);
-  return { deals, quarterlyTarget: setting?.quarterlyTargetEUR ?? DEFAULT_QUARTERLY_TARGET };
+  const clients = await prisma.client.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+  return {
+    deals,
+    clients,
+    quarterlyTarget: setting?.quarterlyTargetEUR ?? DEFAULT_QUARTERLY_TARGET,
+  };
 });
 
 const stageEnum = z.enum(["CONTACT", "QUALIFIE", "DEVIS", "NEGOCIATION", "SIGNE", "REFUSE"]);
@@ -71,7 +79,23 @@ const bodySchema = z.discriminatedUnion("action", [
     note: z.string(),
   }),
   z.object({ action: z.literal("import-csv"), csv: z.string() }),
+  z.object({
+    action: z.literal("convert-to-project"),
+    dealId: z.string().min(1),
+    // Soit on rattache à un client déjà connu, soit on en ouvre un au nom saisi.
+    clientId: z.string().nullable(),
+    clientName: z.string().max(200),
+    projectName: z.string().min(1).max(200),
+  }),
 ]);
+
+// Même règle que sur l'écran Projets : le sigle se déduit du nom.
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "??";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 // Analyseur CSV minimal : gère les champs entre guillemets contenant une virgule
 // et les guillemets échappés (""), qu'un simple split(",") découperait de travers.
@@ -181,6 +205,54 @@ export const POST = adminRoute(["PM", "DIR"], async ({ user }, request) => {
         },
       });
       return;
+    }
+
+    // Une affaire signée n'ouvrait rien : `Deal.projectId` existait dans le
+    // schéma mais n'était jamais renseigné. On matérialise ici le passage du
+    // commercial au suivi — client, projet, et le lien entre les deux.
+    case "convert-to-project": {
+      const deal = await prisma.deal.findUnique({
+        where: { id: body.dealId },
+        select: { id: true, stage: true, amount: true, devHours: true, projectId: true },
+      });
+      if (!deal) badRequest("Affaire introuvable");
+      if (deal.stage !== "SIGNE") badRequest("Seule une affaire signée s'ouvre en projet");
+      if (deal.projectId) badRequest("Cette affaire a déjà son projet");
+
+      let clientId = body.clientId;
+      if (!clientId) {
+        const name = body.clientName.trim();
+        if (!name) badRequest("Indiquez le client, ou choisissez-en un existant");
+        // Rattacher plutôt que dupliquer : `Client.name` est unique, et deux
+        // affaires du même client doivent tomber sur la même fiche.
+        const existing = await prisma.client.findUnique({ where: { name }, select: { id: true } });
+        clientId = existing?.id ?? (await prisma.client.create({ data: { name }, select: { id: true } })).id;
+      }
+
+      const projectName = body.projectName.trim();
+      const project = await prisma.project.create({
+        data: {
+          clientId,
+          name: projectName,
+          initials: initialsOf(projectName),
+          group: "DEV",
+          phaseLabel: "",
+          description: "",
+          // Ce que le commercial a vendu devient ce que le projet doit tenir.
+          hoursSold: deal.devHours ?? 0,
+          hoursSpent: 0,
+          progressPct: 0,
+          openedAt: new Date(),
+          soldAmount: deal.amount,
+        },
+        select: { id: true },
+      });
+
+      await prisma.deal.update({
+        where: { id: deal.id },
+        data: { projectId: project.id },
+      });
+      return { ok: true, projectId: project.id };
     }
 
     case "import-csv": {
