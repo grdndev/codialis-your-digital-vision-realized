@@ -14,7 +14,22 @@ export const GET = adminRoute(["DIR", "PM"], async () => ({
     include: { client: true },
     orderBy: [{ openedAt: "desc" }],
   }),
+  // Le formulaire « nouveau projet » doit pouvoir rattacher à un client
+  // existant : un projet sans client n'a pas de place dans le modèle.
+  clients: await prisma.client.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  }),
 }));
+
+// Le sigle affiché dans les pastilles du back-office. Déduit du nom plutôt que
+// saisi : un champ de plus à remplir pour une valeur qu'on sait calculer.
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "??";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 const NEXT_STATUS: Record<TaskStatus, TaskStatus | null> = {
   A_FAIRE: "EN_COURS",
@@ -43,6 +58,23 @@ async function recomputeProjectProgress(projectId: string) {
 }
 
 const bodySchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("create-client"),
+    name: z.string().min(1).max(200),
+    contactName: z.string().nullable(),
+    contactEmail: z.string().nullable(),
+    contactPhone: z.string().nullable(),
+  }),
+  z.object({
+    action: z.literal("create-project"),
+    clientId: z.string().min(1),
+    name: z.string().min(1).max(200),
+    group: z.enum(["DEV", "FIN", "WAR", "MAI", "CLO"]),
+    phaseLabel: z.string().max(200),
+    hoursSold: z.number().min(0),
+    soldAmount: z.number().min(0).nullable(),
+    deadlineAt: z.string().datetime().nullable(),
+  }),
   z.object({
     action: z.literal("create-epic"),
     projectId: z.string().min(1),
@@ -101,7 +133,65 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
   if (!parsed.success) badRequest("Requête invalide");
   const body = parsed.data;
 
+  // Ouvrir un client ou un projet engage la structure du suivi : c'est à la
+  // direction et à la chefferie de projet, pas au développement. Le contrôle est
+  // ici et non sur la route, qui sert aussi aux écrans ouverts aux DEV.
+  if (body.action === "create-client" || body.action === "create-project") {
+    if (user.role !== "DIR" && user.role !== "PM") {
+      badRequest("Réservé à la direction et à la chefferie de projet");
+    }
+  }
+
   switch (body.action) {
+    case "create-client": {
+      const name = body.name.trim();
+      // `Client.name` est unique : sans ce contrôle, le doublon remonterait en
+      // erreur Prisma, donc en 500 illisible.
+      const duplicate = await prisma.client.findUnique({ where: { name }, select: { id: true } });
+      if (duplicate) badRequest("Ce client existe déjà");
+
+      const client = await prisma.client.create({
+        data: {
+          name,
+          contactName: body.contactName,
+          contactEmail: body.contactEmail,
+          contactPhone: body.contactPhone,
+        },
+        select: { id: true },
+      });
+      return { ok: true, id: client.id };
+    }
+
+    case "create-project": {
+      const client = await prisma.client.findUnique({
+        where: { id: body.clientId },
+        select: { id: true },
+      });
+      if (!client) badRequest("Client introuvable");
+
+      const name = body.name.trim();
+      const project = await prisma.project.create({
+        data: {
+          clientId: body.clientId,
+          name,
+          initials: initialsOf(name),
+          group: body.group,
+          // Sans libellé saisi, l'affichage retombe déjà sur le libellé du
+          // groupe (voir GROUP_LABEL côté front) : inutile d'en inventer un.
+          phaseLabel: body.phaseLabel.trim(),
+          description: "",
+          hoursSold: body.hoursSold,
+          hoursSpent: 0,
+          progressPct: 0,
+          openedAt: new Date(),
+          deadlineAt: body.deadlineAt ? new Date(body.deadlineAt) : null,
+          soldAmount: body.soldAmount,
+        },
+        select: { id: true },
+      });
+      return { ok: true, id: project.id };
+    }
+
     case "create-epic": {
       const count = await prisma.epic.count({ where: { projectId: body.projectId } });
       await prisma.epic.create({

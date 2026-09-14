@@ -1,7 +1,10 @@
 import type { ClientRef, ProjectWithClient, TaskRow, UserRef } from "@/lib/dto";
 import type { ClientQuestionStatus } from "@/lib/types";
 
-export type ProjectsScreen = { allProjects: ProjectWithClient[] };
+export type ProjectsScreen = {
+  allProjects: ProjectWithClient[];
+  clients: ClientRef[];
+};
 
 export type TaskWithAssignee = TaskRow & { assignee: UserRef | null };
 

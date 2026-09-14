@@ -1,9 +1,72 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { apiPost } from "@/lib/api";
+import { redirect } from "next/navigation";
+import { ApiError, apiPost } from "@/lib/api";
 
 const PROJECTS = "/api/admin/projects";
+
+// Les erreurs métier de l'ouverture d'un client ou d'un projet remontent dans
+// l'URL : « ce client existe déjà » doit se lire à l'écran, pas se perdre.
+function fail(message: string): never {
+  redirect(`/projects?error=${encodeURIComponent(message)}`);
+}
+
+function num(fd: FormData, key: string): number {
+  return parseFloat(String(fd.get(key) ?? "0").replace(",", ".")) || 0;
+}
+
+export async function createClientAction(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return;
+
+  try {
+    await apiPost(PROJECTS, {
+      action: "create-client",
+      name,
+      contactName: String(formData.get("contactName") ?? "").trim() || null,
+      contactEmail: String(formData.get("contactEmail") ?? "").trim() || null,
+      contactPhone: String(formData.get("contactPhone") ?? "").trim() || null,
+    });
+  } catch (err) {
+    if (err instanceof ApiError) fail(err.message);
+    throw err;
+  }
+
+  revalidatePath("/projects");
+  redirect("/projects?client=1");
+}
+
+export async function createProjectAction(formData: FormData) {
+  const clientId = String(formData.get("clientId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  if (!clientId || !name) return;
+  const deadlineAt = String(formData.get("deadlineAt") ?? "");
+  const soldAmount = num(formData, "soldAmount");
+
+  let id: string;
+  try {
+    const created = await apiPost<{ id: string }>(PROJECTS, {
+      action: "create-project",
+      clientId,
+      name,
+      group: String(formData.get("group") ?? "DEV"),
+      phaseLabel: String(formData.get("phaseLabel") ?? "").trim(),
+      hoursSold: num(formData, "hoursSold"),
+      soldAmount: soldAmount > 0 ? soldAmount : null,
+      deadlineAt: deadlineAt ? new Date(`${deadlineAt}T00:00:00.000Z`).toISOString() : null,
+    });
+    id = created.id;
+  } catch (err) {
+    if (err instanceof ApiError) fail(err.message);
+    throw err;
+  }
+
+  revalidatePath("/projects");
+  // On enchaîne sur la fiche : après avoir ouvert un projet, la suite est d'y
+  // poser ses lots et ses tâches.
+  redirect(`/projects/${id}`);
+}
 
 export async function createEpicAction(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "");

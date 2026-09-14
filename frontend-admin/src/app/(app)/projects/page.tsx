@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
+import { createClientAction, createProjectAction } from "./actions";
 import type { ProjectsScreen } from "./types";
 import { fmtHours, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL } from "@/lib/format";
 import type { ProjectGroup } from "@/lib/types";
@@ -46,14 +47,14 @@ function relativeActivity(d: Date) {
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ phase?: string }>;
+  searchParams: Promise<{ phase?: string; client?: string; error?: string }>;
 }) {
   await requireRole("DIR", "PM");
-  const { phase } = await searchParams;
-  const active: ProjectGroup | "all" = (phase as ProjectGroup | undefined) ?? "all";
+  const sp = await searchParams;
+  const active: ProjectGroup | "all" = (sp.phase as ProjectGroup | undefined) ?? "all";
 
-  const { allProjects } = await apiGet<ProjectsScreen>("/api/admin/projects");
-  const clientCount = new Set(allProjects.map((p) => p.clientId)).size;
+  const { allProjects, clients } = await apiGet<ProjectsScreen>("/api/admin/projects");
+  const clientCount = clients.length;
 
   const counts: Record<string, number> = { all: allProjects.length };
   for (const g of ["DEV", "FIN", "WAR", "MAI", "CLO"] as ProjectGroup[]) {
@@ -72,6 +73,17 @@ export default async function ProjectsPage({
           </p>
         </div>
       </div>
+
+      {sp.error ? (
+        <p className="rounded-xl border border-red/30 bg-red/10 px-4 py-3 text-sm text-red">
+          {sp.error}
+        </p>
+      ) : null}
+      {sp.client ? (
+        <p className="rounded-xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm text-mint">
+          Client créé. Vous pouvez maintenant lui ouvrir un projet.
+        </p>
+      ) : null}
 
       <div className="flex gap-3">
         {PHASES.map((ph) => (
@@ -141,6 +153,120 @@ export default async function ProjectsPage({
           </tbody>
         </table>
       </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <div className="rounded-xl border border-border bg-panel p-5">
+          <h2 className="text-sm font-semibold text-text">Nouveau client</h2>
+          <p className="mt-1 text-xs text-muted">
+            Un projet se rattache toujours à un client : commencez par là si la liste
+            ci-dessous est vide.
+          </p>
+          <form action={createClientAction} className="mt-4 flex flex-col gap-3">
+            <Field label="Nom du client">
+              <input name="name" required className="input" />
+            </Field>
+            <Field label="Contact" hint="facultatif">
+              <input name="contactName" className="input" />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="E-mail" hint="facultatif">
+                <input name="contactEmail" type="email" className="input" />
+              </Field>
+              <Field label="Téléphone" hint="facultatif">
+                <input name="contactPhone" className="input" />
+              </Field>
+            </div>
+            <button
+              type="submit"
+              className="mt-1 self-start rounded-lg bg-mint px-4 py-2 text-xs font-semibold text-bg transition hover:brightness-110"
+            >
+              Créer le client
+            </button>
+          </form>
+        </div>
+
+        <div className="rounded-xl border border-border bg-panel p-5">
+          <h2 className="text-sm font-semibold text-text">Nouveau projet</h2>
+          {clients.length === 0 ? (
+            <p className="mt-1 text-xs text-amber">
+              Aucun client enregistré : créez-en un d’abord.
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-muted">
+              Les heures consommées et l’avancement démarrent à zéro, et se remplissent
+              au fil des tâches et des saisies de temps.
+            </p>
+          )}
+          <form action={createProjectAction} className="mt-4 flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Client">
+                <select name="clientId" required className="input" disabled={clients.length === 0}>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Nom du projet">
+                <input name="name" required className="input" />
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Phase">
+                <select name="group" defaultValue="DEV" className="input">
+                  {(["DEV", "FIN", "WAR", "MAI", "CLO"] as ProjectGroup[]).map((g) => (
+                    <option key={g} value={g}>
+                      {GROUP_LABEL[g]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Libellé de phase" hint="facultatif">
+                <input name="phaseLabel" className="input" />
+              </Field>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="Heures vendues">
+                <input name="hoursSold" defaultValue="0" className="input" />
+              </Field>
+              <Field label="Montant vendu (€)" hint="facultatif">
+                <input name="soldAmount" defaultValue="0" className="input" />
+              </Field>
+              <Field label="Échéance" hint="facultatif">
+                <input name="deadlineAt" type="date" className="input" />
+              </Field>
+            </div>
+            <button
+              type="submit"
+              disabled={clients.length === 0}
+              className="mt-1 self-start rounded-lg bg-mint px-4 py-2 text-xs font-semibold text-bg transition hover:brightness-110 disabled:opacity-50"
+            >
+              Créer le projet
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-medium text-muted">
+        {label}
+        {hint ? <span className="ml-1 text-[10px] text-muted/70">({hint})</span> : null}
+      </label>
+      {children}
     </div>
   );
 }
