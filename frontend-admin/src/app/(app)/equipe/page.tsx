@@ -27,7 +27,8 @@ export default async function EquipePage({
   const { users, clients, balances } = await apiGet<AccountsScreen>("/api/admin/accounts");
   const editing = sp.edit ? users.find((u) => u.id === sp.edit) : undefined;
   const balanceByUser = new Map(balances.map((b) => [b.userId, b]));
-  const pending = users.filter((u) => !u.emailVerified);
+  // À relancer : personne n'y a encore posé de mot de passe.
+  const pending = users.filter((u) => !u.emailVerified || u.mustChangePassword);
 
   return (
     <div className="flex flex-col gap-6">
@@ -35,20 +36,20 @@ export default async function EquipePage({
         <h1 className="text-xl font-semibold text-text">Comptes</h1>
         <p className="mt-1 text-sm text-muted">
           {users.length} compte{users.length > 1 ? "s" : ""}
-          {pending.length > 0 ? ` · ${pending.length} en attente de confirmation` : ""}
+          {pending.length > 0 ? ` · ${pending.length} en attente d’activation` : ""}
         </p>
       </div>
 
       {sp.error ? <Banner tone="red">{sp.error}</Banner> : null}
       {sp.created ? (
         <Banner tone="mint">
-          Compte créé. Un lien de confirmation a été envoyé — le mot de passe ne sera
-          engendré et transmis qu’une fois l’adresse confirmée.
+          Compte créé. Un lien d’invitation a été envoyé — la personne choisit son mot
+          de passe au bout du lien.
         </Banner>
       ) : null}
       {sp.saved ? <Banner tone="mint">Compte enregistré.</Banner> : null}
       {sp.deleted ? <Banner tone="amber">Compte supprimé.</Banner> : null}
-      {sp.resent ? <Banner tone="mint">Lien de confirmation renvoyé.</Banner> : null}
+      {sp.resent ? <Banner tone="mint">Lien d’invitation renvoyé.</Banner> : null}
 
       <div className="rounded-xl border border-border bg-panel">
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
@@ -108,7 +109,7 @@ export default async function EquipePage({
                       {u.emailVerified ? (
                         u.mustChangePassword ? (
                           <span className="rounded-full bg-amber/10 px-2 py-0.5 text-[11px] font-medium text-amber">
-                            doit changer son mot de passe
+                            mot de passe non choisi
                           </span>
                         ) : (
                           <span className="rounded-full bg-mint/10 px-2 py-0.5 text-[11px] font-medium text-mint">
@@ -129,7 +130,7 @@ export default async function EquipePage({
                         >
                           Modifier
                         </Link>
-                        {!u.emailVerified ? (
+                        {!u.emailVerified || u.mustChangePassword ? (
                           <form action={resendVerifyAction.bind(null, u.id)}>
                             <button
                               type="submit"
@@ -167,9 +168,9 @@ export default async function EquipePage({
         </h2>
         {!editing ? (
           <p className="mt-1 text-xs text-muted">
-            Aucun mot de passe n’est saisi ici. Le compte démarre en attente, un lien de
-            confirmation part par e-mail, et le mot de passe n’est engendré et transmis
-            qu’une fois l’adresse confirmée.
+            Aucun mot de passe n’est saisi ici. Le compte démarre en attente, un lien
+            d’invitation part par e-mail, et la personne choisit elle-même son mot de
+            passe. Le lien reste renvoyable tant qu’elle ne l’a pas fait.
           </p>
         ) : null}
 

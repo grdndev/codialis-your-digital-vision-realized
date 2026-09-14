@@ -16,10 +16,10 @@ const ROLES = ["DIR", "PM", "DEV", "CLIENT"] as const;
 // Gestion des comptes — direction uniquement.
 //
 // Un compte se crée SANS mot de passe : il démarre non confirmé, avec un hash
-// aléatoire que personne ne connaît, et un lien de confirmation part par
-// e-mail. Le mot de passe réel n'est engendré et envoyé qu'après que la
-// personne a cliqué (voir /api/auth/verify). L'adresse est donc prouvée avant
-// qu'un identifiant ne quitte le serveur.
+// aléatoire que personne ne connaît, et un lien d'invitation part par e-mail.
+// La personne choisit elle-même son mot de passe au bout du lien (voir
+// /api/auth/verify). L'adresse est donc prouvée sans qu'aucun identifiant n'ait
+// à quitter le serveur.
 
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -113,18 +113,30 @@ export const POST = adminRoute(["DIR"], async ({ user }, request) => {
   if (body.action === "resend-verify") {
     const target = await prisma.user.findUnique({
       where: { id: body.userId },
-      select: { id: true, name: true, email: true, role: true, emailVerified: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        emailVerified: true,
+        mustChangePassword: true,
+      },
     });
     if (!target) notFound("Compte introuvable");
-    // Refusé une fois le compte confirmé : sinon la route servirait à faire
-    // réémettre des identifiants à répétition.
-    if (target.emailVerified) badRequest("Compte déjà confirmé");
+    // Renvoyable tant que la personne n'a pas posé son propre mot de passe —
+    // `mustChangePassword` marque les comptes ouverts avant l'invitation, à qui
+    // un mot de passe provisoire avait été envoyé. Une fois le mot de passe
+    // choisi, c'est « mot de passe oublié » qui prend le relais : sinon la
+    // route servirait à réémettre des accès à répétition.
+    if (target.emailVerified && !target.mustChangePassword) {
+      badRequest("Ce compte a déjà défini son mot de passe");
+    }
 
     try {
       const token = await createToken(target.id, "VERIFY");
       await sendVerifyEmail({ name: target.name, email: target.email, role: target.role, token });
     } catch (err) {
-      console.error("Renvoi du lien de confirmation en échec:", err);
+      console.error("Renvoi du lien d'invitation en échec:", err);
       badRequest("Échec de l'envoi de l'e-mail — réessayez");
     }
     return;
@@ -195,7 +207,7 @@ export const POST = adminRoute(["DIR"], async ({ user }, request) => {
   } catch (err) {
     // Si l'e-mail ne part pas, on annule la création : laisser un compte non
     // confirmé que personne ne peut activer n'aide personne.
-    console.error("Envoi du lien de confirmation en échec:", err);
+    console.error("Envoi du lien d'invitation en échec:", err);
     await prisma.user.delete({ where: { id: created.id } });
     badRequest("Échec de l'envoi de l'e-mail — compte non créé");
   }

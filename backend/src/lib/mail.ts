@@ -1,5 +1,4 @@
 import "server-only";
-import { randomBytes } from "node:crypto";
 import { signUnsubscribe } from "@/lib/tokens";
 import type { Role } from "@prisma/client";
 
@@ -147,21 +146,6 @@ const ROLE_LABEL: Record<Role, string> = {
   CLIENT: "Client",
 };
 
-// Mot de passe lisible et solide : ni O/0 ni l/1, et au moins une majuscule,
-// une minuscule, un chiffre et un caractère spécial — le tirage est rejoué
-// jusqu'à ce que ce soit le cas, plutôt que corrigé après coup.
-export function generatePassword(length = 14): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#%*?";
-  for (;;) {
-    const bytes = randomBytes(length);
-    let out = "";
-    for (let i = 0; i < length; i++) out += chars[bytes[i] % chars.length];
-    if (/[A-Z]/.test(out) && /[a-z]/.test(out) && /[0-9]/.test(out) && /[!@#%*?]/.test(out)) {
-      return out;
-    }
-  }
-}
-
 // Lien de retour vers le back-office portant un jeton à usage unique.
 function actionUrl(param: "verify" | "reset", token: string): string {
   return `${adminOrigin()}/${param}?token=${encodeURIComponent(token)}`;
@@ -204,10 +188,11 @@ export function mailConfigured(): boolean {
   return Boolean(process.env.BREVO_API_KEY);
 }
 
-// --- Confirmation de compte -------------------------------------------------
+// --- Invitation ------------------------------------------------------------
 
-// Aucun identifiant ici : cliquer le lien prouve que l'adresse est réelle, et
-// c'est SEULEMENT après que le mot de passe est engendré et envoyé.
+// Aucun identifiant ici, ni dans aucun autre e-mail : le lien mène au
+// formulaire où la personne choisit elle-même son mot de passe. Un seul envoi
+// pour ouvrir un compte, donc un seul e-mail qui puisse se perdre.
 export async function sendVerifyEmail(args: {
   name: string;
   email: string;
@@ -216,52 +201,19 @@ export async function sendVerifyEmail(args: {
 }): Promise<void> {
   const url = actionUrl("verify", args.token);
   const body = `
-    <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:${BRAND.green}">Confirmez votre compte</p>
+    <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:${BRAND.green}">Activez votre compte</p>
     <h1 style="margin:0 0 18px 0;font-size:26px;line-height:1.25;font-weight:700;color:${BRAND.navy}">Bonjour ${escapeHtml(args.name)},</h1>
     <p style="margin:0 0 8px 0;font-size:15px;color:${BRAND.ink}">Un compte <strong style="color:${BRAND.navy}">${ROLE_LABEL[args.role]}</strong> a été créé pour vous sur l'espace Codialis.</p>
-    <p style="margin:0 0 22px 0;font-size:15px;color:${BRAND.ink}">Pour l'activer, confirmez que cette adresse est bien la vôtre. Vos identifiants vous seront envoyés juste après.</p>
-    ${ctaButton("Confirmer mon compte", url)}
-    ${notice("Ce lien est valable 48 heures. Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail.")}`;
+    <p style="margin:0 0 22px 0;font-size:15px;color:${BRAND.ink}">Pour l'activer, choisissez votre mot de passe. Vous pourrez vous connecter juste après, avec cette adresse.</p>
+    ${ctaButton("Définir mon mot de passe", url)}
+    ${notice("Ce lien est valable 7 jours et ne sert qu'une fois. Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail.")}`;
 
   await sendEmail({
     email: args.email,
     name: args.name,
-    subject: "Confirmez votre compte Codialis",
+    subject: "Activez votre compte Codialis",
     htmlContent: emailLayout({
-      preheader: "Confirmez votre compte Codialis pour recevoir vos identifiants.",
-      bodyHtml: body,
-    }),
-  });
-}
-
-export async function sendWelcomeEmail(args: {
-  name: string;
-  email: string;
-  password: string;
-  role: Role;
-}): Promise<void> {
-  const body = `
-    <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:${BRAND.green}">Bienvenue à bord</p>
-    <h1 style="margin:0 0 18px 0;font-size:26px;line-height:1.25;font-weight:700;color:${BRAND.navy}">Bonjour ${escapeHtml(args.name)},</h1>
-    <p style="margin:0 0 8px 0;font-size:15px;color:${BRAND.ink}">Votre compte <strong style="color:${BRAND.navy}">${ROLE_LABEL[args.role]}</strong> est prêt.</p>
-    <p style="margin:0 0 22px 0;font-size:15px;color:${BRAND.ink}">Voici vos identifiants de connexion :</p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BRAND.panel};border-radius:12px;margin:0 0 26px 0">
-      <tr><td style="padding:22px 24px">
-        <p style="margin:0 0 4px 0;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8a99ad">E-mail</p>
-        <p style="margin:0 0 18px 0;font-family:'IBM Plex Mono',Consolas,monospace;font-size:15px;color:#ffffff;word-break:break-all">${escapeHtml(args.email)}</p>
-        <p style="margin:0 0 4px 0;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8a99ad">Mot de passe</p>
-        <p style="margin:0;font-family:'IBM Plex Mono',Consolas,monospace;font-size:18px;font-weight:700;color:${BRAND.green};word-break:break-all">${escapeHtml(args.password)}</p>
-      </td></tr>
-    </table>
-    ${ctaButton("Se connecter", loginUrl())}
-    ${notice(`<strong style="color:${BRAND.ink}">Sécurité :</strong> ce mot de passe doit être changé à votre première connexion.`)}`;
-
-  await sendEmail({
-    email: args.email,
-    name: args.name,
-    subject: "Votre accès à l'espace Codialis",
-    htmlContent: emailLayout({
-      preheader: "Votre compte Codialis est prêt — voici vos identifiants.",
+      preheader: "Choisissez votre mot de passe pour activer votre compte Codialis.",
       bodyHtml: body,
     }),
   });

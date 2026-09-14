@@ -9,41 +9,49 @@ const initial: VerifyState = {};
 export function VerifyForm({ token }: { token: string }) {
   const [state, formAction, isPending] = useActionState(verifyAction, initial);
 
-  if (state.done) {
-    return (
-      <div className="flex flex-col gap-3 text-sm">
-        <p className="text-text">
-          Adresse confirmée. Vos identifiants viennent de vous être envoyés
-          {state.email ? ` à ${state.email}` : ""}.
-        </p>
-        <p className="text-xs text-muted">
-          Le mot de passe reçu devra être changé à la première connexion.
-        </p>
-        <Link
-          href="/login"
-          className="mt-1 self-start rounded-lg bg-mint px-3 py-2 text-sm font-semibold text-bg"
-        >
-          Se connecter
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <input type="hidden" name="token" value={token} />
-      <p className="text-sm text-muted">
-        Confirmez que cette adresse est bien la vôtre. Vos identifiants vous seront
-        envoyés juste après — ils n’apparaîtront pas à l’écran.
+      <Field label="Mot de passe" name="password" />
+      <Field label="Confirmer le mot de passe" name="confirm" />
+      <p className="text-xs text-muted">
+        8 caractères minimum, dont une majuscule et un caractère spécial.
       </p>
-      {state.error ? <p className="text-sm text-red">{state.error}</p> : null}
+      {state.error ? (
+        <div className="flex flex-col gap-1">
+          <p className="text-sm text-red">{state.error}</p>
+          {/* Un lien déjà utilisé ou périmé n'a pas de rattrapage évident :
+              sans cette porte de sortie, il faut redemander à la direction. */}
+          <Link href="/reset" className="text-xs text-muted underline hover:text-text">
+            Demander un nouveau lien
+          </Link>
+        </div>
+      ) : null}
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-lg bg-mint px-3 py-2 text-sm font-semibold text-bg transition hover:brightness-110 disabled:opacity-60"
+        className="mt-1 rounded-lg bg-mint px-3 py-2 text-sm font-semibold text-bg transition hover:brightness-110 disabled:opacity-60"
       >
-        {isPending ? "Confirmation…" : "Confirmer mon compte"}
+        {isPending ? "Enregistrement…" : "Activer mon compte"}
       </button>
     </form>
+  );
+}
+
+function Field({ label, name }: { label: string; name: string }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={name} className="text-xs font-medium text-muted">
+        {label}
+      </label>
+      <input
+        id={name}
+        name={name}
+        type="password"
+        autoComplete="new-password"
+        required
+        className="rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm text-text outline-none focus:border-mint"
+      />
+    </div>
   );
 }

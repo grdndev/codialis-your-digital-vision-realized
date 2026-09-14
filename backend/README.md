@@ -385,13 +385,19 @@ lecture estimée, source citée.
 Sans `BREVO_API_KEY`, rien ne part : la création de compte est refusée (elle en
 dépend) et les notifications sont simplement journalisées.
 
-**La création de compte n'émet aucun identifiant avant que l'adresse ne soit
-prouvée.** Le compte démarre avec un hash aléatoire que personne ne connaît et
-`emailVerified = false` ; un lien de confirmation part par e-mail ; le mot de
-passe réel n'est engendré et envoyé qu'au clic. Si l'envoi du premier e-mail
-échoue, la création est annulée — un compte que personne ne peut activer n'aide
-personne. Si l'envoi des identifiants échoue, rien n'est modifié et le même lien
-reste utilisable.
+**Aucun identifiant ne circule jamais par e-mail.** Le compte démarre avec un
+hash aléatoire que personne ne connaît et `emailVerified = false` ; un lien
+d'invitation part par e-mail ; la personne choisit elle-même son mot de passe au
+bout du lien, ce qui prouve l'adresse et active le compte du même geste. Si
+l'envoi échoue, la création est annulée — un compte que personne ne peut activer
+n'aide personne.
+
+Un seul e-mail ouvre donc un compte, et il est **renvoyable** depuis l'écran
+Comptes tant que le mot de passe n'a pas été choisi (`!emailVerified ||
+mustChangePassword`). Ensuite, c'est « mot de passe oublié » qui prend le
+relais : sinon la route servirait à réémettre des accès à répétition.
+`mustChangePassword` ne marque plus que les comptes ouverts avant ce parcours, à
+qui un mot de passe provisoire avait été envoyé.
 
 Autres garde-fous :
 
@@ -399,9 +405,10 @@ Autres garde-fous :
   l'adresse existe en ferait un énumérateur de comptes. Si l'envoi échoue, le
   jeton émis est consommé aussitôt, pour ne pas laisser un lien valide dont nul
   ne dispose.
-- Les jetons sont **stockés en SHA-256**, à usage unique et expirants (48 h pour
-  une confirmation, 1 h pour une réinitialisation). Une fuite de la base ne
-  permet pas de rejouer les liens.
+- Les jetons sont **stockés en SHA-256**, à usage unique et expirants (7 jours
+  pour une invitation — elle arrive sans être attendue et peut tomber en
+  indésirables ; 1 h pour une réinitialisation, action sensible qu'on vient de
+  demander). Une fuite de la base ne permet pas de rejouer les liens.
 - Le mot de passe est validé **avant** que le jeton ne soit consommé : un mot de
   passe refusé ne brûle pas le lien.
 - `/api/auth/change-password` exige le mot de passe actuel même connecté : une
@@ -410,11 +417,10 @@ Autres garde-fous :
   base), et comparée en temps constant.
 
 **Vérifié de bout en bout** contre un faux serveur Brevo qui enregistre chaque
-message : création de compte → e-mail de confirmation (sans mot de passe
-dedans) → connexion impossible avant confirmation → confirmation → e-mail
-d'identifiants → connexion avec le mot de passe engendré → lien de confirmation
-inutilisable une seconde fois. Puis mot de passe oublié → e-mail →
-réinitialisation → connexion → lien mort. Puis les notifications RH (demande à
+message : création de compte → e-mail d'invitation (sans mot de passe dedans) →
+connexion impossible avant activation → choix du mot de passe au bout du lien →
+connexion → lien d'invitation inutilisable une seconde fois. Puis mot de passe
+oublié → e-mail → réinitialisation → connexion → lien mort. Puis les notifications RH (demande à
 la direction, verdict à l'auteur) et la newsletter à la publication d'un
 article, avec son lien de désinscription fonctionnel et un jeton falsifié
 refusé.

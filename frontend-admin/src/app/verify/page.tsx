@@ -15,7 +15,10 @@ export default async function VerifyPage({
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-mint/15 text-xl font-semibold text-mint">
             C
           </div>
-          <h1 className="text-xl font-semibold text-text">Confirmer votre compte</h1>
+          <h1 className="text-xl font-semibold text-text">Activer votre compte</h1>
+          <p className="mt-1 text-sm text-muted">
+            Choisissez le mot de passe qui vous servira à vous connecter.
+          </p>
         </div>
         <div className="rounded-2xl border border-border bg-panel p-6 shadow-2xl">
           {token ? (

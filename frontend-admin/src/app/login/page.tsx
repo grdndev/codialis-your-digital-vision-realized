@@ -7,9 +7,22 @@ import { LoginForm } from "./login-form";
 // Une session valide n'a rien à faire sur le formulaire : on renvoie vers la
 // page par défaut du rôle. Le test se fait ici plutôt que dans le proxy, qui ne
 // voit que la présence du cookie et ne saurait pas distinguer un jeton périmé.
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ activated?: string; reset?: string }>;
+}) {
   const user = await getCurrentUser();
   if (user) redirect(defaultPathFor(user.role));
+
+  // Les parcours par e-mail retombent ici une fois le mot de passe posé : sans
+  // un mot de confirmation, l'écran de connexion ressemble à un échec.
+  const { activated, reset } = await searchParams;
+  const notice = activated
+    ? "Compte activé. Connectez-vous avec votre nouveau mot de passe."
+    : reset
+      ? "Mot de passe enregistré. Connectez-vous."
+      : null;
 
   return (
     <main className="flex min-h-screen w-full items-center justify-center bg-bg px-4">
@@ -21,6 +34,11 @@ export default async function LoginPage() {
           <h1 className="text-xl font-semibold text-text">Codialis CRM</h1>
           <p className="mt-1 text-sm text-muted">Gestion de projet &amp; suivi client</p>
         </div>
+        {notice ? (
+          <p className="mb-4 rounded-xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm text-mint">
+            {notice}
+          </p>
+        ) : null}
         <div className="rounded-2xl border border-border bg-panel p-6 shadow-2xl">
           <LoginForm />
         </div>

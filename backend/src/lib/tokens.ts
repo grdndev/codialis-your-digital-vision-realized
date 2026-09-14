@@ -10,11 +10,12 @@ import type { UserTokenKind } from "@prisma/client";
 // garde que le SHA-256. Une fuite de la base ne permet donc pas de rejouer les
 // liens contre les routes.
 
-// Durées de vie. La confirmation est généreuse (on crée un compte, la personne
-// peut ne relever ses messages que le lendemain) ; la réinitialisation est
+// Durées de vie. L'invitation est généreuse : elle arrive sans être attendue,
+// peut tomber en indésirables et n'être relevée que plusieurs jours plus tard —
+// un lien mort obligerait à repasser par la direction. La réinitialisation est
 // courte, c'est une action sensible qu'on vient de demander.
 const TTL_MINUTES: Record<UserTokenKind, number> = {
-  VERIFY: 48 * 60,
+  VERIFY: 7 * 24 * 60,
   RESET: 60,
 };
 
