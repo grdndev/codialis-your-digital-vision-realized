@@ -8,12 +8,13 @@ export type ChangeState = { done?: boolean; error?: string };
 
 const ME = "/api/admin/me";
 
-// L'intitulé s'affiche sous le nom dans la section « équipe » du site vitrine :
-// chacun rédige le sien, le rôle applicatif reste à la direction.
+// L'intitulé et la photo s'affichent sous le nom dans la section « équipe » du
+// site vitrine : chacun rédige les siens, le rôle applicatif reste à la direction.
 export async function updateProfileAction(formData: FormData) {
   await apiPost(ME, {
     action: "update-profile",
     jobTitle: String(formData.get("jobTitle") ?? "").trim() || null,
+    photo: String(formData.get("photo") ?? "").trim() || null,
   });
   revalidatePath("/parametres");
 }

@@ -30,17 +30,19 @@ export const GET = adminRoute([], async ({ user }) => {
       role: user.role,
       clientId: user.clientId,
     },
-    settings: { jobTitle: user.jobTitle, absence },
+    settings: { jobTitle: user.jobTitle, photo: user.photo, absence },
   };
 });
 
 const bodySchema = z.discriminatedUnion("action", [
-  // L'intitulé s'affiche sous le nom dans la section « équipe » du site
-  // vitrine. Chacun rédige le sien ; le rôle applicatif, lui, reste à la
-  // direction.
+  // L'intitulé et la photo s'affichent sous le nom dans la section « équipe »
+  // du site vitrine. Chacun rédige les siens ; le rôle applicatif, lui, reste
+  // à la direction. La photo est une data URL base64, comme les images du
+  // site — pas de service de fichiers à héberger.
   z.object({
     action: z.literal("update-profile"),
     jobTitle: z.string().max(255).nullable(),
+    photo: z.string().nullable(),
   }),
   z.object({
     action: z.literal("set-absence-mode"),
@@ -62,9 +64,10 @@ export const POST = adminRoute([], async ({ user, }, request) => {
   switch (body.action) {
     case "update-profile": {
       const jobTitle = body.jobTitle?.trim();
+      const photo = body.photo?.trim();
       await prisma.user.update({
         where: { id: user.id },
-        data: { jobTitle: jobTitle || null },
+        data: { jobTitle: jobTitle || null, photo: photo || null },
       });
       return;
     }

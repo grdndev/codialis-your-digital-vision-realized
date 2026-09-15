@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { ABSENCE_MODE_LABEL, ABSENCE_COPY, absenceRules } from "@/lib/absence";
 import { ROLE_LABEL } from "@/lib/nav";
 import type { AbsenceMode, SessionUser } from "@/lib/types";
+import { ImageField } from "../site/image-field";
 import { ChangePasswordForm } from "./change-form";
 import { updateProfileAction, setAbsenceModeAction, toggleAbsenceEnabledAction } from "./actions";
 
@@ -12,6 +13,7 @@ type MeResponse = {
   user: SessionUser;
   settings: {
     jobTitle: string | null;
+    photo: string | null;
     absence: { mode: AbsenceMode; enabled: boolean } | null;
   };
 };
@@ -40,7 +42,8 @@ export default async function ParametresPage() {
         <p className="mt-1 text-xs text-muted">
           Le nom, l’adresse et le rôle sont tenus par la direction depuis l’écran Comptes.
         </p>
-        <form action={updateProfileAction} className="mt-4 flex max-w-sm flex-col gap-3">
+        <form action={updateProfileAction} className="mt-4 flex max-w-sm flex-col gap-4">
+          <ImageField name="photo" defaultValue={settings.photo ?? ""} label="Photo" />
           <div className="flex flex-col gap-1.5">
             <label htmlFor="jobTitle" className="text-xs font-medium text-muted">
               Intitulé
@@ -54,7 +57,7 @@ export default async function ParametresPage() {
             />
             <p className="text-xs text-muted">
               Affiché sous votre nom dans la section « équipe » du site vitrine. Laissé
-              vide, rien ne s’affiche.
+              vide, rien ne s’affiche. Sans photo, le site montre vos initiales.
             </p>
           </div>
           <button
