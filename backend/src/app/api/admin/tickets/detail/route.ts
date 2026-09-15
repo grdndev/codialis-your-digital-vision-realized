@@ -28,9 +28,10 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
   });
   if (!ticket) return { ticket: null };
 
-  // Même cloisonnement que la liste : un développeur n'ouvre que les tickets
-  // des projets sur lesquels il est affecté, y compris par URL directe.
-  if (user.role === "DEV") {
+  // Même cloisonnement que la liste, y compris par URL directe : un
+  // développeur n'ouvre que les tickets des projets sur lesquels il est
+  // affecté, ou ceux qui lui sont nommément assignés.
+  if (user.role === "DEV" && ticket.assigneeId !== user.id) {
     const assignment = await prisma.projectAssignment.findFirst({
       where: { userId: user.id, projectId: ticket.projectId },
       select: { id: true },
@@ -38,5 +39,20 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
     if (!assignment) return { ticket: null };
   }
 
-  return { ticket };
+  // De quoi alimenter le formulaire de modification : les épics du projet et
+  // l'équipe interne, à qui le ticket peut être réassigné.
+  const [epics, team] = await Promise.all([
+    prisma.epic.findMany({
+      where: { projectId: ticket.projectId },
+      orderBy: { order: "asc" },
+      select: { id: true, title: true },
+    }),
+    prisma.user.findMany({
+      where: { role: { in: ["DEV", "PM", "DIR"] } },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
+
+  return { ticket, epics, team };
 });

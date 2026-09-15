@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { apiPost } from "@/lib/api";
-import type { DevNature, Severity, TicketType } from "@/lib/types";
+import type { DevNature, Severity, TaskStatus, TicketType } from "@/lib/types";
 
 const TICKETS = "/api/admin/tickets";
 
@@ -39,6 +39,40 @@ export async function updateTicketStatusAction(ticketId: string, transition: "ad
     ticketId,
     transition,
   });
+  revalidatePath(`/tickets/${ref}`);
+  revalidatePath("/tickets");
+}
+
+// Déplacement vers une colonne précise du kanban : l'enchaînement pas à pas
+// d'`updateTicketStatusAction` ne sait pas exprimer ce geste.
+export async function setTicketStatusAction(ticketId: string, status: TaskStatus) {
+  const { ref } = await apiPost<{ ref: string }>(TICKETS, {
+    action: "set-status",
+    ticketId,
+    status,
+  });
+  revalidatePath(`/tickets/${ref}`);
+  revalidatePath("/tickets");
+}
+
+export async function updateTicketAction(formData: FormData) {
+  const ticketId = String(formData.get("ticketId") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  if (!ticketId || !title) return;
+
+  const { ref } = await apiPost<{ ref: string }>(TICKETS, {
+    action: "update",
+    ticketId,
+    title,
+    description: String(formData.get("description") ?? "").trim(),
+    steps: String(formData.get("steps") ?? "").trim(),
+    severity: (String(formData.get("severity") ?? "") || null) as Severity | null,
+    devNature: (String(formData.get("devNature") ?? "") || null) as DevNature | null,
+    estHours: parseFloat(String(formData.get("estHours") ?? "0").replace(",", ".")) || 0,
+    assigneeId: String(formData.get("assigneeId") ?? "") || null,
+    epicId: String(formData.get("epicId") ?? "") || null,
+  });
+
   revalidatePath(`/tickets/${ref}`);
   revalidatePath("/tickets");
 }

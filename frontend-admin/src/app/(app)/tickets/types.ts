@@ -54,7 +54,13 @@ export type TicketDetail = TicketRow & {
 
 // Null sur une référence inconnue — ou sur un ticket hors du périmètre du rôle,
 // que l'API traite de la même façon : il n'existe pas pour cet utilisateur.
-export type TicketDetailResponse = { ticket: TicketDetail | null };
+export type TicketDetailResponse = {
+  ticket: TicketDetail | null;
+  // Absents quand le ticket l'est : le formulaire de modification n'a alors
+  // rien à alimenter.
+  epics?: { id: string; title: string }[];
+  team?: { id: string; name: string }[];
+};
 
 export type NewTicketScreen = {
   projects: { id: string; label: string; epics: { id: string; title: string }[] }[];

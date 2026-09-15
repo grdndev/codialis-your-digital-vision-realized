@@ -12,7 +12,12 @@ import {
   SEVERITY_LABEL,
   DEV_NATURE_LABEL,
 } from "@/lib/format";
-import { updateTicketStatusAction, toggleTicketCriterionAction, addTicketCommentAction } from "../actions";
+import {
+  updateTicketStatusAction,
+  updateTicketAction,
+  toggleTicketCriterionAction,
+  addTicketCommentAction,
+} from "../actions";
 import type { TicketDetailResponse } from "../types";
 
 const ACTION_LABEL: Record<string, string> = {
@@ -25,7 +30,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ r
   await requireUser();
   const { ref } = await params;
 
-  const { ticket } = await apiGet<TicketDetailResponse>(
+  const { ticket, epics, team } = await apiGet<TicketDetailResponse>(
     `/api/admin/tickets/detail?ref=${encodeURIComponent(ref)}`,
   );
   if (!ticket) notFound();
@@ -57,6 +62,85 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ r
               </span>
             </div>
             <p className="mt-4 text-sm text-muted">{ticket.description}</p>
+
+            <details className="mt-4 border-t border-border pt-3">
+              <summary className="cursor-pointer text-xs font-medium text-mint">
+                Modifier le ticket
+              </summary>
+              <form action={updateTicketAction} className="mt-3 flex flex-col gap-3">
+                <input type="hidden" name="ticketId" value={ticket.id} />
+                <EditField label="Titre">
+                  <input name="title" required defaultValue={ticket.title} className="input" />
+                </EditField>
+                <EditField label="Description">
+                  <textarea name="description" rows={3} defaultValue={ticket.description} className="input" />
+                </EditField>
+                <EditField
+                  label={ticket.type === "BUG" ? "Étapes de reproduction" : "Travail à réaliser"}
+                  hint="une par ligne"
+                >
+                  <textarea name="steps" rows={3} defaultValue={ticket.steps} className="input" />
+                </EditField>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Gravité pour un bug, nature pour un développement : le
+                      type ne se change pas, la référence en découle. */}
+                  {ticket.type === "BUG" ? (
+                    <EditField label="Gravité">
+                      <select name="severity" defaultValue={ticket.severity ?? ""} className="input">
+                        <option value="">—</option>
+                        {(["BLOQUANT", "MAJEUR", "MINEUR"] as const).map((k) => (
+                          <option key={k} value={k}>
+                            {SEVERITY_LABEL[k]}
+                          </option>
+                        ))}
+                      </select>
+                    </EditField>
+                  ) : (
+                    <EditField label="Nature">
+                      <select name="devNature" defaultValue={ticket.devNature ?? ""} className="input">
+                        <option value="">—</option>
+                        {(["FRONT", "BACK", "API", "DESIGN"] as const).map((k) => (
+                          <option key={k} value={k}>
+                            {DEV_NATURE_LABEL[k]}
+                          </option>
+                        ))}
+                      </select>
+                    </EditField>
+                  )}
+                  <EditField label="Estimé (h)">
+                    <input name="estHours" defaultValue={ticket.estHours} className="input" />
+                  </EditField>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <EditField label="Assigné">
+                    <select name="assigneeId" defaultValue={ticket.assigneeId ?? ""} className="input">
+                      <option value="">Non assigné</option>
+                      {(team ?? []).map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name}
+                        </option>
+                      ))}
+                    </select>
+                  </EditField>
+                  <EditField label="Épic">
+                    <select name="epicId" defaultValue={ticket.epicId ?? ""} className="input">
+                      <option value="">Aucun</option>
+                      {(epics ?? []).map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.title}
+                        </option>
+                      ))}
+                    </select>
+                  </EditField>
+                </div>
+                <button
+                  type="submit"
+                  className="self-start rounded-lg bg-mint px-4 py-2 text-xs font-semibold text-bg"
+                >
+                  Enregistrer
+                </button>
+              </form>
+            </details>
           </div>
 
           {stepList.length > 0 ? (
@@ -172,6 +256,26 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ r
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function EditField({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-medium text-muted">
+        {label}
+        {hint ? <span className="ml-1 text-[10px] text-muted/70">({hint})</span> : null}
+      </label>
+      {children}
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   DEV_NATURE_LABEL,
 } from "@/lib/format";
 import type { TaskStatus } from "@/lib/types";
+import { setTicketStatusAction } from "./actions";
 import type { TicketsScreen } from "./types";
 
 const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
@@ -186,25 +187,45 @@ export default async function TicketsPage({
                   </span>
                 </div>
                 <div className="flex flex-col gap-2 p-3">
-                  {items.map((t) => (
-                    <Link
-                      key={t.id}
-                      href={`/tickets/${t.ref}`}
-                      className="rounded-lg border border-border bg-panel-2 p-3 text-sm transition hover:border-mint/40"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-muted">{t.ref}</span>
-                        <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${TICKET_TYPE_BADGE_CLASS[t.type]}`}>
-                          {TICKET_TYPE_LABEL[t.type]}
-                        </span>
+                  {items.map((t) => {
+                    const col = STATUSES.indexOf(t.status);
+                    return (
+                      <div
+                        key={t.id}
+                        className="rounded-lg border border-border bg-panel-2 p-3 text-sm transition hover:border-mint/40"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-muted">{t.ref}</span>
+                          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${TICKET_TYPE_BADGE_CLASS[t.type]}`}>
+                            {TICKET_TYPE_LABEL[t.type]}
+                          </span>
+                        </div>
+                        <Link href={`/tickets/${t.ref}`} className="mt-1 block text-text hover:text-mint">
+                          {t.title}
+                        </Link>
+                        <div className="mt-2 flex items-center justify-between text-xs text-muted">
+                          <span>{t.project.client.name}</span>
+                          <span>{fmtHours(t.estHours)}</span>
+                        </div>
+                        {/* Déplacer la carte d'une colonne : sans cela le kanban
+                            ne sert qu'à regarder. */}
+                        <div className="mt-2 flex items-center justify-between gap-2 border-t border-border pt-2">
+                          <MoveButton
+                            ticketId={t.id}
+                            to={STATUSES[col - 1]}
+                            label="‹"
+                            title={col > 0 ? `Vers « ${STATUS_LABEL[STATUSES[col - 1]]} »` : ""}
+                          />
+                          <MoveButton
+                            ticketId={t.id}
+                            to={STATUSES[col + 1]}
+                            label="›"
+                            title={col < STATUSES.length - 1 ? `Vers « ${STATUS_LABEL[STATUSES[col + 1]]} »` : ""}
+                          />
+                        </div>
                       </div>
-                      <p className="mt-1 text-text">{t.title}</p>
-                      <div className="mt-2 flex items-center justify-between text-xs text-muted">
-                        <span>{t.project.client.name}</span>
-                        <span>{fmtHours(t.estHours)}</span>
-                      </div>
-                    </Link>
-                  ))}
+                    );
+                  })}
                   {items.length === 0 ? <p className="px-1 py-2 text-xs text-muted">—</p> : null}
                 </div>
               </div>
@@ -213,6 +234,35 @@ export default async function TicketsPage({
         </div>
       )}
     </div>
+  );
+}
+
+// Une colonne inexistante (bord du tableau) rend un bouton inerte plutôt que
+// rien : les cartes gardent la même hauteur d'une colonne à l'autre.
+function MoveButton({
+  ticketId,
+  to,
+  label,
+  title,
+}: {
+  ticketId: string;
+  to: TaskStatus | undefined;
+  label: string;
+  title: string;
+}) {
+  if (!to) {
+    return <span className="px-2 py-0.5 text-xs text-muted/30">{label}</span>;
+  }
+  return (
+    <form action={setTicketStatusAction.bind(null, ticketId, to)}>
+      <button
+        type="submit"
+        title={title}
+        className="rounded-md border border-border px-2 py-0.5 text-xs text-muted transition hover:border-mint/40 hover:text-mint"
+      >
+        {label}
+      </button>
+    </form>
   );
 }
 

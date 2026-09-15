@@ -35,11 +35,13 @@ export const GET = adminRoute(
         select: { projectId: true },
       });
       const assignedProjectIds = assignments.map((a) => a.projectId);
-      // Un filtre projet explicite doit rester borné aux projets affectés, sinon
-      // il suffirait de deviner un identifiant pour voir les tickets d'un autre.
-      where.projectId = projectFilter
-        ? { in: assignedProjectIds.filter((id) => id === projectFilter) }
-        : { in: assignedProjectIds };
+      // Deux titres à voir un ticket : être affecté à son projet, ou en être
+      // nommément l'assigné. L'affectation seule ne suffisait pas — un ticket
+      // confié à quelqu'un qui n'est pas sur le projet restait invisible pour
+      // lui, y compris dans sa propre liste.
+      where.OR = [{ projectId: { in: assignedProjectIds } }, { assigneeId: user.id }];
+      // Le filtre projet reste appliqué par `where.projectId` : deviner un
+      // identifiant ne montre donc rien de plus que ses propres tickets.
     }
 
     const [projects, tickets] = await Promise.all([
@@ -86,6 +88,25 @@ const bodySchema = z.discriminatedUnion("action", [
     action: z.literal("update-status"),
     ticketId: z.string().min(1),
     transition: z.enum(["advance", "reopen"]),
+  }),
+  // Le kanban déplace une carte vers une colonne précise : l'enchaînement pas
+  // à pas d'`update-status` ne sait pas exprimer ce geste.
+  z.object({
+    action: z.literal("set-status"),
+    ticketId: z.string().min(1),
+    status: z.enum(["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"]),
+  }),
+  z.object({
+    action: z.literal("update"),
+    ticketId: z.string().min(1),
+    title: z.string().min(1).max(300),
+    description: z.string(),
+    steps: z.string(),
+    severity: z.enum(["BLOQUANT", "MAJEUR", "MINEUR"]).nullable(),
+    devNature: z.enum(["FRONT", "BACK", "API", "DESIGN"]).nullable(),
+    estHours: z.number().min(0),
+    assigneeId: z.string().nullable(),
+    epicId: z.string().nullable(),
   }),
   z.object({
     action: z.literal("toggle-criterion"),
@@ -186,6 +207,41 @@ export const POST = adminRoute(
         await prisma.ticket.update({
           where: { id: body.ticketId },
           data: { status: nextStatus },
+        });
+        return { ok: true, ref: ticket.ref };
+      }
+
+      case "set-status": {
+        const ticket = await prisma.ticket.update({
+          where: { id: body.ticketId },
+          data: { status: body.status },
+          select: { ref: true },
+        });
+        return { ok: true, ref: ticket.ref };
+      }
+
+      case "update": {
+        const ticket = await prisma.ticket.findUnique({
+          where: { id: body.ticketId },
+          select: { ref: true, type: true },
+        });
+        if (!ticket) badRequest("Ticket introuvable");
+
+        await prisma.ticket.update({
+          where: { id: body.ticketId },
+          data: {
+            title: body.title,
+            description: body.description,
+            steps: body.steps,
+            // Même règle qu'à la création : la gravité ne concerne qu'un bug,
+            // la nature qu'un développement. Le type, lui, ne se change pas —
+            // la référence et les critères en découlent.
+            severity: ticket.type === "BUG" ? body.severity : null,
+            devNature: ticket.type === "DEV" ? body.devNature : null,
+            estHours: body.estHours,
+            assigneeId: body.assigneeId,
+            epicId: body.epicId,
+          },
         });
         return { ok: true, ref: ticket.ref };
       }
