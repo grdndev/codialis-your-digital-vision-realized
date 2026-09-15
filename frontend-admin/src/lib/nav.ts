@@ -22,7 +22,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/site/messages", label: "Demandes de contact", roles: ["DIR", "PM"] },
   { href: "/site/veille", label: "Veille", roles: ["DIR", "PM"] },
   { href: "/equipe", label: "Comptes", roles: ["DIR"] },
-  { href: "/mot-de-passe", label: "Mon mot de passe", roles: ["DEV", "PM", "DIR"] },
+  { href: "/parametres", label: "Paramètres", roles: ["DEV", "PM", "DIR"] },
 ];
 
 export const CLIENT_NAV_ITEMS: { href: string; label: string }[] = [

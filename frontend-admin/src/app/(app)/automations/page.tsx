@@ -3,12 +3,9 @@ import Link from "next/link";
 import { apiGet } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import { AUTOMATION_MODE_LABEL } from "@/lib/format";
-import { ABSENCE_MODE_LABEL, ABSENCE_COPY, absenceRules } from "@/lib/absence";
-import type { AbsenceMode } from "@/lib/types";
 import type { AutomationsScreen, AutomationDraftText } from "./types";
-import { setAbsenceModeAction, toggleAbsenceEnabledAction, toggleRuleModeAction, sendDraftAction, ignoreDraftAction } from "./actions";
+import { toggleRuleModeAction, sendDraftAction, ignoreDraftAction } from "./actions";
 
-const MODES: AbsenceMode[] = ["OUVERT", "HORAIRES", "CONGES"];
 
 export default async function AutomationsPage({
   searchParams,
@@ -18,13 +15,8 @@ export default async function AutomationsPage({
   await requireRole("PM", "DIR");
   const aiDraftId = (await searchParams).ai;
 
-  const { absence, autoRules, drafts, signals, sentCount, ignoredCount, paidInvoices } =
+  const { autoRules, drafts, signals, sentCount, ignoredCount, paidInvoices } =
     await apiGet<AutomationsScreen>("/api/admin/automations");
-
-  const mode = absence?.mode ?? "OUVERT";
-  const enabled = absence?.enabled ?? false;
-  const copy = ABSENCE_COPY[mode];
-  const rules = absenceRules(mode);
 
 
   const activeRuleCount = autoRules.filter((r) => r.mode === "AUTO").length;
@@ -53,61 +45,6 @@ export default async function AutomationsPage({
         <Kpi label="Règles automatiques actives" value={String(activeRuleCount)} note={`sur ${autoRules.length} règle${autoRules.length > 1 ? "s" : ""} au total`} color="text-mint" />
         <Kpi label="Brouillons en attente" value={String(drafts.length)} note="aucun envoi sans validation" color="text-blue" />
       </div>
-
-      <div className="rounded-xl border border-border bg-panel p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-sm font-semibold text-text">Absences et réponses automatiques</h2>
-            <p className="mt-1 text-xs text-muted">{copy.title} · {copy.meta}</p>
-          </div>
-          {absence ? (
-            <form action={toggleAbsenceEnabledAction.bind(null, absence.pmId)}>
-              <button
-                type="submit"
-                className={`rounded-full px-3 py-1 text-xs font-medium ${enabled ? "bg-amber/15 text-amber" : "bg-white/5 text-muted"}`}
-              >
-                {mode === "OUVERT" ? "aucune réponse à envoyer" : enabled ? "réponses activées" : "réponses désactivées"}
-              </button>
-            </form>
-          ) : null}
-        </div>
-
-        <div className="mt-4 flex gap-2">
-          {MODES.map((m) => (
-            <form key={m} action={setAbsenceModeAction}>
-              <input type="hidden" name="mode" value={m} />
-              <button
-                type="submit"
-                className={`rounded-lg border px-3 py-1.5 text-sm ${mode === m ? "border-mint/40 bg-mint/10 text-text" : "border-border text-muted hover:text-text"}`}
-              >
-                {ABSENCE_MODE_LABEL[m]}
-              </button>
-            </form>
-          ))}
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-4">
-          <div className="rounded-lg border border-border bg-panel-2 p-3">
-            <p className="text-xs font-medium text-muted">Message envoyé au client</p>
-            <p className="mt-1.5 text-sm text-text">{copy.body}</p>
-          </div>
-          <div className="rounded-lg border border-border bg-panel-2 p-3">
-            <p className="text-xs font-medium text-muted">Règles {mode === "CONGES" ? "pendant l’absence" : mode === "HORAIRES" ? "hors horaires" : "appliquées"}</p>
-            <div className="mt-1.5 flex flex-col gap-1.5">
-              {rules.map((r) => (
-                <div key={r.label} className="flex items-start gap-2 text-sm">
-                  <span className={r.ok ? "text-mint" : "text-muted"}>{r.ok ? "✓" : "–"}</span>
-                  <div>
-                    <p className="text-text">{r.label}</p>
-                    <p className="text-xs text-muted">{r.detail}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="rounded-xl border border-border bg-panel">
         <div className="border-b border-border px-5 py-3"><h2 className="text-sm font-semibold text-text">Règles</h2></div>
         <div className="flex flex-col divide-y divide-border">

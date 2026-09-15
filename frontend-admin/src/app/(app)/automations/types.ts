@@ -1,15 +1,4 @@
-import type { AbsenceMode, AutomationMode, DraftStatus } from "@/lib/types";
-
-export type AbsenceSettingRow = {
-  id: string;
-  pmId: string;
-  mode: AbsenceMode;
-  enabled: boolean;
-  rangeLabel: string;
-  substituteId: string | null;
-  nextAbsence: string;
-  updatedAt: Date;
-};
+import type { AutomationMode, DraftStatus } from "@/lib/types";
 
 export type AutomationRuleRow = {
   id: string;
@@ -44,8 +33,6 @@ export type AutomationSignalRow = {
 export type PaidInvoiceDelay = { id: string; paidAt: Date; dueAt: Date };
 
 export type AutomationsScreen = {
-  // Null si personne n'a encore réglé d'absence.
-  absence: AbsenceSettingRow | null;
   autoRules: AutomationRuleRow[];
   drafts: AutomationDraftRow[];
   signals: AutomationSignalRow[];
