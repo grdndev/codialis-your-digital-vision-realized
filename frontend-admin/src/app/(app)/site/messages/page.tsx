@@ -25,10 +25,17 @@ export default async function SiteInboxPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold text-text">Retours du site</h1>
+        <h1 className="text-xl font-semibold text-text">Demandes de contact</h1>
         <p className="mt-1 text-sm text-muted">
           {open.length} demande{open.length > 1 ? "s" : ""} à traiter · {subscribers.length} abonné
           {subscribers.length > 1 ? "s" : ""} à la newsletter
+        </p>
+        {/* Un écran vide ici ne veut pas dire qu'il est cassé : il ne se
+            remplit que quand un visiteur écrit depuis le site. Le dire évite
+            de le prendre pour une panne. */}
+        <p className="mt-1 text-xs text-muted">
+          Ce qui arrive du site vitrine : le formulaire de contact, les inscriptions à
+          la newsletter du blog, et le compteur de visites.
         </p>
       </div>
 
@@ -41,7 +48,7 @@ export default async function SiteInboxPage() {
 
       <div className="rounded-xl border border-border bg-panel">
         <div className="border-b border-border px-5 py-3">
-          <h2 className="text-sm font-semibold text-text">Demandes de contact</h2>
+          <h2 className="text-sm font-semibold text-text">Messages reçus</h2>
         </div>
         {contactRequests.length === 0 ? (
           <p className="px-5 py-4 text-sm text-muted">Aucune demande reçue.</p>

@@ -10,18 +10,35 @@ export const dynamic = "force-dynamic";
 const CONTACT_STATUSES = ["nouveau", "en_cours", "traite"] as const;
 
 export const GET = adminRoute(["PM", "DIR"], async () => {
-  const [contactRequests, subscribers, views, contentViews] = await Promise.all([
+  const [contactRequests, subscribers, views, ranking] = await Promise.all([
     prisma.contactRequest.findMany({ orderBy: { createdAt: "desc" } }),
     prisma.newsletterSubscriber.findMany({ orderBy: { createdAt: "desc" } }),
     prisma.pageView.findMany({ where: { page: { in: ["portfolio", "blog"] } } }),
     // Les 5 contenus les plus consultés, toutes catégories confondues.
+    //
+    // Le classement se fait SANS la colonne `data` : un article y pèse
+    // plusieurs méga-octets, et MySQL trie en chargeant la ligne entière en
+    // mémoire de tri. Avec un `sort_buffer_size` ordinaire, la requête
+    // échouait en « Out of sort memory » (1038) et tout l'écran tombait en 500.
+    // On classe d'abord sur les colonnes légères, on ne lit le contenu qu'après.
     prisma.content.findMany({
       where: { views: { gt: 0 } },
-      select: { id: true, type: true, data: true, views: true },
+      select: { id: true, views: true },
       orderBy: { views: "desc" },
       take: 5,
     }),
   ]);
+
+  const topRows = ranking.length
+    ? await prisma.content.findMany({
+        where: { id: { in: ranking.map((r) => r.id) } },
+        select: { id: true, type: true, data: true, views: true },
+      })
+    : [];
+  // `findMany` sur un `in` ne garantit pas l'ordre : on le rétablit d'après le
+  // classement.
+  const byId = new Map(topRows.map((r) => [r.id, r]));
+  const contentViews = ranking.map((r) => byId.get(r.id)).filter((r) => r !== undefined);
 
   const pageViews = { portfolio: 0, blog: 0 };
   for (const row of views) {

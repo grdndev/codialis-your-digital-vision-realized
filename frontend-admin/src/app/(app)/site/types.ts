@@ -105,7 +105,7 @@ export type SiteSettingsScreen = {
   };
 };
 
-// --- Retours du site -------------------------------------------------------
+// --- Demandes de contact ---------------------------------------------------
 
 export type ContactRequestRow = {
   id: string;
