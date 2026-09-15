@@ -195,8 +195,16 @@ export const DRAFT_STATUS_LABEL: Record<DraftStatus, string> = {
   IGNORED: "Ignoré",
 };
 
-export function fmtEUR(n: number): string {
-  return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(n) + " €";
+// Pourcentage d'une part sur un tout. Un tout nul ou absent vaut 0 % et non
+// NaN : un projet fraîchement ouvert n'a ni heures vendues ni montant, et
+// « NaN% » s'affichait tel quel à l'écran.
+export function pctOf(part: number | null | undefined, whole: number | null | undefined): number {
+  if (!whole) return 0;
+  return Math.round(((part ?? 0) / whole) * 100);
+}
+
+export function fmtEUR(n: number | null | undefined): string {
+  return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(n ?? 0) + " €";
 }
 
 export function fmtDateTime(date: Date | null): string | null {

@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
 import type { TimeScreen } from "./types";
-import { fmtHours } from "@/lib/format";
+import { fmtHours, pctOf } from "@/lib/format";
 import { addTimeEntryAction } from "./actions";
 
 function dateKey(d: Date) {
@@ -26,7 +26,7 @@ export default async function TimePage() {
   for (const e of weekEntries) byPerson.set(e.user.name, (byPerson.get(e.user.name) ?? 0) + e.hours);
 
   const alerts = activeProjects
-    .map((p) => ({ p, pct: Math.round((p.hoursSpent / p.hoursSold) * 100) }))
+    .map((p) => ({ p, pct: pctOf(p.hoursSpent, p.hoursSold) }))
     .filter((x) => x.pct >= 80)
     .sort((a, b) => b.pct - a.pct);
 
@@ -79,7 +79,7 @@ export default async function TimePage() {
           </tr></thead>
           <tbody className="divide-y divide-border">
             {activeProjects.map((p) => {
-              const pct = Math.round((p.hoursSpent / p.hoursSold) * 100);
+              const pct = pctOf(p.hoursSpent, p.hoursSold);
               return (
                 <tr key={p.id}>
                   <td className="whitespace-nowrap px-4 py-3 text-text">{p.client.name} — {p.name}</td>

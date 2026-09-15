@@ -8,7 +8,6 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/projects", label: "Projets", roles: ["DIR", "PM"] },
   { href: "/crm", label: "Prospection", roles: ["DIR", "PM"] },
   { href: "/triage", label: "Remontées client", roles: ["DIR", "PM"] },
-  { href: "/messages", label: "Messagerie", roles: ["DEV", "PM", "DIR"] },
   { href: "/resources", label: "Ressources", roles: ["DEV", "PM", "DIR"] },
   { href: "/tickets", label: "Tickets", roles: ["DEV", "PM", "DIR"] },
   { href: "/time", label: "Temps", roles: ["DEV", "PM", "DIR"] },

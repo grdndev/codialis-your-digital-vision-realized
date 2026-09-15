@@ -1,7 +1,7 @@
 import { apiGet } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import type { FinanceScreen } from "./types";
-import { fmtHours, fmtEUR, fmtDate, currentPeriodLabel, INVOICE_STATUS_BADGE_CLASS, INVOICE_STATUS_LABEL } from "@/lib/format";
+import { fmtHours, fmtEUR, fmtDate, pctOf, currentPeriodLabel, INVOICE_STATUS_BADGE_CLASS, INVOICE_STATUS_LABEL } from "@/lib/format";
 import { createInvoiceAction, markInvoicePaidAction } from "./actions";
 
 export default async function FinancePage() {
@@ -12,9 +12,12 @@ export default async function FinancePage() {
   const billed = invoices.reduce((s, i) => s + i.amount, 0);
   const collected = invoices.filter((i) => i.status === "PAYEE").reduce((s, i) => s + i.amount, 0);
   const late = invoices.filter((i) => i.status === "EN_RETARD").reduce((s, i) => s + i.amount, 0);
-  const avgMargin = activeProjects.length
+  // Seuls les projets chiffrés entrent dans la moyenne : un projet sans montant
+  // vendu n'a pas de marge nulle, il n'en a pas.
+  const priced = activeProjects.filter((p) => p.soldAmount);
+  const avgMargin = priced.length
     ? Math.round(
-        activeProjects.reduce((s, p) => s + ((p.soldAmount! - p.costAmount!) / p.soldAmount!) * 100, 0) / activeProjects.length
+        priced.reduce((s, p) => s + pctOf(p.soldAmount! - (p.costAmount ?? 0), p.soldAmount), 0) / priced.length
       )
     : 0;
 
@@ -29,7 +32,7 @@ export default async function FinancePage() {
 
       <div className="grid grid-cols-4 gap-4">
         <Kpi label="Facturé" value={fmtEUR(billed)} note={`${invoices.length} factures`} />
-        <Kpi label="Encaissé" value={fmtEUR(collected)} note={billed ? `${Math.round((collected / billed) * 100)}% du facturé` : "—"} color="text-mint" />
+        <Kpi label="Encaissé" value={fmtEUR(collected)} note={billed ? `${pctOf(collected, billed)}% du facturé` : "—"} color="text-mint" />
         <Kpi label="En retard" value={fmtEUR(late)} note={`${invoices.filter((i) => i.status === "EN_RETARD").length} factures`} color="text-amber" />
         <Kpi label="Marge moyenne" value={`${avgMargin >= 0 ? "+" : ""}${avgMargin} %`} note="projets actifs" color="text-mint" />
       </div>
@@ -43,13 +46,13 @@ export default async function FinancePage() {
           </tr></thead>
           <tbody className="divide-y divide-border">
             {activeProjects.map((p) => {
-              const margin = Math.round(((p.soldAmount! - p.costAmount!) / p.soldAmount!) * 100);
-              const rate = p.hoursSpent ? Math.round(p.soldAmount! / p.hoursSpent) : 0;
+              const margin = pctOf((p.soldAmount ?? 0) - (p.costAmount ?? 0), p.soldAmount);
+              const rate = p.hoursSpent ? Math.round((p.soldAmount ?? 0) / p.hoursSpent) : 0;
               return (
                 <tr key={p.id}>
                   <td className="whitespace-nowrap px-4 py-3 text-text">{p.client.name} — {p.name}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-muted">{fmtEUR(p.soldAmount!)}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-muted">{fmtEUR(p.costAmount!)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-muted">{fmtEUR(p.soldAmount)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-muted">{fmtEUR(p.costAmount)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted">{fmtHours(p.hoursSpent)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted">{fmtEUR(rate)}/h</td>
                   <td className="whitespace-nowrap px-4 py-3">

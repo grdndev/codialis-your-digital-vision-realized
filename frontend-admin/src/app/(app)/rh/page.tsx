@@ -110,7 +110,7 @@ export default async function RhPage() {
       <div>
         <h1 className="text-xl font-semibold text-text">Ressources humaines</h1>
         <p className="mt-1 text-sm text-muted">
-          Heures, absences, planning, déplacements · {currentPeriodLabel()}
+          Heures, congés et absences, planning, déplacements · {currentPeriodLabel()}
         </p>
       </div>
 
@@ -398,10 +398,10 @@ export default async function RhPage() {
         </div>
 
         <div className="rounded-xl border border-border bg-panel p-5">
-          <h2 className="text-sm font-semibold text-text">Mes absences</h2>
+          <h2 className="text-sm font-semibold text-text">Mes congés et absences</h2>
           <div className="mt-3 flex flex-col divide-y divide-border">
             {myAbsences.length === 0 ? (
-              <p className="py-2 text-sm text-muted">Aucune absence posée.</p>
+              <p className="py-2 text-sm text-muted">Aucun congé ni absence posé.</p>
             ) : (
               myAbsences.map((a) => (
                 <div key={a.id} className="flex items-center justify-between gap-3 py-2 text-sm">
@@ -435,7 +435,7 @@ export default async function RhPage() {
             )}
           </div>
           <details className="mt-3">
-            <summary className="cursor-pointer text-xs font-medium text-mint">+ Poser une absence</summary>
+            <summary className="cursor-pointer text-xs font-medium text-mint">+ Poser un congé ou une absence</summary>
             <form action={addAbsenceAction} className="mt-2 flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <select name="type" className="input">
