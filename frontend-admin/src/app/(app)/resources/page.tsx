@@ -3,7 +3,8 @@ import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { MOCKUP_STATUS_BADGE_CLASS, MOCKUP_STATUS_LABEL } from "@/lib/format";
 import {
-  addApiAction, addUrlAction, addAccountAction, addMockupAction,
+  addApiAction, updateApiAction, deleteApiAction,
+  addUrlAction, addAccountAction, addMockupAction,
   addCdcDocAction, addTechDocAction, addCustomCategoryAction, addCustomCategoryRowAction,
 } from "./actions";
 import type { CustomCategoryRow, ResourcePanel, ResourcesScreen } from "./types";
@@ -19,7 +20,7 @@ const BASE_TABS = [
 export default async function ResourcesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string; tab?: string }>;
+  searchParams: Promise<{ project?: string; tab?: string; edit?: string }>;
 }) {
   const user = await requireUser();
   const sp = await searchParams;
@@ -74,7 +75,7 @@ export default async function ResourcesPage({
             ))}
           </div>
 
-          <ResourceTabContent projectId={project.id} activeTab={activeTab} team={team} customCategories={customCategories} panel={panel} canUploadCdc={user.role === "PM"} />
+          <ResourceTabContent projectId={project.id} activeTab={activeTab} team={team} customCategories={customCategories} panel={panel} canUploadCdc={user.role === "PM"} editId={sp.edit} />
 
           <NewCategoryForm projectId={project.id} />
         </>
@@ -90,6 +91,7 @@ async function ResourceTabContent({
   customCategories,
   panel,
   canUploadCdc,
+  editId,
 }: {
   projectId: string;
   activeTab: string;
@@ -97,9 +99,13 @@ async function ResourceTabContent({
   customCategories: CustomCategoryRow[];
   panel: ResourcePanel | null;
   canUploadCdc: boolean;
+  editId?: string;
 }) {
   if (activeTab === "api") {
     const apis = panel?.kind === "api" ? panel.apis : [];
+    // L'identifiant peut désigner une ligne d'un autre projet ou déjà effacée :
+    // on ne reprend que ce qui est bien devant nous.
+    const editApi = editId ? apis.find((a) => a.id === editId) : undefined;
     return (
       <div className="flex flex-col gap-3">
         {apis.length === 0 ? <EmptyState /> : (
@@ -110,6 +116,7 @@ async function ResourceTabContent({
                 <th className="px-4 py-3 font-medium">Env.</th><th className="px-4 py-3 font-medium">Base URL</th>
                 <th className="px-4 py-3 font-medium">Clé</th><th className="px-4 py-3 font-medium">Auth</th>
                 <th className="px-4 py-3 font-medium">Propriétaire</th><th className="px-4 py-3 font-medium">Expiration</th>
+                <th className="px-4 py-3 font-medium"></th>
               </tr></thead>
               <tbody className="divide-y divide-border">
                 {apis.map((a) => (
@@ -122,24 +129,63 @@ async function ResourceTabContent({
                     <td className="whitespace-nowrap px-4 py-3 text-muted">{a.authType}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-muted">{a.owner?.name ?? "—"}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-muted">{a.expiryNote}</td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/resources?project=${projectId}&tab=api&edit=${a.id}`}
+                          className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:text-text"
+                        >
+                          Modifier
+                        </Link>
+                        <form action={deleteApiAction.bind(null, a.id)}>
+                          <button
+                            type="submit"
+                            className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:border-red/50 hover:text-red"
+                          >
+                            Supprimer
+                          </button>
+                        </form>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-        <details><summary className="cursor-pointer text-xs font-medium text-mint">+ Ajouter une API</summary>
-          <form action={addApiAction} className="mt-2 grid grid-cols-4 gap-2">
-            <input type="hidden" name="projectId" value={projectId} />
-            <input name="name" placeholder="Nom (Stripe)" required className="input" />
-            <input name="role" placeholder="Rôle" className="input" />
-            <input name="env" placeholder="Environnement" className="input" />
-            <select name="ownerId" className="input"><option value="">Propriétaire</option>{team.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
-            <input name="baseUrl" placeholder="Base URL" className="input col-span-2" />
-            <input name="maskedKey" placeholder="Clé masquée" className="input" />
-            <input name="authType" placeholder="Type d’auth" className="input" />
-            <input name="expiryNote" placeholder="Expiration" className="input" />
-            <button type="submit" className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg">Ajouter</button>
+        {/* Un seul formulaire pour les deux gestes : `edit` désigne la ligne à
+            reprendre, et le champ caché bascule l'action. Ouvert d'office en
+            modification, pour ne pas avoir à déplier après avoir cliqué. */}
+        <details open={!!editApi}>
+          <summary className="cursor-pointer text-xs font-medium text-mint">
+            {editApi ? `Modifier · ${editApi.name}` : "+ Ajouter une API"}
+          </summary>
+          <form
+            key={editApi?.id ?? "new"}
+            action={editApi ? updateApiAction : addApiAction}
+            className="mt-2 grid grid-cols-4 gap-2"
+          >
+            {editApi ? (
+              <input type="hidden" name="apiId" value={editApi.id} />
+            ) : (
+              <input type="hidden" name="projectId" value={projectId} />
+            )}
+            <input name="name" placeholder="Nom (Stripe)" required defaultValue={editApi?.name ?? ""} className="input" />
+            <input name="role" placeholder="Rôle" defaultValue={editApi?.role ?? ""} className="input" />
+            <input name="env" placeholder="Environnement" defaultValue={editApi?.env ?? ""} className="input" />
+            <select name="ownerId" defaultValue={editApi?.ownerId ?? ""} className="input"><option value="">Propriétaire</option>{team.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
+            <input name="baseUrl" placeholder="Base URL" defaultValue={editApi?.baseUrl ?? ""} className="input col-span-2" />
+            <input name="maskedKey" placeholder="Clé masquée" defaultValue={editApi?.maskedKey ?? ""} className="input" />
+            <input name="authType" placeholder="Type d’auth" defaultValue={editApi?.authType ?? ""} className="input" />
+            <input name="expiryNote" placeholder="Expiration" defaultValue={editApi?.expiryNote ?? ""} className="input" />
+            <button type="submit" className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg">
+              {editApi ? "Enregistrer" : "Ajouter"}
+            </button>
+            {editApi ? (
+              <Link href={`/resources?project=${projectId}&tab=api`} className="self-center text-xs text-muted hover:text-text">
+                Annuler
+              </Link>
+            ) : null}
           </form>
         </details>
       </div>

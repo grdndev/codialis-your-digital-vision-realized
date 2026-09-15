@@ -26,6 +26,27 @@ export async function addApiAction(formData: FormData) {
   revalidatePath("/resources");
 }
 
+export async function updateApiAction(formData: FormData) {
+  await apiPost(RESOURCES, {
+    action: "update-api",
+    apiId: str(formData, "apiId"),
+    name: str(formData, "name"),
+    role: str(formData, "role"),
+    env: str(formData, "env"),
+    baseUrl: str(formData, "baseUrl"),
+    maskedKey: str(formData, "maskedKey"),
+    authType: str(formData, "authType"),
+    ownerId: str(formData, "ownerId") || null,
+    expiryNote: str(formData, "expiryNote"),
+  });
+  revalidatePath("/resources");
+}
+
+export async function deleteApiAction(apiId: string) {
+  await apiPost(RESOURCES, { action: "delete-api", apiId });
+  revalidatePath("/resources");
+}
+
 export async function addUrlAction(formData: FormData) {
   await apiPost(RESOURCES, {
     action: "add-url",

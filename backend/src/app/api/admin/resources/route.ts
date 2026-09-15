@@ -122,6 +122,19 @@ const bodySchema = z.discriminatedUnion("action", [
     expiryNote: z.string(),
   }),
   z.object({
+    action: z.literal("update-api"),
+    apiId: z.string().min(1),
+    name: z.string(),
+    role: z.string(),
+    env: z.string(),
+    baseUrl: z.string(),
+    maskedKey: z.string(),
+    authType: z.string(),
+    ownerId: z.string().nullable(),
+    expiryNote: z.string(),
+  }),
+  z.object({ action: z.literal("delete-api"), apiId: z.string().min(1) }),
+  z.object({
     action: z.literal("add-url"),
     projectId: z.string().min(1),
     env: z.string(),
@@ -197,6 +210,24 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
           expiryNote: body.expiryNote,
         },
       });
+      return;
+    case "update-api":
+      await prisma.apiCredential.update({
+        where: { id: body.apiId },
+        data: {
+          name: body.name,
+          role: body.role,
+          env: body.env,
+          baseUrl: body.baseUrl,
+          maskedKey: body.maskedKey,
+          authType: body.authType,
+          ownerId: body.ownerId,
+          expiryNote: body.expiryNote,
+        },
+      });
+      return;
+    case "delete-api":
+      await prisma.apiCredential.delete({ where: { id: body.apiId } });
       return;
     case "add-url":
       await prisma.projectUrl.create({
