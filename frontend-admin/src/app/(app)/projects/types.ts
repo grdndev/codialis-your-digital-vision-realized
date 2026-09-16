@@ -1,4 +1,4 @@
-import type { ClientRef, ProjectWithClient, TaskRow, UserRef } from "@/lib/dto";
+import type { ClientRef, ProjectWithClient, TaskRow, TicketRow, UserRef } from "@/lib/dto";
 import type { ClientQuestionStatus } from "@/lib/types";
 
 export type ProjectsScreen = {
@@ -70,7 +70,14 @@ export type ProjectDetailResponse =
       team: { id: string; name: string }[];
       apis: ApiCredentialRow[];
       questions: ClientQuestionRow[];
+      // Les bugs et développements rattachés au projet, toutes vues confondues.
+      tickets: ProjectTicketRow[];
     };
+
+export type ProjectTicketRow = TicketRow & {
+  assignee: UserRef | null;
+  epic: { id: string; title: string } | null;
+};
 
 export type TaskCriterionRow = {
   id: string;

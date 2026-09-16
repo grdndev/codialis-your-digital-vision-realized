@@ -2,14 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
-import { fmtHours, fmtEUR, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL } from "@/lib/format";
+import { fmtHours, fmtEUR, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL } from "@/lib/format";
 import {
   createEpicAction, createTaskAction, updateClientContactAction, updateProjectDescriptionAction,
   addClientQuestionAction, markQuestionAskedAction, answerClientQuestionAction,
 } from "../actions";
 import type { ClientQuestionStatus, TaskStatus } from "@/lib/types";
 import type {
-  ApiCredentialRow, ClientQuestionRow, ProjectDetail, ProjectDetailResponse,
+  ApiCredentialRow, ClientQuestionRow, ProjectDetail, ProjectDetailResponse, ProjectTicketRow,
 } from "../types";
 
 
@@ -44,7 +44,7 @@ export default async function ProjectDetailPage({
     );
   }
 
-  const { project, team, apis, questions } = result;
+  const { project, team, apis, questions, tickets } = result;
 
   const workEpics = project.epics.filter((e) => e.tasks.length > 0 || e.estHours > 0);
   const allTasks = project.epics.flatMap((e) => e.tasks.map((t) => ({ ...t, epicTitle: e.title })));
@@ -106,9 +106,9 @@ export default async function ProjectDetailPage({
       </div>
 
       {activeView === "list" ? (
-        <ListView epics={workEpics} projectId={project.id} team={team} />
+        <ListView epics={workEpics} projectId={project.id} team={team} tickets={tickets} />
       ) : activeView === "kanban" ? (
-        <KanbanView tasks={allTasks} projectId={project.id} />
+        <KanbanView tasks={allTasks} projectId={project.id} tickets={tickets} />
       ) : (
         <FicheView project={project} deadline={deadline} apis={apis} questions={questions} />
       )}
@@ -304,10 +304,12 @@ function ListView({
   epics,
   projectId,
   team,
+  tickets,
 }: {
   epics: EpicWithTasks[];
   projectId: string;
   team: { id: string; name: string }[];
+  tickets: ProjectTicketRow[];
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -371,6 +373,55 @@ function ListView({
           );
         })
       )}
+
+      {/* Les tickets ne sont rattachés qu'au projet, pas forcément à un lot :
+          ils forment donc leur propre bloc plutôt que de se glisser dans un
+          épic auquel la plupart n'appartiennent pas. */}
+      <div className="rounded-xl border border-border bg-panel">
+        <div className="flex items-center justify-between border-b border-border px-5 py-3">
+          <h2 className="text-sm font-semibold text-text">Tickets du projet</h2>
+          <span className="text-xs text-muted">
+            {tickets.filter((t) => t.status !== "TERMINE").length} ouvert
+            {tickets.filter((t) => t.status !== "TERMINE").length > 1 ? "s" : ""} sur {tickets.length}
+          </span>
+        </div>
+        {tickets.length === 0 ? (
+          <p className="px-5 py-4 text-sm text-muted">Aucun ticket sur ce projet.</p>
+        ) : (
+          <table className="w-full border-collapse text-sm">
+            <tbody className="divide-y divide-border">
+              {tickets.map((t) => (
+                <tr key={t.id} className="transition hover:bg-panel-2">
+                  <td className="whitespace-nowrap px-5 py-2">
+                    <Link href={`/tickets/${t.ref}`} className="font-medium text-text hover:text-mint">
+                      {t.ref}
+                    </Link>
+                  </td>
+                  <td className="whitespace-nowrap py-2 pr-4">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${TICKET_TYPE_BADGE_CLASS[t.type]}`}>
+                      {TICKET_TYPE_LABEL[t.type]}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-4">
+                    <Link href={`/tickets/${t.ref}`} className="text-text hover:text-mint">
+                      {t.title}
+                    </Link>
+                  </td>
+                  <td className="whitespace-nowrap py-2 pr-4 text-xs text-muted">
+                    {t.severity ? SEVERITY_LABEL[t.severity] : t.devNature ? DEV_NATURE_LABEL[t.devNature] : "—"}
+                  </td>
+                  <td className="whitespace-nowrap py-2 pr-4 text-muted">{t.assignee?.name ?? "Non assigné"}</td>
+                  <td className="whitespace-nowrap py-2 pr-5 text-right">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[t.status]}`}>
+                      {STATUS_LABEL[t.status]}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }
@@ -385,19 +436,24 @@ const KANBAN_COLUMNS: { status: TaskStatus; label: string }[] = [
 function KanbanView({
   tasks,
   projectId,
+  tickets,
 }: {
   tasks: { id: string; title: string; status: TaskStatus; estHours: number; assignee: { name: string } | null; epicTitle: string }[];
   projectId: string;
+  tickets: ProjectTicketRow[];
 }) {
   return (
     <div className="grid grid-cols-4 gap-4">
       {KANBAN_COLUMNS.map((col) => {
         const items = tasks.filter((t) => t.status === col.status);
+        // Tâches et tickets partagent les mêmes états : ils tombent dans les
+        // mêmes colonnes. La pastille de type distingue les seconds.
+        const ticketItems = tickets.filter((t) => t.status === col.status);
         return (
           <div key={col.status} className="rounded-xl border border-border bg-panel">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <span className="text-sm font-medium text-text">{col.label}</span>
-              <span className="text-xs text-muted">{items.length}</span>
+              <span className="text-xs text-muted">{items.length + ticketItems.length}</span>
             </div>
             <div className="flex flex-col gap-2 p-3">
               {items.map((t) => (
@@ -414,7 +470,28 @@ function KanbanView({
                   </div>
                 </Link>
               ))}
-              {items.length === 0 ? <p className="px-1 py-2 text-xs text-muted">—</p> : null}
+              {ticketItems.map((t) => (
+                <Link
+                  key={t.id}
+                  href={`/tickets/${t.ref}`}
+                  className="rounded-lg border border-border bg-panel-2 p-3 text-sm transition hover:border-mint/40"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-muted">{t.ref}</span>
+                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${TICKET_TYPE_BADGE_CLASS[t.type]}`}>
+                      {TICKET_TYPE_LABEL[t.type]}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-text">{t.title}</p>
+                  <div className="mt-2 flex items-center justify-between text-xs text-muted">
+                    <span>{t.assignee?.name ?? "Non assigné"}</span>
+                    <span>{fmtHours(t.estHours)}</span>
+                  </div>
+                </Link>
+              ))}
+              {items.length + ticketItems.length === 0 ? (
+                <p className="px-1 py-2 text-xs text-muted">—</p>
+              ) : null}
             </div>
           </div>
         );

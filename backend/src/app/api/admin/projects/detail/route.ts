@@ -46,12 +46,19 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
     if (!assigned) return { access: "not-assigned" as const };
   }
 
-  const [team, apis, questions] = await Promise.all([
+  const [team, apis, questions, tickets] = await Promise.all([
     prisma.user.findMany({ where: { role: { in: ["DEV", "PM"] } }, orderBy: { name: "asc" } }),
     fiche ? prisma.apiCredential.findMany({ where: { projectId: id }, orderBy: { order: "asc" } }) : [],
     fiche
       ? prisma.clientQuestion.findMany({ where: { projectId: id }, orderBy: { createdAt: "desc" } })
       : [],
+    // Les bugs et développements du projet : ils vivaient uniquement sur
+    // l'écran Tickets, filtrables par projet, donc invisibles depuis la fiche.
+    prisma.ticket.findMany({
+      where: { projectId: id },
+      include: { assignee: true, epic: true },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   return {
@@ -60,5 +67,6 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
     team: team.map((t) => ({ id: t.id, name: t.name })),
     apis,
     questions,
+    tickets,
   };
 });
