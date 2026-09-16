@@ -2834,14 +2834,14 @@
                   hint-placeholder-count="5"
                 >
                   <a
-                    href="/#expertises"
+                    href="{{ f.href }}"
                     style="
                       font-size: 14.5px;
                       color: #b7c2d2;
                       transition: color 0.2s;
                     "
                     style-hover="color:#2FED7F;"
-                    >{{ f }}</a
+                    >{{ f.label }}</a
                   >
                 </sc-for>
               </div>
@@ -3129,7 +3129,14 @@
               { label: 'Contact', href: '/contact', color: '#C4CFDD' },
             ],
             heroChecks: ['Membre Numeum', 'Labellisée France Num', 'Architecture-first'],
-            footerExp: ['Développement SaaS', 'Applications mobiles', 'Intelligence artificielle', 'CRM & ERP sur mesure', 'Logiciel métier sur mesure'],
+            footerExp: [
+              { label: 'Développement SaaS', href: '/developpement-saas' },
+              { label: 'Applications mobiles', href: '/application-mobile' },
+              { label: 'Intelligence artificielle', href: '/agence-ia' },
+              { label: 'CRM & ERP sur mesure', href: '/crm-erp-api' },
+              // Pas de page dédiée pour celui-ci : il reste sur l'ancre d'accueil.
+              { label: 'Logiciel métier sur mesure', href: '/#expertises' },
+            ],
             values: [
               { num: '01', delay: 0, label: 'Excellence technique' },
               { num: '02', delay: 550, label: 'Responsabilité long terme' },

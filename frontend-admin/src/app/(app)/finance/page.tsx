@@ -1,11 +1,12 @@
 import { apiGet } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
+import { ScreenTabs } from "./screen-tabs";
 import type { FinanceScreen } from "./types";
 import { fmtHours, fmtEUR, fmtDate, pctOf, currentPeriodLabel, INVOICE_STATUS_BADGE_CLASS, INVOICE_STATUS_LABEL } from "@/lib/format";
 import { createInvoiceAction, markInvoicePaidAction } from "./actions";
 
 export default async function FinancePage() {
-  await requireRole("PM", "DIR");
+  const user = await requireRole("PM", "DIR");
 
   const { invoices, activeProjects, projects } = await apiGet<FinanceScreen>("/api/admin/finance");
 
@@ -28,6 +29,7 @@ export default async function FinancePage() {
           <h1 className="text-xl font-semibold text-text">Facturation &amp; rentabilité</h1>
           <p className="mt-1 text-sm text-muted">{currentPeriodLabel()}</p>
         </div>
+        <ScreenTabs active="/finance" role={user.role} />
       </div>
 
       <div className="grid grid-cols-4 gap-4">

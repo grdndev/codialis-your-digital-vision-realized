@@ -5,6 +5,11 @@ import type { Severity, TaskStatus } from "@prisma/client";
 // Reprise des projets depuis les exports Asana.
 //
 //   npx tsx prisma/import-asana.ts Tapix.csv ADD.csv … [--dry-run]
+//   npx tsx prisma/import-asana.ts topformation.csv --as="Top formation"
+//
+// `--as` rattache l'export à un projet existant dont le nom diffère de celui
+// que porte le fichier — les exports n'orthographient pas toujours le projet
+// comme la base.
 //
 // Un export par projet. Le fichier porte lui-même le nom du projet (colonne
 // `Projects`), le client est créé au même nom s'il n'existe pas encore.
@@ -16,6 +21,7 @@ import type { Severity, TaskStatus } from "@prisma/client";
 
 const DRY = process.argv.includes("--dry-run");
 const FILES = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const RENAME = process.argv.find((a) => a.startsWith("--as="))?.slice("--as=".length) ?? null;
 
 const prisma = new PrismaClient();
 
@@ -111,7 +117,7 @@ function kindOf(section: string, category: string): Kind {
   const s = normalize(section);
   if (!s) return "epic";
   if (s.startsWith("documents")) return normalize(category) === "fix" ? "ticket" : "skip";
-  if (s.startsWith("retours")) return "ticket";
+  if (s.startsWith("retours") || s.startsWith("bug")) return "ticket";
   return "epic";
 }
 
@@ -238,18 +244,20 @@ async function main() {
 
   for (const file of FILES) {
     const rows = inherit(readFile(file));
-    const projectName = rows.find((r) => r.project)?.project ?? "";
+    const csvName = rows.find((r) => r.project)?.project ?? "";
+    const projectName = RENAME ?? csvName;
     if (!projectName) {
       console.error(`${file} : aucune colonne « Projects » renseignée, ignoré`);
       continue;
     }
 
-    const work = rows.filter((r) => r.project === projectName && kindOf(r.section, r.category) !== "skip");
+    const work = rows.filter((r) => r.project === csvName && kindOf(r.section, r.category) !== "skip");
     const skipped = rows.length - work.length;
     const epicRows = work.filter((r) => kindOf(r.section, r.category) === "epic");
     const ticketRows = work.filter((r) => kindOf(r.section, r.category) === "ticket");
 
-    console.log(`\n=== ${file} → projet « ${projectName} » ===`);
+    const renamed = RENAME && RENAME !== csvName ? ` (le fichier dit « ${csvName} »)` : "";
+    console.log(`\n=== ${file} → projet « ${projectName} »${renamed} ===`);
     console.log(`  ${rows.length} lignes lues · ${skipped} ignorées (documents, hors projet)`);
     console.log(`  ${epicRows.length} tâches · ${ticketRows.length} tickets`);
 

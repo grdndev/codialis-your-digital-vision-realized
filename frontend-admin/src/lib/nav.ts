@@ -1,6 +1,13 @@
 import type { Role } from "@/lib/types";
 
-export type NavItem = { href: string; label: string; roles: Role[] };
+export type NavItem = {
+  href: string;
+  label: string;
+  roles: Role[];
+  // Autres chemins que cette entrée représente : l'écran « Rentabilité & temps »
+  // a deux onglets sur deux routes, et le menu doit rester surligné sur les deux.
+  alsoMatch?: string[];
+};
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", roles: ["DIR", "PM"] },
@@ -8,16 +15,20 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/projects", label: "Projets", roles: ["DIR", "PM"] },
   { href: "/crm", label: "Prospection", roles: ["DIR", "PM"] },
   { href: "/triage", label: "Remontées client", roles: ["DIR", "PM"] },
-  { href: "/resources", label: "Ressources", roles: ["DEV", "PM", "DIR"] },
-  { href: "/tickets", label: "Tickets", roles: ["DEV", "PM", "DIR"] },
-  { href: "/time", label: "Temps", roles: ["DEV", "PM", "DIR"] },
+  { href: "/resources", label: "Ressources", roles: ["DEV", "PM"] },
+  { href: "/tickets", label: "Tickets", roles: ["DEV", "PM"] },
   { href: "/rh", label: "RH", roles: ["DEV", "PM", "DIR"] },
   { href: "/pilotage", label: "Pilotage", roles: ["DIR"] },
-  { href: "/finance", label: "Rentabilité", roles: ["DIR", "PM"] },
+  // Rentabilité et Temps forment un seul écran à deux onglets, donc une seule
+  // entrée de menu. La rentabilité restant réservée à la direction et à la
+  // chefferie, un développeur n'a que l'onglet Temps — son entrée y mène
+  // directement plutôt que de le faire rebondir sur un écran interdit.
+  { href: "/finance", label: "Rentabilité & temps", roles: ["DIR", "PM"], alsoMatch: ["/time"] },
+  { href: "/time", label: "Temps", roles: ["DEV"] },
   { href: "/maintenance", label: "Maintenance", roles: ["DIR", "PM"] },
   { href: "/automations", label: "Automatisations", roles: ["DIR", "PM"] },
   // Le site vitrine : ce qu'il publie, ses réglages, ce qu'il fait remonter.
-  { href: "/site", label: "Contenu du site", roles: ["DIR", "PM"] },
+  { href: "/site", label: "Contenu du site", roles: ["PM"] },
   { href: "/site/reglages", label: "Réglages du site", roles: ["DIR", "PM"] },
   { href: "/site/messages", label: "Demandes de contact", roles: ["DIR", "PM"] },
   { href: "/site/veille", label: "Veille", roles: ["DIR", "PM"] },

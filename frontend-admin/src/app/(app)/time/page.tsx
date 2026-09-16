@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/auth";
+import { ScreenTabs } from "../finance/screen-tabs";
 import { apiGet } from "@/lib/api";
 import type { TimeScreen } from "./types";
 import { fmtHours, pctOf } from "@/lib/format";
@@ -51,11 +52,14 @@ export default async function TimePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold text-text">Suivi du temps</h1>
-        <p className="mt-1 text-sm text-muted">
-          {fmtHours(totalHours)} dont {fmtHours(billableHours)} facturables · {[...byPerson.entries()].map(([n, h]) => `${n.split(" ")[0]} ${fmtHours(h)}`).join(" · ")}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-text">Suivi du temps</h1>
+          <p className="mt-1 text-sm text-muted">
+            {fmtHours(totalHours)} dont {fmtHours(billableHours)} facturables · {[...byPerson.entries()].map(([n, h]) => `${n.split(" ")[0]} ${fmtHours(h)}`).join(" · ")}
+          </p>
+        </div>
+        <ScreenTabs active="/time" role={user.role} />
       </div>
 
       {alerts.length > 0 ? (

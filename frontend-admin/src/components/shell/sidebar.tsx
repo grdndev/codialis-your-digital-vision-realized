@@ -10,8 +10,12 @@ export function Sidebar({ items, title }: { items: NavItem[]; title?: string }) 
   // L'entrée active est celle dont le chemin est le PLUS LONG préfixe de l'URL
   // courante. Un simple `startsWith` surlignerait « Contenu du site » (/site)
   // en même temps que « Réglages du site » (/site/reglages).
+  const matches = (item: NavItem) =>
+    [item.href, ...(item.alsoMatch ?? [])].some(
+      (h) => pathname === h || pathname.startsWith(`${h}/`),
+    );
   const activeHref = items
-    .filter((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
+    .filter(matches)
     .reduce<string | null>((best, item) => (best && best.length >= item.href.length ? best : item.href), null);
 
   return (
