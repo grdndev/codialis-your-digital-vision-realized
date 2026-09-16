@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE `TicketAttachment` ADD COLUMN `driveFileId` VARCHAR(191) NULL,
+    ADD COLUMN `mimeType` VARCHAR(191) NOT NULL DEFAULT '',
+    ADD COLUMN `sizeBytes` INTEGER NOT NULL DEFAULT 0;

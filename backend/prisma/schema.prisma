@@ -61,8 +61,8 @@ model User {
   // `role` qui est un rôle applicatif. `photo` est une data URL base64, d'où
   // le LONGTEXT. Les deux sont facultatifs : sans photo le site affiche les
   // initiales, sans intitulé il n'affiche rien sous le nom.
-  jobTitle     String?  @db.VarChar(255)
-  photo        String?  @db.LongText
+  jobTitle String? @db.VarChar(255)
+  photo    String? @db.LongText
 
   // Soldes « à ancre » : la direction saisit un solde réel et la date du jour
   // devient l'ancre ; l'affiché est recalculé à partir de là (voir
@@ -78,93 +78,93 @@ model User {
   // la personne a confirmé son adresse. Cela prouve l'adresse avant qu'un
   // identifiant ne quitte le serveur. `mustChangePassword` force le changement
   // à la première connexion.
-  emailVerified       Boolean @default(true)
-  mustChangePassword  Boolean @default(false)
+  emailVerified      Boolean @default(true)
+  mustChangePassword Boolean @default(false)
 
-  clientId     String?
-  client       Client?  @relation(fields: [clientId], references: [id])
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id])
 
-  assignments      ProjectAssignment[]
-  leadEpics        Epic[]           @relation("EpicLead")
-  assignedTasks    Task[]           @relation("TaskAssignee")
-  taskComments     TaskComment[]
-  assignedTickets  Ticket[]         @relation("TicketAssignee")
-  createdTickets   Ticket[]         @relation("TicketCreator")
-  ticketComments   TicketComment[]
+  assignments     ProjectAssignment[]
+  leadEpics       Epic[]              @relation("EpicLead")
+  assignedTasks   Task[]              @relation("TaskAssignee")
+  taskComments    TaskComment[]
+  assignedTickets Ticket[]            @relation("TicketAssignee")
+  createdTickets  Ticket[]            @relation("TicketCreator")
+  ticketComments  TicketComment[]
 
-  dealNotes        DealNote[]
-  messages         Message[]
-  threadMemberships ThreadParticipant[]
-  ownedApis        ApiCredential[]
-  customCategories CustomCategory[]
-  timeEntries      TimeEntry[]
-  decisions        Decision[]
-  teamProfitRows   TeamProfitSnapshot[]
-  hostedRdvs       Rdv[]
-  internalTasksAssigned InternalTask[] @relation("InternalTaskAssignee")
-  internalTasksGiven    InternalTask[] @relation("InternalTaskAssigner")
-  tokens          UserToken[]
-  hoursEntries    HoursEntry[]
-  absences        Absence[]
-  presenceRules   PresenceRecurrence[]
-  plannedShifts   PlannedShift[]
-  travelEntries   TravelEntry[]
+  dealNotes             DealNote[]
+  messages              Message[]
+  threadMemberships     ThreadParticipant[]
+  ownedApis             ApiCredential[]
+  customCategories      CustomCategory[]
+  timeEntries           TimeEntry[]
+  decisions             Decision[]
+  teamProfitRows        TeamProfitSnapshot[]
+  hostedRdvs            Rdv[]
+  internalTasksAssigned InternalTask[]       @relation("InternalTaskAssignee")
+  internalTasksGiven    InternalTask[]       @relation("InternalTaskAssigner")
+  tokens                UserToken[]
+  hoursEntries          HoursEntry[]
+  absences              Absence[]
+  presenceRules         PresenceRecurrence[]
+  plannedShifts         PlannedShift[]
+  travelEntries         TravelEntry[]
 }
 
 model Client {
-  id           String    @id @default(cuid())
-  name         String    @unique
+  id           String   @id @default(cuid())
+  name         String   @unique
   contactName  String?
   contactEmail String?
   contactPhone String?
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime @default(now())
 
-  users       User[]
-  projects    Project[]
+  users    User[]
+  projects Project[]
 }
 
 model Project {
-  id          String       @id @default(cuid())
-  clientId    String
-  client      Client       @relation(fields: [clientId], references: [id])
-  name        String
-  initials    String
-  group       ProjectGroup
-  phaseLabel  String
-  description String       @db.Text
-  hoursSold   Float
-  hoursSpent  Float
-  progressPct Int
-  openedAt    DateTime
-  closedAt    DateTime?
-  deadlineAt  DateTime?
-  deadlineNote String?
-  lastActivityAt DateTime @default(now())
-  soldAmount  Float?
-  costAmount  Float?
-  createdAt   DateTime     @default(now())
+  id             String       @id @default(cuid())
+  clientId       String
+  client         Client       @relation(fields: [clientId], references: [id])
+  name           String
+  initials       String
+  group          ProjectGroup
+  phaseLabel     String
+  description    String       @db.Text
+  hoursSold      Float
+  hoursSpent     Float
+  progressPct    Int
+  openedAt       DateTime
+  closedAt       DateTime?
+  deadlineAt     DateTime?
+  deadlineNote   String?
+  lastActivityAt DateTime     @default(now())
+  soldAmount     Float?
+  costAmount     Float?
+  createdAt      DateTime     @default(now())
 
-  epics       Epic[]
-  tickets     Ticket[]
-  assignments ProjectAssignment[]
-  apis        ApiCredential[]
-  clientQuestions ClientQuestion[]
-  urls        ProjectUrl[]
-  testAccounts TestAccount[]
-  mockups     Mockup[]
-  mockupSources MockupSource[]
-  cdcDocuments CdcDocument[]
-  techDocs    TechDoc[]
-  customCategories CustomCategory[]
-  invoices    Invoice[]
-  maintenanceContract MaintenanceContract?
-  messageThreads MessageThread[]
-  quote       Quote?
-  rdvs        Rdv[]
+  epics                Epic[]
+  tickets              Ticket[]
+  assignments          ProjectAssignment[]
+  apis                 ApiCredential[]
+  clientQuestions      ClientQuestion[]
+  urls                 ProjectUrl[]
+  testAccounts         TestAccount[]
+  mockups              Mockup[]
+  mockupSources        MockupSource[]
+  cdcDocuments         CdcDocument[]
+  techDocs             TechDoc[]
+  customCategories     CustomCategory[]
+  invoices             Invoice[]
+  maintenanceContract  MaintenanceContract?
+  messageThreads       MessageThread[]
+  quote                Quote?
+  rdvs                 Rdv[]
   clientThreadMessages ClientThreadMessage[]
-  actionItems ActionItem[]
-  deals       Deal[]
-  timeEntries TimeEntry[]
+  actionItems          ActionItem[]
+  deals                Deal[]
+  timeEntries          TimeEntry[]
 }
 
 model ProjectAssignment {
@@ -178,20 +178,20 @@ model ProjectAssignment {
 }
 
 model Epic {
-  id          String   @id @default(cuid())
-  projectId   String
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  title       String
-  objective   String?
-  estHours    Float
-  leadId      String?
-  lead        User?    @relation("EpicLead", fields: [leadId], references: [id])
-  dueAt       DateTime?
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
+  id        String    @id @default(cuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String
+  objective String?
+  estHours  Float
+  leadId    String?
+  lead      User?     @relation("EpicLead", fields: [leadId], references: [id])
+  dueAt     DateTime?
+  order     Int       @default(0)
+  createdAt DateTime  @default(now())
 
-  tasks       Task[]
-  tickets     Ticket[]
+  tasks   Task[]
+  tickets Ticket[]
 
   @@index([projectId])
 }
@@ -249,36 +249,36 @@ model TaskAttachment {
 }
 
 model Ticket {
-  id          String      @id @default(cuid())
-  ref         String      @unique
-  projectId   String
-  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  epicId      String?
-  epic        Epic?       @relation(fields: [epicId], references: [id])
-  type        TicketType
-  severity    Severity?
-  devNature   DevNature?
-  status      TaskStatus  @default(A_FAIRE)
-  title       String
-  description String      @db.Text
-  steps       String      @db.Text
-  module      String?
-  estHours    Float
-  spentHours  Float       @default(0)
-  assigneeId  String?
-  assignee    User?       @relation("TicketAssignee", fields: [assigneeId], references: [id])
-  creatorId   String?
-  creator     User?       @relation("TicketCreator", fields: [creatorId], references: [id])
-  clientReported Boolean  @default(false)
-  triageState TriageState @default(A_QUALIFIER)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id             String      @id @default(cuid())
+  ref            String      @unique
+  projectId      String
+  project        Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  epicId         String?
+  epic           Epic?       @relation(fields: [epicId], references: [id])
+  type           TicketType
+  severity       Severity?
+  devNature      DevNature?
+  status         TaskStatus  @default(A_FAIRE)
+  title          String
+  description    String      @db.Text
+  steps          String      @db.Text
+  module         String?
+  estHours       Float
+  spentHours     Float       @default(0)
+  assigneeId     String?
+  assignee       User?       @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  creatorId      String?
+  creator        User?       @relation("TicketCreator", fields: [creatorId], references: [id])
+  clientReported Boolean     @default(false)
+  triageState    TriageState @default(A_QUALIFIER)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
-  criteria    TicketCriterion[]
-  comments    TicketComment[]
-  attachments TicketAttachment[]
+  criteria      TicketCriterion[]
+  comments      TicketComment[]
+  attachments   TicketAttachment[]
   triageReplies TriageReply[]
-  timeEntries TimeEntry[]
+  timeEntries   TimeEntry[]
 
   @@index([projectId])
   @@index([epicId])
@@ -304,11 +304,19 @@ model TicketComment {
 }
 
 model TicketAttachment {
-  id        String   @id @default(cuid())
-  ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  filename  String
-  meta      String   @default("")
+  id       String @id @default(cuid())
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  filename String
+  meta     String @default("")
+
+  // Le fichier lui-même vit dans Google Drive, pas ici : la base n'en garde que
+  // de quoi le retrouver et l'afficher. `driveFileId` est NULL sur les lignes
+  // d'avant la reprise, qui n'avaient qu'un nom et aucun contenu.
+  driveFileId String?
+  mimeType    String  @default("")
+  sizeBytes   Int     @default(0)
+
   createdAt DateTime @default(now())
 }
 
@@ -321,13 +329,13 @@ enum TriageState {
 }
 
 model TriageReply {
-  id        String   @id @default(cuid())
-  ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  ticketId    String
+  ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   authorLabel String
-  body      String   @db.Text
-  mine      Boolean  @default(true)
-  createdAt DateTime @default(now())
+  body        String   @db.Text
+  mine        Boolean  @default(true)
+  createdAt   DateTime @default(now())
 }
 
 enum DealStage {
@@ -413,7 +421,7 @@ model Message {
   thread         MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
   authorId       String
   author         User          @relation(fields: [authorId], references: [id])
-  body           String   @db.Text
+  body           String        @db.Text
   citedTicketRef String?
   citedLabel     String?
   createdAt      DateTime      @default(now())
@@ -668,10 +676,10 @@ model InternalTask {
 // derived from other data, but real settings rather than literals baked
 // into a page component.
 model CompanySetting {
-  id                    String @id @default(cuid())
-  quarterlyTargetEUR    Float  @default(130000)
-  monthlyChargesEUR     Float  @default(21400)
-  monthlyRevenueTargetEUR Float @default(45000)
+  id                      String @id @default(cuid())
+  quarterlyTargetEUR      Float  @default(130000)
+  monthlyChargesEUR       Float  @default(21400)
+  monthlyRevenueTargetEUR Float  @default(45000)
 }
 
 model Decision {
@@ -894,16 +902,16 @@ model Quote {
 }
 
 model QuoteLine {
-  id      String @id @default(cuid())
+  id      String  @id @default(cuid())
   quoteId String
-  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quote   Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   ref     String?
   label   String
-  detail  String @db.Text
+  detail  String  @db.Text
   hours   Float
   amount  Float
-  status  String @default("")
-  order   Int    @default(0)
+  status  String  @default("")
+  order   Int     @default(0)
 }
 
 model PaymentScheduleItem {
@@ -942,14 +950,14 @@ model CashForecastItem {
 }
 
 model ClientThreadMessage {
-  id         String   @id @default(cuid())
-  projectId  String
-  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  fromClient Boolean
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fromClient  Boolean
   authorLabel String
-  body       String   @db.Text
-  auto       Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  body        String   @db.Text
+  auto        Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }
 
 // ---------------------------------------------------------------------------
