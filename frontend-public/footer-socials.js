@@ -61,6 +61,30 @@
     for (var i = 0; i < nodes.length; i++) build(nodes[i], cachedItems);
   }
 
+  // Année du copyright. Elle était écrite en dur dans chaque page et vieillissait
+  // toute seule : on la pose au chargement, et on repasse après les rendus du
+  // runtime DC, qui remplace les nœuds du pied de page.
+  function applyYear() {
+    var year = String(new Date().getFullYear());
+    var nodes = document.querySelectorAll("[data-cod-year]");
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].textContent !== year) nodes[i].textContent = year;
+    }
+  }
+
+  function runYear() {
+    applyYear();
+    [200, 600, 1200].forEach(function (d) {
+      setTimeout(applyYear, d);
+    });
+    if (window.MutationObserver) {
+      new MutationObserver(applyYear).observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    }
+  }
+
   function run() {
     if (!document.querySelector("[data-cod-footer-socials]")) return;
     var apiBase =
@@ -90,6 +114,11 @@
       .catch(function () {});
   }
 
-  if (document.readyState !== "loading") run();
-  else document.addEventListener("DOMContentLoaded", run);
+  function start() {
+    runYear();
+    run();
+  }
+
+  if (document.readyState !== "loading") start();
+  else document.addEventListener("DOMContentLoaded", start);
 })();
