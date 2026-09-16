@@ -100,11 +100,17 @@ const SEVERITY: Record<string, Severity> = {
 
 // Une section dit ce que la ligne est vraiment : un lot de travail, une
 // remontée, ou un dépôt de documents et d'accès.
+//
+// À une exception près : Sumvibes a classé huit correctifs dans sa section
+// « Documents du projet ». La colonne `Catégorie` les distingue — elle vaut
+// « fix » sur ces lignes, « document » ou rien sur les vrais documents. On les
+// récupère donc comme tickets plutôt que de les perdre, sans pour autant
+// remonter les clés et accès qui peuplent le reste de la section.
 type Kind = "epic" | "ticket" | "skip";
-function kindOf(section: string): Kind {
+function kindOf(section: string, category: string): Kind {
   const s = normalize(section);
   if (!s) return "epic";
-  if (s.startsWith("documents")) return "skip";
+  if (s.startsWith("documents")) return normalize(category) === "fix" ? "ticket" : "skip";
   if (s.startsWith("retours")) return "ticket";
   return "epic";
 }
@@ -133,6 +139,7 @@ function initialsOf(name: string): string {
 type Row = {
   name: string;
   section: string;
+  category: string;
   project: string;
   parent: string;
   notes: string;
@@ -163,6 +170,7 @@ function readFile(path: string): Row[] {
   const iCreated = at("Created At");
   const iDue = at("Due Date");
   const iPriority = at("Priorité");
+  const iCategory = at("Catégorie");
   const iEst = at("heures estimées", "heure estimées", "Estimated time");
   const iSpent = at("heures réelles", "Actual time");
 
@@ -173,6 +181,7 @@ function readFile(path: string): Row[] {
   return rows.slice(1).map((r) => ({
     name: cell(r, iName),
     section: cell(r, iSection),
+    category: cell(r, iCategory),
     project: cell(r, iProject),
     parent: cell(r, iParent),
     notes: cell(r, iNotes),
@@ -235,10 +244,10 @@ async function main() {
       continue;
     }
 
-    const work = rows.filter((r) => r.project === projectName && kindOf(r.section) !== "skip");
+    const work = rows.filter((r) => r.project === projectName && kindOf(r.section, r.category) !== "skip");
     const skipped = rows.length - work.length;
-    const epicRows = work.filter((r) => kindOf(r.section) === "epic");
-    const ticketRows = work.filter((r) => kindOf(r.section) === "ticket");
+    const epicRows = work.filter((r) => kindOf(r.section, r.category) === "epic");
+    const ticketRows = work.filter((r) => kindOf(r.section, r.category) === "ticket");
 
     console.log(`\n=== ${file} → projet « ${projectName} » ===`);
     console.log(`  ${rows.length} lignes lues · ${skipped} ignorées (documents, hors projet)`);
