@@ -16,6 +16,9 @@ import {
   updateTicketStatusAction,
   updateTicketAction,
   toggleTicketCriterionAction,
+  addTicketCriterionAction,
+  updateTicketCriterionAction,
+  deleteTicketCriterionAction,
   addTicketCommentAction,
 } from "../actions";
 import type { TicketDetailResponse } from "../types";
@@ -170,24 +173,60 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ r
             </div>
           ) : null}
 
-          {ticket.criteria.length > 0 ? (
-            <div className="rounded-xl border border-border bg-panel p-5">
-              <h2 className="text-sm font-semibold text-text">Critères d’acceptation</h2>
-              <div className="mt-3 flex flex-col gap-2">
-                {ticket.criteria.map((c) => (
-                  <form key={c.id} action={toggleTicketCriterionAction.bind(null, c.id, ref)}>
-                    <button
-                      type="submit"
-                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition hover:bg-panel-2"
-                    >
-                      <span className={c.done ? "text-mint" : "text-muted"}>{c.done ? "☑" : "☐"}</span>
-                      <span className={c.done ? "text-muted line-through" : "text-text"}>{c.label}</span>
-                    </button>
-                  </form>
-                ))}
-              </div>
+          <div className="rounded-xl border border-border bg-panel p-5">
+            <h2 className="text-sm font-semibold text-text">Critères d’acceptation</h2>
+            <div className="mt-3 flex flex-col gap-1">
+              {ticket.criteria.length === 0 ? (
+                <p className="py-1 text-sm text-muted">Aucun critère pour l’instant.</p>
+              ) : (
+                ticket.criteria.map((c) => (
+                  <div key={c.id} className="flex items-center gap-2 rounded-lg px-1 py-1 transition hover:bg-panel-2">
+                    {/* Cocher reste un geste à part : un bouton, pas un champ. */}
+                    <form action={toggleTicketCriterionAction.bind(null, c.id, ref)}>
+                      <button
+                        type="submit"
+                        title={c.done ? "Décocher" : "Cocher"}
+                        className={`px-1 text-sm ${c.done ? "text-mint" : "text-muted hover:text-text"}`}
+                      >
+                        {c.done ? "☑" : "☐"}
+                      </button>
+                    </form>
+                    {/* Le libellé s'édite sur place : la saisie EST l'affichage,
+                        et l'enregistrement se fait à la validation du champ. */}
+                    <form action={updateTicketCriterionAction} className="flex-1">
+                      <input type="hidden" name="criterionId" value={c.id} />
+                      <input
+                        name="label"
+                        defaultValue={c.label}
+                        className={`w-full rounded-md border border-transparent bg-transparent px-2 py-1 text-sm outline-none focus:border-border focus:bg-panel-2 ${c.done ? "text-muted line-through" : "text-text"}`}
+                      />
+                    </form>
+                    <form action={deleteTicketCriterionAction.bind(null, c.id)}>
+                      <button
+                        type="submit"
+                        title="Supprimer ce critère"
+                        className="px-1 text-xs text-muted transition hover:text-red"
+                      >
+                        ✕
+                      </button>
+                    </form>
+                  </div>
+                ))
+              )}
             </div>
-          ) : null}
+            <form action={addTicketCriterionAction} className="mt-3 flex gap-2">
+              <input type="hidden" name="ticketId" value={ticket.id} />
+              <input
+                name="label"
+                required
+                placeholder="Ajouter un critère…"
+                className="flex-1 rounded-lg border border-border bg-panel-2 px-3 py-1.5 text-sm text-text outline-none focus:border-mint"
+              />
+              <button type="submit" className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted hover:text-text">
+                Ajouter
+              </button>
+            </form>
+          </div>
 
           <div className="rounded-xl border border-border bg-panel p-5">
             <h2 className="text-sm font-semibold text-text">Commentaires internes</h2>

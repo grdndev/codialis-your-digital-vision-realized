@@ -112,6 +112,19 @@ const bodySchema = z.discriminatedUnion("action", [
     action: z.literal("toggle-criterion"),
     criterionId: z.string().min(1),
   }),
+  // Les critères ne savaient que se cocher : la liste posée à la création était
+  // définitive, alors que c'est justement ce qu'on affine en cours de route.
+  z.object({
+    action: z.literal("add-criterion"),
+    ticketId: z.string().min(1),
+    label: z.string().min(1).max(300),
+  }),
+  z.object({
+    action: z.literal("update-criterion"),
+    criterionId: z.string().min(1),
+    label: z.string().min(1).max(300),
+  }),
+  z.object({ action: z.literal("delete-criterion"), criterionId: z.string().min(1) }),
   z.object({
     action: z.literal("add-comment"),
     ticketId: z.string().min(1),
@@ -257,6 +270,38 @@ export const POST = adminRoute(
           data: { done: !criterion.done },
         });
         return;
+      }
+
+      case "add-criterion": {
+        const ticket = await prisma.ticket.findUnique({
+          where: { id: body.ticketId },
+          select: { ref: true },
+        });
+        if (!ticket) badRequest("Ticket introuvable");
+        const count = await prisma.ticketCriterion.count({ where: { ticketId: body.ticketId } });
+        await prisma.ticketCriterion.create({
+          data: { ticketId: body.ticketId, label: body.label.trim(), order: count },
+        });
+        return { ok: true, ref: ticket.ref };
+      }
+
+      case "update-criterion": {
+        const criterion = await prisma.ticketCriterion.update({
+          where: { id: body.criterionId },
+          data: { label: body.label.trim() },
+          select: { ticket: { select: { ref: true } } },
+        });
+        return { ok: true, ref: criterion.ticket.ref };
+      }
+
+      case "delete-criterion": {
+        const criterion = await prisma.ticketCriterion.findUnique({
+          where: { id: body.criterionId },
+          select: { ticket: { select: { ref: true } } },
+        });
+        if (!criterion) badRequest("Critère introuvable");
+        await prisma.ticketCriterion.delete({ where: { id: body.criterionId } });
+        return { ok: true, ref: criterion.ticket.ref };
       }
 
       case "add-comment":

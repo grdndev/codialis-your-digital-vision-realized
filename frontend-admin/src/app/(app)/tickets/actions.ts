@@ -82,6 +82,40 @@ export async function toggleTicketCriterionAction(criterionId: string, ref: stri
   revalidatePath(`/tickets/${ref}`);
 }
 
+export async function addTicketCriterionAction(formData: FormData) {
+  const ticketId = String(formData.get("ticketId") ?? "");
+  const label = String(formData.get("label") ?? "").trim();
+  if (!ticketId || !label) return;
+
+  const { ref } = await apiPost<{ ref: string }>(TICKETS, {
+    action: "add-criterion",
+    ticketId,
+    label,
+  });
+  revalidatePath(`/tickets/${ref}`);
+}
+
+export async function updateTicketCriterionAction(formData: FormData) {
+  const criterionId = String(formData.get("criterionId") ?? "");
+  const label = String(formData.get("label") ?? "").trim();
+  if (!criterionId || !label) return;
+
+  const { ref } = await apiPost<{ ref: string }>(TICKETS, {
+    action: "update-criterion",
+    criterionId,
+    label,
+  });
+  revalidatePath(`/tickets/${ref}`);
+}
+
+export async function deleteTicketCriterionAction(criterionId: string) {
+  const { ref } = await apiPost<{ ref: string }>(TICKETS, {
+    action: "delete-criterion",
+    criterionId,
+  });
+  revalidatePath(`/tickets/${ref}`);
+}
+
 export async function addTicketCommentAction(formData: FormData) {
   const ticketId = String(formData.get("ticketId") ?? "");
   const ref = String(formData.get("ref") ?? "");
