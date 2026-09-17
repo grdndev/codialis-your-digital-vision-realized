@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma, Role, Severity, TaskStatus, TicketType } from "@prisma/client";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
 import { closeSessions, openSession } from "@/lib/work-sessions";
-import { projectIdsVisibleToDev } from "@/lib/project-access";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +18,7 @@ const SEVERITIES: Severity[] = ["BLOQUANT", "MAJEUR", "MINEUR"];
 
 export const GET = adminRoute(
   ["DEV", "PM", "DIR"],
-  async ({ user }, request) => {
+  async (_ctx, request) => {
     // Chaque filtre accepte PLUSIEURS valeurs, séparées par des virgules :
     // « les bloquants et les majeurs », « ces deux projets ». Une seule valeur
     // par critère obligeait à repasser la liste autant de fois qu'on voulait
@@ -46,18 +45,8 @@ export const GET = adminRoute(
     if (statusFilter.length) where.status = { in: statusFilter };
     if (severityFilter.length) where.severity = { in: severityFilter };
 
-    // Un développeur ne voit que les projets sur lesquels il travaille, plus
-    // les tickets qui lui sont nommément confiés — le filtre projet reste
-    // appliqué par-dessus, deviner un identifiant ne montre donc rien de plus.
-    const visibleProjectIds =
-      user.role === "DEV" ? await projectIdsVisibleToDev(user.id) : null;
-    if (visibleProjectIds) {
-      where.OR = [{ projectId: { in: visibleProjectIds } }, { assigneeId: user.id }];
-    }
-
     const [projects, tickets, team] = await Promise.all([
       prisma.project.findMany({
-        where: visibleProjectIds ? { id: { in: visibleProjectIds } } : undefined,
         include: { client: true },
         orderBy: { name: "asc" },
       }),

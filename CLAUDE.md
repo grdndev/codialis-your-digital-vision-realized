@@ -67,7 +67,7 @@ entry=backend/src/app/api/admin/*/route.ts et frontend-admin/src/app/(app)/*/pag
 
 ## DEC
 DEC-001 [2026-09-17] ACTIVE les droits sont appliqués par l'API, jamais par l'écran why=les gardes de frontend-admin n'évitent que d'afficher, elles ne protègent pas les données alt=confiance au frontend
-DEC-002 [2026-09-17] ACTIVE un DEV accède à un projet s'il y est affecté OU y porte un ticket OU une tâche why=donner du travail sans affecter est courant, et refuser l'accès à ce sur quoi on travaille n'a pas de sens alt=affectation seule (état initial, à l'origine de CC-337)
+DEC-002 [2026-09-17] SUPERSEDED-BY:DEC-014 un DEV accède à un projet s'il y est affecté OU y porte un ticket OU une tâche why=donner du travail sans affecter est courant alt=affectation seule (état initial, à l'origine de CC-337)
 DEC-003 [2026-09-17] ACTIVE le temps passé est MESURÉ depuis les changements de statut, pas déclaré why=demande CC-330 ; la saisie manuelle subsiste pour ce qui ne relève d'aucune tâche alt=saisie manuelle seule
 DEC-004 [2026-09-17] ACTIVE spentHours/hoursSpent sont RECALCULÉS, plus incrémentés why=la part d'une session dépend des autres tâches menées en parallèle, un incrément ne peut pas rester juste alt=compteurs incrémentaux (dérivaient à chaque correction)
 DEC-005 [2026-09-17] ACTIVE le temps s'impute à l'ASSIGNÉ, pas à qui clique why=demande utilisateur ; un tiers qui démarre est averti à l'écran alt=imputer à l'acteur
@@ -79,6 +79,8 @@ DEC-010 [2026-09-17] ACTIVE l'import JSON d'un projet est réservé à PM et DIR
 DEC-011 [2026-09-17] ACTIVE la référence d'un ticket CHANGE quand il change de projet why=arbitrage utilisateur explicite ; une référence porte le projet alt=référence figée (état initial)
 DEC-012 [2026-09-17] ACTIVE les pièces jointes passent par Google Drive (scope drive.file), pas par un stockage maison why=rien à héberger ni à sauvegarder alt=fichiers sur le serveur, base64 en base
 DEC-013 [2026-09-17] ACTIVE emails transactionnels via Brevo en `fetch` brut, sans SDK why=même parti pris que Gemini et Drive, une dépendance de moins alt=SDK officiel
+DEC-014 [2026-09-17] ACTIVE AUCUN cloisonnement interne : DEV, PM et DIR voient tous les projets, tickets, tâches et ressources why=arbitrage Denis ; ProjectAssignment n'a jamais été écrite par aucun écran, la table est vide en prod, la règle ne masquait donc des projets qu'à tout le monde alt=affectation par projet (DEC-002), ANNULE CC-338 — à signaler à Jayan et Gabrielle
+DEC-015 [2026-09-17] ACTIVE les restrictions d'ÉCRITURE demeurent (clôture PM/DIR, import JSON PM/DIR, création client/projet PM/DIR) why=DEC-014 ne porte que sur la lecture alt=tout ouvrir
 
 ## TRAP
 TRAP-001 le serveur `next dev` garde l'ANCIEN client Prisma après une migration → le redémarrer, sinon « Cannot read properties of undefined » sur le nouveau modèle
@@ -94,6 +96,8 @@ TRAP-010 le shadow database de `prisma migrate dev` exige des droits étendus �
 TRAP-011 `monthEnd` des routes RH est une borne EXCLUSIVE → le dernier jour affiché est la veille
 TRAP-012 les bornes de période du planning RH sont décidées par l'ÉCRAN et non recalculées côté API → un créneau se retrouve par égalité exacte de date, tout recalcul le ferait disparaître
 TRAP-013 le conteneur codialis-api affiche un avertissement OpenSSL de Prisma sur chaque commande node → bruit, pas une erreur
+TRAP-014 ProjectAssignment n'est écrite QUE par les seeds, jamais par l'application → ne fonder aucune règle dessus sans construire d'abord l'écran qui la remplit (a produit des 404 inexplicables sur des tickets existants)
+TRAP-015 un cloisonnement de lecture se teste avec un compte qui n'a RIEN (ni affectation, ni tâche, ni ticket) → le jeu d'essai donnait du travail aux deux développeurs sur les deux projets, ce qui masquait le défaut
 
 ## STATE
 branch=main
@@ -104,6 +108,7 @@ wip=aucun
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — le socle Drive est committé, il manque le client ID et le secret OAuth d'un projet Google Cloud à créer par l'utilisateur
 blocked=DEC-009 — confirmer que le calendrier RH peut rester visible par toute l'équipe
+blocked=DEC-014 annule CC-338 (livré le matin même) — prévenir Jayan et Gabrielle, le ticket est resté EN_REVUE avec un commentaire expliquant la volte-face
 manual=balayage éditabilité : l'API accepte la modification des lots, tâches, critères de tâche, deals, saisies de temps, actions et des 7 types de ressources, mais AUCUN écran ne l'appelle encore
 manual=secrets exposés dans les exports Asana importés (Stripe live, OVH, root VPS, Cloudflare R2, Brevo, PayPal, Orange) → à faire tourner
 manual=une tâche importée (lot « DEV », « Faire une page en attendant le dev du site et la déployer ») contient encore des identifiants FTP et base OVH dans sa description → à nettoyer, proposé, sans réponse

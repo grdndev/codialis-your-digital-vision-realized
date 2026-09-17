@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { adminRoute, badRequest } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
-import { devCanSeeProject } from "@/lib/project-access";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 const querySchema = z.object({ id: z.string().min(1), fiche: z.boolean() });
 
-export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
+export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
   const params = request.nextUrl.searchParams;
   const parsed = querySchema.safeParse({
     id: params.get("id"),
@@ -38,10 +37,6 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
     },
   });
   if (!project) return { access: "not-found" as const };
-
-  if (user.role === "DEV" && !(await devCanSeeProject(user.id, project.id))) {
-    return { access: "not-assigned" as const };
-  }
 
   const [team, apis, questions, tickets, clients] = await Promise.all([
     prisma.user.findMany({ where: { role: { in: ["DEV", "PM"] } }, orderBy: { name: "asc" } }),

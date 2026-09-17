@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 const querySchema = z.object({ ref: z.string().min(1) });
 
-export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
+export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
   const parsed = querySchema.safeParse({ ref: request.nextUrl.searchParams.get("ref") });
   if (!parsed.success) badRequest("Référence invalide");
 
@@ -27,17 +27,6 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
     },
   });
   if (!ticket) return { ticket: null };
-
-  // Même cloisonnement que la liste, y compris par URL directe : un
-  // développeur n'ouvre que les tickets des projets sur lesquels il est
-  // affecté, ou ceux qui lui sont nommément assignés.
-  if (user.role === "DEV" && ticket.assigneeId !== user.id) {
-    const assignment = await prisma.projectAssignment.findFirst({
-      where: { userId: user.id, projectId: ticket.projectId },
-      select: { id: true },
-    });
-    if (!assignment) return { ticket: null };
-  }
 
   // De quoi alimenter le formulaire de modification : les épics du projet et
   // l'équipe interne, à qui le ticket peut être réassigné.

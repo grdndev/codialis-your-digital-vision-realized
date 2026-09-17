@@ -13,16 +13,12 @@ export const dynamic = "force-dynamic";
 
 const BASE_TABS = ["api", "url", "acc", "mock", "doc"];
 
-export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
+export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
   const params = request.nextUrl.searchParams;
 
-  // Un développeur ne voit que les projets sur lesquels il est affecté ; les
-  // autres rôles voient tout ce qui n'est pas clôturé.
+  // Toute l'équipe interne voit les projets non clôturés.
   const projects = await prisma.project.findMany({
-    where:
-      user.role === "DEV"
-        ? { assignments: { some: { userId: user.id } } }
-        : { group: { not: "CLO" } },
+    where: { group: { not: "CLO" } },
     include: { client: true },
     orderBy: { name: "asc" },
   });

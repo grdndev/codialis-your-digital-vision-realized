@@ -58,12 +58,11 @@ export type ClientQuestionRow = {
   createdAt: Date;
 };
 
-// `access` sépare les deux écrans vides possibles : projet inexistant (404) et
-// développeur non assigné (message explicite). `apis` et `questions` n'arrivent
-// remplis que si l'onglet Fiche est demandé.
+// `access` ne distingue plus qu'un cas d'écran vide : le projet n'existe pas.
+// Toute l'équipe interne voit tous les projets. `apis` et `questions`
+// n'arrivent remplis que si l'onglet Fiche est demandé.
 export type ProjectDetailResponse =
   | { access: "not-found" }
-  | { access: "not-assigned" }
   | {
       access: "ok";
       project: ProjectDetail;

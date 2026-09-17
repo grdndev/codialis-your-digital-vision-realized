@@ -36,19 +36,6 @@ export default async function ProjectDetailPage({
   // supprimé depuis, on renvoie à la liste plutôt que sur une page d'erreur
   // dont on ne sait pas sortir.
   if (result.access === "not-found") redirect("/projects?liste=1");
-  // Un développeur non assigné voit un refus explicite, pas un 404 : le
-  // projet existe, il n’y a simplement pas accès.
-  if (result.access === "not-assigned") {
-    return (
-      <div className="flex flex-col gap-4">
-        <Link href="/tickets" className="text-sm text-muted hover:text-text">
-          ← Retour
-        </Link>
-        <p className="text-sm text-muted">Vous n’êtes pas assigné à ce projet.</p>
-      </div>
-    );
-  }
-
   const { project, team, apis, questions, tickets, clients } = result;
   // Un développeur consulte, il ne reconfigure pas le projet ni le client.
   const canEdit = user.role === "DIR" || user.role === "PM";
