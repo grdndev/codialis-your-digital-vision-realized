@@ -259,21 +259,30 @@ export const POST = adminRoute(
         if (!ticket) badRequest("Ticket introuvable");
 
         const movedProject = body.projectId !== ticket.projectId;
+        // Déplacer un ticket lui donne une nouvelle référence, au préfixe du
+        // projet d'accueil : une référence porte le projet, en garder une qui
+        // désigne l'ancien induirait en erreur à chaque lecture. Le numéro
+        // reprend au-delà du plus grand déjà attribué sur ce préfixe.
+        let nextRef = ticket.ref;
         if (movedProject) {
           const target = await prisma.project.findUnique({
             where: { id: body.projectId },
-            select: { id: true },
+            select: { id: true, initials: true },
           });
           if (!target) badRequest("Projet introuvable");
+
+          const prefix = `${target.initials}-`;
+          const refs = await prisma.ticket.findMany({
+            where: { ref: { startsWith: prefix } },
+            select: { ref: true },
+          });
+          nextRef = `${prefix}${(maxSuffix(refs.map((r) => r.ref), prefix) ?? 300) + 1}`;
         }
 
         await prisma.ticket.update({
           where: { id: body.ticketId },
           data: {
-            // Déplacer un ticket NE change PAS sa référence : c'est par elle
-            // qu'on le désigne dans un e-mail ou une réunion, la renuméroter
-            // casserait toute trace. Elle garde donc le préfixe du projet
-            // d'origine, ce qui est le moindre mal.
+            ref: nextRef,
             projectId: body.projectId,
             // Un lot appartient à un projet : le changer de projet rend le
             // rattachement caduc.
@@ -290,7 +299,9 @@ export const POST = adminRoute(
             assigneeId: body.assigneeId,
           },
         });
-        return { ok: true, ref: ticket.ref };
+        // La référence renvoyée est la NOUVELLE : le frontend s'en sert pour
+        // revalider et rediriger, l'ancienne adresse n'existe plus.
+        return { ok: true, ref: nextRef, previousRef: ticket.ref };
       }
 
       case "toggle-criterion": {

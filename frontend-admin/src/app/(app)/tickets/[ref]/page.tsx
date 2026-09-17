@@ -90,8 +90,8 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ r
                   </EditField>
                 </div>
                 <p className="text-xs text-muted">
-                  La référence {ticket.ref} ne change pas avec le projet : c’est par elle qu’on
-                  désigne le ticket ailleurs. Déplacer le ticket détache son épic.
+                  Changer de projet renumérote le ticket au préfixe du projet d’accueil —
+                  {" "}{ticket.ref} deviendra autre chose — et détache son épic.
                 </p>
                 <EditField label="Titre">
                   <input name="title" required defaultValue={ticket.title} className="input" />

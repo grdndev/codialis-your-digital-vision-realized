@@ -60,7 +60,7 @@ export async function updateTicketAction(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   if (!ticketId || !title) return;
 
-  const { ref } = await apiPost<{ ref: string }>(TICKETS, {
+  const { ref, previousRef } = await apiPost<{ ref: string; previousRef?: string }>(TICKETS, {
     action: "update",
     ticketId,
     projectId: String(formData.get("projectId") ?? ""),
@@ -77,6 +77,12 @@ export async function updateTicketAction(formData: FormData) {
 
   revalidatePath(`/tickets/${ref}`);
   revalidatePath("/tickets");
+  // Un changement de projet renumérote le ticket : on suit la nouvelle
+  // référence, l'adresse de l'ancienne ne répond plus.
+  if (previousRef && previousRef !== ref) {
+    revalidatePath(`/tickets/${previousRef}`);
+    redirect(`/tickets/${ref}`);
+  }
 }
 
 export async function toggleTicketCriterionAction(criterionId: string, ref: string) {
