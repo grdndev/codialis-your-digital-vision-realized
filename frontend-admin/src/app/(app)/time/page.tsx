@@ -2,7 +2,7 @@ import { requireUser } from "@/lib/auth";
 import { ScreenTabs } from "../finance/screen-tabs";
 import { apiGet } from "@/lib/api";
 import type { TimeScreen } from "./types";
-import { fmtHours, pctOf } from "@/lib/format";
+import { fmtHours, pctOf, projectLabel } from "@/lib/format";
 import { addTimeEntryAction } from "./actions";
 
 function dateKey(d: Date) {
@@ -136,7 +136,7 @@ export default async function TimePage() {
           <p className="text-sm font-medium text-text">Alertes de budget</p>
           {alerts.map(({ p, pct }) => (
             <div key={p.id} className="flex items-center justify-between text-sm">
-              <span className="text-text">{p.client.name} — {p.name}</span>
+              <span className="text-text">{projectLabel(p.client.name, p.name)}</span>
               <span className={pct >= 100 ? "font-medium text-red" : "font-medium text-amber"}>
                 {pct}% · {fmtHours(p.hoursSpent)} / {fmtHours(p.hoursSold)} {pct >= 100 ? "— dépassé, chiffrer un avenant" : "— seuil 80% franchi, prévenir le client"}
               </span>
@@ -155,7 +155,7 @@ export default async function TimePage() {
               const pct = pctOf(p.hoursSpent, p.hoursSold);
               return (
                 <tr key={p.id}>
-                  <td className="whitespace-nowrap px-4 py-3 text-text">{p.client.name} — {p.name}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-text">{projectLabel(p.client.name, p.name)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted">{fmtHours(p.hoursSpent)} / {fmtHours(p.hoursSold)}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export default async function TimePage() {
           <label className="flex flex-col gap-1 text-xs text-muted">Projet
             <select name="projectId" className="input w-44">
               <option value="">Interne / autre</option>
-              {allProjects.map((p) => <option key={p.id} value={p.id}>{p.client.name} — {p.name}</option>)}
+              {allProjects.map((p) => <option key={p.id} value={p.id}>{projectLabel(p.client.name, p.name)}</option>)}
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs text-muted">Rattaché à (optionnel)
@@ -212,12 +212,12 @@ export default async function TimePage() {
               <option value="">Aucun · projet seul</option>
               <optgroup label="Tâches">
                 {openTasks.map((t) => (
-                  <option key={t.id} value={`task:${t.id}`}>{t.epic.project.client.name} — {t.title}</option>
+                  <option key={t.id} value={`task:${t.id}`}>{projectLabel(t.epic.project.client.name, t.title)}</option>
                 ))}
               </optgroup>
               <optgroup label="Tickets">
                 {openTickets.map((t) => (
-                  <option key={t.id} value={`ticket:${t.id}`}>{t.project.client.name} — {t.title}</option>
+                  <option key={t.id} value={`ticket:${t.id}`}>{projectLabel(t.project.client.name, t.title)}</option>
                 ))}
               </optgroup>
             </select>

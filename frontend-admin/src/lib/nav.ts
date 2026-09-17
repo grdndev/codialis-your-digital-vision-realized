@@ -10,7 +10,7 @@ export type NavItem = {
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", roles: ["DIR", "PM"] },
+  { href: "/dashboard", label: "Dashboard", roles: ["DIR", "PM", "DEV"] },
   { href: "/todo", label: "À traiter", roles: ["DIR"] },
   { href: "/projects", label: "Projets", roles: ["DEV", "PM", "DIR"] },
   { href: "/crm", label: "Prospection", roles: ["DIR", "PM"] },

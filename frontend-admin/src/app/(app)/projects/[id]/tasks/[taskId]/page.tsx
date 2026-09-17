@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
-import { fmtHours, fmtDate, STATUS_BADGE_CLASS, STATUS_LABEL } from "@/lib/format";
+import { fmtHours, fmtDate, STATUS_BADGE_CLASS, STATUS_LABEL, projectLabel } from "@/lib/format";
 import { setTaskStatusAction, toggleTaskCriterionAction, addTaskCommentAction } from "../../../actions";
 import type { TaskDetailResponse } from "../../../types";
 import type { TaskStatus } from "@/lib/types";
@@ -47,7 +47,7 @@ export default async function TaskDetailPage({
   return (
     <div className="flex flex-col gap-6">
       <Link href={`/projects/${projectId}`} className="text-sm text-muted hover:text-text">
-        ← {task.epic.project.client.name} — {task.epic.project.name}
+        ← {projectLabel(task.epic.project.client.name, task.epic.project.name)}
       </Link>
 
       {info ? (

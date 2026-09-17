@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { devCanSeeProject } from "@/lib/project-access";
 
 export const dynamic = "force-dynamic";
 
@@ -32,13 +33,10 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
   });
   if (!task || task.epic.projectId !== projectId) return { task: null };
 
-  // Même cloisonnement que le détail projet.
-  if (user.role === "DEV") {
-    const assigned = await prisma.projectAssignment.findFirst({
-      where: { projectId, userId: user.id },
-      select: { id: true },
-    });
-    if (!assigned) return { task: null };
+  // Exactement le même cloisonnement que la fiche projet : la tâche s'affiche
+  // dans la fiche, elle doit s'ouvrir depuis la fiche.
+  if (user.role === "DEV" && !(await devCanSeeProject(user.id, projectId))) {
+    return { task: null };
   }
 
   return { task };

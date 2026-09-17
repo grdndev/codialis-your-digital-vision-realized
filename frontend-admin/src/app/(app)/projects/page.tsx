@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
 import { createClientAction, createProjectAction } from "./actions";
 import type { ProjectsScreen } from "./types";
-import { fmtHours, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL } from "@/lib/format";
+import { fmtHours, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, projectLabel } from "@/lib/format";
 import type { ProjectGroup } from "@/lib/types";
 
 const PHASES: { id: "all" | ProjectGroup; label: string }[] = [
@@ -126,7 +126,7 @@ export default async function ProjectsPage({
                   <td className="px-5 py-3">
                     <Link href={`/projects/${p.id}`} className="block">
                       <p className="font-medium text-text">
-                        {p.client.name} — {p.name}
+                        {projectLabel(p.client.name, p.name)}
                       </p>
                     </Link>
                   </td>

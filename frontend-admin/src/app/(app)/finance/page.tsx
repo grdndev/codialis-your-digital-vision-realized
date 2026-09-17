@@ -2,7 +2,7 @@ import { apiGet } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import { ScreenTabs } from "./screen-tabs";
 import type { FinanceScreen } from "./types";
-import { fmtHours, fmtEUR, fmtDate, pctOf, currentPeriodLabel, INVOICE_STATUS_BADGE_CLASS, INVOICE_STATUS_LABEL } from "@/lib/format";
+import { fmtHours, fmtEUR, fmtDate, pctOf, currentPeriodLabel, INVOICE_STATUS_BADGE_CLASS, INVOICE_STATUS_LABEL, projectLabel } from "@/lib/format";
 import { createInvoiceAction, markInvoicePaidAction, updateInvoiceAction, deleteInvoiceAction } from "./actions";
 
 export default async function FinancePage({
@@ -62,7 +62,7 @@ export default async function FinancePage({
               const rate = p.hoursSpent ? Math.round((p.soldAmount ?? 0) / p.hoursSpent) : 0;
               return (
                 <tr key={p.id}>
-                  <td className="whitespace-nowrap px-4 py-3 text-text">{p.client.name} — {p.name}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-text">{projectLabel(p.client.name, p.name)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted">{fmtEUR(p.soldAmount)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted">{fmtEUR(p.costAmount)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted">{fmtHours(p.hoursSpent)}</td>
@@ -141,7 +141,7 @@ export default async function FinancePage({
           <form action={createInvoiceAction} className="mt-2 grid grid-cols-4 gap-2">
             <select name="projectId" className="input" required>
               <option value="">Projet</option>
-              {projects.map((p) => <option key={p.id} value={p.id}>{p.client.name} — {p.name}</option>)}
+              {projects.map((p) => <option key={p.id} value={p.id}>{projectLabel(p.client.name, p.name)}</option>)}
             </select>
             <input name="label" placeholder="Libellé (ex : jalon 3)" className="input" required />
             <input name="amount" placeholder="Montant €" className="input" required />

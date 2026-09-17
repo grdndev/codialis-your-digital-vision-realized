@@ -5,13 +5,15 @@ import type { TaskStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-// Écran « Dashboard » (direction et cheffes de projet).
+// Écran « Dashboard ».
 //
-// Les listes propres à la direction (les CP assignables, les tâches qu'elle a
-// distribuées) ne sont interrogées que pour un DIR : une CP reçoit des tableaux
-// vides, elle n'a pas à connaître ces données.
+// Ouvert aussi aux développeurs : c'est la seule vue d'ensemble de l'agence, et
+// travailler sans savoir où en sont les autres projets n'aide personne. Les
+// listes propres à la direction (les CP assignables, les tâches qu'elle a
+// distribuées) ne sont interrogées que pour un DIR : les autres reçoivent des
+// tableaux vides, ces données ne les concernent pas.
 
-export const GET = adminRoute(["DIR", "PM"], async ({ user }) => {
+export const GET = adminRoute(["DIR", "PM", "DEV"], async ({ user }) => {
   const isDir = user.role === "DIR";
   const [activeProjects, openTickets, clientCount, myInternalTasks, pmUsers, givenInternalTasks, totalProjects] =
     await Promise.all([
@@ -74,7 +76,9 @@ const bodySchema = z.discriminatedUnion("action", [
   }),
 ]);
 
-export const POST = adminRoute(["DIR", "PM"], async ({ user }, request) => {
+// Distribuer une tâche interne reste à la direction et à la chefferie ; faire
+// avancer la sienne appartient à qui la porte, développeur compris.
+export const POST = adminRoute(["DIR", "PM", "DEV"], async ({ user }, request) => {
   const parsed = bodySchema.safeParse(await jsonBody(request));
   if (!parsed.success) badRequest("Requête invalide");
   const body = parsed.data;

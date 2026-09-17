@@ -3,6 +3,7 @@ import { apiGet } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import type { ActionItemRow, ProjectWithClient } from "@/lib/dto";
 import { createActionItemAction, toggleActionItemAction } from "./actions";
+import { projectLabel } from "@/lib/format";
 
 const GROUPS: { category: "URGENT" | "RELANCE" | "DECISION"; title: string; note: string; color: string; border: string }[] = [
   { category: "URGENT", title: "Urgent", note: "échéance dépassée ou risque immédiat", color: "text-red", border: "border-red/30 bg-red/5" },
@@ -113,7 +114,7 @@ export default async function TodoPage() {
                 <option value="">Aucun</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.client.name} — {p.name}
+                    {projectLabel(p.client.name, p.name)}
                   </option>
                 ))}
               </select>

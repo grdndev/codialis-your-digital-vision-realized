@@ -2,6 +2,7 @@ import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { closeSessions, openSession, refreshProjectSpent } from "@/lib/work-sessions";
+import { projectIdsVisibleToDev } from "@/lib/project-access";
 import type { TaskStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -13,8 +14,14 @@ export const dynamic = "force-dynamic";
 // Lecture ouverte aux développeurs : ils travaillent sur ces projets, la liste
 // leur sert. La création d'un client ou d'un projet reste à la direction et à
 // la chefferie, contrôlée plus bas dans le POST.
-export const GET = adminRoute(["DEV", "PM", "DIR"], async () => ({
+export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }) => ({
+  // Un développeur ne voit que les projets sur lesquels il travaille — ceux où
+  // il est affecté, ou porte une tâche ou un ticket. La liste complète de
+  // l'agence ne le concerne pas, et la faire défiler pour trouver les siens
+  // était une perte de temps.
   allProjects: await prisma.project.findMany({
+    where:
+      user.role === "DEV" ? { id: { in: await projectIdsVisibleToDev(user.id) } } : undefined,
     include: { client: true },
     orderBy: [{ openedAt: "desc" }],
   }),

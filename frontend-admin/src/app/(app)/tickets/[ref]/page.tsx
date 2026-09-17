@@ -2,16 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
-import {
-  fmtHours,
-  fmtDate,
-  STATUS_BADGE_CLASS,
-  STATUS_LABEL,
-  TICKET_TYPE_BADGE_CLASS,
-  TICKET_TYPE_LABEL,
-  SEVERITY_LABEL,
-  DEV_NATURE_LABEL,
-} from "@/lib/format";
+import { fmtHours, fmtDate, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel } from "@/lib/format";
 import {
   setTicketStatusAction,
   updateTicketAction,
@@ -47,7 +38,10 @@ export default async function TicketDetailPage({
   params: Promise<{ ref: string }>;
   searchParams: Promise<{ info?: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
+  // Un développeur va jusqu'à « En revue » : la clôture appartient à la
+  // chefferie de projet et à la direction.
+  const canClose = user.role !== "DEV";
   const { ref } = await params;
   const { info } = await searchParams;
 
@@ -56,7 +50,8 @@ export default async function TicketDetailPage({
   );
   if (!ticket) notFound();
 
-  const advanceLabel = ACTION_LABEL[ticket.status];
+  const advanceLabel =
+    ticket.status === "EN_REVUE" && !canClose ? undefined : ACTION_LABEL[ticket.status];
   const stepList = ticket.steps.split("\n").filter(Boolean);
 
   return (
@@ -101,7 +96,7 @@ export default async function TicketDetailPage({
                     <select name="projectId" defaultValue={ticket.project.id} className="input">
                       {(projects ?? []).map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.client.name} — {p.name}
+                          {projectLabel(p.client.name, p.name)}
                         </option>
                       ))}
                     </select>
@@ -310,7 +305,7 @@ export default async function TicketDetailPage({
           <div className="rounded-xl border border-border bg-panel p-5">
             <h2 className="text-sm font-semibold text-text">Détails</h2>
             <dl className="mt-3 flex flex-col gap-2.5 text-sm">
-              <Row label="Projet" value={`${ticket.project.client.name} — ${ticket.project.name}`} />
+              <Row label="Projet" value={projectLabel(ticket.project.client.name, ticket.project.name)} />
               <Row label="Épic" value={ticket.epic?.title ?? "—"} />
               {ticket.severity ? <Row label="Gravité" value={SEVERITY_LABEL[ticket.severity]} /> : null}
               {ticket.devNature ? <Row label="Nature" value={DEV_NATURE_LABEL[ticket.devNature]} /> : null}
@@ -333,7 +328,9 @@ export default async function TicketDetailPage({
 
             <p className="mt-1 text-xs text-muted">Changer de statut</p>
             <div className="flex flex-wrap gap-1.5">
-              {STATUSES.filter((s) => s !== ticket.status).map((s) => (
+              {STATUSES.filter((s) => s !== ticket.status)
+                .filter((s) => canClose || s !== "TERMINE")
+                .map((s) => (
                 <form key={s} action={setTicketStatusAction.bind(null, ticket.id, s, true)}>
                   <button
                     type="submit"

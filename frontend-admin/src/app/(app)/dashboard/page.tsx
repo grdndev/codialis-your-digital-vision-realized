@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
 import type { DashboardScreen } from "./types";
-import { fmtHours, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_LABEL, STATUS_BADGE_CLASS } from "@/lib/format";
+import { fmtHours, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_LABEL, STATUS_BADGE_CLASS, projectLabel } from "@/lib/format";
 import { assignInternalTaskAction, advanceInternalTaskAction } from "./actions";
 
 export default async function DashboardPage() {
@@ -57,7 +57,7 @@ export default async function DashboardPage() {
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-text">
-                    {p.client.name} — {p.name}
+                    {projectLabel(p.client.name, p.name)}
                   </p>
                   <p className="mt-0.5 text-xs text-muted">{p.phaseLabel}</p>
                 </div>

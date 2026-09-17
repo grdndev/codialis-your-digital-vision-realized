@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
-import type { Prisma, Severity, TaskStatus } from "@prisma/client";
+import type { Prisma, Role, Severity, TaskStatus } from "@prisma/client";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
 import { closeSessions, openSession } from "@/lib/work-sessions";
 
@@ -158,8 +158,15 @@ const bodySchema = z.discriminatedUnion("action", [
 async function applyTicketStatus(
   ticket: { id: string; ref: string; assigneeId: string | null; status: TaskStatus },
   nextStatus: TaskStatus,
-  actorId: string,
+  actor: { id: string; role: Role },
 ): Promise<{ ok: true; ref: string; notice?: string }> {
+  // Clôturer, c'est constater que le travail est bon. Ce n'est pas à qui l'a
+  // fait de le dire : un développeur va jusqu'à « En revue », la chefferie de
+  // projet et la direction ferment.
+  if (nextStatus === "TERMINE" && actor.role === "DEV") {
+    badRequest("La clôture revient à la chefferie de projet ou à la direction.");
+  }
+
   if (nextStatus === ticket.status) return { ok: true, ref: ticket.ref };
 
   let notice: string | undefined;
@@ -169,9 +176,9 @@ async function applyTicketStatus(
       await closeSessions(tx, { ticketId: ticket.id });
       return;
     }
-    const started = await openSession(tx, { ticketId: ticket.id }, ticket.assigneeId, actorId);
+    const started = await openSession(tx, { ticketId: ticket.id }, ticket.assigneeId, actor.id);
     if (!started) notice = "Aucun assigné : le temps ne sera décompté pour personne.";
-    else if (ticket.assigneeId !== actorId)
+    else if (ticket.assigneeId !== actor.id)
       notice = "Le temps sera décompté pour l'utilisateur assigné.";
   });
   return { ok: true, ref: ticket.ref, notice };
@@ -262,13 +269,13 @@ export const POST = adminRoute(
         // Un ticket déjà terminé n'a pas d'étape suivante.
         if (!nextStatus) return { ok: true, ref: ticket.ref };
 
-        return applyTicketStatus(ticket, nextStatus, user.id);
+        return applyTicketStatus(ticket, nextStatus, user);
       }
 
       case "set-status": {
         const ticket = await prisma.ticket.findUnique({ where: { id: body.ticketId } });
         if (!ticket) badRequest("Ticket introuvable");
-        return applyTicketStatus(ticket, body.status, user.id);
+        return applyTicketStatus(ticket, body.status, user);
       }
 
       case "update": {

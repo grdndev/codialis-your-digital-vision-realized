@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
-import { fmtHours, fmtEUR, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL } from "@/lib/format";
+import { fmtHours, fmtEUR, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel } from "@/lib/format";
 import {
   createEpicAction, createTaskAction, updateClientContactAction, updateProjectDescriptionAction,
   addClientQuestionAction, markQuestionAskedAction, answerClientQuestionAction,
@@ -68,7 +68,7 @@ export default async function ProjectDetailPage({
         <div className="mt-2 flex items-start justify-between gap-6">
           <div>
             <h1 className="text-xl font-semibold text-text">
-              {project.client.name} — {project.name}
+              {projectLabel(project.client.name, project.name)}
             </h1>
             <p className="mt-1 max-w-2xl text-sm text-muted">{project.description}</p>
           </div>

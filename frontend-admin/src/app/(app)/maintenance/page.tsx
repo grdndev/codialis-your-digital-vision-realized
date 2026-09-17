@@ -2,7 +2,7 @@ import Link from "next/link";
 import { apiGet } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import type { MaintenanceScreen } from "./types";
-import { fmtHours, fmtEUR, fmtDate, daysFromNow } from "@/lib/format";
+import { fmtHours, fmtEUR, fmtDate, daysFromNow, projectLabel } from "@/lib/format";
 import { startMaintenanceContractAction } from "./actions";
 
 export default async function MaintenancePage() {
@@ -30,7 +30,7 @@ export default async function MaintenancePage() {
               return (
                 <div key={p.id} className="flex items-center justify-between gap-4 px-5 py-3 text-sm">
                   <div className="min-w-0">
-                    <Link href={`/projects/${p.id}`} className="text-text hover:text-mint">{p.client.name} — {p.name}</Link>
+                    <Link href={`/projects/${p.id}`} className="text-text hover:text-mint">{projectLabel(p.client.name, p.name)}</Link>
                     <p className="text-xs text-muted">livré {fmtDate(p.closedAt)}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-4">
@@ -68,7 +68,7 @@ export default async function MaintenancePage() {
                 return (
                   <tr key={c.id}>
                     <td className="whitespace-nowrap px-5 py-3">
-                      <Link href={`/projects/${c.project.id}`} className="text-text hover:text-mint">{c.project.client.name} — {c.project.name}</Link>
+                      <Link href={`/projects/${c.project.id}`} className="text-text hover:text-mint">{projectLabel(c.project.client.name, c.project.name)}</Link>
                     </td>
                     <td className="whitespace-nowrap px-5 py-3 text-muted">{fmtEUR(c.monthlyPrice)} / mois</td>
                     <td className="whitespace-nowrap px-5 py-3">

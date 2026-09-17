@@ -26,7 +26,10 @@ export default async function TicketsPage({
 }) {
   // Le cloisonnement par rôle est appliqué côté API : ici la garde ne sert
   // qu'à exiger une session.
-  await requireUser();
+  const user = await requireUser();
+  // Un développeur va jusqu'à « En revue » : la clôture appartient à la
+  // chefferie de projet et à la direction.
+  const canClose = user.role !== "DEV";
   const sp = await searchParams;
   const view = sp.view === "kanban" ? "kanban" : "table";
 
@@ -231,9 +234,15 @@ export default async function TicketsPage({
                           />
                           <MoveButton
                             ticketId={t.id}
-                            to={STATUSES[col + 1]}
+                            to={canClose || STATUSES[col + 1] !== "TERMINE" ? STATUSES[col + 1] : undefined}
                             label="›"
-                            title={col < STATUSES.length - 1 ? `Vers « ${STATUS_LABEL[STATUSES[col + 1]]} »` : ""}
+                            title={
+                              !canClose && STATUSES[col + 1] === "TERMINE"
+                                ? "La clôture revient à la chefferie de projet ou à la direction"
+                                : col < STATUSES.length - 1
+                                  ? `Vers « ${STATUS_LABEL[STATUSES[col + 1]]} »`
+                                  : ""
+                            }
                           />
                         </div>
                       </div>

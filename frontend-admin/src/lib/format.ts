@@ -240,3 +240,13 @@ export function fmtDateTime(date: Date | null): string | null {
   if (!date) return null;
   return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(date);
 }
+
+// « Client — Projet », sauf quand les deux portent le même nom : un client qui
+// n'a qu'un projet le nomme souvent comme lui, et « Sumvibes — Sumvibes »
+// n'apprend rien tout en occupant deux fois la place.
+export function projectLabel(clientName: string | null | undefined, projectName: string): string {
+  const client = (clientName ?? "").trim();
+  const project = projectName.trim();
+  if (!client || client.toLowerCase() === project.toLowerCase()) return project;
+  return `${client} — ${project}`;
+}
