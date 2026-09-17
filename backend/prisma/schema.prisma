@@ -109,6 +109,9 @@ model User {
   presenceRules         PresenceRecurrence[]
   plannedShifts         PlannedShift[]
   travelEntries         TravelEntry[]
+  workSchedule          WorkSchedule?
+  workSessions          WorkSession[]        @relation("SessionOwner")
+  startedSessions       WorkSession[]        @relation("SessionStarter")
 }
 
 model Client {
@@ -212,10 +215,11 @@ model Task {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  criteria    TaskCriterion[]
-  comments    TaskComment[]
-  attachments TaskAttachment[]
-  timeEntries TimeEntry[]
+  criteria     TaskCriterion[]
+  comments     TaskComment[]
+  attachments  TaskAttachment[]
+  timeEntries  TimeEntry[]
+  workSessions WorkSession[]
 
   @@index([epicId])
 }
@@ -279,6 +283,7 @@ model Ticket {
   attachments   TicketAttachment[]
   triageReplies TriageReply[]
   timeEntries   TimeEntry[]
+  workSessions  WorkSession[]
 
   @@index([projectId])
   @@index([epicId])
@@ -827,6 +832,55 @@ enum ShiftKind {
 
 // One row per person per day — a lightweight planned-schedule grid, not a
 // full calendar. @@unique makes "set this day's status" an upsert.
+// Horaires de travail d'une personne, en minutes depuis minuit. Ils servent à
+// rogner les chronomètres : une tâche laissée « en cours » le vendredi soir ne
+// doit pas compter le week-end, ni la nuit, ni la pause déjeuner.
+model WorkSchedule {
+  userId           String   @id
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startMin         Int      @default(540)
+  breakStartMin    Int?     @default(720)
+  breakEndMin      Int?     @default(780)
+  endMin           Int      @default(1080)
+  // Jours travaillés au format ISO : 1 = lundi … 7 = dimanche.
+  weekdays         String   @default("1,2,3,4,5")
+  // Plage supplémentaire facultative, comptée en plus des horaires ordinaires.
+  overtimeStartMin Int?
+  overtimeEndMin   Int?
+  updatedAt        DateTime @updatedAt
+}
+
+// Un chronomètre : ouvert quand une tâche ou un ticket passe « En cours »,
+// fermé dès qu'il en sort.
+//
+// `userId` est la personne ASSIGNÉE au moment du démarrage, pas celle qui a
+// cliqué — c'est son temps qu'on décompte, et ses horaires qui rognent la
+// session. `startedById` garde qui a lancé, pour pouvoir l'expliquer.
+//
+// `hours` est le temps retenu après rognage ET partage entre les sessions
+// menées en parallèle. Il est recalculé à chaque fermeture pour toutes les
+// sessions de la personne sur les journées touchées : une session qui se ferme
+// change la part des autres.
+model WorkSession {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation("SessionOwner", fields: [userId], references: [id], onDelete: Cascade)
+  startedById String?
+  startedBy   User?     @relation("SessionStarter", fields: [startedById], references: [id])
+  taskId      String?
+  task        Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  ticketId    String?
+  ticket      Ticket?   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  startedAt   DateTime
+  endedAt     DateTime?
+  hours       Float     @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, startedAt])
+  @@index([taskId])
+  @@index([ticketId])
+}
+
 model PlannedShift {
   id     String    @id @default(cuid())
   userId String
