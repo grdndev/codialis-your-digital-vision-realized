@@ -1,12 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { parseNumber } from "@/lib/format";
 import { apiPost } from "@/lib/api";
 
 export async function addTimeEntryAction(formData: FormData) {
   const label = String(formData.get("label") ?? "").trim();
   const dateRaw = String(formData.get("date") ?? "");
-  const hours = parseFloat(String(formData.get("hours") ?? "0").replace(",", ".")) || 0;
+  const hours = parseNumber(formData.get("hours"));
   if (!label || !dateRaw || hours <= 0) return;
 
   // Le select « Rattaché à » encode sa cible en `task:<id>` / `ticket:<id>`.

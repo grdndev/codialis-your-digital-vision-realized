@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { parseNumber } from "@/lib/format";
 import { redirect } from "next/navigation";
 import { apiPost } from "@/lib/api";
 import type { DevNature, Severity, TaskStatus, TicketType } from "@/lib/types";
@@ -22,7 +23,7 @@ export async function createTicketAction(formData: FormData) {
     epicId: String(formData.get("epicId") ?? "") || null,
     severity: (String(formData.get("severity") ?? "") || null) as Severity | null,
     devNature: (String(formData.get("devNature") ?? "") || null) as DevNature | null,
-    estHours: parseFloat(String(formData.get("estHours") ?? "0").replace(",", ".")) || 0,
+    estHours: parseNumber(formData.get("estHours")),
     // Vide = laisser l'API décider : un développeur se voit attribuer son ticket.
     assigneeId: String(formData.get("assigneeId") ?? "") || null,
   });
@@ -70,7 +71,7 @@ export async function updateTicketAction(formData: FormData) {
     steps: String(formData.get("steps") ?? "").trim(),
     severity: (String(formData.get("severity") ?? "") || null) as Severity | null,
     devNature: (String(formData.get("devNature") ?? "") || null) as DevNature | null,
-    estHours: parseFloat(String(formData.get("estHours") ?? "0").replace(",", ".")) || 0,
+    estHours: parseNumber(formData.get("estHours")),
     assigneeId: String(formData.get("assigneeId") ?? "") || null,
     epicId: String(formData.get("epicId") ?? "") || null,
   });
@@ -88,6 +89,13 @@ export async function updateTicketAction(formData: FormData) {
 export async function toggleTicketCriterionAction(criterionId: string, ref: string) {
   await apiPost(TICKETS, { action: "toggle-criterion", criterionId });
   revalidatePath(`/tickets/${ref}`);
+}
+
+export async function deleteTicketAction(ticketId: string) {
+  await apiPost(TICKETS, { action: "delete", ticketId });
+  revalidatePath("/tickets");
+  // La fiche n'existe plus : on repart sur la liste.
+  redirect("/tickets");
 }
 
 export async function addTicketCriterionAction(formData: FormData) {

@@ -20,6 +20,7 @@ import {
   updateTicketCriterionAction,
   deleteTicketCriterionAction,
   addTicketCommentAction,
+  deleteTicketAction,
 } from "../actions";
 import type { TicketDetailResponse } from "../types";
 
@@ -312,6 +313,25 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ r
                 </button>
               </form>
             )}
+            {/* Supprimer emporte critères, commentaires et pièces jointes. Les
+                heures déjà saisies restent au projet : le travail a eu lieu. */}
+            <details className="mt-2 border-t border-border pt-2">
+              <summary className="cursor-pointer text-xs text-muted hover:text-red">
+                Supprimer ce ticket
+              </summary>
+              <p className="mt-2 text-xs text-muted">
+                Ses critères, commentaires et pièces jointes partent avec lui. Les heures
+                déjà saisies restent imputées au projet.
+              </p>
+              <form action={deleteTicketAction.bind(null, ticket.id)} className="mt-2">
+                <button
+                  type="submit"
+                  className="w-full rounded-lg border border-red/40 px-3 py-2 text-xs font-medium text-red transition hover:bg-red/10"
+                >
+                  Supprimer définitivement {ticket.ref}
+                </button>
+              </form>
+            </details>
           </div>
         </div>
       </div>

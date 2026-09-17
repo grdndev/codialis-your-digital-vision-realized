@@ -121,9 +121,6 @@ export default async function PilotagePage() {
           <form action={updateMonthlyRevenueTargetAction} className="mt-2 flex items-center gap-2">
             <input
               name="monthlyRevenueTarget"
-              type="number"
-              min="1"
-              step="1000"
               defaultValue={monthlyRevenueTarget}
               className="input w-40"
             />
@@ -162,9 +159,6 @@ export default async function PilotagePage() {
           <form action={updateMonthlyChargesAction} className="mt-2 flex items-center gap-2">
             <input
               name="monthlyCharges"
-              type="number"
-              min="0"
-              step="100"
               defaultValue={monthlyCharges}
               className="input w-40"
             />

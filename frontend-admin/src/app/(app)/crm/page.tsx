@@ -107,9 +107,6 @@ export default async function CrmPage({
           <form action={updateQuarterlyTargetAction} className="mt-2 flex items-center gap-2">
             <input
               name="quarterlyTarget"
-              type="number"
-              min="1"
-              step="1000"
               defaultValue={quarterlyTarget}
               className="input w-40"
             />

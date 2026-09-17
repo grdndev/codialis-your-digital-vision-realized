@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { parseNumber } from "@/lib/format";
 import { redirect } from "next/navigation";
 import { ApiError, apiPost } from "@/lib/api";
 
@@ -13,7 +14,7 @@ function fail(message: string): never {
 }
 
 function num(fd: FormData, key: string): number {
-  return parseFloat(String(fd.get(key) ?? "0").replace(",", ".")) || 0;
+  return parseNumber(fd.get(key));
 }
 
 export async function createClientAction(formData: FormData) {
@@ -128,7 +129,7 @@ export async function createEpicAction(formData: FormData) {
     action: "create-epic",
     projectId,
     title,
-    estHours: parseFloat(String(formData.get("estHours") ?? "0").replace(",", ".")) || 0,
+    estHours: parseNumber(formData.get("estHours")),
     leadId: String(formData.get("leadId") ?? "") || null,
     dueAt: dueAtRaw ? new Date(`${dueAtRaw}T00:00:00.000Z`).toISOString() : null,
   });
@@ -146,7 +147,7 @@ export async function createTaskAction(formData: FormData) {
     epicId,
     projectId,
     title,
-    estHours: parseFloat(String(formData.get("estHours") ?? "0").replace(",", ".")) || 0,
+    estHours: parseNumber(formData.get("estHours")),
     assigneeId: String(formData.get("assigneeId") ?? "") || null,
   });
 

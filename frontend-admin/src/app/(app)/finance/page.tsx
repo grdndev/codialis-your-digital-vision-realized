@@ -3,10 +3,16 @@ import { requireRole } from "@/lib/auth";
 import { ScreenTabs } from "./screen-tabs";
 import type { FinanceScreen } from "./types";
 import { fmtHours, fmtEUR, fmtDate, pctOf, currentPeriodLabel, INVOICE_STATUS_BADGE_CLASS, INVOICE_STATUS_LABEL } from "@/lib/format";
-import { createInvoiceAction, markInvoicePaidAction } from "./actions";
+import { createInvoiceAction, markInvoicePaidAction, updateInvoiceAction, deleteInvoiceAction } from "./actions";
 
-export default async function FinancePage() {
+export default async function FinancePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const user = await requireRole("PM", "DIR");
+  // Refus de l'API — une facture payée, par exemple — remonté dans l'URL.
+  const { error } = await searchParams;
 
   const { invoices, activeProjects, projects } = await apiGet<FinanceScreen>("/api/admin/finance");
 
@@ -31,6 +37,10 @@ export default async function FinancePage() {
         </div>
         <ScreenTabs active="/finance" role={user.role} />
       </div>
+
+      {error ? (
+        <p className="rounded-xl border border-red/30 bg-red/10 px-4 py-3 text-sm text-red">{error}</p>
+      ) : null}
 
       <div className="grid grid-cols-4 gap-4">
         <Kpi label="Facturé" value={fmtEUR(billed)} note={`${invoices.length} factures`} />
@@ -75,24 +85,55 @@ export default async function FinancePage() {
         </div>
         <div className="mt-3 flex flex-col divide-y divide-border">
           {invoices.map((inv) => (
-            <div key={inv.id} className="flex items-center justify-between gap-4 py-2.5 text-sm">
-              <div className="min-w-0">
-                <p className="text-text">{inv.ref} · {inv.label}</p>
-                <p className="text-xs text-muted">
-                  {inv.status === "PAYEE" ? `payée ${fmtDate(inv.paidAt)}` : inv.dueAt ? `échue ${fmtDate(inv.dueAt)}` : `émise ${fmtDate(inv.issuedAt)}`}
-                </p>
+            <div key={inv.id} className="flex flex-col gap-2 py-2.5 text-sm">
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-text">{inv.ref} · {inv.label}</p>
+                  <p className="text-xs text-muted">
+                    {inv.status === "PAYEE" ? `payée ${fmtDate(inv.paidAt)}` : inv.dueAt ? `échue ${fmtDate(inv.dueAt)}` : `émise ${fmtDate(inv.issuedAt)}`}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className="font-medium text-text">{fmtEUR(inv.amount)}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${INVOICE_STATUS_BADGE_CLASS[inv.status]}`}>
+                    {INVOICE_STATUS_LABEL[inv.status]}
+                  </span>
+                  {inv.status !== "PAYEE" ? (
+                    <form action={markInvoicePaidAction.bind(null, inv.id)}>
+                      <button type="submit" className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:text-text">Marquer payée</button>
+                    </form>
+                  ) : null}
+                </div>
               </div>
-              <div className="flex shrink-0 items-center gap-3">
-                <span className="font-medium text-text">{fmtEUR(inv.amount)}</span>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${INVOICE_STATUS_BADGE_CLASS[inv.status]}`}>
-                  {INVOICE_STATUS_LABEL[inv.status]}
-                </span>
-                {inv.status !== "PAYEE" ? (
-                  <form action={markInvoicePaidAction.bind(null, inv.id)}>
-                    <button type="submit" className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:text-text">Marquer payée</button>
-                  </form>
-                ) : null}
-              </div>
+              {/* Une facture payée est une pièce comptable : on la rectifie par
+                  un avoir, pas en réécrivant son montant. Tant qu'elle ne l'est
+                  pas, elle se corrige et se supprime. */}
+              {inv.status !== "PAYEE" ? (
+                <details>
+                  <summary className="cursor-pointer text-xs text-muted hover:text-text">Modifier</summary>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <form action={updateInvoiceAction} className="flex flex-1 flex-wrap items-center gap-2">
+                      <input type="hidden" name="invoiceId" value={inv.id} />
+                      <input name="label" defaultValue={inv.label} className="input flex-1" />
+                      <input name="amount" defaultValue={inv.amount} className="input w-32" />
+                      <input
+                        name="dueAt"
+                        type="date"
+                        defaultValue={inv.dueAt ? new Date(inv.dueAt).toISOString().slice(0, 10) : ""}
+                        className="input w-40"
+                      />
+                      <button type="submit" className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:text-text">
+                        Enregistrer
+                      </button>
+                    </form>
+                    <form action={deleteInvoiceAction.bind(null, inv.id)}>
+                      <button type="submit" className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:border-red/50 hover:text-red">
+                        Supprimer
+                      </button>
+                    </form>
+                  </div>
+                </details>
+              ) : null}
             </div>
           ))}
         </div>

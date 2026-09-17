@@ -195,6 +195,35 @@ export const DRAFT_STATUS_LABEL: Record<DraftStatus, string> = {
   IGNORED: "Ignoré",
 };
 
+// Lecture d'un nombre saisi dans un formulaire, à la française.
+//
+// `parseFloat` seul ne suffit pas : une saisie « 1 500 » — espace de milliers,
+// réflexe naturel — donne 1, et « 1.500 » donne 1,5. C'est ce qui faisait
+// atterrir des factures à 1 €. On enlève donc tous les espaces (y compris les
+// insécables que produisent le collage et le pavé numérique), on traite la
+// virgule comme séparateur décimal, et le point comme séparateur de milliers
+// quand il est suivi d'exactement trois chiffres qui ne terminent pas par une
+// décimale.
+export function parseNumber(value: unknown): number {
+  let text = String(value ?? "")
+    .replace(/[\s\u00a0\u202f\u2009]/g, "")
+    .replace(/€/g, "")
+    .trim();
+  if (!text) return 0;
+
+  const hasComma = text.includes(",");
+  if (hasComma) {
+    // La virgule tranche : tout point restant est un séparateur de milliers.
+    text = text.replace(/\./g, "").replace(",", ".");
+  } else {
+    // Sans virgule, « 1.500 » est mille cinq cents, « 1.5 » est un et demi.
+    text = text.replace(/\.(?=\d{3}(?:\D|$))/g, "");
+  }
+
+  const n = Number.parseFloat(text);
+  return Number.isFinite(n) ? n : 0;
+}
+
 // Pourcentage d'une part sur un tout. Un tout nul ou absent vaut 0 % et non
 // NaN : un projet fraîchement ouvert n'a ni heures vendues ni montant, et
 // « NaN% » s'affichait tel quel à l'écran.

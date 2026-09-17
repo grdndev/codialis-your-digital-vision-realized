@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { parseNumber } from "@/lib/format";
 import { apiPost } from "@/lib/api";
 import type { ShiftKind } from "@/lib/types";
 import type { AbsenceType, HalfDay, HoursEntryKind, RecurrenceEffect, RecurrenceFreq } from "./types";
@@ -12,7 +13,7 @@ function str(fd: FormData, key: string) {
 }
 
 function num(fd: FormData, key: string): number {
-  return parseFloat(str(fd, key).replace(",", ".")) || 0;
+  return parseNumber(fd.get(key));
 }
 
 // Les dates sont saisies au jour. 09:00 UTC est la convention de toutes les

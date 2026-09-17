@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { parseNumber } from "@/lib/format";
 import { redirect } from "next/navigation";
 import { ApiError, apiPost } from "@/lib/api";
 import type { CsvImportResult } from "./types";
@@ -11,7 +12,7 @@ const CRM = "/api/admin/crm";
 // Les champs numériques optionnels : vide = « non renseigné », donc null, pas 0.
 function optionalNum(value: FormDataEntryValue | null): number | null {
   if (!value) return null;
-  const n = parseFloat(String(value).replace(",", "."));
+  const n = parseNumber(value);
   return Number.isFinite(n) ? n : null;
 }
 
@@ -87,7 +88,7 @@ export async function addDealNoteAction(formData: FormData) {
 }
 
 export async function updateQuarterlyTargetAction(formData: FormData) {
-  const value = parseFloat(String(formData.get("quarterlyTarget") ?? "").replace(",", "."));
+  const value = parseNumber(formData.get("quarterlyTarget"));
   if (!Number.isFinite(value) || value <= 0) return;
 
   await apiPost(CRM, { action: "update-quarterly-target", value });
@@ -121,7 +122,7 @@ export async function createDealAction(formData: FormData) {
     action: "create",
     name,
     // Le champ est saisi en k€ ; la conversion en euros se fait côté API.
-    amountK: parseFloat(String(formData.get("amount") ?? "0").replace(",", ".")) || 0,
+    amountK: parseNumber(formData.get("amount")),
     note: String(formData.get("note") ?? ""),
   });
   revalidatePath("/crm");

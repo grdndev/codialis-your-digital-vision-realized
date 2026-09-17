@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { parseNumber } from "@/lib/format";
 import { apiPost } from "@/lib/api";
 import type { Severity, TriageState } from "@/lib/types";
 
@@ -16,7 +17,7 @@ export async function qualifyTicketAction(formData: FormData) {
     module: String(formData.get("module") ?? "") || null,
     severity: (String(formData.get("severity") ?? "") || null) as Severity | null,
     assigneeId: String(formData.get("assigneeId") ?? "") || null,
-    estHours: parseFloat(String(formData.get("estHours") ?? "0").replace(",", ".")) || 0,
+    estHours: parseNumber(formData.get("estHours")),
     // Champ absent = le formulaire ne proposait pas de transition : l'état du
     // triage reste tel quel.
     nextState: (String(formData.get("nextState") ?? "") || null) as TriageState | null,

@@ -143,6 +143,7 @@ const bodySchema = z.discriminatedUnion("action", [
     label: z.string().min(1).max(300),
   }),
   z.object({ action: z.literal("delete-criterion"), criterionId: z.string().min(1) }),
+  z.object({ action: z.literal("delete"), ticketId: z.string().min(1) }),
   z.object({
     action: z.literal("add-comment"),
     ticketId: z.string().min(1),
@@ -315,6 +316,25 @@ export const POST = adminRoute(
           data: { done: !criterion.done },
         });
         return;
+      }
+
+      case "delete": {
+        // Critères, commentaires et pièces jointes tombent en cascade (schéma).
+        // Les saisies de temps, elles, ne tombent PAS : `TimeEntry.ticketId` est
+        // une relation facultative, les heures déjà passées restent au projet.
+        // Elles perdent seulement leur rattachement au ticket, ce qui est juste
+        // — le travail a bien eu lieu.
+        const ticket = await prisma.ticket.findUnique({
+          where: { id: body.ticketId },
+          select: { ref: true },
+        });
+        if (!ticket) badRequest("Ticket introuvable");
+        await prisma.timeEntry.updateMany({
+          where: { ticketId: body.ticketId },
+          data: { ticketId: null },
+        });
+        await prisma.ticket.delete({ where: { id: body.ticketId } });
+        return { ok: true, ref: ticket.ref };
       }
 
       case "add-criterion": {
