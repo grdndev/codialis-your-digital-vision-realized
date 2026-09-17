@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { refreshAfterTimeChange, liveSessionHours } from "@/lib/work-sessions";
 import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +10,12 @@ export const dynamic = "force-dynamic";
 // et la vue d'équipe est ouverte à tous (elle l'était déjà avant la séparation).
 
 export const GET = adminRoute(["DEV", "PM", "DIR"], async () => {
-  const [entries, activeProjects, allProjects, openTasks, openTickets] = await Promise.all([
+  // Le temps mesuré remonté à l'écran : ce qui tourne en ce moment, et les deux
+  // dernières semaines pour donner du contexte à la répartition.
+  const since = new Date(Date.now() - 14 * 24 * 3_600_000);
+
+  const [entries, activeProjects, allProjects, openTasks, openTickets, sessions] =
+    await Promise.all([
     prisma.timeEntry.findMany({
       include: { user: true, project: { include: { client: true } } },
       orderBy: { date: "asc" },
@@ -34,8 +40,43 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async () => {
       include: { project: { include: { client: true } } },
       orderBy: { title: "asc" },
     }),
+    prisma.workSession.findMany({
+      where: { OR: [{ endedAt: null }, { startedAt: { gte: since } }] },
+      include: {
+        user: { select: { id: true, name: true, initials: true } },
+        task: {
+          select: {
+            id: true,
+            title: true,
+            epic: { select: { project: { select: { name: true, client: { select: { name: true } } } } } },
+          },
+        },
+        ticket: {
+          select: {
+            id: true,
+            ref: true,
+            title: true,
+            project: { select: { name: true, client: { select: { name: true } } } },
+          },
+        },
+      },
+      orderBy: { startedAt: "desc" },
+    }),
   ]);
-  return { entries, activeProjects, allProjects, openTasks, openTickets };
+
+  // La part d'une session encore ouverte bouge à chaque seconde et dépend des
+  // autres tâches menées en parallèle : on la calcule à la lecture plutôt que
+  // d'écrire en base à chaque affichage.
+  const live = await liveSessionHours(prisma, sessions);
+
+  return {
+    entries,
+    activeProjects,
+    allProjects,
+    openTasks,
+    openTickets,
+    sessions: sessions.map((s) => ({ ...s, hours: live.get(s.id) ?? s.hours })),
+  };
 });
 
 const bodySchema = z.discriminatedUnion("action", [
@@ -60,32 +101,17 @@ const bodySchema = z.discriminatedUnion("action", [
   }),
 ]);
 
-// Les compteurs d'heures passées (tâche, ticket, projet, contrat) sont des
-// colonnes incrémentées à la saisie, pas des sommes recalculées. Corriger ou
-// supprimer une entrée doit donc les rattraper du même écart, sans quoi
-// l'avancement affiché dériverait à chaque correction.
-async function shiftCounters(
+// Les heures passées d'une tâche, d'un ticket ou d'un projet sont désormais
+// RECALCULÉES (voir `work-sessions`) : elles additionnent le mesuré et le
+// déclaré, et une part mesurée dépend des autres tâches menées en parallèle.
+// Seul le quota mensuel d'un contrat de maintenance reste incrémental — il
+// compte le facturable du mois, pas le temps passé.
+async function shiftContract(
   tx: Prisma.TransactionClient,
-  entry: { projectId: string | null; taskId: string | null; ticketId: string | null; date: Date },
+  entry: { projectId: string | null; date: Date },
   delta: number,
 ) {
-  if (delta === 0) return;
-  if (entry.taskId) {
-    await tx.task.update({ where: { id: entry.taskId }, data: { spentHours: { increment: delta } } });
-  }
-  if (entry.ticketId) {
-    await tx.ticket.update({
-      where: { id: entry.ticketId },
-      data: { spentHours: { increment: delta } },
-    });
-  }
-  if (!entry.projectId) return;
-
-  await tx.project.update({
-    where: { id: entry.projectId },
-    data: { hoursSpent: { increment: delta }, lastActivityAt: new Date() },
-  });
-
+  if (delta === 0 || !entry.projectId) return;
   const now = new Date();
   const sameMonth =
     entry.date.getUTCFullYear() === now.getUTCFullYear() &&
@@ -94,12 +120,11 @@ async function shiftCounters(
   const contract = await tx.maintenanceContract.findUnique({
     where: { projectId: entry.projectId },
   });
-  if (contract) {
-    await tx.maintenanceContract.update({
-      where: { projectId: entry.projectId },
-      data: { usedHoursThisMonth: { increment: delta } },
-    });
-  }
+  if (!contract) return;
+  await tx.maintenanceContract.update({
+    where: { projectId: entry.projectId },
+    data: { usedHoursThisMonth: { increment: delta } },
+  });
 }
 
 export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
@@ -120,19 +145,24 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
 
     await prisma.$transaction(async (tx) => {
       if (body.action === "delete-entry") {
-        await shiftCounters(tx, entry, -entry.hours);
+        await shiftContract(tx, entry, -entry.hours);
         await tx.timeEntry.delete({ where: { id: entry.id } });
-        return;
+      } else {
+        await shiftContract(tx, entry, body.hours - entry.hours);
+        await tx.timeEntry.update({
+          where: { id: entry.id },
+          data: {
+            label: body.label,
+            date: new Date(body.date),
+            hours: body.hours,
+            billable: body.billable,
+          },
+        });
       }
-      await shiftCounters(tx, entry, body.hours - entry.hours);
-      await tx.timeEntry.update({
-        where: { id: entry.id },
-        data: {
-          label: body.label,
-          date: new Date(body.date),
-          hours: body.hours,
-          billable: body.billable,
-        },
+      await refreshAfterTimeChange(tx, {
+        taskIds: entry.taskId ? [entry.taskId] : [],
+        ticketIds: entry.ticketId ? [entry.ticketId] : [],
+        projectIds: entry.projectId ? [entry.projectId] : [],
       });
     });
 
@@ -153,16 +183,10 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
     // ne peut pas contredire le projet choisi séparément dans le formulaire.
     if (taskId) {
       const task = await tx.task.findUnique({ where: { id: taskId }, include: { epic: true } });
-      if (task) {
-        projectId = task.epic.projectId;
-        await tx.task.update({ where: { id: taskId }, data: { spentHours: { increment: hours } } });
-      }
+      if (task) projectId = task.epic.projectId;
     } else if (ticketId) {
       const ticket = await tx.ticket.findUnique({ where: { id: ticketId } });
-      if (ticket) {
-        projectId = ticket.projectId;
-        await tx.ticket.update({ where: { id: ticketId }, data: { spentHours: { increment: hours } } });
-      }
+      if (ticket) projectId = ticket.projectId;
     }
 
     await tx.timeEntry.create({
@@ -179,25 +203,12 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       },
     });
 
-    if (projectId) {
-      await tx.project.update({
-        where: { id: projectId },
-        data: { hoursSpent: { increment: hours }, lastActivityAt: new Date() },
-      });
-
-      const now = new Date();
-      const sameMonth =
-        date.getUTCFullYear() === now.getUTCFullYear() && date.getUTCMonth() === now.getUTCMonth();
-      if (sameMonth) {
-        const contract = await tx.maintenanceContract.findUnique({ where: { projectId } });
-        if (contract) {
-          await tx.maintenanceContract.update({
-            where: { projectId },
-            data: { usedHoursThisMonth: { increment: hours } },
-          });
-        }
-      }
-    }
+    await shiftContract(tx, { projectId, date }, hours);
+    await refreshAfterTimeChange(tx, {
+      taskIds: taskId ? [taskId] : [],
+      ticketIds: ticketId ? [ticketId] : [],
+      projectIds: projectId ? [projectId] : [],
+    });
   });
 
   // Le frontend a besoin du projet réellement imputé pour revalider sa page.

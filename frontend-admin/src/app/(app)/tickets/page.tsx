@@ -267,7 +267,7 @@ function MoveButton({
     return <span className="px-2 py-0.5 text-xs text-muted/30">{label}</span>;
   }
   return (
-    <form action={setTicketStatusAction.bind(null, ticketId, to)}>
+    <form action={setTicketStatusAction.bind(null, ticketId, to, false)}>
       <button
         type="submit"
         title={title}

@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { fmtHours, fmtDate, STATUS_BADGE_CLASS, STATUS_LABEL } from "@/lib/format";
-import { updateTaskStatusAction, toggleTaskCriterionAction, addTaskCommentAction } from "../../../actions";
+import { setTaskStatusAction, toggleTaskCriterionAction, addTaskCommentAction } from "../../../actions";
 import type { TaskDetailResponse } from "../../../types";
+import type { TaskStatus } from "@/lib/types";
 
 const ACTION_LABEL: Record<string, string> = {
   A_FAIRE: "Démarrer",
@@ -12,13 +13,27 @@ const ACTION_LABEL: Record<string, string> = {
   EN_REVUE: "Valider",
 };
 
+// Toutes les colonnes sont atteignables, y compris en arrière : arrêter une
+// tâche ne doit pas obliger à la déclarer livrée. C'est aussi ce qui coupe le
+// chronomètre, qui tourne tant que la tâche est « En cours ».
+const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
+
+const NEXT: Record<string, TaskStatus | undefined> = {
+  A_FAIRE: "EN_COURS",
+  EN_COURS: "EN_REVUE",
+  EN_REVUE: "TERMINE",
+};
+
 export default async function TaskDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; taskId: string }>;
+  searchParams: Promise<{ info?: string }>;
 }) {
   await requireUser();
   const { id: projectId, taskId } = await params;
+  const { info } = await searchParams;
 
   // Le backend vérifie que la tâche appartient bien à ce projet, et que le
   // rôle y a accès : dans les deux cas d'échec il renvoie `null`.
@@ -34,6 +49,12 @@ export default async function TaskDetailPage({
       <Link href={`/projects/${projectId}`} className="text-sm text-muted hover:text-text">
         ← {task.epic.project.client.name} — {task.epic.project.name}
       </Link>
+
+      {info ? (
+        <p className="rounded-lg border border-amber/30 bg-amber/5 px-4 py-2.5 text-sm text-text">
+          {info}
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-2 flex flex-col gap-6">
@@ -116,18 +137,31 @@ export default async function TaskDetailPage({
 
           <div className="flex flex-col gap-2 rounded-xl border border-border bg-panel p-5">
             {advanceLabel ? (
-              <form action={updateTaskStatusAction.bind(null, taskId, projectId, "advance")}>
+              <form action={setTaskStatusAction.bind(null, taskId, projectId, NEXT[task.status]!)}>
                 <button type="submit" className="w-full rounded-lg bg-mint px-3 py-2 text-sm font-semibold text-bg">
                   {advanceLabel}
                 </button>
               </form>
-            ) : (
-              <form action={updateTaskStatusAction.bind(null, taskId, projectId, "reopen")}>
-                <button type="submit" className="w-full rounded-lg border border-border px-3 py-2 text-sm text-muted hover:text-text">
-                  Rouvrir
-                </button>
-              </form>
-            )}
+            ) : null}
+
+            <p className="mt-1 text-xs text-muted">Changer de statut</p>
+            <div className="flex flex-wrap gap-1.5">
+              {STATUSES.filter((s) => s !== task.status).map((s) => (
+                <form key={s} action={setTaskStatusAction.bind(null, taskId, projectId, s)}>
+                  <button
+                    type="submit"
+                    className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted transition hover:border-mint/40 hover:text-text"
+                  >
+                    {STATUS_LABEL[s]}
+                  </button>
+                </form>
+              ))}
+            </div>
+            <p className="text-xs text-muted">
+              {task.status === "EN_COURS"
+                ? "Le chronomètre tourne : le temps est compté pour l’assigné, dans ses horaires, et partagé avec ses autres tâches en cours."
+                : "Passer la tâche à « En cours » démarre le chronomètre."}
+            </p>
           </div>
         </div>
       </div>

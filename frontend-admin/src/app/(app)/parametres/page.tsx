@@ -5,6 +5,8 @@ import { ROLE_LABEL } from "@/lib/nav";
 import type { AbsenceMode, SessionUser } from "@/lib/types";
 import { ImageField } from "../site/image-field";
 import { ChangePasswordForm } from "./change-form";
+import { ScheduleForm } from "./schedule-form";
+import type { ScheduleSettings } from "./schedule-form";
 import { updateProfileAction, setAbsenceModeAction, toggleAbsenceEnabledAction } from "./actions";
 
 const MODES: AbsenceMode[] = ["OUVERT", "HORAIRES", "CONGES"];
@@ -15,6 +17,7 @@ type MeResponse = {
     jobTitle: string | null;
     photo: string | null;
     absence: { mode: AbsenceMode; enabled: boolean } | null;
+    schedule: ScheduleSettings | null;
   };
 };
 
@@ -68,6 +71,20 @@ export default async function ParametresPage() {
           </button>
         </form>
       </div>
+
+      {settings.schedule ? (
+        <div className="rounded-xl border border-border bg-panel p-5">
+          <h2 className="text-sm font-semibold text-text">Mes horaires de travail</h2>
+          <p className="mt-1 max-w-xl text-xs text-muted">
+            Le temps passé est mesuré : une tâche passée à « En cours » démarre un
+            chronomètre, un changement de statut l’arrête. Ces horaires le bornent — rien
+            n’est compté la nuit, le week-end, les jours fériés ni pendant la pause. Et
+            deux tâches menées en même temps se partagent le temps écoulé.
+            {settings.schedule.isDefault ? " Horaires par défaut de l’agence, à ajuster." : ""}
+          </p>
+          <ScheduleForm schedule={settings.schedule} />
+        </div>
+      ) : null}
 
       <div className="rounded-xl border border-border bg-panel p-5">
         <h2 className="text-sm font-semibold text-text">Mon mot de passe</h2>

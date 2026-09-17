@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { closeSessions, openSession, refreshProjectSpent } from "@/lib/work-sessions";
 import type { TaskStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -120,11 +121,15 @@ const bodySchema = z.discriminatedUnion("action", [
     taskId: z.string().min(1),
     projectId: z.string().min(1),
   }),
+  // `transition` fait avancer d'un cran, `status` vise une colonne précise —
+  // y compris en arrière : on doit pouvoir arrêter une tâche sans être forcé
+  // de la déclarer livrée.
   z.object({
     action: z.literal("update-task-status"),
     taskId: z.string().min(1),
     projectId: z.string().min(1),
-    transition: z.enum(["advance", "reopen"]),
+    transition: z.enum(["advance", "reopen"]).optional(),
+    status: z.enum(["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"]).optional(),
   }),
   z.object({ action: z.literal("toggle-task-criterion"), criterionId: z.string().min(1) }),
   z.object({
@@ -318,24 +323,46 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
     }
 
     case "update-task": {
-      await prisma.task.update({
+      const before = await prisma.task.findUnique({
         where: { id: body.taskId },
-        data: {
-          epicId: body.epicId,
-          title: body.title.trim(),
-          description: body.description,
-          estHours: body.estHours,
-          assigneeId: body.assigneeId,
-          dueAt: body.dueAt ? new Date(body.dueAt) : null,
-        },
+        select: { status: true, assigneeId: true },
+      });
+      if (!before) badRequest("Tâche introuvable");
+
+      // Passer la main pendant que le chronomètre tourne l'arrête pour le
+      // précédent assigné : les heures déjà comptées lui restent, et la tâche
+      // revient à « À faire » pour que le suivant la démarre lui-même.
+      const handover = before.status === "EN_COURS" && before.assigneeId !== body.assigneeId;
+
+      await prisma.$transaction(async (tx) => {
+        if (handover) await closeSessions(tx, { taskId: body.taskId });
+        await tx.task.update({
+          where: { id: body.taskId },
+          data: {
+            epicId: body.epicId,
+            title: body.title.trim(),
+            description: body.description,
+            estHours: body.estHours,
+            assigneeId: body.assigneeId,
+            dueAt: body.dueAt ? new Date(body.dueAt) : null,
+            ...(handover ? { status: "A_FAIRE" as TaskStatus } : {}),
+          },
+        });
       });
       await recomputeProjectProgress(body.projectId);
-      return;
+      return handover
+        ? {
+            ok: true,
+            notice:
+              "Le temps en cours a été arrêté pour l'assigné précédent, la tâche est repassée à « À faire ».",
+          }
+        : undefined;
     }
 
     case "delete-task": {
       await prisma.task.delete({ where: { id: body.taskId } });
       await recomputeProjectProgress(body.projectId);
+      await prisma.$transaction((tx) => refreshProjectSpent(tx, body.projectId));
       return;
     }
 
@@ -343,13 +370,27 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       const task = await prisma.task.findUnique({ where: { id: body.taskId } });
       if (!task) badRequest("Tâche introuvable");
 
-      const nextStatus = body.transition === "reopen" ? "A_FAIRE" : NEXT_STATUS[task.status];
+      const nextStatus: TaskStatus | null =
+        body.status ?? (body.transition === "reopen" ? "A_FAIRE" : NEXT_STATUS[task.status]);
       // Une tâche déjà terminée n'a pas d'étape suivante.
-      if (!nextStatus) return;
+      if (!nextStatus || nextStatus === task.status) return;
 
-      await prisma.task.update({ where: { id: body.taskId }, data: { status: nextStatus } });
+      // « En cours » lance le chronomètre, tout autre statut l'arrête : le
+      // temps se mesure, il ne se déclare pas.
+      let notice: string | undefined;
+      await prisma.$transaction(async (tx) => {
+        await tx.task.update({ where: { id: body.taskId }, data: { status: nextStatus } });
+        if (nextStatus !== "EN_COURS") {
+          await closeSessions(tx, { taskId: task.id });
+          return;
+        }
+        const started = await openSession(tx, { taskId: task.id }, task.assigneeId, user.id);
+        if (!started) notice = "Aucun assigné : le temps ne sera décompté pour personne.";
+        else if (task.assigneeId !== user.id)
+          notice = "Le temps sera décompté pour l'utilisateur assigné.";
+      });
       await recomputeProjectProgress(body.projectId);
-      return;
+      return notice ? { ok: true, notice } : undefined;
     }
 
     case "toggle-task-criterion": {

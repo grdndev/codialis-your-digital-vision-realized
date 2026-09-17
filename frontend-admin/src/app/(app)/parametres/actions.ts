@@ -59,3 +59,32 @@ export async function changePasswordAction(
   revalidatePath("/parametres");
   return { done: true };
 }
+
+// Les horaires bornent le temps mesuré : une tâche laissée « en cours » le soir
+// ne compte ni la nuit, ni le week-end, ni la pause. Les champs `time` du
+// formulaire arrivent en « HH:MM », l'API compte en minutes depuis minuit —
+// c'est une heure de bureau, pas un instant, aucun fuseau n'entre en jeu.
+function minutesOf(value: FormDataEntryValue | null): number | null {
+  const [h, m] = String(value ?? "").split(":");
+  const hours = Number(h);
+  const mins = Number(m);
+  if (!Number.isFinite(hours) || !Number.isFinite(mins)) return null;
+  return hours * 60 + mins;
+}
+
+export async function updateScheduleAction(formData: FormData): Promise<void> {
+  const weekdays = formData.getAll("weekdays").map((d) => Number(d));
+  await apiPost(ME, {
+    action: "update-schedule",
+    startMin: minutesOf(formData.get("start")) ?? 540,
+    endMin: minutesOf(formData.get("end")) ?? 1080,
+    breakStartMin: minutesOf(formData.get("breakStart")),
+    breakEndMin: minutesOf(formData.get("breakEnd")),
+    // Sans jour coché, on ne compterait jamais rien : la semaine ouvrée reprend.
+    weekdays: weekdays.length ? weekdays : [1, 2, 3, 4, 5],
+    overtimeStartMin: minutesOf(formData.get("overtimeStart")),
+    overtimeEndMin: minutesOf(formData.get("overtimeEnd")),
+  });
+  revalidatePath("/parametres");
+  revalidatePath("/time");
+}

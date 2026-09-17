@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { parseNumber } from "@/lib/format";
 import { redirect } from "next/navigation";
 import { ApiError, apiPost } from "@/lib/api";
+import type { TaskStatus } from "@/lib/types";
 
 const PROJECTS = "/api/admin/projects";
 
@@ -155,6 +156,33 @@ export async function createTaskAction(formData: FormData) {
   revalidatePath(`/projects/${projectId}`);
   revalidatePath("/projects");
   revalidatePath("/dashboard");
+}
+
+// Un statut visé, pas seulement l'étape suivante : on doit pouvoir reculer,
+// ne serait-ce que pour arrêter une tâche sans la déclarer livrée. L'API
+// renvoie parfois un message — le temps compté pour quelqu'un d'autre, une
+// tâche sans assigné : il repart en query pour être affiché après le
+// rechargement, les formulaires de cet écran étant rendus côté serveur.
+export async function setTaskStatusAction(taskId: string, projectId: string, status: TaskStatus) {
+  const { notice } = await apiPost<{ notice?: string }>(PROJECTS, {
+    action: "update-task-status",
+    taskId,
+    projectId,
+    status,
+  });
+
+  revalidatePath(`/projects/${projectId}/tasks/${taskId}`);
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/projects");
+  revalidatePath("/dashboard");
+  revalidatePath("/time");
+  revalidatePath("/portal");
+
+  if (notice) {
+    redirect(
+      `/projects/${projectId}/tasks/${taskId}?info=${encodeURIComponent(notice)}`,
+    );
+  }
 }
 
 export async function updateTaskStatusAction(

@@ -15,8 +15,18 @@ function dayLabel(key: string) {
 export default async function TimePage() {
   const user = await requireUser();
 
-  const { entries, activeProjects, allProjects, openTasks, openTickets } =
+  const { entries, activeProjects, allProjects, openTasks, openTickets, sessions } =
     await apiGet<TimeScreen>("/api/admin/time");
+
+  // Le temps se mesure : « En cours » démarre un chronomètre, le changement de
+  // statut suivant l'arrête. La saisie manuelle reste en complément, pour ce
+  // qui ne relève d'aucune tâche — réunions, avant-vente, astreinte.
+  const running = sessions.filter((s) => s.endedAt === null);
+  const measuredByPerson = new Map<string, number>();
+  for (const s of sessions) {
+    measuredByPerson.set(s.user.name, (measuredByPerson.get(s.user.name) ?? 0) + s.hours);
+  }
+  const measuredTotal = sessions.reduce((sum, s) => sum + s.hours, 0);
 
   const days = [...new Set(entries.map((e) => dateKey(e.date)))].sort().slice(-5);
 
@@ -60,6 +70,65 @@ export default async function TimePage() {
           </p>
         </div>
         <ScreenTabs active="/time" role={user.role} />
+      </div>
+
+      <div className="rounded-xl border border-border bg-panel p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-semibold text-text">Temps mesuré</h2>
+            <p className="mt-1 text-xs text-muted">
+              Une tâche passée à « En cours » démarre un chronomètre ; le changement de
+              statut suivant l’arrête. Deux tâches menées en même temps se partagent le
+              temps écoulé, et seules vos heures de travail sont comptées.
+            </p>
+          </div>
+          <span className="whitespace-nowrap text-sm text-muted">
+            {fmtHours(measuredTotal)} sur 14 jours
+          </span>
+        </div>
+
+        {running.length > 0 ? (
+          <div className="mt-4 flex flex-col gap-2">
+            {running.map((s) => {
+              const what = s.task
+                ? { label: s.task.title, project: s.task.epic.project.client.name }
+                : s.ticket
+                  ? { label: `${s.ticket.ref} — ${s.ticket.title}`, project: s.ticket.project.client.name }
+                  : { label: "Sans rattachement", project: "—" };
+              return (
+                <div
+                  key={s.id}
+                  className="flex items-center justify-between gap-4 rounded-lg border border-mint/30 bg-mint/5 px-3 py-2 text-sm"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-text">{what.label}</p>
+                    <p className="text-xs text-muted">
+                      {what.project} · {s.user.name}
+                      {s.startedById && s.startedById !== s.userId ? " (démarrée par un tiers)" : ""}
+                    </p>
+                  </div>
+                  <span className="whitespace-nowrap font-medium text-mint">
+                    {fmtHours(s.hours)} · depuis{" "}
+                    {new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(
+                      s.startedAt,
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-muted">Aucune tâche en cours pour le moment.</p>
+        )}
+
+        {measuredByPerson.size > 0 ? (
+          <p className="mt-4 text-xs text-muted">
+            {[...measuredByPerson.entries()]
+              .sort((a, b) => b[1] - a[1])
+              .map(([name, h]) => `${name.split(" ")[0]} ${fmtHours(h)}`)
+              .join(" · ")}
+          </p>
+        ) : null}
       </div>
 
       {alerts.length > 0 ? (

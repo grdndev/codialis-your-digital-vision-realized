@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_SCHEDULE } from "@/lib/work-time";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,12 @@ export const GET = adminRoute([], async ({ user }) => {
         })
       : null;
 
+  // Les horaires de travail bornent le temps mesuré : une tâche laissée « en
+  // cours » le soir ne compte pas la nuit. Sans réglage personnel, l'horaire
+  // par défaut de l'agence s'applique — chacun peut le corriger.
+  const schedule =
+    user.role === "CLIENT" ? null : await prisma.workSchedule.findUnique({ where: { userId: user.id } });
+
   return {
     user: {
       id: user.id,
@@ -30,7 +37,25 @@ export const GET = adminRoute([], async ({ user }) => {
       role: user.role,
       clientId: user.clientId,
     },
-    settings: { jobTitle: user.jobTitle, photo: user.photo, absence },
+    settings: {
+      jobTitle: user.jobTitle,
+      photo: user.photo,
+      absence,
+      schedule:
+        user.role === "CLIENT"
+          ? null
+          : {
+              startMin: schedule?.startMin ?? DEFAULT_SCHEDULE.startMin,
+              breakStartMin: schedule ? schedule.breakStartMin : DEFAULT_SCHEDULE.breakStartMin,
+              breakEndMin: schedule ? schedule.breakEndMin : DEFAULT_SCHEDULE.breakEndMin,
+              endMin: schedule?.endMin ?? DEFAULT_SCHEDULE.endMin,
+              weekdays: schedule?.weekdays ?? DEFAULT_SCHEDULE.weekdays.join(","),
+              overtimeStartMin: schedule ? schedule.overtimeStartMin : null,
+              overtimeEndMin: schedule ? schedule.overtimeEndMin : null,
+              // Vrai tant que la personne n'a rien réglé : l'écran le dit.
+              isDefault: !schedule,
+            },
+    },
   };
 });
 
@@ -43,6 +68,18 @@ const bodySchema = z.discriminatedUnion("action", [
     action: z.literal("update-profile"),
     jobTitle: z.string().max(255).nullable(),
     photo: z.string().nullable(),
+  }),
+  // Horaires de travail. Les minutes depuis minuit évitent tout fuseau : c'est
+  // une heure locale de bureau, pas un instant.
+  z.object({
+    action: z.literal("update-schedule"),
+    startMin: z.number().int().min(0).max(1440),
+    endMin: z.number().int().min(0).max(1440),
+    breakStartMin: z.number().int().min(0).max(1440).nullable(),
+    breakEndMin: z.number().int().min(0).max(1440).nullable(),
+    weekdays: z.array(z.number().int().min(0).max(6)).min(1),
+    overtimeStartMin: z.number().int().min(0).max(1440).nullable(),
+    overtimeEndMin: z.number().int().min(0).max(1440).nullable(),
   }),
   z.object({
     action: z.literal("set-absence-mode"),
@@ -68,6 +105,36 @@ export const POST = adminRoute([], async ({ user, }, request) => {
       await prisma.user.update({
         where: { id: user.id },
         data: { jobTitle: jobTitle || null, photo: photo || null },
+      });
+      return;
+    }
+
+    case "update-schedule": {
+      if (body.endMin <= body.startMin) badRequest("La fin doit suivre le début");
+      // Une pause incomplète ou à l'envers ne borne rien : on n'en garde une
+      // que si elle tient debout.
+      const hasBreak =
+        body.breakStartMin !== null &&
+        body.breakEndMin !== null &&
+        body.breakEndMin > body.breakStartMin;
+      const hasOvertime =
+        body.overtimeStartMin !== null &&
+        body.overtimeEndMin !== null &&
+        body.overtimeEndMin > body.overtimeStartMin;
+
+      const data = {
+        startMin: body.startMin,
+        endMin: body.endMin,
+        breakStartMin: hasBreak ? body.breakStartMin : null,
+        breakEndMin: hasBreak ? body.breakEndMin : null,
+        weekdays: [...new Set(body.weekdays)].sort((a, b) => a - b).join(","),
+        overtimeStartMin: hasOvertime ? body.overtimeStartMin : null,
+        overtimeEndMin: hasOvertime ? body.overtimeEndMin : null,
+      };
+      await prisma.workSchedule.upsert({
+        where: { userId: user.id },
+        update: data,
+        create: { userId: user.id, ...data },
       });
       return;
     }

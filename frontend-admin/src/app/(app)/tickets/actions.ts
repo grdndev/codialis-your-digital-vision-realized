@@ -32,28 +32,30 @@ export async function createTicketAction(formData: FormData) {
   redirect(`/tickets/${ref}`);
 }
 
-export async function updateTicketStatusAction(ticketId: string, transition: "advance" | "reopen") {
-  // L'enchaînement des statuts est une règle métier : l'API renvoie la
-  // référence du ticket touché, dont on a besoin pour revalider sa page.
-  const { ref } = await apiPost<{ ref: string }>(TICKETS, {
-    action: "update-status",
-    ticketId,
-    transition,
-  });
-  revalidatePath(`/tickets/${ref}`);
-  revalidatePath("/tickets");
-}
-
-// Déplacement vers une colonne précise du kanban : l'enchaînement pas à pas
-// d'`updateTicketStatusAction` ne sait pas exprimer ce geste.
-export async function setTicketStatusAction(ticketId: string, status: TaskStatus) {
-  const { ref } = await apiPost<{ ref: string }>(TICKETS, {
+// Déplacement vers une colonne précise, depuis le kanban comme depuis la fiche.
+// Reculer est permis : arrêter un ticket ne doit pas obliger à le déclarer
+// livré — et c'est ce qui coupe le chronomètre, qui tourne tant que le ticket
+// est « En cours ».
+//
+// `notice` remonte parfois de l'API (temps compté pour l'assigné, ticket sans
+// assigné). Il repart en query sur la fiche : les formulaires sont rendus côté
+// serveur, il n'y a pas d'état client pour le porter. Depuis le kanban on ne
+// redirige pas — le geste est un glisser-déposer entre colonnes, pas une
+// navigation.
+export async function setTicketStatusAction(
+  ticketId: string,
+  status: TaskStatus,
+  showNotice = false,
+) {
+  const { ref, notice } = await apiPost<{ ref: string; notice?: string }>(TICKETS, {
     action: "set-status",
     ticketId,
     status,
   });
   revalidatePath(`/tickets/${ref}`);
   revalidatePath("/tickets");
+  revalidatePath("/time");
+  if (showNotice && notice) redirect(`/tickets/${ref}?info=${encodeURIComponent(notice)}`);
 }
 
 export async function updateTicketAction(formData: FormData) {

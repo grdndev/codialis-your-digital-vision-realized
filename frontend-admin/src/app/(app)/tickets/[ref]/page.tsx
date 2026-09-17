@@ -13,7 +13,7 @@ import {
   DEV_NATURE_LABEL,
 } from "@/lib/format";
 import {
-  updateTicketStatusAction,
+  setTicketStatusAction,
   updateTicketAction,
   toggleTicketCriterionAction,
   addTicketCriterionAction,
@@ -23,6 +23,7 @@ import {
   deleteTicketAction,
 } from "../actions";
 import type { TicketDetailResponse } from "../types";
+import type { TaskStatus } from "@/lib/types";
 
 const ACTION_LABEL: Record<string, string> = {
   A_FAIRE: "Démarrer",
@@ -30,9 +31,25 @@ const ACTION_LABEL: Record<string, string> = {
   EN_REVUE: "Clôturer",
 };
 
-export default async function TicketDetailPage({ params }: { params: Promise<{ ref: string }> }) {
+// Toutes les colonnes sont atteignables, y compris en arrière.
+const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
+
+const NEXT: Record<string, TaskStatus | undefined> = {
+  A_FAIRE: "EN_COURS",
+  EN_COURS: "EN_REVUE",
+  EN_REVUE: "TERMINE",
+};
+
+export default async function TicketDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ ref: string }>;
+  searchParams: Promise<{ info?: string }>;
+}) {
   await requireUser();
   const { ref } = await params;
+  const { info } = await searchParams;
 
   const { ticket, epics, team, projects } = await apiGet<TicketDetailResponse>(
     `/api/admin/tickets/detail?ref=${encodeURIComponent(ref)}`,
@@ -47,6 +64,12 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ r
       <Link href="/tickets" className="text-sm text-muted hover:text-text">
         ← Tickets
       </Link>
+
+      {info ? (
+        <p className="rounded-lg border border-amber/30 bg-amber/5 px-4 py-2.5 text-sm text-text">
+          {info}
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-2 flex flex-col gap-6">
@@ -301,18 +324,31 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ r
 
           <div className="flex flex-col gap-2 rounded-xl border border-border bg-panel p-5">
             {advanceLabel ? (
-              <form action={updateTicketStatusAction.bind(null, ticket.id, "advance")}>
+              <form action={setTicketStatusAction.bind(null, ticket.id, NEXT[ticket.status]!, true)}>
                 <button type="submit" className="w-full rounded-lg bg-mint px-3 py-2 text-sm font-semibold text-bg">
                   {advanceLabel}
                 </button>
               </form>
-            ) : (
-              <form action={updateTicketStatusAction.bind(null, ticket.id, "reopen")}>
-                <button type="submit" className="w-full rounded-lg border border-border px-3 py-2 text-sm text-muted hover:text-text">
-                  Rouvrir
-                </button>
-              </form>
-            )}
+            ) : null}
+
+            <p className="mt-1 text-xs text-muted">Changer de statut</p>
+            <div className="flex flex-wrap gap-1.5">
+              {STATUSES.filter((s) => s !== ticket.status).map((s) => (
+                <form key={s} action={setTicketStatusAction.bind(null, ticket.id, s, true)}>
+                  <button
+                    type="submit"
+                    className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted transition hover:border-mint/40 hover:text-text"
+                  >
+                    {STATUS_LABEL[s]}
+                  </button>
+                </form>
+              ))}
+            </div>
+            <p className="text-xs text-muted">
+              {ticket.status === "EN_COURS"
+                ? "Le chronomètre tourne : le temps est compté pour l’assigné, dans ses horaires, et partagé avec ses autres tâches en cours."
+                : "Passer le ticket à « En cours » démarre le chronomètre."}
+            </p>
             {/* Supprimer emporte critères, commentaires et pièces jointes. Les
                 heures déjà saisies restent au projet : le travail a eu lieu. */}
             <details className="mt-2 border-t border-border pt-2">

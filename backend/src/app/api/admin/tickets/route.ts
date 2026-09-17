@@ -3,6 +3,7 @@ import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import type { Prisma, Severity, TaskStatus } from "@prisma/client";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
+import { closeSessions, openSession } from "@/lib/work-sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -151,6 +152,31 @@ const bodySchema = z.discriminatedUnion("action", [
   }),
 ]);
 
+// « En cours » lance le chronomètre au nom de l'assigné, tout autre statut
+// l'arrête. Le temps se mesure à partir des changements de statut : personne
+// n'a à le saisir.
+async function applyTicketStatus(
+  ticket: { id: string; ref: string; assigneeId: string | null; status: TaskStatus },
+  nextStatus: TaskStatus,
+  actorId: string,
+): Promise<{ ok: true; ref: string; notice?: string }> {
+  if (nextStatus === ticket.status) return { ok: true, ref: ticket.ref };
+
+  let notice: string | undefined;
+  await prisma.$transaction(async (tx) => {
+    await tx.ticket.update({ where: { id: ticket.id }, data: { status: nextStatus } });
+    if (nextStatus !== "EN_COURS") {
+      await closeSessions(tx, { ticketId: ticket.id });
+      return;
+    }
+    const started = await openSession(tx, { ticketId: ticket.id }, ticket.assigneeId, actorId);
+    if (!started) notice = "Aucun assigné : le temps ne sera décompté pour personne.";
+    else if (ticket.assigneeId !== actorId)
+      notice = "Le temps sera décompté pour l'utilisateur assigné.";
+  });
+  return { ok: true, ref: ticket.ref, notice };
+}
+
 export const POST = adminRoute(
   ["DEV", "PM", "DIR"],
   async ({ user }, request) => {
@@ -236,30 +262,27 @@ export const POST = adminRoute(
         // Un ticket déjà terminé n'a pas d'étape suivante.
         if (!nextStatus) return { ok: true, ref: ticket.ref };
 
-        await prisma.ticket.update({
-          where: { id: body.ticketId },
-          data: { status: nextStatus },
-        });
-        return { ok: true, ref: ticket.ref };
+        return applyTicketStatus(ticket, nextStatus, user.id);
       }
 
       case "set-status": {
-        const ticket = await prisma.ticket.update({
-          where: { id: body.ticketId },
-          data: { status: body.status },
-          select: { ref: true },
-        });
-        return { ok: true, ref: ticket.ref };
+        const ticket = await prisma.ticket.findUnique({ where: { id: body.ticketId } });
+        if (!ticket) badRequest("Ticket introuvable");
+        return applyTicketStatus(ticket, body.status, user.id);
       }
 
       case "update": {
         const ticket = await prisma.ticket.findUnique({
           where: { id: body.ticketId },
-          select: { ref: true, projectId: true },
+          select: { ref: true, projectId: true, status: true, assigneeId: true },
         });
         if (!ticket) badRequest("Ticket introuvable");
 
         const movedProject = body.projectId !== ticket.projectId;
+        // Passer la main pendant que le chronomètre tourne l'arrête pour le
+        // précédent assigné, et le ticket revient à « À faire » : au suivant de
+        // le démarrer.
+        const handover = ticket.status === "EN_COURS" && ticket.assigneeId !== body.assigneeId;
         // Déplacer un ticket lui donne une nouvelle référence, au préfixe du
         // projet d'accueil : une référence porte le projet, en garder une qui
         // désigne l'ancien induirait en erreur à chaque lecture. Le numéro
@@ -280,9 +303,11 @@ export const POST = adminRoute(
           nextRef = `${prefix}${(maxSuffix(refs.map((r) => r.ref), prefix) ?? 300) + 1}`;
         }
 
+        if (handover) await prisma.$transaction((tx) => closeSessions(tx, { ticketId: body.ticketId }));
         await prisma.ticket.update({
           where: { id: body.ticketId },
           data: {
+            ...(handover ? { status: "A_FAIRE" as TaskStatus } : {}),
             ref: nextRef,
             projectId: body.projectId,
             // Un lot appartient à un projet : le changer de projet rend le
@@ -302,7 +327,14 @@ export const POST = adminRoute(
         });
         // La référence renvoyée est la NOUVELLE : le frontend s'en sert pour
         // revalider et rediriger, l'ancienne adresse n'existe plus.
-        return { ok: true, ref: nextRef, previousRef: ticket.ref };
+        return {
+          ok: true,
+          ref: nextRef,
+          previousRef: ticket.ref,
+          notice: handover
+            ? "Le temps en cours a été arrêté pour l'assigné précédent, le ticket est repassé à « À faire »."
+            : undefined,
+        };
       }
 
       case "toggle-criterion": {
