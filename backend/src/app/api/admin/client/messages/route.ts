@@ -22,7 +22,15 @@ export const GET = adminRoute(["CLIENT"], async ({ user }) => {
     messages,
     // Seul le nom de la cheffe de projet est exposé au client.
     pm: pm ? { id: pm.id, name: pm.name } : null,
-    absence: absence ? { mode: absence.mode } : null,
+    // Le message rédigé par la cheffe de projet prend le pas sur le texte par
+    // défaut ; vide, c'est le portail qui met le sien.
+    absence: absence
+      ? {
+          mode: absence.mode,
+          message:
+            (absence.mode === "CONGES" ? absence.messageConges : absence.messageHoraires) ?? null,
+        }
+      : null,
   };
 });
 

@@ -93,7 +93,7 @@ export default async function ProjectsPage({
         {PHASES.map((ph) => (
           <Link
             key={ph.id}
-            href={ph.id === "all" ? "/projects" : `/projects?phase=${ph.id}`}
+            href={ph.id === "all" ? "/projects?liste=1" : `/projects?phase=${ph.id}`}
             className={`rounded-xl border px-4 py-3 text-sm transition ${
               active === ph.id
                 ? "border-mint/40 bg-mint/10 text-text"

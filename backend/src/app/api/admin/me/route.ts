@@ -18,7 +18,12 @@ export const GET = adminRoute([], async ({ user }) => {
     user.role === "PM" || user.role === "DIR"
       ? await prisma.absenceSetting.findUnique({
           where: { pmId: user.id },
-          select: { mode: true, enabled: true },
+          select: {
+            mode: true,
+            enabled: true,
+            messageConges: true,
+            messageHoraires: true,
+          },
         })
       : null;
 
@@ -85,6 +90,13 @@ const bodySchema = z.discriminatedUnion("action", [
     action: z.literal("set-absence-mode"),
     mode: z.enum(["OUVERT", "HORAIRES", "CONGES"]),
   }),
+  // Le message envoyé au client se rédige. Vide, le texte par défaut de
+  // l'agence reprend sa place — c'est aussi la façon de revenir en arrière.
+  z.object({
+    action: z.literal("set-absence-message"),
+    mode: z.enum(["HORAIRES", "CONGES"]),
+    message: z.string().max(2000),
+  }),
   z.object({ action: z.literal("toggle-absence-enabled") }),
 ]);
 
@@ -150,6 +162,21 @@ export const POST = adminRoute([], async ({ user, }, request) => {
         where: { pmId: user.id },
         update: { mode: body.mode, enabled },
         create: { pmId: user.id, mode: body.mode, enabled },
+      });
+      return;
+    }
+
+    case "set-absence-message": {
+      if (user.role !== "PM" && user.role !== "DIR") {
+        badRequest("Réservé aux comptes qui suivent des clients");
+      }
+      const text = body.message.trim() || null;
+      const data =
+        body.mode === "CONGES" ? { messageConges: text } : { messageHoraires: text };
+      await prisma.absenceSetting.upsert({
+        where: { pmId: user.id },
+        update: data,
+        create: { pmId: user.id, ...data },
       });
       return;
     }

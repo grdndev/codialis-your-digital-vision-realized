@@ -53,6 +53,10 @@ export function NewTicketForm({
         <textarea name="description" rows={3} className="w-full rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm text-text outline-none focus:border-mint" />
       </Field>
 
+      <Field label={type === "BUG" ? "Étapes de reproduction" : "Travail à réaliser"}>
+        <textarea name="steps" rows={3} placeholder="une par ligne" className="w-full rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm text-text outline-none focus:border-mint" />
+      </Field>
+
       <div className="grid grid-cols-2 gap-4">
         <Field label="Projet">
           <select

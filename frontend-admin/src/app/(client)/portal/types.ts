@@ -35,7 +35,7 @@ export type PortalMessagesScreen = {
   // Seul le nom de la cheffe de projet est exposé.
   pm: { id: string; name: string } | null;
   // Réponse automatique active, s'il y en a une.
-  absence: { mode: AbsenceMode } | null;
+  absence: { mode: AbsenceMode; message: string | null } | null;
 };
 
 export type RdvRow = {

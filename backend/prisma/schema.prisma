@@ -650,14 +650,18 @@ enum AbsenceMode {
 }
 
 model AbsenceSetting {
-  id           String      @id @default(cuid())
-  pmId         String      @unique
-  mode         AbsenceMode @default(OUVERT)
-  enabled      Boolean     @default(true)
-  rangeLabel   String      @default("")
-  substituteId String?
-  nextAbsence  String      @default("")
-  updatedAt    DateTime    @updatedAt
+  id              String      @id @default(cuid())
+  pmId            String      @unique
+  mode            AbsenceMode @default(OUVERT)
+  enabled         Boolean     @default(true)
+  rangeLabel      String      @default("")
+  substituteId    String?
+  nextAbsence     String      @default("")
+  // Message envoyé au client, un par mode. Vide = le texte par défaut de
+  // l'agence s'applique : personne n'est obligé de rédiger le sien.
+  messageConges   String?     @db.Text
+  messageHoraires String?     @db.Text
+  updatedAt       DateTime    @updatedAt
 }
 
 // A task assigned by a director directly to a teammate, outside any client

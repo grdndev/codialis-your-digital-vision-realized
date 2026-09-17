@@ -27,6 +27,18 @@ export async function setAbsenceModeAction(formData: FormData) {
   revalidatePath("/parametres");
 }
 
+// Vide, le message repart au texte par défaut de l'agence : c'est la façon de
+// revenir en arrière sans avoir à le recopier.
+export async function setAbsenceMessageAction(formData: FormData) {
+  await apiPost(ME, {
+    action: "set-absence-message",
+    mode: String(formData.get("mode") ?? "CONGES"),
+    message: String(formData.get("message") ?? ""),
+  });
+  revalidatePath("/parametres");
+  revalidatePath("/portal/messages");
+}
+
 export async function toggleAbsenceEnabledAction() {
   await apiPost(ME, { action: "toggle-absence-enabled" });
   revalidatePath("/parametres");

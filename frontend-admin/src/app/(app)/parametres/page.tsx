@@ -7,7 +7,12 @@ import { ImageField } from "../site/image-field";
 import { ChangePasswordForm } from "./change-form";
 import { ScheduleForm } from "./schedule-form";
 import type { ScheduleSettings } from "./schedule-form";
-import { updateProfileAction, setAbsenceModeAction, toggleAbsenceEnabledAction } from "./actions";
+import {
+  updateProfileAction,
+  setAbsenceModeAction,
+  setAbsenceMessageAction,
+  toggleAbsenceEnabledAction,
+} from "./actions";
 
 const MODES: AbsenceMode[] = ["OUVERT", "HORAIRES", "CONGES"];
 
@@ -16,7 +21,12 @@ type MeResponse = {
   settings: {
     jobTitle: string | null;
     photo: string | null;
-    absence: { mode: AbsenceMode; enabled: boolean } | null;
+    absence: {
+      mode: AbsenceMode;
+      enabled: boolean;
+      messageConges: string | null;
+      messageHoraires: string | null;
+    } | null;
     schedule: ScheduleSettings | null;
   };
 };
@@ -30,6 +40,14 @@ export default async function ParametresPage() {
   const mode = settings.absence?.mode ?? "OUVERT";
   const enabled = settings.absence?.enabled ?? false;
   const copy = ABSENCE_COPY[mode];
+  // Le message rédigé prend le pas sur celui de l'agence ; vide, c'est ce
+  // dernier qui part, et le champ le montre pour qu'on sache ce qu'on modifie.
+  const customMessage =
+    mode === "CONGES"
+      ? settings.absence?.messageConges
+      : mode === "HORAIRES"
+        ? settings.absence?.messageHoraires
+        : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -139,7 +157,32 @@ export default async function ParametresPage() {
           <div className="mt-4 grid grid-cols-2 gap-4">
             <div className="rounded-lg border border-border bg-panel-2 p-3">
               <p className="text-xs font-medium text-muted">Message envoyé au client</p>
-              <p className="mt-1.5 text-sm text-text">{copy.body}</p>
+              {mode === "OUVERT" ? (
+                <p className="mt-1.5 text-sm text-text">{copy.body}</p>
+              ) : (
+                <form action={setAbsenceMessageAction} className="mt-1.5 flex flex-col gap-2">
+                  <input type="hidden" name="mode" value={mode} />
+                  <textarea
+                    name="message"
+                    rows={5}
+                    defaultValue={customMessage ?? copy.body}
+                    className="input min-h-[120px] resize-y text-sm"
+                  />
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs text-muted">
+                      {customMessage
+                        ? "Message personnalisé. Videz le champ pour revenir à celui de l’agence."
+                        : "Texte par défaut de l’agence. Modifiez-le pour envoyer le vôtre."}
+                    </p>
+                    <button
+                      type="submit"
+                      className="shrink-0 rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg transition hover:brightness-110"
+                    >
+                      Enregistrer
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
             <div className="rounded-lg border border-border bg-panel-2 p-3">
               <p className="text-xs font-medium text-muted">

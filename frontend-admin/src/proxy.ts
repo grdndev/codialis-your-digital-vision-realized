@@ -11,6 +11,31 @@ import { SESSION_COOKIE } from "@/lib/session-cookie";
 // fait refuser en 401, et `apiGet` renvoie l'utilisateur au login.
 const PUBLIC_PATHS = new Set(["/login", "/reset", "/verify"]);
 
+// Mémoire d'écran. Deux besoins distincts, un même mécanisme : le navigateur
+// garde ce que la personne regardait, et y revient toute seule.
+//
+// - « Tickets » retient les filtres choisis. Le marqueur `f=1`, posé par tous
+//   les liens de filtre, distingue « je n'en veux aucun » d'une arrivée par le
+//   menu : sans lui, vider les filtres serait immédiatement défait par la
+//   mémoire.
+// - « Projets » retient le dernier projet ouvert et y retourne directement.
+//   `?liste=1` demande explicitement la liste complète.
+const FILTER_MEMORY_PATHS = new Set(["/tickets"]);
+const FILTER_COOKIE_PREFIX = "codialis_filtres";
+const LAST_PROJECT_COOKIE = "codialis_dernier_projet";
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 90;
+
+function filterCookieName(pathname: string): string {
+  return `${FILTER_COOKIE_PREFIX}${pathname.replace(/\//g, "_")}`;
+}
+
+// Un identifiant de projet et rien d'autre : `/projects/abc` compte,
+// `/projects/abc/tasks/def` non — on retient le projet, pas la sous-page.
+function projectIdOf(pathname: string): string | null {
+  const match = /^\/projects\/([^/]+)$/.exec(pathname);
+  return match ? match[1] : null;
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -29,6 +54,51 @@ export function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
+  }
+
+  const search = request.nextUrl.searchParams;
+
+  if (FILTER_MEMORY_PATHS.has(pathname)) {
+    const cookieName = filterCookieName(pathname);
+    if (search.has("f")) {
+      const response = NextResponse.next();
+      response.cookies.set(cookieName, search.toString(), {
+        maxAge: COOKIE_MAX_AGE,
+        sameSite: "lax",
+        path: "/",
+      });
+      return response;
+    }
+    const remembered = request.cookies.get(cookieName)?.value;
+    if (remembered && ![...search.keys()].length) {
+      const url = request.nextUrl.clone();
+      url.search = remembered;
+      return NextResponse.redirect(url);
+    }
+  }
+
+  const projectId = projectIdOf(pathname);
+  if (projectId) {
+    const response = NextResponse.next();
+    response.cookies.set(LAST_PROJECT_COOKIE, projectId, {
+      maxAge: COOKIE_MAX_AGE,
+      sameSite: "lax",
+      path: "/",
+    });
+    return response;
+  }
+
+  // Seul un « /projects » nu — celui du menu — ouvre le dernier projet. Dès
+  // qu'un paramètre est présent (un filtre de la liste, ou `liste=1`), la
+  // liste s'affiche : sans quoi filtrer la liste renverrait sur un projet.
+  if (pathname === "/projects" && ![...search.keys()].length) {
+    const last = request.cookies.get(LAST_PROJECT_COOKIE)?.value;
+    if (last) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/projects/${last}`;
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
   }
 
   return NextResponse.next();

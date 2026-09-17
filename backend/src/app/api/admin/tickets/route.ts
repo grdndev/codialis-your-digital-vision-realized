@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
-import type { Prisma, Role, Severity, TaskStatus } from "@prisma/client";
+import type { Prisma, Role, Severity, TaskStatus, TicketType } from "@prisma/client";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
 import { closeSessions, openSession } from "@/lib/work-sessions";
+import { projectIdsVisibleToDev } from "@/lib/project-access";
 
 export const dynamic = "force-dynamic";
 
@@ -19,39 +20,44 @@ const SEVERITIES: Severity[] = ["BLOQUANT", "MAJEUR", "MINEUR"];
 export const GET = adminRoute(
   ["DEV", "PM", "DIR"],
   async ({ user }, request) => {
+    // Chaque filtre accepte PLUSIEURS valeurs, séparées par des virgules :
+    // « les bloquants et les majeurs », « ces deux projets ». Une seule valeur
+    // par critère obligeait à repasser la liste autant de fois qu'on voulait
+    // de cas.
     const params = request.nextUrl.searchParams;
-    const projectFilter = params.get("project");
-    const typeFilter = params.get("type");
-    const statusFilter = params.get("status");
-    const severityFilter = params.get("severity");
+    const listOf = (key: string) =>
+      (params.get(key) ?? "")
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean);
+
+    const projectFilter = listOf("project");
+    const typeFilter = listOf("type").filter((t) => t === "BUG" || t === "DEV") as TicketType[];
+    const statusFilter = listOf("status").filter((s) =>
+      STATUSES.includes(s as TaskStatus),
+    ) as TaskStatus[];
+    const severityFilter = listOf("severity").filter((s) =>
+      SEVERITIES.includes(s as Severity),
+    ) as Severity[];
 
     const where: Prisma.TicketWhereInput = {};
-    if (projectFilter) where.projectId = projectFilter;
-    if (typeFilter === "BUG" || typeFilter === "DEV") where.type = typeFilter;
-    if (statusFilter && STATUSES.includes(statusFilter as TaskStatus)) {
-      where.status = statusFilter as TaskStatus;
-    }
-    if (severityFilter && SEVERITIES.includes(severityFilter as Severity)) {
-      where.severity = severityFilter as Severity;
-    }
+    if (projectFilter.length) where.projectId = { in: projectFilter };
+    if (typeFilter.length) where.type = { in: typeFilter };
+    if (statusFilter.length) where.status = { in: statusFilter };
+    if (severityFilter.length) where.severity = { in: severityFilter };
 
-    if (user.role === "DEV") {
-      const assignments = await prisma.projectAssignment.findMany({
-        where: { userId: user.id },
-        select: { projectId: true },
-      });
-      const assignedProjectIds = assignments.map((a) => a.projectId);
-      // Deux titres à voir un ticket : être affecté à son projet, ou en être
-      // nommément l'assigné. L'affectation seule ne suffisait pas — un ticket
-      // confié à quelqu'un qui n'est pas sur le projet restait invisible pour
-      // lui, y compris dans sa propre liste.
-      where.OR = [{ projectId: { in: assignedProjectIds } }, { assigneeId: user.id }];
-      // Le filtre projet reste appliqué par `where.projectId` : deviner un
-      // identifiant ne montre donc rien de plus que ses propres tickets.
+    // Un développeur ne voit que les projets sur lesquels il travaille, plus
+    // les tickets qui lui sont nommément confiés — le filtre projet reste
+    // appliqué par-dessus, deviner un identifiant ne montre donc rien de plus.
+    const visibleProjectIds =
+      user.role === "DEV" ? await projectIdsVisibleToDev(user.id) : null;
+    if (visibleProjectIds) {
+      where.OR = [{ projectId: { in: visibleProjectIds } }, { assigneeId: user.id }];
     }
 
     const [projects, tickets] = await Promise.all([
       prisma.project.findMany({
+        where: visibleProjectIds ? { id: { in: visibleProjectIds } } : undefined,
         include: { client: true },
         orderBy: { name: "asc" },
       }),
@@ -94,6 +100,10 @@ const bodySchema = z.discriminatedUnion("action", [
     type: z.enum(["BUG", "DEV"]),
     title: z.string().min(1),
     description: z.string(),
+    // Les étapes se saisissaient seulement en modification : un bug arrivait
+    // donc toujours sans la façon de le reproduire, c'est-à-dire sans ce qui
+    // permet de le traiter.
+    steps: z.string(),
     projectId: z.string().min(1),
     epicId: z.string().nullable(),
     severity: z.enum(["BLOQUANT", "MAJEUR", "MINEUR"]).nullable(),
@@ -216,7 +226,7 @@ export const POST = adminRoute(
           prisma.ticket.create({
             data: {
               ref,
-              steps: "",
+              steps: body.steps,
               projectId: body.projectId,
               epicId: body.epicId,
               type: body.type,

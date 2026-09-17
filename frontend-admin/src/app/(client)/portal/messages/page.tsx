@@ -26,7 +26,7 @@ export default async function PortalMessagesPage() {
       {copy && absence?.mode !== "OUVERT" ? (
         <div className="rounded-xl border border-amber/30 bg-amber/5 p-4 text-sm">
           <p className="font-medium text-amber">RÉPONSE AUTOMATIQUE — {copy.title}</p>
-          <p className="mt-1 text-text">{copy.body}</p>
+          <p className="mt-1 whitespace-pre-line text-text">{absence?.message ?? copy.body}</p>
         </div>
       ) : null}
 

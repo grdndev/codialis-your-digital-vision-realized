@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { fmtHours, fmtEUR, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel } from "@/lib/format";
@@ -32,7 +32,10 @@ export default async function ProjectDetailPage({
     `/api/admin/projects/detail?id=${encodeURIComponent(id)}${activeView === "fiche" ? "&fiche=1" : ""}`,
   );
 
-  if (result.access === "not-found") notFound();
+  // « Projets » dans le menu rouvre le dernier projet consulté : s'il a été
+  // supprimé depuis, on renvoie à la liste plutôt que sur une page d'erreur
+  // dont on ne sait pas sortir.
+  if (result.access === "not-found") redirect("/projects?liste=1");
   // Un développeur non assigné voit un refus explicite, pas un 404 : le
   // projet existe, il n’y a simplement pas accès.
   if (result.access === "not-assigned") {
@@ -62,7 +65,9 @@ export default async function ProjectDetailPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link href="/projects" className="text-sm text-muted hover:text-text">
+        {/* `liste=1` demande explicitement la liste : « Projets » dans le menu
+            rouvre le dernier projet consulté, ce lien-ci fait le contraire. */}
+        <Link href="/projects?liste=1" className="text-sm text-muted hover:text-text">
           ← Tous les projets
         </Link>
         <div className="mt-2 flex items-start justify-between gap-6">

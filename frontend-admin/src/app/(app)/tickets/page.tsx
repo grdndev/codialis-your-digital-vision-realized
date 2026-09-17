@@ -10,19 +10,29 @@ import {
   SEVERITY_BADGE_CLASS,
   SEVERITY_LABEL,
   DEV_NATURE_LABEL,
+  projectLabel,
 } from "@/lib/format";
 import type { Severity, TaskStatus } from "@/lib/types";
 import { setTicketStatusAction } from "./actions";
 import type { TicketsScreen } from "./types";
 
 const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
+const FILTER_KEYS = ["project", "type", "severity", "status"] as const;
+type FilterKey = (typeof FILTER_KEYS)[number];
 // L'API renvoie déjà la liste triée du plus grave au moins grave.
 const SEVERITIES: Severity[] = ["BLOQUANT", "MAJEUR", "MINEUR"];
 
 export default async function TicketsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string; type?: string; status?: string; severity?: string; view?: string }>;
+  searchParams: Promise<{
+    project?: string;
+    type?: string;
+    status?: string;
+    severity?: string;
+    view?: string;
+    f?: string;
+  }>;
 }) {
   // Le cloisonnement par rôle est appliqué côté API : ici la garde ne sert
   // qu'à exiger une session.
@@ -46,18 +56,35 @@ export default async function TicketsPage({
   const devCount = tickets.filter((t) => t.type === "DEV").length;
   const remaining = tickets.reduce((s, t) => s + Math.max(0, t.estHours - t.spentHours), 0);
 
-  function withParam(key: string, value: string | null) {
-    const params = new URLSearchParams();
-    if (sp.project) params.set("project", sp.project);
-    if (sp.type) params.set("type", sp.type);
-    if (sp.severity) params.set("severity", sp.severity);
-    if (sp.status) params.set("status", sp.status);
-    if (sp.view) params.set("view", sp.view);
-    if (value) params.set(key, value);
-    else params.delete(key);
-    const qs = params.toString();
-    return qs ? `/tickets?${qs}` : "/tickets";
+  // Chaque critère retient plusieurs valeurs : cliquer une deuxième gravité
+  // l'ajoute au lieu de remplacer la première, recliquer l'enlève. `f=1`
+  // marque un choix délibéré — c'est ce qui distingue « aucun filtre » d'une
+  // arrivée par le menu, où les filtres retenus sont réappliqués.
+  function selected(key: FilterKey): string[] {
+    return (sp[key] ?? "").split(",").filter(Boolean);
   }
+
+  function buildHref(next: Partial<Record<FilterKey | "view", string | null>>) {
+    const params = new URLSearchParams();
+    for (const key of FILTER_KEYS) {
+      const value = key in next ? next[key] : (sp[key] ?? null);
+      if (value) params.set(key, value);
+    }
+    const view = "view" in next ? next.view : (sp.view ?? null);
+    if (view) params.set("view", view);
+    params.set("f", "1");
+    return `/tickets?${params}`;
+  }
+
+  function toggleHref(key: FilterKey, value: string) {
+    const current = selected(key);
+    const next = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    return buildHref({ [key]: next.join(",") || null });
+  }
+
+  const clearHref = (key: FilterKey) => buildHref({ [key]: null });
 
   return (
     <div className="flex flex-col gap-6">
@@ -70,10 +97,10 @@ export default async function TicketsPage({
         </div>
         <div className="flex items-center gap-3">
           <div className="flex gap-1 rounded-lg border border-border bg-panel p-1 text-sm">
-            <Link href={withParam("view", null)} className={`rounded-md px-3 py-1.5 ${view === "table" ? "bg-mint/10 text-mint" : "text-muted"}`}>
+            <Link href={buildHref({ view: null })} className={`rounded-md px-3 py-1.5 ${view === "table" ? "bg-mint/10 text-mint" : "text-muted"}`}>
               Tableau
             </Link>
-            <Link href={withParam("view", "kanban")} className={`rounded-md px-3 py-1.5 ${view === "kanban" ? "bg-mint/10 text-mint" : "text-muted"}`}>
+            <Link href={buildHref({ view: "kanban" })} className={`rounded-md px-3 py-1.5 ${view === "kanban" ? "bg-mint/10 text-mint" : "text-muted"}`}>
               Kanban
             </Link>
           </div>
@@ -84,39 +111,51 @@ export default async function TicketsPage({
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <FilterLink href={withParam("project", null)} active={!sp.project}>
+        <FilterLink href={clearHref("project")} active={!selected("project").length}>
           Tous les projets
         </FilterLink>
         {projects.map((p) => (
-          <FilterLink key={p.id} href={withParam("project", p.id)} active={sp.project === p.id}>
-            {p.client.name}
+          <FilterLink
+            key={p.id}
+            href={toggleHref("project", p.id)}
+            active={selected("project").includes(p.id)}
+          >
+            {projectLabel(p.client.name, p.name)}
           </FilterLink>
         ))}
         <span className="mx-1 h-4 w-px bg-border" />
-        <FilterLink href={withParam("type", null)} active={!sp.type}>
+        <FilterLink href={clearHref("type")} active={!selected("type").length}>
           Tous types
         </FilterLink>
-        <FilterLink href={withParam("type", "BUG")} active={sp.type === "BUG"}>
+        <FilterLink href={toggleHref("type", "BUG")} active={selected("type").includes("BUG")}>
           Bugs
         </FilterLink>
-        <FilterLink href={withParam("type", "DEV")} active={sp.type === "DEV"}>
+        <FilterLink href={toggleHref("type", "DEV")} active={selected("type").includes("DEV")}>
           Développement
         </FilterLink>
         <span className="mx-1 h-4 w-px bg-border" />
-        <FilterLink href={withParam("severity", null)} active={!sp.severity}>
+        <FilterLink href={clearHref("severity")} active={!selected("severity").length}>
           Toutes gravités
         </FilterLink>
         {SEVERITIES.map((sev) => (
-          <FilterLink key={sev} href={withParam("severity", sev)} active={sp.severity === sev}>
+          <FilterLink
+            key={sev}
+            href={toggleHref("severity", sev)}
+            active={selected("severity").includes(sev)}
+          >
             {SEVERITY_LABEL[sev]}
           </FilterLink>
         ))}
         <span className="mx-1 h-4 w-px bg-border" />
-        <FilterLink href={withParam("status", null)} active={!sp.status}>
+        <FilterLink href={clearHref("status")} active={!selected("status").length}>
           Tous statuts
         </FilterLink>
         {STATUSES.map((s) => (
-          <FilterLink key={s} href={withParam("status", s)} active={sp.status === s}>
+          <FilterLink
+            key={s}
+            href={toggleHref("status", s)}
+            active={selected("status").includes(s)}
+          >
             {STATUS_LABEL[s]}
           </FilterLink>
         ))}

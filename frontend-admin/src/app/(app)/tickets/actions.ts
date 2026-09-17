@@ -19,6 +19,7 @@ export async function createTicketAction(formData: FormData) {
     type,
     title,
     description: String(formData.get("description") ?? "").trim(),
+    steps: String(formData.get("steps") ?? "").trim(),
     projectId,
     epicId: String(formData.get("epicId") ?? "") || null,
     severity: (String(formData.get("severity") ?? "") || null) as Severity | null,
