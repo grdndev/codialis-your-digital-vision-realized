@@ -137,6 +137,33 @@ export async function createEpicAction(formData: FormData) {
   revalidatePath(`/projects/${projectId}`);
 }
 
+// Import JSON — poser d'un coup les lots, leurs tâches et les tickets d'un
+// projet. Les erreurs de forme remontent telles quelles de l'API : « il manque
+// un titre à la troisième entrée » est exploitable, « requête invalide » non.
+export async function importProjectJsonAction(formData: FormData): Promise<void> {
+  const projectId = String(formData.get("projectId") ?? "");
+  const payload = String(formData.get("payload") ?? "").trim();
+  if (!projectId || !payload) return;
+
+  let message: string;
+  try {
+    const result = await apiPost<{
+      createdEpics: number;
+      createdTasks: number;
+      createdTickets: number;
+    }>(PROJECTS, { action: "import-json", projectId, payload });
+    message = `Import terminé : ${result.createdEpics} lot(s), ${result.createdTasks} tâche(s), ${result.createdTickets} ticket(s).`;
+  } catch (err) {
+    if (!(err instanceof ApiError)) throw err;
+    message = err.message;
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/projects");
+  revalidatePath("/tickets");
+  redirect(`/projects/${projectId}?info=${encodeURIComponent(message)}`);
+}
+
 export async function createTaskAction(formData: FormData) {
   const epicId = String(formData.get("epicId") ?? "");
   const projectId = String(formData.get("projectId") ?? "");

@@ -55,7 +55,7 @@ export const GET = adminRoute(
       where.OR = [{ projectId: { in: visibleProjectIds } }, { assigneeId: user.id }];
     }
 
-    const [projects, tickets] = await Promise.all([
+    const [projects, tickets, team] = await Promise.all([
       prisma.project.findMany({
         where: visibleProjectIds ? { id: { in: visibleProjectIds } } : undefined,
         include: { client: true },
@@ -70,6 +70,12 @@ export const GET = adminRoute(
         },
         orderBy: { createdAt: "desc" },
       }),
+      // Pour le traitement en masse : à qui réassigner une sélection.
+      prisma.user.findMany({
+        where: { role: { in: ["DEV", "PM", "DIR"] } },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
     ]);
 
     // Tri par gravité fait ici et non en SQL : MySQL place les NULL en tête, et
@@ -83,7 +89,7 @@ export const GET = adminRoute(
       return b.createdAt.getTime() - a.createdAt.getTime();
     });
 
-    return { projects, tickets: ranked };
+    return { projects, tickets: ranked, team };
   },
 );
 
@@ -122,6 +128,16 @@ const bodySchema = z.discriminatedUnion("action", [
     action: z.literal("set-status"),
     ticketId: z.string().min(1),
     status: z.enum(["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"]),
+  }),
+  // Traitement en masse : trier vingt tickets un par un pour leur poser le
+  // même statut ou le même assigné coûte vingt allers-retours. `null` sur un
+  // champ signifie « ne pas y toucher », et non « vider ».
+  z.object({
+    action: z.literal("bulk-update"),
+    ticketIds: z.array(z.string().min(1)).min(1).max(200),
+    status: z.enum(["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"]).nullable(),
+    assigneeId: z.string().nullable(),
+    clearAssignee: z.boolean(),
   }),
   z.object({
     action: z.literal("update"),
@@ -286,6 +302,43 @@ export const POST = adminRoute(
         const ticket = await prisma.ticket.findUnique({ where: { id: body.ticketId } });
         if (!ticket) badRequest("Ticket introuvable");
         return applyTicketStatus(ticket, body.status, user);
+      }
+
+      case "bulk-update": {
+        if (!body.status && !body.assigneeId && !body.clearAssignee) {
+          badRequest("Aucune modification demandée");
+        }
+        const tickets = await prisma.ticket.findMany({ where: { id: { in: body.ticketIds } } });
+        if (!tickets.length) badRequest("Aucun ticket sélectionné");
+
+        // L'assigné se pose d'abord : changer de porteur arrête le chronomètre
+        // du précédent, et le statut demandé s'applique ensuite par-dessus.
+        if (body.assigneeId || body.clearAssignee) {
+          const nextAssignee = body.clearAssignee ? null : body.assigneeId;
+          for (const ticket of tickets) {
+            if (ticket.assigneeId === nextAssignee) continue;
+            if (ticket.status === "EN_COURS") {
+              await prisma.$transaction((tx) => closeSessions(tx, { ticketId: ticket.id }));
+            }
+            await prisma.ticket.update({
+              where: { id: ticket.id },
+              data: {
+                assigneeId: nextAssignee,
+                ...(ticket.status === "EN_COURS" && !body.status
+                  ? { status: "A_FAIRE" as TaskStatus }
+                  : {}),
+              },
+            });
+          }
+        }
+
+        if (body.status) {
+          const fresh = await prisma.ticket.findMany({ where: { id: { in: body.ticketIds } } });
+          for (const ticket of fresh) {
+            await applyTicketStatus(ticket, body.status, user);
+          }
+        }
+        return { ok: true, count: tickets.length };
       }
 
       case "update": {

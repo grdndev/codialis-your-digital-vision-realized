@@ -28,6 +28,8 @@ import {
   type Balance,
   type PresenceRuleRow,
   type RhScreen,
+  type CalendarEntryRow,
+  type CalendarKind,
 } from "./types";
 
 const SHIFT_KINDS: ShiftKind[] = ["BUREAU", "TELETRAVAIL", "CLIENT", "ABSENCE"];
@@ -97,6 +99,8 @@ export default async function RhPage() {
     allTravel,
     allAbsences,
     allRules,
+    calendar,
+    people,
   } = await apiGet<RhScreen>(`/api/admin/rh?${query}`);
 
   const isDir = user.role === "DIR";
@@ -120,6 +124,8 @@ export default async function RhPage() {
         <Kpi label="Heures supp. du mois" value={fmtHours(supTotal)} note={`${myHours.filter((e) => e.kind === "SUP").length} déclaration(s)`} />
         <Kpi label="Récupérations du mois" value={fmtHours(recupTotal)} note={`${myHours.filter((e) => e.kind === "RECUP").length} demande(s)`} />
       </div>
+
+      <TeamCalendar monthStart={monthStart} monthEnd={monthEnd} calendar={calendar} people={people} />
 
       {isDir ? (
         <>
@@ -651,6 +657,117 @@ function Kpi({ label, value, note }: { label: string; value: string; note: strin
       <p className="text-xs text-muted">{label}</p>
       <p className="mt-1.5 text-2xl font-semibold text-text">{value}</p>
       <p className="mt-1 text-xs text-muted">{note}</p>
+    </div>
+  );
+}
+
+const CALENDAR_LABEL: Record<CalendarKind, string> = {
+  TELETRAVAIL: "Télétravail",
+  CONGE: "Congés",
+  ABSENCE: "Absence",
+  FORMATION: "Formation",
+  DEPLACEMENT: "Déplacement",
+};
+
+const CALENDAR_CLASS: Record<CalendarKind, string> = {
+  TELETRAVAIL: "bg-mint/15 text-mint",
+  CONGE: "bg-amber/15 text-amber",
+  ABSENCE: "bg-red/15 text-red",
+  FORMATION: "bg-white/10 text-text",
+  DEPLACEMENT: "bg-white/5 text-muted",
+};
+
+
+// « Qui est là ce mois-ci ». Une case par jour, une pastille par personne
+// concernée — le reste de l'équipe est au bureau, ce qui se lit à l'absence de
+// pastille plutôt qu'en répétant trente fois « présent ».
+function TeamCalendar({
+  monthStart,
+  monthEnd,
+  calendar,
+  people,
+}: {
+  monthStart: Date;
+  monthEnd: Date;
+  calendar: Record<string, CalendarEntryRow[]>;
+  people: { id: string; name: string; initials: string }[];
+}) {
+  const nameById = new Map(people.map((p) => [p.id, p]));
+
+  const days: Date[] = [];
+  for (
+    const cursor = new Date(monthStart);
+    cursor < monthEnd;
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
+  ) {
+    days.push(new Date(cursor));
+  }
+
+  // La grille commence un lundi : on décale du nombre de cases nécessaire.
+  const lead = (monthStart.getUTCDay() + 6) % 7;
+  const kinds = [...new Set(Object.values(calendar).flat().map((e) => e.kind))];
+
+  return (
+    <div className="rounded-xl border border-border bg-panel p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-text">Qui est là</h2>
+          <p className="mt-1 text-xs text-muted">
+            Congés, télétravail, formations et déplacements de l’équipe ce mois-ci. Un jour
+            sans pastille est un jour où tout le monde est au bureau.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs">
+          {kinds.map((kind) => (
+            <span key={kind} className={`rounded-full px-2 py-0.5 ${CALENDAR_CLASS[kind]}`}>
+              {CALENDAR_LABEL[kind]}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-7 gap-1.5">
+        {["L", "M", "M", "J", "V", "S", "D"].map((label, i) => (
+          <div key={`${label}-${i}`} className="pb-1 text-center text-[10px] font-medium text-muted">
+            {label}
+          </div>
+        ))}
+        {Array.from({ length: lead }, (_, i) => (
+          <div key={`vide-${i}`} />
+        ))}
+        {days.map((day) => {
+          const key = day.toISOString().slice(0, 10);
+          const entries = calendar[key] ?? [];
+          const weekend = day.getUTCDay() === 0 || day.getUTCDay() === 6;
+          return (
+            <div
+              key={key}
+              className={`min-h-[68px] rounded-lg border p-1.5 ${
+                weekend ? "border-border/40 bg-panel-2/40" : "border-border bg-panel-2"
+              }`}
+            >
+              <p className={`text-[10px] ${weekend ? "text-muted/50" : "text-muted"}`}>
+                {day.getUTCDate()}
+              </p>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {entries.map((entry, i) => {
+                  const who = nameById.get(entry.userId);
+                  if (!who) return null;
+                  return (
+                    <span
+                      key={`${entry.userId}-${entry.kind}-${i}`}
+                      title={`${who.name} — ${CALENDAR_LABEL[entry.kind]}${entry.halfDay ? (entry.halfDay === "AM" ? " (matin)" : " (après-midi)") : ""}${entry.motif ? ` · ${entry.motif}` : ""}`}
+                      className={`rounded px-1 py-0.5 text-[10px] font-medium ${CALENDAR_CLASS[entry.kind]}`}
+                    >
+                      {who.initials}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

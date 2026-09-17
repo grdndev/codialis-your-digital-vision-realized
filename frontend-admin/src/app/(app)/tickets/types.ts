@@ -13,6 +13,8 @@ export type TicketsScreen = {
   // Déjà filtré côté API : par les filtres de l'écran ET par les projets
   // auxquels le rôle donne accès.
   tickets: TicketListRow[];
+  // Pour le traitement en masse : à qui réassigner une sélection.
+  team: { id: string; name: string }[];
 };
 
 export type TicketCriterionRow = {

@@ -3,6 +3,7 @@ import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { closeSessions, openSession, refreshProjectSpent } from "@/lib/work-sessions";
 import { projectIdsVisibleToDev } from "@/lib/project-access";
+import { maxSuffix, withUniqueRef } from "@/lib/refs";
 import type { TaskStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -138,6 +139,15 @@ const bodySchema = z.discriminatedUnion("action", [
     transition: z.enum(["advance", "reopen"]).optional(),
     status: z.enum(["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"]).optional(),
   }),
+  // Import JSON — poser d'un coup les lots, les tâches et les tickets d'un
+  // projet. Le contenu est validé par `importSchema` plus bas : ici on ne
+  // reçoit que le texte brut, pour pouvoir répondre une erreur lisible plutôt
+  // qu'un « requête invalide » qui ne dit pas où ça coince.
+  z.object({
+    action: z.literal("import-json"),
+    projectId: z.string().min(1),
+    payload: z.string().min(1).max(500_000),
+  }),
   z.object({ action: z.literal("toggle-task-criterion"), criterionId: z.string().min(1) }),
   z.object({
     action: z.literal("add-task-criterion"),
@@ -217,7 +227,10 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
     body.action === "create-client" ||
     body.action === "create-project" ||
     body.action === "update-project" ||
-    body.action === "update-client"
+    body.action === "update-client" ||
+    // Poser d'un coup les lots et les tickets d'un projet, c'est en dessiner la
+    // structure : même main que la création.
+    body.action === "import-json"
   ) {
     if (user.role !== "DIR" && user.role !== "PM") {
       badRequest("Réservé à la direction et à la chefferie de projet");
@@ -400,6 +413,104 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       return notice ? { ok: true, notice } : undefined;
     }
 
+    case "import-json": {
+      const project = await prisma.project.findUnique({ where: { id: body.projectId } });
+      if (!project) badRequest("Projet introuvable");
+
+      let parsedPayload: unknown;
+      try {
+        parsedPayload = JSON.parse(body.payload);
+      } catch {
+        badRequest("JSON illisible : vérifiez les virgules et les guillemets.");
+      }
+
+      const content = importSchema.safeParse(parsedPayload);
+      if (!content.success) {
+        const first = content.error.issues[0];
+        badRequest(`JSON refusé — ${first.path.join(".") || "racine"} : ${first.message}`);
+      }
+      const { epics, tickets } = content.data;
+      if (!epics.length && !tickets.length) badRequest("Rien à importer.");
+
+      // Les lots déjà présents sont réutilisés, pas dupliqués : réimporter un
+      // fichier corrigé ne doit pas créer un deuxième « Lot 1 ».
+      const existingEpics = await prisma.epic.findMany({
+        where: { projectId: project.id },
+        select: { id: true, title: true },
+      });
+      const epicByTitle = new Map(existingEpics.map((e) => [e.title.toLowerCase(), e.id]));
+      let order = existingEpics.length;
+      let createdEpics = 0;
+      let createdTasks = 0;
+
+      for (const epic of epics) {
+        let epicId = epicByTitle.get(epic.title.toLowerCase());
+        if (!epicId) {
+          const created = await prisma.epic.create({
+            data: {
+              projectId: project.id,
+              title: epic.title,
+              objective: epic.objective ?? null,
+              estHours: epic.estHours ?? 0,
+              order: order++,
+            },
+          });
+          epicId = created.id;
+          epicByTitle.set(epic.title.toLowerCase(), epicId);
+          createdEpics++;
+        }
+        let taskOrder = await prisma.task.count({ where: { epicId } });
+        for (const task of epic.tasks) {
+          await prisma.task.create({
+            data: {
+              epicId,
+              title: task.title,
+              description: task.description ?? "",
+              estHours: task.estHours ?? 0,
+              order: taskOrder++,
+            },
+          });
+          createdTasks++;
+        }
+      }
+
+      const prefix = `${project.initials}-`;
+      let createdTickets = 0;
+      for (const ticket of tickets) {
+        const epicId = ticket.epic ? (epicByTitle.get(ticket.epic.toLowerCase()) ?? null) : null;
+        await withUniqueRef(
+          async () => {
+            const refs = await prisma.ticket.findMany({
+              where: { ref: { startsWith: prefix } },
+              select: { ref: true },
+            });
+            return `${prefix}${(maxSuffix(refs.map((r) => r.ref), prefix) ?? 300) + 1}`;
+          },
+          (ref) =>
+            prisma.ticket.create({
+              data: {
+                ref,
+                projectId: project.id,
+                epicId,
+                type: ticket.type,
+                // La gravité ne concerne qu'un bug, la nature qu'un développement.
+                severity: ticket.type === "BUG" ? (ticket.severity ?? "MINEUR") : null,
+                devNature: ticket.type === "DEV" ? (ticket.devNature ?? null) : null,
+                title: ticket.title,
+                description: ticket.description ?? "",
+                steps: ticket.steps ?? "",
+                estHours: ticket.estHours ?? 0,
+                creatorId: user.id,
+              },
+            }),
+        );
+        createdTickets++;
+      }
+
+      await recomputeProjectProgress(project.id);
+      return { ok: true, createdEpics, createdTasks, createdTickets };
+    }
+
     case "toggle-task-criterion": {
       const criterion = await prisma.taskCriterion.findUnique({
         where: { id: body.criterionId },
@@ -516,4 +627,43 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       });
       return;
   }
+});
+
+// Forme attendue du JSON d'import. Tout est facultatif sauf les titres : un
+// fichier rédigé à la main ne doit pas être refusé pour une estimation absente.
+const importSchema = z.object({
+  epics: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(200),
+        objective: z.string().max(2000).optional(),
+        estHours: z.number().min(0).optional(),
+        tasks: z
+          .array(
+            z.object({
+              title: z.string().min(1).max(300),
+              description: z.string().max(5000).optional(),
+              estHours: z.number().min(0).optional(),
+            }),
+          )
+          .default([]),
+      }),
+    )
+    .default([]),
+  tickets: z
+    .array(
+      z.object({
+        type: z.enum(["BUG", "DEV"]),
+        title: z.string().min(1).max(300),
+        description: z.string().max(5000).optional(),
+        steps: z.string().max(5000).optional(),
+        severity: z.enum(["BLOQUANT", "MAJEUR", "MINEUR"]).optional(),
+        devNature: z.enum(["FRONT", "BACK", "API", "DESIGN"]).optional(),
+        estHours: z.number().min(0).optional(),
+        // Rattachement au lot par son TITRE : un identifiant technique ne se
+        // rédige pas à la main.
+        epic: z.string().max(200).optional(),
+      }),
+    )
+    .default([]),
 });

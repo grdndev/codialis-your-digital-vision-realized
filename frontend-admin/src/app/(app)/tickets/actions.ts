@@ -59,6 +59,30 @@ export async function setTicketStatusAction(
   if (showNotice && notice) redirect(`/tickets/${ref}?info=${encodeURIComponent(notice)}`);
 }
 
+// Traitement en masse. Le formulaire porte une case par ticket, plus le statut
+// et l'assigné à poser : une sélection, un aller-retour, au lieu d'ouvrir vingt
+// fiches pour la même correction.
+export async function bulkUpdateTicketsAction(formData: FormData) {
+  const ticketIds = formData.getAll("ticketIds").map(String).filter(Boolean);
+  if (!ticketIds.length) return;
+
+  const status = String(formData.get("bulkStatus") ?? "");
+  const assignee = String(formData.get("bulkAssignee") ?? "");
+
+  await apiPost(TICKETS, {
+    action: "bulk-update",
+    ticketIds,
+    status: (status || null) as TaskStatus | null,
+    // « Retirer l'assigné » est un choix, pas une absence de choix : sans ce
+    // drapeau, vider un assigné serait indistinct de « ne pas y toucher ».
+    assigneeId: assignee && assignee !== "__aucun__" ? assignee : null,
+    clearAssignee: assignee === "__aucun__",
+  });
+
+  revalidatePath("/tickets");
+  revalidatePath("/time");
+}
+
 export async function updateTicketAction(formData: FormData) {
   const ticketId = String(formData.get("ticketId") ?? "");
   const title = String(formData.get("title") ?? "").trim();

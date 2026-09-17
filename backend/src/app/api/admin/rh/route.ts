@@ -8,6 +8,7 @@ import {
   notifyRequestDecided,
   travelDetails,
 } from "@/lib/notify";
+import { buildCalendar } from "@/lib/hr-calendar";
 import {
   availableHours,
   availableLeave,
@@ -98,6 +99,69 @@ export const GET = adminRoute(
       availableLeave(user.id),
     ]);
 
+    // Calendrier d'équipe — « qui est là ce mois-ci ». Ouvert à toute
+    // l'équipe : savoir qui est absent est le minimum pour s'organiser. Le
+    // MOTIF, lui, reste à la direction ; le reste de l'écran RH ne change pas.
+    // `monthEnd` est une borne exclusive, le dernier jour affiché est la veille.
+    const lastDay = new Date(monthEnd);
+    lastDay.setUTCDate(lastDay.getUTCDate() - 1);
+
+    const [people, calAbsences, calRules, calTravels] = await Promise.all([
+      prisma.user.findMany({
+        where: { role: { in: ["DEV", "PM", "DIR"] } },
+        select: { id: true, name: true, initials: true, role: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.absence.findMany({
+        where: {
+          status: { not: "REFUSE" },
+          startDate: { lte: lastDay },
+          endDate: { gte: monthStart },
+        },
+      }),
+      prisma.presenceRecurrence.findMany({
+        where: {
+          startDate: { lte: lastDay },
+          OR: [{ endDate: null }, { endDate: { gte: monthStart } }],
+        },
+      }),
+      prisma.travelEntry.findMany({
+        where: {
+          status: { not: "REFUSE" },
+          startDate: { lte: lastDay },
+          OR: [{ endDate: null }, { endDate: { gte: monthStart } }],
+        },
+      }),
+    ]);
+
+    const calendar = buildCalendar(monthStart, lastDay, {
+      absences: calAbsences.map((a) => ({
+        userId: a.userId,
+        type: a.type,
+        startDate: a.startDate,
+        endDate: a.endDate,
+        halfDay: a.halfDay,
+        motif: user.role === "DIR" ? a.motif : "",
+      })),
+      recurrences: calRules.map((r) => ({
+        userId: r.userId,
+        effect: r.effect,
+        freq: r.freq,
+        weekday: r.weekday,
+        monthday: r.monthday,
+        halfDay: r.halfDay,
+        startDate: r.startDate,
+        endDate: r.endDate,
+        motif: user.role === "DIR" ? r.motif : "",
+      })),
+      travels: calTravels.map((t) => ({
+        userId: t.userId,
+        startDate: t.startDate,
+        endDate: t.endDate,
+        destination: user.role === "DIR" ? t.destination : "",
+      })),
+    });
+
     const mine = {
       myHours,
       myShifts,
@@ -105,6 +169,8 @@ export const GET = adminRoute(
       myAbsences,
       myRules,
       balances: { hours: hoursBalance, leave: leaveBalance },
+      calendar,
+      people,
     };
 
     // La synthèse d'équipe, la file de validation et les soldes des autres sont

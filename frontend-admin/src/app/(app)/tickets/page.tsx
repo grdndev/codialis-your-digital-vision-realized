@@ -13,7 +13,7 @@ import {
   projectLabel,
 } from "@/lib/format";
 import type { Severity, TaskStatus } from "@/lib/types";
-import { setTicketStatusAction } from "./actions";
+import { bulkUpdateTicketsAction, setTicketStatusAction } from "./actions";
 import type { TicketsScreen } from "./types";
 
 const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
@@ -50,7 +50,7 @@ export default async function TicketsPage({
   if (sp.type) filters.set("type", sp.type);
   if (sp.status) filters.set("status", sp.status);
   if (sp.severity) filters.set("severity", sp.severity);
-  const { projects, tickets } = await apiGet<TicketsScreen>(`/api/admin/tickets?${filters}`);
+  const { projects, tickets, team } = await apiGet<TicketsScreen>(`/api/admin/tickets?${filters}`);
 
   const bugCount = tickets.filter((t) => t.type === "BUG").length;
   const devCount = tickets.filter((t) => t.type === "DEV").length;
@@ -163,10 +163,45 @@ export default async function TicketsPage({
       </div>
 
       {view === "table" ? (
+        <form action={bulkUpdateTicketsAction} className="flex flex-col gap-3">
+          {/* Traiter une sélection d'un coup : cocher, choisir, appliquer.
+              Sans case cochée, le bandeau ne fait rien — l'API refuse une
+              sélection vide. */}
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-panel px-4 py-3 text-xs">
+            <span className="text-muted">Sélection :</span>
+            <select name="bulkStatus" className="input h-8 w-auto py-0 text-xs">
+              <option value="">Statut inchangé</option>
+              {STATUSES.filter((s) => canClose || s !== "TERMINE").map((s) => (
+                <option key={s} value={s}>
+                  {STATUS_LABEL[s]}
+                </option>
+              ))}
+            </select>
+            <select name="bulkAssignee" className="input h-8 w-auto py-0 text-xs">
+              <option value="">Assigné inchangé</option>
+              <option value="__aucun__">Retirer l’assigné</option>
+              {team.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg transition hover:brightness-110"
+            >
+              Appliquer
+            </button>
+            <span className="text-muted">
+              aux tickets cochés{canClose ? "" : " — la clôture revient à la chefferie de projet"}
+            </span>
+          </div>
+
         <div className="overflow-x-auto rounded-xl border border-border bg-panel">
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs text-muted">
+                <th className="w-8 px-4 py-3 font-medium"> </th>
                 <th className="px-4 py-3 font-medium">Réf.</th>
                 <th className="px-4 py-3 font-medium">Type</th>
                 <th className="px-4 py-3 font-medium">Titre</th>
@@ -180,6 +215,15 @@ export default async function TicketsPage({
             <tbody className="divide-y divide-border">
               {tickets.map((t) => (
                 <tr key={t.id} className="transition hover:bg-panel-2">
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      name="ticketIds"
+                      value={t.id}
+                      aria-label={`Sélectionner ${t.ref}`}
+                      className="accent-mint"
+                    />
+                  </td>
                   <td className="whitespace-nowrap px-4 py-3">
                     <Link href={`/tickets/${t.ref}`} className="font-medium text-text hover:text-mint">
                       {t.ref}
@@ -220,7 +264,7 @@ export default async function TicketsPage({
               ))}
               {tickets.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-muted">
+                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-muted">
                     Aucun ticket pour ces filtres.
                   </td>
                 </tr>
@@ -228,6 +272,7 @@ export default async function TicketsPage({
             </tbody>
           </table>
         </div>
+        </form>
       ) : (
         <div className="grid grid-cols-4 gap-4">
           {STATUSES.map((s) => {

@@ -91,7 +91,20 @@ export type TeamBalanceRow = { userId: string; hours: Balance; leave: Balance };
 // `team`, `teamBalances`, `allHours`, `allAbsences`, `allTravel` et `allRules`
 // arrivent vides pour un rôle autre que DIR : la synthèse d'équipe, les soldes
 // des autres et la file de validation lui sont réservés.
+// Calendrier d'équipe — « qui est là ce mois-ci ». Rangé par date ISO. Le
+// motif n'est renseigné que pour la direction.
+export type CalendarKind = AbsenceType | "DEPLACEMENT";
+
+export type CalendarEntryRow = {
+  userId: string;
+  kind: CalendarKind;
+  halfDay: HalfDay | null;
+  motif: string;
+};
+
 export type RhScreen = {
+  calendar: Record<string, CalendarEntryRow[]>;
+  people: { id: string; name: string; initials: string; role: string }[];
   myHours: HoursEntryRow[];
   myShifts: PlannedShiftRow[];
   myTravel: TravelRow[];

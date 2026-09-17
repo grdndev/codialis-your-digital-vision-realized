@@ -4,7 +4,7 @@ import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { fmtHours, fmtEUR, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel } from "@/lib/format";
 import {
-  createEpicAction, createTaskAction, updateClientContactAction, updateProjectDescriptionAction,
+  createEpicAction, createTaskAction, importProjectJsonAction, updateClientContactAction, updateProjectDescriptionAction,
   addClientQuestionAction, markQuestionAskedAction, answerClientQuestionAction,
   updateProjectAction, updateClientAction,
 } from "../actions";
@@ -20,11 +20,11 @@ export default async function ProjectDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; info?: string }>;
 }) {
   const user = await requireUser();
   const { id } = await params;
-  const { view } = await searchParams;
+  const { view, info } = await searchParams;
   const activeView = view === "kanban" ? "kanban" : view === "fiche" ? "fiche" : "list";
 
   // Les données de la fiche ne sont chargées que si son onglet est ouvert.
@@ -70,6 +70,11 @@ export default async function ProjectDetailPage({
         <Link href="/projects?liste=1" className="text-sm text-muted hover:text-text">
           ← Tous les projets
         </Link>
+        {info ? (
+          <p className="mt-2 rounded-lg border border-amber/30 bg-amber/5 px-4 py-2.5 text-sm text-text">
+            {info}
+          </p>
+        ) : null}
         <div className="mt-2 flex items-start justify-between gap-6">
           <div>
             <h1 className="text-xl font-semibold text-text">
@@ -114,6 +119,7 @@ export default async function ProjectDetailPage({
         {activeView !== "fiche" ? (
           <div className="flex items-center gap-2">
             <NewEpicDisclosure projectId={project.id} team={team} />
+            <ImportJsonDisclosure projectId={project.id} />
             {/* Depuis la fiche d'un projet, on ne pouvait ouvrir qu'un lot :
                 signaler un bug obligeait à repasser par l'écran Tickets et à
                 y resélectionner le projet. */}
@@ -623,6 +629,62 @@ function KanbanView({
         );
       })}
     </div>
+  );
+}
+
+const IMPORT_EXAMPLE = `{
+  "epics": [
+    {
+      "title": "Lot 1 — Cadrage",
+      "estHours": 20,
+      "tasks": [
+        { "title": "Atelier de lancement", "estHours": 4 }
+      ]
+    }
+  ],
+  "tickets": [
+    {
+      "type": "BUG",
+      "title": "Le formulaire ne s’envoie pas",
+      "steps": "1. Ouvrir la page\\n2. Valider",
+      "severity": "MAJEUR",
+      "estHours": 2,
+      "epic": "Lot 1 — Cadrage"
+    }
+  ]
+}`;
+
+// Import en masse. Un lot dont le titre existe déjà est réutilisé et non
+// dupliqué : réimporter un fichier corrigé ne crée pas un second « Lot 1 ».
+function ImportJsonDisclosure({ projectId }: { projectId: string }) {
+  return (
+    <details className="relative">
+      <summary className="cursor-pointer list-none rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted transition hover:text-text">
+        Importer du JSON
+      </summary>
+      <form
+        action={importProjectJsonAction}
+        className="absolute right-0 z-10 mt-2 flex w-[32rem] flex-col gap-2 rounded-xl border border-border bg-panel p-4 shadow-2xl"
+      >
+        <input type="hidden" name="projectId" value={projectId} />
+        <p className="text-xs text-muted">
+          Lots, tâches et tickets d’un coup. Seuls les titres sont obligatoires ; un lot
+          déjà présent est réutilisé, et les tickets reçoivent leur référence
+          automatiquement.
+        </p>
+        <textarea
+          name="payload"
+          required
+          rows={12}
+          defaultValue=""
+          placeholder={IMPORT_EXAMPLE}
+          className="input min-h-[240px] resize-y font-mono text-xs"
+        />
+        <button type="submit" className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg">
+          Importer
+        </button>
+      </form>
+    </details>
   );
 }
 
