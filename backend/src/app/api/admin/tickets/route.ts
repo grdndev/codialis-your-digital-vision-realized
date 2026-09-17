@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
-import type { Prisma, TaskStatus } from "@prisma/client";
+import type { Prisma, Severity, TaskStatus } from "@prisma/client";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 // ne doit jamais rapporter les autres, même s'ils ne sont pas rendus.
 
 const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
+const SEVERITIES: Severity[] = ["BLOQUANT", "MAJEUR", "MINEUR"];
 
 export const GET = adminRoute(
   ["DEV", "PM", "DIR"],
@@ -21,12 +22,16 @@ export const GET = adminRoute(
     const projectFilter = params.get("project");
     const typeFilter = params.get("type");
     const statusFilter = params.get("status");
+    const severityFilter = params.get("severity");
 
     const where: Prisma.TicketWhereInput = {};
     if (projectFilter) where.projectId = projectFilter;
     if (typeFilter === "BUG" || typeFilter === "DEV") where.type = typeFilter;
     if (statusFilter && STATUSES.includes(statusFilter as TaskStatus)) {
       where.status = statusFilter as TaskStatus;
+    }
+    if (severityFilter && SEVERITIES.includes(severityFilter as Severity)) {
+      where.severity = severityFilter as Severity;
     }
 
     if (user.role === "DEV") {
@@ -60,7 +65,18 @@ export const GET = adminRoute(
       }),
     ]);
 
-    return { projects, tickets };
+    // Tri par gravité fait ici et non en SQL : MySQL place les NULL en tête, et
+    // Prisma n'expose pas `nulls: "last"` sur ce connecteur. Les tickets sans
+    // gravité — les développements — doivent passer après les bugs, pas avant.
+    const RANK: Record<string, number> = { BLOQUANT: 0, MAJEUR: 1, MINEUR: 2 };
+    const ranked = [...tickets].sort((a, b) => {
+      const ra = a.severity ? RANK[a.severity] : 3;
+      const rb = b.severity ? RANK[b.severity] : 3;
+      if (ra !== rb) return ra - rb;
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    });
+
+    return { projects, tickets: ranked };
   },
 );
 
@@ -99,6 +115,8 @@ const bodySchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("update"),
     ticketId: z.string().min(1),
+    projectId: z.string().min(1),
+    type: z.enum(["BUG", "DEV"]),
     title: z.string().min(1).max(300),
     description: z.string(),
     steps: z.string(),
@@ -236,24 +254,40 @@ export const POST = adminRoute(
       case "update": {
         const ticket = await prisma.ticket.findUnique({
           where: { id: body.ticketId },
-          select: { ref: true, type: true },
+          select: { ref: true, projectId: true },
         });
         if (!ticket) badRequest("Ticket introuvable");
+
+        const movedProject = body.projectId !== ticket.projectId;
+        if (movedProject) {
+          const target = await prisma.project.findUnique({
+            where: { id: body.projectId },
+            select: { id: true },
+          });
+          if (!target) badRequest("Projet introuvable");
+        }
 
         await prisma.ticket.update({
           where: { id: body.ticketId },
           data: {
+            // Déplacer un ticket NE change PAS sa référence : c'est par elle
+            // qu'on le désigne dans un e-mail ou une réunion, la renuméroter
+            // casserait toute trace. Elle garde donc le préfixe du projet
+            // d'origine, ce qui est le moindre mal.
+            projectId: body.projectId,
+            // Un lot appartient à un projet : le changer de projet rend le
+            // rattachement caduc.
+            epicId: movedProject ? null : body.epicId,
+            type: body.type,
             title: body.title,
             description: body.description,
             steps: body.steps,
-            // Même règle qu'à la création : la gravité ne concerne qu'un bug,
-            // la nature qu'un développement. Le type, lui, ne se change pas —
-            // la référence et les critères en découlent.
-            severity: ticket.type === "BUG" ? body.severity : null,
-            devNature: ticket.type === "DEV" ? body.devNature : null,
+            // La gravité ne concerne qu'un bug, la nature qu'un développement :
+            // on efface celle qui ne correspond plus au type retenu.
+            severity: body.type === "BUG" ? body.severity : null,
+            devNature: body.type === "DEV" ? body.devNature : null,
             estHours: body.estHours,
             assigneeId: body.assigneeId,
-            epicId: body.epicId,
           },
         });
         return { ok: true, ref: ticket.ref };

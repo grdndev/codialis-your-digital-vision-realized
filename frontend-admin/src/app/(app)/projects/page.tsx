@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
 import { createClientAction, createProjectAction } from "./actions";
 import type { ProjectsScreen } from "./types";
@@ -49,7 +49,11 @@ export default async function ProjectsPage({
 }: {
   searchParams: Promise<{ phase?: string; client?: string; error?: string }>;
 }) {
-  await requireRole("DIR", "PM");
+  // CC-317 : la liste s'ouvre aux développeurs. Créer un client ou un projet
+  // reste à la direction et à la chefferie — les deux formulaires disparaissent
+  // pour les autres, et l'API refuse de toute façon.
+  const user = await requireUser();
+  const canCreate = user.role === "DIR" || user.role === "PM";
   const sp = await searchParams;
   const active: ProjectGroup | "all" = (sp.phase as ProjectGroup | undefined) ?? "all";
 
@@ -154,6 +158,7 @@ export default async function ProjectsPage({
         </table>
       </div>
 
+      {canCreate ? (
       <div className="grid grid-cols-2 gap-6">
         <div className="rounded-xl border border-border bg-panel p-5">
           <h2 className="text-sm font-semibold text-text">Nouveau client</h2>
@@ -247,6 +252,7 @@ export default async function ProjectsPage({
           </form>
         </div>
       </div>
+      ) : null}
     </div>
   );
 }

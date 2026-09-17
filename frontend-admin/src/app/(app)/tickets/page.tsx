@@ -11,16 +11,18 @@ import {
   SEVERITY_LABEL,
   DEV_NATURE_LABEL,
 } from "@/lib/format";
-import type { TaskStatus } from "@/lib/types";
+import type { Severity, TaskStatus } from "@/lib/types";
 import { setTicketStatusAction } from "./actions";
 import type { TicketsScreen } from "./types";
 
 const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
+// L'API renvoie déjà la liste triée du plus grave au moins grave.
+const SEVERITIES: Severity[] = ["BLOQUANT", "MAJEUR", "MINEUR"];
 
 export default async function TicketsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string; type?: string; status?: string; view?: string }>;
+  searchParams: Promise<{ project?: string; type?: string; status?: string; severity?: string; view?: string }>;
 }) {
   // Le cloisonnement par rôle est appliqué côté API : ici la garde ne sert
   // qu'à exiger une session.
@@ -34,6 +36,7 @@ export default async function TicketsPage({
   if (sp.project) filters.set("project", sp.project);
   if (sp.type) filters.set("type", sp.type);
   if (sp.status) filters.set("status", sp.status);
+  if (sp.severity) filters.set("severity", sp.severity);
   const { projects, tickets } = await apiGet<TicketsScreen>(`/api/admin/tickets?${filters}`);
 
   const bugCount = tickets.filter((t) => t.type === "BUG").length;
@@ -44,6 +47,7 @@ export default async function TicketsPage({
     const params = new URLSearchParams();
     if (sp.project) params.set("project", sp.project);
     if (sp.type) params.set("type", sp.type);
+    if (sp.severity) params.set("severity", sp.severity);
     if (sp.status) params.set("status", sp.status);
     if (sp.view) params.set("view", sp.view);
     if (value) params.set(key, value);
@@ -95,6 +99,15 @@ export default async function TicketsPage({
         <FilterLink href={withParam("type", "DEV")} active={sp.type === "DEV"}>
           Développement
         </FilterLink>
+        <span className="mx-1 h-4 w-px bg-border" />
+        <FilterLink href={withParam("severity", null)} active={!sp.severity}>
+          Toutes gravités
+        </FilterLink>
+        {SEVERITIES.map((sev) => (
+          <FilterLink key={sev} href={withParam("severity", sev)} active={sp.severity === sev}>
+            {SEVERITY_LABEL[sev]}
+          </FilterLink>
+        ))}
         <span className="mx-1 h-4 w-px bg-border" />
         <FilterLink href={withParam("status", null)} active={!sp.status}>
           Tous statuts

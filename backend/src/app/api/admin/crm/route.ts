@@ -55,6 +55,10 @@ const bodySchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("update"),
     dealId: z.string().min(1),
+    // Le nom et le montant se corrigent comme le reste : une affaire mal
+    // nommée ou mal chiffrée n'avait aucun moyen d'être rectifiée.
+    name: z.string().min(1).max(200),
+    amountK: z.number().min(0),
     contactFirst: z.string().nullable(),
     contactLast: z.string().nullable(),
     contactEmail: z.string().nullable(),
@@ -151,6 +155,10 @@ export const POST = adminRoute(["PM", "DIR"], async ({ user }, request) => {
       await prisma.deal.update({
         where: { id: body.dealId },
         data: {
+          name: body.name.trim(),
+          // Le formulaire saisit des k€, le stockage est en euros — comme à la
+          // création et à l'import CSV.
+          amount: body.amountK * 1000,
           contactFirst: body.contactFirst,
           contactLast: body.contactLast,
           contactEmail: body.contactEmail,

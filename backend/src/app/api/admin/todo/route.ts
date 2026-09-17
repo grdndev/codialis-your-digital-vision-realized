@@ -25,6 +25,18 @@ export const GET = adminRoute(["DIR"], async () => ({
 const bodySchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("toggle"), itemId: z.string().min(1) }),
   z.object({
+    action: z.literal("update"),
+    itemId: z.string().min(1),
+    category: z.enum(["URGENT", "RELANCE", "DECISION"]),
+    title: z.string().min(1).max(300),
+    detail: z.string().max(5000),
+    tag: z.string().max(60),
+    dueLabel: z.string().max(60),
+    amountLabel: z.string().max(60),
+    linkedProjectId: z.string().nullable(),
+  }),
+  z.object({ action: z.literal("delete"), itemId: z.string().min(1) }),
+  z.object({
     action: z.literal("create"),
     category: z.enum(["URGENT", "RELANCE", "DECISION"]),
     title: z.string().min(1).max(300),
@@ -56,6 +68,27 @@ export const POST = adminRoute(["DIR"], async (_ctx, request) => {
         linkedProjectId: body.linkedProjectId,
       },
     });
+    return;
+  }
+
+  if (body.action === "update") {
+    await prisma.actionItem.update({
+      where: { id: body.itemId },
+      data: {
+        category: body.category,
+        tag: body.tag.trim() || body.category,
+        title: body.title.trim(),
+        detail: body.detail.trim(),
+        dueLabel: body.dueLabel.trim(),
+        amountLabel: body.amountLabel.trim(),
+        linkedProjectId: body.linkedProjectId,
+      },
+    });
+    return;
+  }
+
+  if (body.action === "delete") {
+    await prisma.actionItem.delete({ where: { id: body.itemId } });
     return;
   }
 

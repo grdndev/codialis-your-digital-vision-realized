@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, jsonBody, notFound } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
 
@@ -46,6 +46,18 @@ const bodySchema = z.discriminatedUnion("action", [
     action: z.literal("mark-paid"),
     invoiceId: z.string().min(1),
   }),
+  // Une facture se corrige TANT QU'ELLE N'EST PAS PAYÉE. Une fois réglée, c'est
+  // une pièce comptable : on la rectifie par un avoir, pas en réécrivant le
+  // montant. La référence, elle, ne bouge jamais — c'est par elle que le client
+  // et la comptabilité la désignent.
+  z.object({
+    action: z.literal("update-invoice"),
+    invoiceId: z.string().min(1),
+    label: z.string().min(1).max(200),
+    amount: z.number().positive(),
+    dueAt: z.string().datetime().nullable(),
+  }),
+  z.object({ action: z.literal("delete-invoice"), invoiceId: z.string().min(1) }),
 ]);
 
 export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
@@ -76,6 +88,35 @@ export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
         },
       }),
     );
+    return;
+  }
+
+  const invoice = await prisma.invoice.findUnique({
+    where: { id: body.invoiceId },
+    select: { status: true },
+  });
+  if (!invoice) notFound("Facture introuvable");
+
+  if (body.action === "update-invoice" || body.action === "delete-invoice") {
+    if (invoice.status === "PAYEE") {
+      badRequest("Une facture payée ne se modifie plus : passez par un avoir");
+    }
+  }
+
+  if (body.action === "update-invoice") {
+    await prisma.invoice.update({
+      where: { id: body.invoiceId },
+      data: {
+        label: body.label.trim(),
+        amount: body.amount,
+        dueAt: body.dueAt ? new Date(body.dueAt) : null,
+      },
+    });
+    return;
+  }
+
+  if (body.action === "delete-invoice") {
+    await prisma.invoice.delete({ where: { id: body.invoiceId } });
     return;
   }
 

@@ -6,8 +6,10 @@ import { fmtHours, fmtEUR, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL,
 import {
   createEpicAction, createTaskAction, updateClientContactAction, updateProjectDescriptionAction,
   addClientQuestionAction, markQuestionAskedAction, answerClientQuestionAction,
+  updateProjectAction, updateClientAction,
 } from "../actions";
-import type { ClientQuestionStatus, TaskStatus } from "@/lib/types";
+import type { ClientQuestionStatus, ProjectGroup, TaskStatus } from "@/lib/types";
+import type { ClientRef } from "@/lib/dto";
 import type {
   ApiCredentialRow, ClientQuestionRow, ProjectDetail, ProjectDetailResponse, ProjectTicketRow,
 } from "../types";
@@ -20,7 +22,7 @@ export default async function ProjectDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ view?: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
   const { view } = await searchParams;
   const activeView = view === "kanban" ? "kanban" : view === "fiche" ? "fiche" : "list";
@@ -44,7 +46,9 @@ export default async function ProjectDetailPage({
     );
   }
 
-  const { project, team, apis, questions, tickets } = result;
+  const { project, team, apis, questions, tickets, clients } = result;
+  // Un développeur consulte, il ne reconfigure pas le projet ni le client.
+  const canEdit = user.role === "DIR" || user.role === "PM";
 
   const workEpics = project.epics.filter((e) => e.tasks.length > 0 || e.estHours > 0);
   const allTasks = project.epics.flatMap((e) => e.tasks.map((t) => ({ ...t, epicTitle: e.title })));
@@ -102,7 +106,20 @@ export default async function ProjectDetailPage({
             Fiche
           </Link>
         </div>
-        {activeView !== "fiche" ? <NewEpicDisclosure projectId={project.id} team={team} /> : null}
+        {activeView !== "fiche" ? (
+          <div className="flex items-center gap-2">
+            <NewEpicDisclosure projectId={project.id} team={team} />
+            {/* Depuis la fiche d'un projet, on ne pouvait ouvrir qu'un lot :
+                signaler un bug obligeait à repasser par l'écran Tickets et à
+                y resélectionner le projet. */}
+            <Link
+              href={`/tickets/new?project=${project.id}`}
+              className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted transition hover:text-text"
+            >
+              + Nouveau ticket
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       {activeView === "list" ? (
@@ -110,7 +127,7 @@ export default async function ProjectDetailPage({
       ) : activeView === "kanban" ? (
         <KanbanView tasks={allTasks} projectId={project.id} tickets={tickets} />
       ) : (
-        <FicheView project={project} deadline={deadline} apis={apis} questions={questions} />
+        <FicheView project={project} deadline={deadline} apis={apis} questions={questions} clients={clients} canEdit={canEdit} />
       )}
     </div>
   );
@@ -121,19 +138,103 @@ function FicheView({
   deadline,
   apis,
   questions,
+  clients,
+  canEdit,
 }: {
   project: ProjectDetail;
   deadline: string;
   apis: ApiCredentialRow[];
   questions: ClientQuestionRow[];
+  clients: ClientRef[];
+  canEdit: boolean;
 }) {
+  const day = (d: Date | null) => (d ? new Date(d).toISOString().slice(0, 10) : "");
 
   return (
     <div className="grid grid-cols-2 gap-6">
       <div className="flex flex-col gap-6">
+        {canEdit ? (
+          <div className="rounded-xl border border-border bg-panel p-5">
+            <details>
+              <summary className="cursor-pointer text-sm font-semibold text-text">
+                Modifier le projet
+              </summary>
+              <form action={updateProjectAction} className="mt-4 flex flex-col gap-3">
+                <input type="hidden" name="projectId" value={project.id} />
+                <div className="grid grid-cols-2 gap-3">
+                  <PField label="Nom">
+                    <input name="name" required defaultValue={project.name} className="input" />
+                  </PField>
+                  <PField label="Client">
+                    <select name="clientId" defaultValue={project.client.id} className="input">
+                      {clients.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </PField>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <PField label="Phase">
+                    <select name="group" defaultValue={project.group} className="input">
+                      {(["DEV", "FIN", "WAR", "MAI", "CLO"] as ProjectGroup[]).map((g) => (
+                        <option key={g} value={g}>{GROUP_LABEL[g]}</option>
+                      ))}
+                    </select>
+                  </PField>
+                  <PField label="Libellé de phase" hint="facultatif">
+                    <input name="phaseLabel" defaultValue={project.phaseLabel} className="input" />
+                  </PField>
+                </div>
+                <PField label="Description">
+                  <textarea name="description" rows={2} defaultValue={project.description} className="input" />
+                </PField>
+                <div className="grid grid-cols-3 gap-3">
+                  <PField label="Heures vendues">
+                    <input name="hoursSold" defaultValue={project.hoursSold} className="input" />
+                  </PField>
+                  <PField label="Montant vendu (€)">
+                    <input name="soldAmount" defaultValue={project.soldAmount ?? ""} className="input" />
+                  </PField>
+                  <PField label="Coût (€)">
+                    <input name="costAmount" defaultValue={project.costAmount ?? ""} className="input" />
+                  </PField>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <PField label="Ouvert le">
+                    <input name="openedAt" type="date" defaultValue={day(project.openedAt)} className="input" />
+                  </PField>
+                  <PField label="Échéance">
+                    <input name="deadlineAt" type="date" defaultValue={day(project.deadlineAt)} className="input" />
+                  </PField>
+                  <PField label="Note d’échéance" hint="si pas de date">
+                    <input name="deadlineNote" defaultValue={project.deadlineNote ?? ""} className="input" />
+                  </PField>
+                </div>
+                <p className="text-xs text-muted">
+                  L’avancement et les heures passées ne se saisissent pas : ils suivent les tâches et
+                  les saisies de temps. Passer la phase en « Clôturé » horodate la clôture.
+                </p>
+                <button type="submit" className="self-start rounded-lg bg-mint px-4 py-2 text-xs font-semibold text-bg">
+                  Enregistrer
+                </button>
+              </form>
+            </details>
+          </div>
+        ) : null}
+
         <div className="rounded-xl border border-border bg-panel p-5">
           <h2 className="text-sm font-semibold text-text">Client</h2>
-          <p className="mt-2 text-base font-medium text-text">{project.client.name}</p>
+          {canEdit ? (
+            <form action={updateClientAction} className="mt-2 flex gap-2">
+              <input type="hidden" name="clientId" value={project.client.id} />
+              <input name="name" defaultValue={project.client.name} className="input flex-1" />
+              <button type="submit" className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted hover:text-text">
+                Renommer
+              </button>
+            </form>
+          ) : (
+            <p className="mt-2 text-base font-medium text-text">{project.client.name}</p>
+          )}
           <form action={updateClientContactAction} className="mt-3 flex flex-col gap-2">
             <input type="hidden" name="clientId" value={project.client.id} />
             <input type="hidden" name="projectId" value={project.id} />
@@ -279,6 +380,26 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div>
       <p className="text-xs text-muted">{label}</p>
       <p className="mt-0.5 text-text">{children}</p>
+    </div>
+  );
+}
+
+function PField({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-medium text-muted">
+        {label}
+        {hint ? <span className="ml-1 text-[10px] text-muted/70">({hint})</span> : null}
+      </label>
+      {children}
     </div>
   );
 }

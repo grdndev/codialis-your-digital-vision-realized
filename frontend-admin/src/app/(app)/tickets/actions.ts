@@ -63,6 +63,8 @@ export async function updateTicketAction(formData: FormData) {
   const { ref } = await apiPost<{ ref: string }>(TICKETS, {
     action: "update",
     ticketId,
+    projectId: String(formData.get("projectId") ?? ""),
+    type: String(formData.get("type") ?? "BUG"),
     title,
     description: String(formData.get("description") ?? "").trim(),
     steps: String(formData.get("steps") ?? "").trim(),

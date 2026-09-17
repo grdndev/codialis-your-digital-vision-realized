@@ -72,6 +72,7 @@ export type ProjectDetailResponse =
       questions: ClientQuestionRow[];
       // Les bugs et développements rattachés au projet, toutes vues confondues.
       tickets: ProjectTicketRow[];
+      clients: ClientRef[];
     };
 
 export type ProjectTicketRow = TicketRow & {

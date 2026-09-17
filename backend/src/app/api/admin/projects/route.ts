@@ -9,7 +9,10 @@ export const dynamic = "force-dynamic";
 // (liste, détail, fiche, détail de tâche), regroupées ici parce qu'elles
 // touchent le même agrégat.
 
-export const GET = adminRoute(["DIR", "PM"], async () => ({
+// Lecture ouverte aux développeurs : ils travaillent sur ces projets, la liste
+// leur sert. La création d'un client ou d'un projet reste à la direction et à
+// la chefferie, contrôlée plus bas dans le POST.
+export const GET = adminRoute(["DEV", "PM", "DIR"], async () => ({
   allProjects: await prisma.project.findMany({
     include: { client: true },
     orderBy: [{ openedAt: "desc" }],
@@ -92,12 +95,49 @@ const bodySchema = z.discriminatedUnion("action", [
     assigneeId: z.string().nullable(),
   }),
   z.object({
+    action: z.literal("update-epic"),
+    epicId: z.string().min(1),
+    title: z.string().min(1).max(200),
+    objective: z.string().nullable(),
+    estHours: z.number().min(0),
+    leadId: z.string().nullable(),
+    dueAt: z.string().datetime().nullable(),
+  }),
+  z.object({ action: z.literal("delete-epic"), epicId: z.string().min(1) }),
+  z.object({
+    action: z.literal("update-task"),
+    taskId: z.string().min(1),
+    projectId: z.string().min(1),
+    epicId: z.string().min(1),
+    title: z.string().min(1).max(300),
+    description: z.string(),
+    estHours: z.number().min(0),
+    assigneeId: z.string().nullable(),
+    dueAt: z.string().datetime().nullable(),
+  }),
+  z.object({
+    action: z.literal("delete-task"),
+    taskId: z.string().min(1),
+    projectId: z.string().min(1),
+  }),
+  z.object({
     action: z.literal("update-task-status"),
     taskId: z.string().min(1),
     projectId: z.string().min(1),
     transition: z.enum(["advance", "reopen"]),
   }),
   z.object({ action: z.literal("toggle-task-criterion"), criterionId: z.string().min(1) }),
+  z.object({
+    action: z.literal("add-task-criterion"),
+    taskId: z.string().min(1),
+    label: z.string().min(1).max(300),
+  }),
+  z.object({
+    action: z.literal("update-task-criterion"),
+    criterionId: z.string().min(1),
+    label: z.string().min(1).max(300),
+  }),
+  z.object({ action: z.literal("delete-task-criterion"), criterionId: z.string().min(1) }),
   z.object({
     action: z.literal("add-task-comment"),
     taskId: z.string().min(1),
@@ -109,6 +149,31 @@ const bodySchema = z.discriminatedUnion("action", [
     contactName: z.string().nullable(),
     contactEmail: z.string().nullable(),
     contactPhone: z.string().nullable(),
+  }),
+  // Tout ce qui décrit un projet se corrige : une phase avance, une échéance
+  // se décale, un chiffrage se révise. Restent dehors `initials` (préfixe des
+  // références de tickets, deux préfixes sur un même projet n'auraient pas de
+  // sens) et les colonnes calculées — avancement et heures passées reflètent
+  // les tâches et les saisies de temps, ce ne sont pas des saisies.
+  z.object({
+    action: z.literal("update-project"),
+    projectId: z.string().min(1),
+    clientId: z.string().min(1),
+    name: z.string().min(1).max(200),
+    group: z.enum(["DEV", "FIN", "WAR", "MAI", "CLO"]),
+    phaseLabel: z.string().max(200),
+    description: z.string(),
+    hoursSold: z.number().min(0),
+    soldAmount: z.number().min(0).nullable(),
+    costAmount: z.number().min(0).nullable(),
+    deadlineAt: z.string().datetime().nullable(),
+    deadlineNote: z.string().max(200).nullable(),
+    openedAt: z.string().datetime(),
+  }),
+  z.object({
+    action: z.literal("update-client"),
+    clientId: z.string().min(1),
+    name: z.string().min(1).max(200),
   }),
   z.object({
     action: z.literal("update-project-description"),
@@ -136,7 +201,12 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
   // Ouvrir un client ou un projet engage la structure du suivi : c'est à la
   // direction et à la chefferie de projet, pas au développement. Le contrôle est
   // ici et non sur la route, qui sert aussi aux écrans ouverts aux DEV.
-  if (body.action === "create-client" || body.action === "create-project") {
+  if (
+    body.action === "create-client" ||
+    body.action === "create-project" ||
+    body.action === "update-project" ||
+    body.action === "update-client"
+  ) {
     if (user.role !== "DIR" && user.role !== "PM") {
       badRequest("Réservé à la direction et à la chefferie de projet");
     }
@@ -223,6 +293,52 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       return;
     }
 
+    case "update-epic": {
+      await prisma.epic.update({
+        where: { id: body.epicId },
+        data: {
+          title: body.title.trim(),
+          objective: body.objective?.trim() || null,
+          estHours: body.estHours,
+          leadId: body.leadId,
+          dueAt: body.dueAt ? new Date(body.dueAt) : null,
+        },
+      });
+      return;
+    }
+
+    case "delete-epic": {
+      // Les tâches du lot tombent avec lui (cascade au schéma) : supprimer un
+      // lot rempli n'est pas un geste anodin, on le refuse plutôt que de
+      // l'exécuter silencieusement.
+      const tasks = await prisma.task.count({ where: { epicId: body.epicId } });
+      if (tasks > 0) badRequest(`Ce lot porte ${tasks} tâche(s) : videz-le d'abord`);
+      await prisma.epic.delete({ where: { id: body.epicId } });
+      return;
+    }
+
+    case "update-task": {
+      await prisma.task.update({
+        where: { id: body.taskId },
+        data: {
+          epicId: body.epicId,
+          title: body.title.trim(),
+          description: body.description,
+          estHours: body.estHours,
+          assigneeId: body.assigneeId,
+          dueAt: body.dueAt ? new Date(body.dueAt) : null,
+        },
+      });
+      await recomputeProjectProgress(body.projectId);
+      return;
+    }
+
+    case "delete-task": {
+      await prisma.task.delete({ where: { id: body.taskId } });
+      await recomputeProjectProgress(body.projectId);
+      return;
+    }
+
     case "update-task-status": {
       const task = await prisma.task.findUnique({ where: { id: body.taskId } });
       if (!task) badRequest("Tâche introuvable");
@@ -248,6 +364,25 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       return;
     }
 
+    case "add-task-criterion": {
+      const count = await prisma.taskCriterion.count({ where: { taskId: body.taskId } });
+      await prisma.taskCriterion.create({
+        data: { taskId: body.taskId, label: body.label.trim(), order: count },
+      });
+      return;
+    }
+
+    case "update-task-criterion":
+      await prisma.taskCriterion.update({
+        where: { id: body.criterionId },
+        data: { label: body.label.trim() },
+      });
+      return;
+
+    case "delete-task-criterion":
+      await prisma.taskCriterion.delete({ where: { id: body.criterionId } });
+      return;
+
     case "add-task-comment":
       // L'auteur est la session.
       await prisma.taskComment.create({
@@ -265,6 +400,46 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
         },
       });
       return;
+
+    case "update-project": {
+      const client = await prisma.client.findUnique({
+        where: { id: body.clientId },
+        select: { id: true },
+      });
+      if (!client) badRequest("Client introuvable");
+
+      await prisma.project.update({
+        where: { id: body.projectId },
+        data: {
+          clientId: body.clientId,
+          name: body.name.trim(),
+          group: body.group,
+          phaseLabel: body.phaseLabel.trim(),
+          description: body.description,
+          hoursSold: body.hoursSold,
+          soldAmount: body.soldAmount,
+          costAmount: body.costAmount,
+          deadlineAt: body.deadlineAt ? new Date(body.deadlineAt) : null,
+          deadlineNote: body.deadlineNote?.trim() || null,
+          openedAt: new Date(body.openedAt),
+          // Clôturer horodate la clôture ; rouvrir l'efface. La date suit la
+          // phase plutôt que d'être saisie à part, où elle pourrait la démentir.
+          closedAt: body.group === "CLO" ? new Date() : null,
+        },
+      });
+      return;
+    }
+
+    case "update-client": {
+      const name = body.name.trim();
+      const duplicate = await prisma.client.findFirst({
+        where: { name, id: { not: body.clientId } },
+        select: { id: true },
+      });
+      if (duplicate) badRequest("Un autre client porte déjà ce nom");
+      await prisma.client.update({ where: { id: body.clientId }, data: { name } });
+      return;
+    }
 
     case "update-project-description":
       await prisma.project.update({

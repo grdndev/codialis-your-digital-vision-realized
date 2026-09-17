@@ -188,6 +188,70 @@ const bodySchema = z.discriminatedUnion("action", [
     // Les valeurs arrivent dans l'ordre des colonnes de la catégorie.
     values: z.array(z.string()),
   }),
+
+  // Les sept autres types de ressources se modifiaient aussi peu que les clés
+  // d'API avant CC-301 : on ne pouvait qu'ajouter. Même traitement pour tous,
+  // le `projectId` restant hors du formulaire — une ressource appartient au
+  // projet sur lequel on l'a déposée.
+  z.object({
+    action: z.literal("update-url"),
+    urlId: z.string().min(1),
+    env: z.string(),
+    url: z.string(),
+    access: z.string(),
+    deployNote: z.string(),
+  }),
+  z.object({ action: z.literal("delete-url"), urlId: z.string().min(1) }),
+  z.object({
+    action: z.literal("update-account"),
+    accountId: z.string().min(1),
+    role: z.string(),
+    login: z.string(),
+    passwordMasked: z.string(),
+    env: z.string(),
+    note: z.string(),
+  }),
+  z.object({ action: z.literal("delete-account"), accountId: z.string().min(1) }),
+  z.object({
+    action: z.literal("update-mockup"),
+    mockupId: z.string().min(1),
+    name: z.string(),
+    version: z.string(),
+    status: z.enum(["VALIDE", "EN_INTEGRATION", "A_VALIDER", "BROUILLON"]),
+  }),
+  z.object({ action: z.literal("delete-mockup"), mockupId: z.string().min(1) }),
+  z.object({
+    action: z.literal("update-cdc-doc"),
+    docId: z.string().min(1),
+    name: z.string(),
+    version: z.string(),
+    meta: z.string(),
+    status: z.string(),
+  }),
+  z.object({ action: z.literal("delete-cdc-doc"), docId: z.string().min(1) }),
+  z.object({
+    action: z.literal("update-tech-doc"),
+    docId: z.string().min(1),
+    name: z.string(),
+    ext: z.string(),
+    meta: z.string(),
+    status: z.string(),
+  }),
+  z.object({ action: z.literal("delete-tech-doc"), docId: z.string().min(1) }),
+  z.object({
+    action: z.literal("update-custom-category"),
+    categoryId: z.string().min(1),
+    name: z.string(),
+    visibility: z.enum(["TEAM", "PM_ONLY"]),
+    format: z.enum(["TABLE", "FILES", "NOTES"]),
+  }),
+  z.object({ action: z.literal("delete-custom-category"), categoryId: z.string().min(1) }),
+  z.object({
+    action: z.literal("update-custom-category-row"),
+    rowId: z.string().min(1),
+    values: z.array(z.string()),
+  }),
+  z.object({ action: z.literal("delete-custom-category-row"), rowId: z.string().min(1) }),
 ]);
 
 export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
@@ -319,5 +383,90 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       });
       return;
     }
+
+    case "update-url":
+      await prisma.projectUrl.update({
+        where: { id: body.urlId },
+        data: { env: body.env, url: body.url, access: body.access, deployNote: body.deployNote },
+      });
+      return;
+    case "delete-url":
+      await prisma.projectUrl.delete({ where: { id: body.urlId } });
+      return;
+
+    case "update-account":
+      await prisma.testAccount.update({
+        where: { id: body.accountId },
+        data: {
+          role: body.role,
+          login: body.login,
+          passwordMasked: body.passwordMasked,
+          env: body.env,
+          note: body.note,
+        },
+      });
+      return;
+    case "delete-account":
+      await prisma.testAccount.delete({ where: { id: body.accountId } });
+      return;
+
+    case "update-mockup":
+      await prisma.mockup.update({
+        where: { id: body.mockupId },
+        data: { name: body.name, version: body.version, status: body.status },
+      });
+      return;
+    case "delete-mockup":
+      await prisma.mockup.delete({ where: { id: body.mockupId } });
+      return;
+
+    case "update-cdc-doc":
+      await prisma.cdcDocument.update({
+        where: { id: body.docId },
+        data: { name: body.name, version: body.version, meta: body.meta, status: body.status },
+      });
+      return;
+    case "delete-cdc-doc":
+      await prisma.cdcDocument.delete({ where: { id: body.docId } });
+      return;
+
+    case "update-tech-doc":
+      await prisma.techDoc.update({
+        where: { id: body.docId },
+        data: { name: body.name, ext: body.ext, meta: body.meta, status: body.status },
+      });
+      return;
+    case "delete-tech-doc":
+      await prisma.techDoc.delete({ where: { id: body.docId } });
+      return;
+
+    case "update-custom-category":
+      // Les colonnes ne se modifient pas ici : elles décrivent la forme des
+      // lignes déjà saisies, en changer le nombre les rendrait bancales.
+      await prisma.customCategory.update({
+        where: { id: body.categoryId },
+        data: { name: body.name, visibility: body.visibility, format: body.format },
+      });
+      return;
+    case "delete-custom-category":
+      await prisma.customCategory.delete({ where: { id: body.categoryId } });
+      return;
+
+    case "update-custom-category-row": {
+      const row = await prisma.customCategoryRow.findUnique({
+        where: { id: body.rowId },
+        include: { category: true },
+      });
+      if (!row) badRequest("Ligne introuvable");
+      const columns: string[] = JSON.parse(row.category.columns);
+      await prisma.customCategoryRow.update({
+        where: { id: body.rowId },
+        data: { data: JSON.stringify(columns.map((_, i) => body.values[i] ?? "")) },
+      });
+      return;
+    }
+    case "delete-custom-category-row":
+      await prisma.customCategoryRow.delete({ where: { id: body.rowId } });
+      return;
   }
 });

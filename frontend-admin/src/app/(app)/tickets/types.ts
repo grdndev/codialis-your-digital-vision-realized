@@ -60,6 +60,8 @@ export type TicketDetailResponse = {
   // rien à alimenter.
   epics?: { id: string; title: string }[];
   team?: { id: string; name: string }[];
+  // Pour déplacer le ticket : il n'avait aucun moyen de changer de projet.
+  projects?: { id: string; name: string; client: { name: string } }[];
 };
 
 export type NewTicketScreen = {

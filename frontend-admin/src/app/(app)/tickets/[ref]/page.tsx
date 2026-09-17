@@ -33,7 +33,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ r
   await requireUser();
   const { ref } = await params;
 
-  const { ticket, epics, team } = await apiGet<TicketDetailResponse>(
+  const { ticket, epics, team, projects } = await apiGet<TicketDetailResponse>(
     `/api/admin/tickets/detail?ref=${encodeURIComponent(ref)}`,
   );
   if (!ticket) notFound();
@@ -72,6 +72,27 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ r
               </summary>
               <form action={updateTicketAction} className="mt-3 flex flex-col gap-3">
                 <input type="hidden" name="ticketId" value={ticket.id} />
+                <div className="grid grid-cols-2 gap-3">
+                  <EditField label="Projet" hint="déplacer le ticket">
+                    <select name="projectId" defaultValue={ticket.project.id} className="input">
+                      {(projects ?? []).map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.client.name} — {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </EditField>
+                  <EditField label="Type">
+                    <select name="type" defaultValue={ticket.type} className="input">
+                      <option value="BUG">{TICKET_TYPE_LABEL.BUG}</option>
+                      <option value="DEV">{TICKET_TYPE_LABEL.DEV}</option>
+                    </select>
+                  </EditField>
+                </div>
+                <p className="text-xs text-muted">
+                  La référence {ticket.ref} ne change pas avec le projet : c’est par elle qu’on
+                  désigne le ticket ailleurs. Déplacer le ticket détache son épic.
+                </p>
                 <EditField label="Titre">
                   <input name="title" required defaultValue={ticket.title} className="input" />
                 </EditField>
@@ -87,29 +108,28 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ r
                 <div className="grid grid-cols-2 gap-3">
                   {/* Gravité pour un bug, nature pour un développement : le
                       type ne se change pas, la référence en découle. */}
-                  {ticket.type === "BUG" ? (
-                    <EditField label="Gravité">
-                      <select name="severity" defaultValue={ticket.severity ?? ""} className="input">
-                        <option value="">—</option>
-                        {(["BLOQUANT", "MAJEUR", "MINEUR"] as const).map((k) => (
-                          <option key={k} value={k}>
-                            {SEVERITY_LABEL[k]}
-                          </option>
-                        ))}
-                      </select>
-                    </EditField>
-                  ) : (
-                    <EditField label="Nature">
-                      <select name="devNature" defaultValue={ticket.devNature ?? ""} className="input">
-                        <option value="">—</option>
-                        {(["FRONT", "BACK", "API", "DESIGN"] as const).map((k) => (
-                          <option key={k} value={k}>
-                            {DEV_NATURE_LABEL[k]}
-                          </option>
-                        ))}
-                      </select>
-                    </EditField>
-                  )}
+                  {/* Les deux champs sont proposés : le type se change, et
+                      l'API garde celui qui correspond au type retenu. */}
+                  <EditField label="Gravité" hint="bug">
+                    <select name="severity" defaultValue={ticket.severity ?? ""} className="input">
+                      <option value="">—</option>
+                      {(["BLOQUANT", "MAJEUR", "MINEUR"] as const).map((k) => (
+                        <option key={k} value={k}>
+                          {SEVERITY_LABEL[k]}
+                        </option>
+                      ))}
+                    </select>
+                  </EditField>
+                  <EditField label="Nature" hint="développement">
+                    <select name="devNature" defaultValue={ticket.devNature ?? ""} className="input">
+                      <option value="">—</option>
+                      {(["FRONT", "BACK", "API", "DESIGN"] as const).map((k) => (
+                        <option key={k} value={k}>
+                          {DEV_NATURE_LABEL[k]}
+                        </option>
+                      ))}
+                    </select>
+                  </EditField>
                   <EditField label="Estimé (h)">
                     <input name="estHours" defaultValue={ticket.estHours} className="input" />
                   </EditField>

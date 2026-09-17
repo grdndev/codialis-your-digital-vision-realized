@@ -68,6 +68,56 @@ export async function createProjectAction(formData: FormData) {
   redirect(`/projects/${id}`);
 }
 
+export async function updateProjectAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  if (!projectId || !name) return;
+  const deadlineAt = String(formData.get("deadlineAt") ?? "");
+  const openedAt = String(formData.get("openedAt") ?? "");
+  const soldAmount = num(formData, "soldAmount");
+  const costAmount = num(formData, "costAmount");
+
+  try {
+    await apiPost(PROJECTS, {
+      action: "update-project",
+      projectId,
+      clientId: String(formData.get("clientId") ?? ""),
+      name,
+      group: String(formData.get("group") ?? "DEV"),
+      phaseLabel: String(formData.get("phaseLabel") ?? "").trim(),
+      description: String(formData.get("description") ?? ""),
+      hoursSold: num(formData, "hoursSold"),
+      soldAmount: soldAmount > 0 ? soldAmount : null,
+      costAmount: costAmount > 0 ? costAmount : null,
+      deadlineAt: deadlineAt ? new Date(`${deadlineAt}T00:00:00.000Z`).toISOString() : null,
+      deadlineNote: String(formData.get("deadlineNote") ?? "").trim() || null,
+      openedAt: new Date(`${openedAt || new Date().toISOString().slice(0, 10)}T00:00:00.000Z`).toISOString(),
+    });
+  } catch (err) {
+    if (err instanceof ApiError) fail(err.message);
+    throw err;
+  }
+
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}`);
+  redirect(`/projects/${projectId}`);
+}
+
+export async function updateClientAction(formData: FormData) {
+  const clientId = String(formData.get("clientId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  if (!clientId || !name) return;
+
+  try {
+    await apiPost(PROJECTS, { action: "update-client", clientId, name });
+  } catch (err) {
+    if (err instanceof ApiError) fail(err.message);
+    throw err;
+  }
+  revalidatePath("/projects");
+  redirect("/projects?client=renomme");
+}
+
 export async function createEpicAction(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "");
   const title = String(formData.get("title") ?? "").trim();

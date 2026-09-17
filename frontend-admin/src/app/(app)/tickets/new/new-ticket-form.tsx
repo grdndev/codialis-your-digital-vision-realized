@@ -5,9 +5,21 @@ import { createTicketAction } from "../actions";
 
 type Project = { id: string; label: string; epics: { id: string; title: string }[] };
 
-export function NewTicketForm({ projects, team }: { projects: Project[]; team: { id: string; name: string }[] }) {
+export function NewTicketForm({
+  projects,
+  team,
+  initialProjectId,
+}: {
+  projects: Project[];
+  team: { id: string; name: string }[];
+  initialProjectId?: string;
+}) {
   const [type, setType] = useState<"BUG" | "DEV">("BUG");
-  const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
+  // Un projet passé en paramètre n'est retenu que s'il existe vraiment dans la
+  // liste : une URL bricolée ne doit pas laisser le sélecteur vide.
+  const [projectId, setProjectId] = useState(
+    projects.some((p) => p.id === initialProjectId) ? initialProjectId! : (projects[0]?.id ?? ""),
+  );
   const project = projects.find((p) => p.id === projectId);
 
   return (

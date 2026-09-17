@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -37,21 +38,107 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async () => {
   return { entries, activeProjects, allProjects, openTasks, openTickets };
 });
 
-const addSchema = z.object({
-  action: z.literal("add-entry"),
-  projectId: z.string().nullable(),
-  taskId: z.string().nullable(),
-  ticketId: z.string().nullable(),
-  label: z.string().min(1),
-  date: z.string().datetime(),
-  hours: z.number().positive(),
-  billable: z.boolean(),
-});
+const bodySchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("update-entry"),
+    entryId: z.string().min(1),
+    label: z.string().min(1),
+    date: z.string().datetime(),
+    hours: z.number().positive(),
+    billable: z.boolean(),
+  }),
+  z.object({ action: z.literal("delete-entry"), entryId: z.string().min(1) }),
+  z.object({
+    action: z.literal("add-entry"),
+    projectId: z.string().nullable(),
+    taskId: z.string().nullable(),
+    ticketId: z.string().nullable(),
+    label: z.string().min(1),
+    date: z.string().datetime(),
+    hours: z.number().positive(),
+    billable: z.boolean(),
+  }),
+]);
+
+// Les compteurs d'heures passées (tâche, ticket, projet, contrat) sont des
+// colonnes incrémentées à la saisie, pas des sommes recalculées. Corriger ou
+// supprimer une entrée doit donc les rattraper du même écart, sans quoi
+// l'avancement affiché dériverait à chaque correction.
+async function shiftCounters(
+  tx: Prisma.TransactionClient,
+  entry: { projectId: string | null; taskId: string | null; ticketId: string | null; date: Date },
+  delta: number,
+) {
+  if (delta === 0) return;
+  if (entry.taskId) {
+    await tx.task.update({ where: { id: entry.taskId }, data: { spentHours: { increment: delta } } });
+  }
+  if (entry.ticketId) {
+    await tx.ticket.update({
+      where: { id: entry.ticketId },
+      data: { spentHours: { increment: delta } },
+    });
+  }
+  if (!entry.projectId) return;
+
+  await tx.project.update({
+    where: { id: entry.projectId },
+    data: { hoursSpent: { increment: delta }, lastActivityAt: new Date() },
+  });
+
+  const now = new Date();
+  const sameMonth =
+    entry.date.getUTCFullYear() === now.getUTCFullYear() &&
+    entry.date.getUTCMonth() === now.getUTCMonth();
+  if (!sameMonth) return;
+  const contract = await tx.maintenanceContract.findUnique({
+    where: { projectId: entry.projectId },
+  });
+  if (contract) {
+    await tx.maintenanceContract.update({
+      where: { projectId: entry.projectId },
+      data: { usedHoursThisMonth: { increment: delta } },
+    });
+  }
+}
 
 export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
-  const parsed = addSchema.safeParse(await jsonBody(request));
+  const parsed = bodySchema.safeParse(await jsonBody(request));
   if (!parsed.success) badRequest("Requête invalide");
   const body = parsed.data;
+
+  if (body.action === "update-entry" || body.action === "delete-entry") {
+    const entry = await prisma.timeEntry.findUnique({ where: { id: body.entryId } });
+    if (!entry) badRequest("Saisie introuvable");
+    // Chacun corrige ses propres heures ; la direction peut reprendre celles de
+    // l'équipe. Le rattachement (projet, tâche, ticket) ne bouge pas : il fait
+    // autorité sur les compteurs, le changer reviendrait à déplacer des heures
+    // d'un projet à l'autre en douce.
+    if (entry.userId !== user.id && user.role !== "DIR") {
+      badRequest("Cette saisie appartient à quelqu'un d'autre");
+    }
+
+    await prisma.$transaction(async (tx) => {
+      if (body.action === "delete-entry") {
+        await shiftCounters(tx, entry, -entry.hours);
+        await tx.timeEntry.delete({ where: { id: entry.id } });
+        return;
+      }
+      await shiftCounters(tx, entry, body.hours - entry.hours);
+      await tx.timeEntry.update({
+        where: { id: entry.id },
+        data: {
+          label: body.label,
+          date: new Date(body.date),
+          hours: body.hours,
+          billable: body.billable,
+        },
+      });
+    });
+
+    return { ok: true, projectId: entry.projectId };
+  }
+
   const date = new Date(body.date);
   const { taskId, ticketId, hours } = body;
 

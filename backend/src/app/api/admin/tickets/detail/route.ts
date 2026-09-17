@@ -41,7 +41,7 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
 
   // De quoi alimenter le formulaire de modification : les épics du projet et
   // l'équipe interne, à qui le ticket peut être réassigné.
-  const [epics, team] = await Promise.all([
+  const [epics, team, projects] = await Promise.all([
     prisma.epic.findMany({
       where: { projectId: ticket.projectId },
       orderBy: { order: "asc" },
@@ -52,7 +52,13 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
+    // Pour pouvoir déplacer le ticket : un ticket déposé sur le mauvais projet
+    // n'avait aucun moyen d'en changer.
+    prisma.project.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, client: { select: { name: true } } },
+    }),
   ]);
 
-  return { ticket, epics, team };
+  return { ticket, epics, team, projects };
 });

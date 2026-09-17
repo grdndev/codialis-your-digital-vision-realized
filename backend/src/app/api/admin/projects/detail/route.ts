@@ -38,15 +38,29 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
   });
   if (!project) return { access: "not-found" as const };
 
+  // Trois titres à ouvrir la fiche d'un projet pour un développeur : y être
+  // affecté, ou s'y voir confier un ticket, ou une tâche. L'affectation seule
+  // ne suffisait pas — un développeur à qui l'on donne du travail sur un projet
+  // sans l'y affecter se voyait refuser l'accès à ce sur quoi il travaille.
   if (user.role === "DEV") {
-    const assigned = await prisma.projectAssignment.findFirst({
-      where: { projectId: project.id, userId: user.id },
-      select: { id: true },
-    });
-    if (!assigned) return { access: "not-assigned" as const };
+    const [assigned, ticket, task] = await Promise.all([
+      prisma.projectAssignment.findFirst({
+        where: { projectId: project.id, userId: user.id },
+        select: { id: true },
+      }),
+      prisma.ticket.findFirst({
+        where: { projectId: project.id, assigneeId: user.id },
+        select: { id: true },
+      }),
+      prisma.task.findFirst({
+        where: { assigneeId: user.id, epic: { projectId: project.id } },
+        select: { id: true },
+      }),
+    ]);
+    if (!assigned && !ticket && !task) return { access: "not-assigned" as const };
   }
 
-  const [team, apis, questions, tickets] = await Promise.all([
+  const [team, apis, questions, tickets, clients] = await Promise.all([
     prisma.user.findMany({ where: { role: { in: ["DEV", "PM"] } }, orderBy: { name: "asc" } }),
     fiche ? prisma.apiCredential.findMany({ where: { projectId: id }, orderBy: { order: "asc" } }) : [],
     fiche
@@ -59,6 +73,8 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
       include: { assignee: true, epic: true },
       orderBy: { createdAt: "desc" },
     }),
+    // Pour pouvoir rattacher le projet à un autre client depuis sa fiche.
+    prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
 
   return {
@@ -68,5 +84,6 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
     apis,
     questions,
     tickets,
+    clients,
   };
 });
