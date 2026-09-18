@@ -18,7 +18,7 @@ const SEVERITIES: Severity[] = ["BLOQUANT", "MAJEUR", "MINEUR"];
 
 export const GET = adminRoute(
   ["DEV", "PM", "DIR"],
-  async (_ctx, request) => {
+  async ({ user }, request) => {
     // Chaque filtre accepte PLUSIEURS valeurs, séparées par des virgules :
     // « les bloquants et les majeurs », « ces deux projets ». Une seule valeur
     // par critère obligeait à repasser la liste autant de fois qu'on voulait
@@ -39,7 +39,14 @@ export const GET = adminRoute(
       SEVERITIES.includes(s as Severity),
     ) as Severity[];
 
+    // « Assigné à » n'est pas une liste : les trois cas s'excluent. `me` est le
+    // cas courant — on ouvre l'écran pour voir ce qu'on a à faire — et c'est
+    // pour cela que l'écran l'applique par défaut.
+    const assigneeFilter = params.get("assignee");
+
     const where: Prisma.TicketWhereInput = {};
+    if (assigneeFilter === "me") where.assigneeId = user.id;
+    else if (assigneeFilter === "none") where.assigneeId = null;
     if (projectFilter.length) where.projectId = { in: projectFilter };
     if (typeFilter.length) where.type = { in: typeFilter };
     if (statusFilter.length) where.status = { in: statusFilter };

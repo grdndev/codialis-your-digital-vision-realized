@@ -14,11 +14,17 @@ import {
 } from "@/lib/format";
 import type { Severity, TaskStatus } from "@/lib/types";
 import { bulkUpdateTicketsAction, setTicketStatusAction } from "./actions";
+import { SelectAllTickets, TicketSelection } from "./selection";
 import type { TicketsScreen } from "./types";
 
 const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
 const FILTER_KEYS = ["project", "type", "severity", "status"] as const;
 type FilterKey = (typeof FILTER_KEYS)[number];
+
+// « Assigné à » n'est pas cumulable : les trois cas s'excluent. Par défaut
+// « Moi » — on ouvre cet écran pour voir ce qu'on a à faire, pas les 236
+// tickets de l'agence.
+const DEFAULT_ASSIGNEE = "me";
 // L'API renvoie déjà la liste triée du plus grave au moins grave.
 const SEVERITIES: Severity[] = ["BLOQUANT", "MAJEUR", "MINEUR"];
 
@@ -30,6 +36,7 @@ export default async function TicketsPage({
     type?: string;
     status?: string;
     severity?: string;
+    assignee?: string;
     view?: string;
     f?: string;
   }>;
@@ -50,6 +57,8 @@ export default async function TicketsPage({
   if (sp.type) filters.set("type", sp.type);
   if (sp.status) filters.set("status", sp.status);
   if (sp.severity) filters.set("severity", sp.severity);
+  const assignee = sp.assignee ?? DEFAULT_ASSIGNEE;
+  filters.set("assignee", assignee);
   const { projects, tickets, team } = await apiGet<TicketsScreen>(`/api/admin/tickets?${filters}`);
 
   const bugCount = tickets.filter((t) => t.type === "BUG").length;
@@ -64,12 +73,15 @@ export default async function TicketsPage({
     return (sp[key] ?? "").split(",").filter(Boolean);
   }
 
-  function buildHref(next: Partial<Record<FilterKey | "view", string | null>>) {
+  function buildHref(next: Partial<Record<FilterKey | "view" | "assignee", string | null>>) {
     const params = new URLSearchParams();
     for (const key of FILTER_KEYS) {
       const value = key in next ? next[key] : (sp[key] ?? null);
       if (value) params.set(key, value);
     }
+    const who = "assignee" in next ? next.assignee : assignee;
+    // Le défaut ne s'écrit pas dans l'adresse tant qu'on ne l'a pas quitté.
+    if (who && who !== DEFAULT_ASSIGNEE) params.set("assignee", who);
     const view = "view" in next ? next.view : (sp.view ?? null);
     if (view) params.set("view", view);
     params.set("f", "1");
@@ -110,7 +122,10 @@ export default async function TicketsPage({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 text-xs">
+      {/* Les projets ont leur propre ligne : ils sont nombreux et leurs noms
+          longs. Elle défile horizontalement plutôt que de pousser les autres
+          filtres trois lignes plus bas. */}
+      <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 text-xs">
         <FilterLink href={clearHref("project")} active={!selected("project").length}>
           Tous les projets
         </FilterLink>
@@ -123,85 +138,110 @@ export default async function TicketsPage({
             {projectLabel(p.client.name, p.name)}
           </FilterLink>
         ))}
-        <span className="mx-1 h-4 w-px bg-border" />
-        <FilterLink href={clearHref("type")} active={!selected("type").length}>
-          Tous types
-        </FilterLink>
-        <FilterLink href={toggleHref("type", "BUG")} active={selected("type").includes("BUG")}>
-          Bugs
-        </FilterLink>
-        <FilterLink href={toggleHref("type", "DEV")} active={selected("type").includes("DEV")}>
-          Développement
-        </FilterLink>
-        <span className="mx-1 h-4 w-px bg-border" />
-        <FilterLink href={clearHref("severity")} active={!selected("severity").length}>
-          Toutes gravités
-        </FilterLink>
-        {SEVERITIES.map((sev) => (
-          <FilterLink
-            key={sev}
-            href={toggleHref("severity", sev)}
-            active={selected("severity").includes(sev)}
-          >
-            {SEVERITY_LABEL[sev]}
+      </div>
+
+      {/* Chaque critère est un groupe insécable : une liste de choix coupée en
+          deux au milieu ne se lit plus comme une liste. Le retour à la ligne se
+          fait ENTRE les groupes. */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
+        <FilterGroup>
+          <FilterLink href={buildHref({ assignee: "all" })} active={assignee === "all"}>
+            Tous
           </FilterLink>
-        ))}
-        <span className="mx-1 h-4 w-px bg-border" />
-        <FilterLink href={clearHref("status")} active={!selected("status").length}>
-          Tous statuts
-        </FilterLink>
-        {STATUSES.map((s) => (
-          <FilterLink
-            key={s}
-            href={toggleHref("status", s)}
-            active={selected("status").includes(s)}
-          >
-            {STATUS_LABEL[s]}
+          <FilterLink href={buildHref({ assignee: "me" })} active={assignee === "me"}>
+            Moi
           </FilterLink>
-        ))}
+          <FilterLink href={buildHref({ assignee: "none" })} active={assignee === "none"}>
+            Personne
+          </FilterLink>
+        </FilterGroup>
+
+        <FilterGroup>
+          <FilterLink href={clearHref("type")} active={!selected("type").length}>
+            Tous types
+          </FilterLink>
+          <FilterLink href={toggleHref("type", "BUG")} active={selected("type").includes("BUG")}>
+            Bugs
+          </FilterLink>
+          <FilterLink href={toggleHref("type", "DEV")} active={selected("type").includes("DEV")}>
+            Développement
+          </FilterLink>
+        </FilterGroup>
+
+        <FilterGroup>
+          <FilterLink href={clearHref("severity")} active={!selected("severity").length}>
+            Toutes gravités
+          </FilterLink>
+          {SEVERITIES.map((sev) => (
+            <FilterLink
+              key={sev}
+              href={toggleHref("severity", sev)}
+              active={selected("severity").includes(sev)}
+            >
+              {SEVERITY_LABEL[sev]}
+            </FilterLink>
+          ))}
+        </FilterGroup>
+
+        <FilterGroup>
+          <FilterLink href={clearHref("status")} active={!selected("status").length}>
+            Tous statuts
+          </FilterLink>
+          {STATUSES.map((s) => (
+            <FilterLink
+              key={s}
+              href={toggleHref("status", s)}
+              active={selected("status").includes(s)}
+            >
+              {STATUS_LABEL[s]}
+            </FilterLink>
+          ))}
+        </FilterGroup>
+
         <span className="ml-auto text-muted">{tickets.length} tickets</span>
       </div>
 
       {view === "table" ? (
-        <form action={bulkUpdateTicketsAction} className="flex flex-col gap-3">
-          {/* Traiter une sélection d'un coup : cocher, choisir, appliquer.
-              Sans case cochée, le bandeau ne fait rien — l'API refuse une
-              sélection vide. */}
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-panel px-4 py-3 text-xs">
-            <span className="text-muted">Sélection :</span>
-            <select name="bulkStatus" className="input h-8 w-auto py-0 text-xs">
-              <option value="">Statut inchangé</option>
-              {STATUSES.filter((s) => canClose || s !== "TERMINE").map((s) => (
-                <option key={s} value={s}>
-                  {STATUS_LABEL[s]}
-                </option>
-              ))}
-            </select>
-            <select name="bulkAssignee" className="input h-8 w-auto py-0 text-xs">
-              <option value="">Assigné inchangé</option>
-              <option value="__aucun__">Retirer l’assigné</option>
-              {team.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg transition hover:brightness-110"
-            >
-              Appliquer
-            </button>
-            <span className="text-muted">
-              aux tickets cochés{canClose ? "" : " — la clôture revient à la chefferie de projet"}
-            </span>
-          </div>
-
+        <TicketSelection
+          action={bulkUpdateTicketsAction}
+          bar={
+            <>
+              <select name="bulkStatus" className="input h-8 w-auto py-0 text-xs">
+                <option value="">Statut inchangé</option>
+                {STATUSES.filter((s) => canClose || s !== "TERMINE").map((s) => (
+                  <option key={s} value={s}>
+                    {STATUS_LABEL[s]}
+                  </option>
+                ))}
+              </select>
+              <select name="bulkAssignee" className="input h-8 w-auto py-0 text-xs">
+                <option value="">Assigné inchangé</option>
+                <option value="__aucun__">Retirer l’assigné</option>
+                {team.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg transition hover:brightness-110"
+              >
+                Appliquer
+              </button>
+              {canClose ? null : (
+                <span className="text-muted">la clôture revient à la chefferie de projet</span>
+              )}
+            </>
+          }
+        >
         <div className="overflow-x-auto rounded-xl border border-border bg-panel">
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs text-muted">
-                <th className="w-8 px-4 py-3 font-medium"> </th>
+                <th className="w-8 px-4 py-3 font-medium">
+                  <SelectAllTickets />
+                </th>
                 <th className="px-4 py-3 font-medium">Réf.</th>
                 <th className="px-4 py-3 font-medium">Type</th>
                 <th className="px-4 py-3 font-medium">Titre</th>
@@ -272,7 +312,7 @@ export default async function TicketsPage({
             </tbody>
           </table>
         </div>
-        </form>
+        </TicketSelection>
       ) : (
         <div className="grid grid-cols-4 gap-4">
           {STATUSES.map((s) => {
@@ -372,11 +412,18 @@ function MoveButton({
   );
 }
 
+// Un groupe de choix ne se coupe pas : `flex-nowrap` garde « Tous types ·
+// Bugs · Développement » d'un seul tenant, le retour à la ligne se fait entre
+// les groupes.
+function FilterGroup({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-nowrap items-center gap-2">{children}</div>;
+}
+
 function FilterLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
   return (
     <Link
       href={href}
-      className={`rounded-full border px-2.5 py-1 transition ${
+      className={`whitespace-nowrap rounded-full border px-2.5 py-1 transition ${
         active ? "border-mint/40 bg-mint/10 text-text" : "border-border text-muted hover:text-text"
       }`}
     >
