@@ -82,6 +82,8 @@ DEC-013 [2026-09-17] ACTIVE emails transactionnels via Brevo en `fetch` brut, sa
 DEC-014 [2026-09-17] ACTIVE AUCUN cloisonnement interne : DEV, PM et DIR voient tous les projets, tickets, tâches et ressources why=arbitrage Denis ; ProjectAssignment n'a jamais été écrite par aucun écran, la table est vide en prod, la règle ne masquait donc des projets qu'à tout le monde alt=affectation par projet (DEC-002), ANNULE CC-338 — à signaler à Jayan et Gabrielle
 DEC-015 [2026-09-17] ACTIVE les restrictions d'ÉCRITURE demeurent (clôture PM/DIR, import JSON PM/DIR, création client/projet PM/DIR) why=DEC-014 ne porte que sur la lecture alt=tout ouvrir
 DEC-016 [2026-09-18] ACTIVE l'écran Tickets filtre « assigné à » sur Moi PAR DÉFAUT why=on l'ouvre pour voir ce qu'on a à faire, pas les 236 tickets de l'agence ; le défaut ne s'écrit pas dans l'adresse alt=aucun filtre par défaut
+DEC-018 [2026-09-18] ACTIVE la page Programme partenaire est une page HTML simple du site (gabarit des pages d'expertise), pas le bundle React livré why=elle doit hériter du bandeau, du pied de page, des couleurs et des polices du site, et le bundle autonome ne le permettait pas alt=publier le bundle tel quel (design divergent, sans titre, formulaire qui n'envoie rien)
+DEC-019 [2026-09-18] ACTIVE la candidature partenaire part dans /api/contact, profil et niveau dans le message why=elle atterrit ainsi dans « Demandes de Contact » du back-office sans toucher au schéma alt=nouvelle table et nouvelle route
 DEC-017 [2026-09-18] ACTIVE les 162 remontées client sont devenues des tickets ordinaires TERMINE/CLOS, marqueur `clientReported` retiré why=arbitrage Denis du 18/09 ; la file de triage est vidée alt=ne fermer que le triage en gardant le marqueur (préservait l'écran Bugs du portail client) — sauvegarde ~/backups/remontees-client/avant-20260918-060340.json, restaurable par `npx tsx prisma/close-client-reports.ts --restore=`
 
 ## TRAP
@@ -117,5 +119,7 @@ blocked=DEC-014 annule CC-338 (livré le matin même) — prévenir Jayan et Gab
 manual=balayage éditabilité : l'API accepte la modification des lots, tâches, critères de tâche, deals, saisies de temps, actions et des 7 types de ressources, mais AUCUN écran ne l'appelle encore
 manual=secrets exposés dans les exports Asana importés (Stripe live, OVH, root VPS, Cloudflare R2, Brevo, PayPal, Orange) → à faire tourner
 manual=une tâche importée (lot « DEV », « Faire une page en attendant le dev du site et la déployer ») contient encore des identifiants FTP et base OVH dans sa description → à nettoyer, proposé, sans réponse
+manual=frontend-public À ENVOYER SUR HOSTINGER : partenaires.html (nouvelle page), sitemap.xml, et les 11 pages touchées par le pied de page et le bandeau mobile
+manual=le sitemap EN LIGNE ne contient que 3 URLs contre 12 dans le dépôt — il n'a jamais été redéployé
 manual=le portail client n'a plus de liste de bugs signalés (DEC-017) — à revoir si un compte client est créé
 manual=le README n'a pas de partie « Fonctionnalités » au format BxFy ; la référence fonctionnelle reste la liste de tickets en production
