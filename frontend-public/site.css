@@ -1,0 +1,39 @@
+:root {
+  --cod-bg: #0e1626;
+  --cod-bg-alt: #0a101e;
+  --cod-text: #eaf0f7;
+  --cod-muted: #a6b3c6;
+  --cod-accent: #2fed7f;
+  --cod-accent-hover: #7ff2b3;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--cod-bg);
+  color: var(--cod-text);
+  font-family: "IBM Plex Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+a { color: var(--cod-accent); text-decoration: none; }
+a:hover { color: var(--cod-accent-hover); }
+::selection { background: var(--cod-accent); color: #08111e; }
+
+.cod-wrap { max-width: 1140px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 64px); }
+.cod-navtoggle button.is-active { background: var(--cod-accent) !important; color: #08111e !important; }
+
+.cod-site-footer { border-top: 1px solid rgba(255, 255, 255, 0.06); padding: 46px 0 60px; }
+.cod-site-footer p, .cod-site-footer a { font-size: 14px; }
+.cod-site-footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 30px; }
+.cod-site-footer h4 { color: #fff; font-family: "Space Grotesk", sans-serif; font-size: 14px; letter-spacing: 0.02em; margin: 0 0 12px; }
+.cod-site-footer ul { list-style: none; margin: 0; padding: 0; }
+.cod-site-footer li { margin-bottom: 8px; }
+.cod-site-footer a { color: var(--cod-muted); }
+.cod-site-footer a:hover { color: var(--cod-accent); }
+
+[data-cod-footer] footer { font-family: "IBM Plex Sans", sans-serif; }
+[data-cod-footer] h4 { color: #8291a6 !important; font-family: "IBM Plex Mono", monospace !important; font-size: 12px !important; font-weight: 500; letter-spacing: 0.15em; }
+[data-cod-footer] a { color: #b7c2d2; font-size: 15px; line-height: 1.4; }
+[data-cod-footer] a:hover { color: var(--cod-accent); }

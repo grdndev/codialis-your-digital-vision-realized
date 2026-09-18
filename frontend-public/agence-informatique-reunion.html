@@ -153,15 +153,10 @@
       .final p { margin: 0 auto 26px; max-width: 56ch; }
 
 </style>
+      <script src="./site-chrome.js" defer></script>
   </head>
   <body>
-    <header class="nav">
-      <div class="wrap nav-in">
-        <a href="/"><img src="/assets/codialis-white.png" alt="Codialis — ingénierie logicielle sur mesure" /></a>
-        <nav class="nav-links"><a href="/#expertises">Expertise</a><a href="/portfolio">Portfolio</a><a href="/blog">Blog</a><a href="/financement">Financement</a><a href="/contact">Contact</a></nav>
-        <a class="cta" href="/contact">Prendre RDV</a>
-      </div>
-    </header>
+    <div data-cod-header></div>
 
     <main>
       <section class="hero">
@@ -273,39 +268,6 @@
         </div>
       </section>
     </main>
-
-    <footer>
-      <div class="wrap foot-grid">
-        <div>
-          <h4>Codialis</h4>
-          <p style="margin: 0">Société française de conseil et d'ingénierie informatique, siège à Vitry-sur-Seine et établissement à La Réunion. Clients dans 11 pays sur 4 continents. Membre Numeum, labellisée France Num.</p>
-        </div>
-        <div>
-          <h4>Expertises</h4>
-          <ul><li><a href="/developpement-saas">Développement SaaS</a></li><li><a href="/application-mobile">Applications mobiles</a></li><li><a href="/agence-ia">Intelligence artificielle</a></li><li><a href="/crm-erp-api">CRM, ERP & API</a></li></ul>
-        </div>
-        <div>
-          <h4>Le site</h4>
-          <ul><li><a href="/agence-informatique-reunion">Agence La R&eacute;union</a></li><li><a href="/portfolio">Portfolio</a></li><li><a href="/blog">Blog</a></li><li><a href="/financement">Financement</a></li><li><a href="/partner-program">Partner Program</a></li><li><a href="/legal">Mentions légales</a></li></ul>
-        </div>
-        <div>
-          <h4>Contact</h4>
-          <ul>
-            <li><a href="/contact">Nous contacter</a></li>
-            <li><a href="https://www.linkedin.com/company/109392264/" rel="noopener">LinkedIn</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4>Nos implantations</h4>
-          <ul>
-            <li><strong style="color:#cfd9e6">Si&egrave;ge &mdash; &Icirc;le-de-France</strong><br />88 Rue du G&eacute;nie, 94400 Vitry-sur-Seine<br /><a href="tel:+33783905717">+33 7 83 90 57 17</a></li>
-            <li style="margin-top:10px"><strong style="color:#cfd9e6">La R&eacute;union</strong><br />436 Avenue des Mascareignes, 97440 Saint-Andr&eacute;<br /><a href="tel:+262693298420">+262 693 29 84 20</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="wrap" style="margin-top: 34px">
-        <p style="margin: 0; color: #6b7a8f">Aussi chez Codialis : <span><a href="/developpement-saas">Développement SaaS</a> · <a href="/application-mobile">Applications mobiles</a> · <a href="/crm-erp-api">CRM, ERP & API</a></span></p>
-      </div>
-    </footer>
+    <div data-cod-footer></div>
   </body>
 </html>
