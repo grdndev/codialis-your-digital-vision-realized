@@ -1184,19 +1184,53 @@
                 <sc-for
                   list="{{ footerExp }}"
                   as="f"
-                  hint-placeholder-count="4"
+                  hint-placeholder-count="5"
                 >
                   <a
-                    href="/#expertises"
+                    href="{{ f.href }}"
                     style="
                       font-size: 14.5px;
                       color: #b7c2d2;
                       transition: color 0.2s;
                     "
                     style-hover="color:#2FED7F;"
-                    >{{ f }}</a
+                    >{{ f.label }}</a
                   >
                 </sc-for>
+              </div>
+            </div>
+            <div>
+              <div
+                style="
+                  font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  font-size: 12px;
+                  letter-spacing: 0.16em;
+                  text-transform: uppercase;
+                  color: #5c6b80;
+                  margin-bottom: 16px;
+                "
+              >
+                Le site
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <a
+                  href="/portfolio"
+                  style="font-size: 14.5px; color: #b7c2d2"
+                  style-hover="color:#2FED7F;"
+                  >Portfolio</a
+                >
+                <a
+                  href="/blog"
+                  style="font-size: 14.5px; color: #b7c2d2"
+                  style-hover="color:#2FED7F;"
+                  >Blog</a
+                >
+                <a
+                  href="/financement"
+                  style="font-size: 14.5px; color: #b7c2d2"
+                  style-hover="color:#2FED7F;"
+                  >Financement</a
+                >
               </div>
             </div>
             <div>
@@ -1236,10 +1270,10 @@
               </div>
               <div style="display: flex; flex-direction: column; gap: 10px">
                 <a
-                  href="mailto:contact@codialis.com"
+                  href="/contact"
                   style="font-size: 14.5px; color: #b7c2d2"
                   style-hover="color:#2FED7F;"
-                  >contact@codialis.com</a
+                  >Nous contacter</a
                 >
                 <a
                   href="https://calendly.com/contact-codialis/30min"
@@ -1559,7 +1593,17 @@
             enBg: !fr ? '#2FED7F' : 'transparent',
             enColor: !fr ? '#08111E' : '#8FA0B5',
             navLinks,
-            footerExp: ['Développement SaaS', 'Applications mobiles', 'Intelligence artificielle', 'CRM & ERP sur mesure'],
+            // Le gabarit du pied de page lit `f.href` et `f.label` : une liste de
+            // simples chaînes y rendait quatre liens vides. Mêmes entrées que
+            // sur l'accueil, pour que le pied de page soit le même partout.
+            footerExp: [
+              { label: 'Développement SaaS', href: '/developpement-saas' },
+              { label: 'Applications mobiles', href: '/application-mobile' },
+              { label: 'Intelligence artificielle', href: '/agence-ia' },
+              { label: 'CRM & ERP sur mesure', href: '/crm-erp-api' },
+              // Pas de page dédiée pour celui-ci : il reste sur l'ancre d'accueil.
+              { label: 'Logiciel métier sur mesure', href: '/#expertises' },
+            ],
 
             heroKicker: h.kicker || t('Le blog', 'The blog'),
             heroLead: h.lead || t("Idées, retours d'expérience &", 'Ideas, field notes &'),
