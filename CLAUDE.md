@@ -81,6 +81,8 @@ DEC-012 [2026-09-17] ACTIVE les pièces jointes passent par Google Drive (scope 
 DEC-013 [2026-09-17] ACTIVE emails transactionnels via Brevo en `fetch` brut, sans SDK why=même parti pris que Gemini et Drive, une dépendance de moins alt=SDK officiel
 DEC-014 [2026-09-17] ACTIVE AUCUN cloisonnement interne : DEV, PM et DIR voient tous les projets, tickets, tâches et ressources why=arbitrage Denis ; ProjectAssignment n'a jamais été écrite par aucun écran, la table est vide en prod, la règle ne masquait donc des projets qu'à tout le monde alt=affectation par projet (DEC-002), ANNULE CC-338 — à signaler à Jayan et Gabrielle
 DEC-015 [2026-09-17] ACTIVE les restrictions d'ÉCRITURE demeurent (clôture PM/DIR, import JSON PM/DIR, création client/projet PM/DIR) why=DEC-014 ne porte que sur la lecture alt=tout ouvrir
+DEC-016 [2026-09-18] ACTIVE l'écran Tickets filtre « assigné à » sur Moi PAR DÉFAUT why=on l'ouvre pour voir ce qu'on a à faire, pas les 236 tickets de l'agence ; le défaut ne s'écrit pas dans l'adresse alt=aucun filtre par défaut
+DEC-017 [2026-09-18] ACTIVE les 162 remontées client sont devenues des tickets ordinaires TERMINE/CLOS, marqueur `clientReported` retiré why=arbitrage Denis du 18/09 ; la file de triage est vidée alt=ne fermer que le triage en gardant le marqueur (préservait l'écran Bugs du portail client) — sauvegarde ~/backups/remontees-client/avant-20260918-060340.json, restaurable par `npx tsx prisma/close-client-reports.ts --restore=`
 
 ## TRAP
 TRAP-001 le serveur `next dev` garde l'ANCIEN client Prisma après une migration → le redémarrer, sinon « Cannot read properties of undefined » sur le nouveau modèle
@@ -97,13 +99,16 @@ TRAP-011 `monthEnd` des routes RH est une borne EXCLUSIVE → le dernier jour af
 TRAP-012 les bornes de période du planning RH sont décidées par l'ÉCRAN et non recalculées côté API → un créneau se retrouve par égalité exacte de date, tout recalcul le ferait disparaître
 TRAP-013 le conteneur codialis-api affiche un avertissement OpenSSL de Prisma sur chaque commande node → bruit, pas une erreur
 TRAP-014 ProjectAssignment n'est écrite QUE par les seeds, jamais par l'application → ne fonder aucune règle dessus sans construire d'abord l'écran qui la remplit (a produit des 404 inexplicables sur des tickets existants)
+TRAP-015b `clientReported` alimente DEUX écrans : le triage interne ET la liste « Bugs » du portail client → le retirer vide aussi ce que le client voit de ses propres signalements
+TRAP-016 une case cochée par JavaScript ne déclenche aucun évènement → après un « tout sélectionner », réémettre un `change` depuis une case pour que React recompte
 TRAP-015 un cloisonnement de lecture se teste avec un compte qui n'a RIEN (ni affectation, ni tâche, ni ticket) → le jeu d'essai donnait du travail aux deux développeurs sur les deux projets, ce qui masquait le défaut
 
 ## STATE
 branch=main
 done=CC-301 à CC-339 traités et déployés SAUF CC-302 ; les livrés sont en EN_REVUE, pas en TERMINE (voir statut_ticket dans CONV)
 done=temps mesuré (CC-330) en production ; import Asana fait (6 projets + Top formation)
-done=vérifications : work-time 18/18, hr-calendar 18/18, sessions 31/31, partage du temps 9/9, accès 17/17, filtres+absences 15/15, masse+import 24/24
+done=vérifications : work-time 18/18, hr-calendar 18/18, sessions 31/31, partage du temps 9/9, accès 17/17 puis 10/10 après DEC-014, filtres+absences 15/15, masse+import 24/24, filtre assigné 7/7, écran Tickets dans Chrome 15/15
+done=[18/09] écran Tickets : bandeau de sélection conditionnel, case « tout sélectionner », projets sur une ligne scrollable, groupes de filtres insécables, filtre « assigné à »
 wip=aucun
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — le socle Drive est committé, il manque le client ID et le secret OAuth d'un projet Google Cloud à créer par l'utilisateur
@@ -112,4 +117,5 @@ blocked=DEC-014 annule CC-338 (livré le matin même) — prévenir Jayan et Gab
 manual=balayage éditabilité : l'API accepte la modification des lots, tâches, critères de tâche, deals, saisies de temps, actions et des 7 types de ressources, mais AUCUN écran ne l'appelle encore
 manual=secrets exposés dans les exports Asana importés (Stripe live, OVH, root VPS, Cloudflare R2, Brevo, PayPal, Orange) → à faire tourner
 manual=une tâche importée (lot « DEV », « Faire une page en attendant le dev du site et la déployer ») contient encore des identifiants FTP et base OVH dans sa description → à nettoyer, proposé, sans réponse
+manual=le portail client n'a plus de liste de bugs signalés (DEC-017) — à revoir si un compte client est créé
 manual=le README n'a pas de partie « Fonctionnalités » au format BxFy ; la référence fonctionnelle reste la liste de tickets en production
