@@ -94,6 +94,28 @@ export async function decideAbsenceAction(
   revalidatePath("/rh");
 }
 
+// Corriger une absence déjà posée : une date décalée, un motif à préciser, un
+// type mal choisi. L'API l'acceptait, aucun écran ne l'appelait — il fallait
+// annuler puis reposer.
+export async function updateAbsenceAction(formData: FormData) {
+  const absenceId = str(formData, "absenceId");
+  const startDate = str(formData, "startDate");
+  const endDate = str(formData, "endDate");
+  if (!absenceId || !startDate || !endDate) return;
+
+  await apiPost(RH, {
+    action: "update-absence",
+    absenceId,
+    type: str(formData, "type"),
+    startDate: new Date(`${startDate}T09:00:00.000Z`).toISOString(),
+    endDate: new Date(`${endDate}T09:00:00.000Z`).toISOString(),
+    halfDay: str(formData, "halfDay") || null,
+    motif: str(formData, "motif"),
+    paid: formData.get("paid") === "on",
+  });
+  revalidatePath("/rh");
+}
+
 export async function deleteAbsenceAction(absenceId: string) {
   await apiPost(RH, { action: "delete-absence", absenceId });
   revalidatePath("/rh");

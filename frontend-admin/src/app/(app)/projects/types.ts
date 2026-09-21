@@ -112,4 +112,9 @@ export type TaskDetail = TaskRow & {
   attachments: TaskAttachmentRow[];
 };
 
-export type TaskDetailResponse = { task: TaskDetail | null };
+export type TaskDetailResponse = {
+  task: TaskDetail | null;
+  // Pour le formulaire de modification : les lots du projet et l'équipe.
+  epics?: { id: string; title: string }[];
+  team?: { id: string; name: string }[];
+};

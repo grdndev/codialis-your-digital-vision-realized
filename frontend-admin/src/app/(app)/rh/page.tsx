@@ -9,6 +9,7 @@ import {
   addAbsenceAction,
   decideAbsenceAction,
   deleteAbsenceAction,
+  updateAbsenceAction,
   setPlannedShiftAction,
   addTravelAction,
   decideTravelAction,
@@ -420,6 +421,63 @@ export default async function RhPage() {
                       {absenceRange(a)}
                       {a.motif ? ` · ${a.motif}` : ""}
                     </p>
+                    {/* Une date décalée ou un motif à préciser se corrigeaient
+                        en annulant puis en reposant : l'API savait pourtant
+                        reprendre l'absence. */}
+                    {a.status !== "VALIDE" || isDir ? (
+                      <details className="mt-1">
+                        <summary className="cursor-pointer text-[11px] font-medium text-mint">Modifier</summary>
+                        <form action={updateAbsenceAction} className="mt-1.5 flex flex-wrap items-end gap-2">
+                          <input type="hidden" name="absenceId" value={a.id} />
+                          <label className="flex flex-col gap-1 text-[11px] text-muted">
+                            Type
+                            <select name="type" defaultValue={a.type} className="input h-8 py-0 text-xs">
+                              {(Object.keys(ABSENCE_TYPE_LABEL) as (keyof typeof ABSENCE_TYPE_LABEL)[]).map((t) => (
+                                <option key={t} value={t}>
+                                  {ABSENCE_TYPE_LABEL[t]}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="flex flex-col gap-1 text-[11px] text-muted">
+                            Du
+                            <input
+                              name="startDate"
+                              type="date"
+                              defaultValue={new Date(a.startDate).toISOString().slice(0, 10)}
+                              className="input h-8 py-0 text-xs"
+                            />
+                          </label>
+                          <label className="flex flex-col gap-1 text-[11px] text-muted">
+                            Au
+                            <input
+                              name="endDate"
+                              type="date"
+                              defaultValue={new Date(a.endDate).toISOString().slice(0, 10)}
+                              className="input h-8 py-0 text-xs"
+                            />
+                          </label>
+                          <label className="flex flex-col gap-1 text-[11px] text-muted">
+                            Demi-journée
+                            <select name="halfDay" defaultValue={a.halfDay ?? ""} className="input h-8 py-0 text-xs">
+                              <option value="">Journée entière</option>
+                              <option value="AM">Matin</option>
+                              <option value="PM">Après-midi</option>
+                            </select>
+                          </label>
+                          <label className="flex flex-col gap-1 text-[11px] text-muted">
+                            Motif
+                            <input name="motif" defaultValue={a.motif} className="input h-8 py-0 text-xs" />
+                          </label>
+                          <label className="flex items-center gap-1.5 pb-1.5 text-[11px] text-muted">
+                            <input name="paid" type="checkbox" defaultChecked={a.paid} /> Payée
+                          </label>
+                          <button type="submit" className="rounded-lg bg-mint px-2.5 py-1 text-[11px] font-semibold text-bg">
+                            Enregistrer
+                          </button>
+                        </form>
+                      </details>
+                    ) : null}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_CLASS[a.status]}`}>

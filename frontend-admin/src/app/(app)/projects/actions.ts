@@ -298,3 +298,118 @@ export async function answerClientQuestionAction(formData: FormData) {
   await apiPost(PROJECTS, { action: "answer-client-question", questionId, answer });
   revalidatePath(`/projects/${projectId}`);
 }
+
+// --- Reprendre ce qui a été saisi (CC-343) ---------------------------------
+//
+// L'API acceptait déjà ces corrections, aucun écran ne les appelait : un lot
+// mal nommé, une estimation à refaire ou une tâche créée en double restaient
+// définitifs.
+
+function revaliderProjet(projectId: string) {
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/projects");
+  revalidatePath("/dashboard");
+}
+
+export async function updateEpicAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const epicId = String(formData.get("epicId") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  if (!projectId || !epicId || !title) return;
+
+  await apiPost(PROJECTS, {
+    action: "update-epic",
+    epicId,
+    projectId,
+    title,
+    objective: String(formData.get("objective") ?? "").trim() || null,
+    estHours: parseNumber(formData.get("estHours")),
+    leadId: String(formData.get("leadId") ?? "") || null,
+    dueAt: String(formData.get("dueAt") ?? "")
+      ? new Date(`${String(formData.get("dueAt"))}T09:00:00.000Z`).toISOString()
+      : null,
+  });
+  revaliderProjet(projectId);
+}
+
+// Un lot qui porte encore des tâches n'est pas supprimable : l'API refuse, et
+// le message remonte tel quel plutôt que de faire disparaître le travail.
+export async function deleteEpicAction(epicId: string, projectId: string): Promise<void> {
+  try {
+    await apiPost(PROJECTS, { action: "delete-epic", epicId, projectId });
+  } catch (err) {
+    if (!(err instanceof ApiError)) throw err;
+    redirect(`/projects/${projectId}?info=${encodeURIComponent(err.message)}`);
+  }
+  revaliderProjet(projectId);
+}
+
+export async function updateTaskCriterionAction(formData: FormData) {
+  const criterionId = String(formData.get("criterionId") ?? "");
+  const label = String(formData.get("label") ?? "").trim();
+  const projectId = String(formData.get("projectId") ?? "");
+  const taskId = String(formData.get("taskId") ?? "");
+  if (!criterionId || !label) return;
+
+  await apiPost(PROJECTS, { action: "update-task-criterion", criterionId, label });
+  revalidatePath(`/projects/${projectId}/tasks/${taskId}`);
+}
+
+export async function deleteTaskCriterionAction(
+  criterionId: string,
+  projectId: string,
+  taskId: string,
+) {
+  await apiPost(PROJECTS, { action: "delete-task-criterion", criterionId });
+  revalidatePath(`/projects/${projectId}/tasks/${taskId}`);
+}
+
+export async function addTaskCriterionAction(formData: FormData) {
+  const taskId = String(formData.get("taskId") ?? "");
+  const projectId = String(formData.get("projectId") ?? "");
+  const label = String(formData.get("label") ?? "").trim();
+  if (!taskId || !label) return;
+
+  await apiPost(PROJECTS, { action: "add-task-criterion", taskId, label });
+  revalidatePath(`/projects/${projectId}/tasks/${taskId}`);
+}
+
+// Supprimer une tâche emporte ses critères, ses commentaires et ses
+// chronomètres (cascade du schéma). Les heures déjà saisies à la main, elles,
+// restent au projet : le travail a bien eu lieu.
+export async function deleteTaskAction(taskId: string, projectId: string): Promise<void> {
+  await apiPost(PROJECTS, { action: "delete-task", taskId, projectId });
+  revaliderProjet(projectId);
+  redirect(`/projects/${projectId}`);
+}
+
+// Modifier une tâche. Changer d'assigné pendant qu'elle est « en cours »
+// arrête le chronomètre du précédent et la ramène à « À faire » : l'API le
+// fait et le dit, on relaie son message.
+export async function updateTaskAction(formData: FormData): Promise<void> {
+  const taskId = String(formData.get("taskId") ?? "");
+  const projectId = String(formData.get("projectId") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  if (!taskId || !projectId || !title) return;
+
+  const { notice } = await apiPost<{ notice?: string }>(PROJECTS, {
+    action: "update-task",
+    taskId,
+    projectId,
+    epicId: String(formData.get("epicId") ?? ""),
+    title,
+    description: String(formData.get("description") ?? "").trim(),
+    estHours: parseNumber(formData.get("estHours")),
+    assigneeId: String(formData.get("assigneeId") ?? "") || null,
+    dueAt: String(formData.get("dueAt") ?? "")
+      ? new Date(`${String(formData.get("dueAt"))}T09:00:00.000Z`).toISOString()
+      : null,
+  });
+
+  revaliderProjet(projectId);
+  revalidatePath(`/projects/${projectId}/tasks/${taskId}`);
+  revalidatePath("/time");
+  if (notice) {
+    redirect(`/projects/${projectId}/tasks/${taskId}?info=${encodeURIComponent(notice)}`);
+  }
+}

@@ -3,7 +3,7 @@ import { ScreenTabs } from "../finance/screen-tabs";
 import { apiGet } from "@/lib/api";
 import type { TimeScreen } from "./types";
 import { fmtHours, pctOf, projectLabel } from "@/lib/format";
-import { addTimeEntryAction } from "./actions";
+import { addTimeEntryAction, deleteTimeEntryAction, updateTimeEntryAction } from "./actions";
 
 function dateKey(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -199,6 +199,68 @@ export default async function TimePage() {
             </tbody>
           </table>
         </div>
+        {/* Le tableau ci-dessus agrège par tâche : impossible d'y reprendre une
+            saisie précise. Le détail ci-dessous liste chaque écriture, avec de
+            quoi la corriger ou la retirer. Le rattachement, lui, ne se change
+            pas — il fait autorité sur les compteurs. */}
+        <details className="mt-4 border-t border-border pt-3">
+          <summary className="cursor-pointer text-xs font-medium text-mint">
+            Détail de mes saisies ({myEntries.length})
+          </summary>
+          <div className="mt-3 flex flex-col divide-y divide-border">
+            {myEntries.length === 0 ? (
+              <p className="py-2 text-sm text-muted">Aucune saisie cette semaine.</p>
+            ) : (
+              myEntries.map((e) => (
+                <form
+                  key={e.id}
+                  action={updateTimeEntryAction}
+                  className="flex flex-wrap items-end gap-2 py-2"
+                >
+                  <input type="hidden" name="entryId" value={e.id} />
+                  <label className="flex flex-col gap-1 text-xs text-muted">
+                    Tâche
+                    <input name="label" defaultValue={e.label} required className="input w-56" />
+                  </label>
+                  <label className="flex flex-col gap-1 text-xs text-muted">
+                    Date
+                    <input
+                      name="date"
+                      type="date"
+                      defaultValue={dateKey(e.date)}
+                      className="input w-36"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-xs text-muted">
+                    Heures
+                    <input name="hours" defaultValue={String(e.hours).replace(".", ",")} className="input w-20" />
+                  </label>
+                  <label className="flex items-center gap-1.5 pb-2 text-xs text-muted">
+                    <input name="billable" type="checkbox" defaultChecked={e.billable} /> Facturable
+                  </label>
+                  <span className="pb-2 text-xs text-muted">
+                    {e.project ? projectLabel(e.project.client.name, e.project.name) : "Interne"}
+                    {e.source === "MESURE" ? " · mesurée" : ""}
+                  </span>
+                  <button
+                    type="submit"
+                    className="rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted transition hover:border-mint/40 hover:text-mint"
+                  >
+                    Enregistrer
+                  </button>
+                  <button
+                    type="submit"
+                    formAction={deleteTimeEntryAction.bind(null, e.id)}
+                    className="rounded-lg border border-red/40 px-3 py-2 text-xs font-medium text-red transition hover:bg-red/10"
+                  >
+                    Supprimer
+                  </button>
+                </form>
+              ))
+            )}
+          </div>
+        </details>
+
         <form action={addTimeEntryAction} className="mt-4 flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-xs text-muted">Tâche<input name="label" required className="input w-48" /></label>
           <label className="flex flex-col gap-1 text-xs text-muted">Projet

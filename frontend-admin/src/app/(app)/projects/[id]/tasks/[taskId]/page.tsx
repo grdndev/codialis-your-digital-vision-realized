@@ -3,7 +3,16 @@ import { notFound } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { fmtHours, fmtDate, STATUS_BADGE_CLASS, STATUS_LABEL, projectLabel } from "@/lib/format";
-import { setTaskStatusAction, toggleTaskCriterionAction, addTaskCommentAction } from "../../../actions";
+import {
+  setTaskStatusAction,
+  toggleTaskCriterionAction,
+  addTaskCommentAction,
+  addTaskCriterionAction,
+  deleteTaskAction,
+  deleteTaskCriterionAction,
+  updateTaskAction,
+  updateTaskCriterionAction,
+} from "../../../actions";
 import type { TaskDetailResponse } from "../../../types";
 import type { TaskStatus } from "@/lib/types";
 
@@ -37,7 +46,7 @@ export default async function TaskDetailPage({
 
   // Le backend vérifie que la tâche appartient bien à ce projet, et que le
   // rôle y a accès : dans les deux cas d'échec il renvoie `null`.
-  const { task } = await apiGet<TaskDetailResponse>(
+  const { task, epics = [], team = [] } = await apiGet<TaskDetailResponse>(
     `/api/admin/projects/task?projectId=${encodeURIComponent(projectId)}&taskId=${encodeURIComponent(taskId)}`,
   );
   if (!task) notFound();
@@ -71,24 +80,57 @@ export default async function TaskDetailPage({
             <p className="mt-4 text-sm text-muted">{task.description || "Aucune description."}</p>
           </div>
 
-          {task.criteria.length > 0 ? (
-            <div className="rounded-xl border border-border bg-panel p-5">
-              <h2 className="text-sm font-semibold text-text">Critères d’acceptation</h2>
-              <div className="mt-3 flex flex-col gap-2">
-                {task.criteria.map((c) => (
-                  <form key={c.id} action={toggleTaskCriterionAction.bind(null, c.id, projectId, taskId)}>
+          {/* Les critères ne savaient que se cocher : la liste posée à la
+              création était définitive, alors que c'est justement ce qu'on
+              affine en cours de route. */}
+          <div className="rounded-xl border border-border bg-panel p-5">
+            <h2 className="text-sm font-semibold text-text">Critères d’acceptation</h2>
+            <div className="mt-3 flex flex-col gap-1">
+              {task.criteria.map((c) => (
+                <div key={c.id} className="flex items-center gap-2 rounded-lg px-1 py-1 transition hover:bg-panel-2">
+                  <form action={toggleTaskCriterionAction.bind(null, c.id, projectId, taskId)}>
                     <button
                       type="submit"
-                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition hover:bg-panel-2"
+                      title={c.done ? "Décocher" : "Cocher"}
+                      className={`px-1 text-sm ${c.done ? "text-mint" : "text-muted"}`}
                     >
-                      <span className={c.done ? "text-mint" : "text-muted"}>{c.done ? "☑" : "☐"}</span>
-                      <span className={c.done ? "text-muted line-through" : "text-text"}>{c.label}</span>
+                      {c.done ? "☑" : "☐"}
                     </button>
                   </form>
-                ))}
-              </div>
+                  <form action={updateTaskCriterionAction} className="flex flex-1 items-center gap-2">
+                    <input type="hidden" name="criterionId" value={c.id} />
+                    <input type="hidden" name="projectId" value={projectId} />
+                    <input type="hidden" name="taskId" value={taskId} />
+                    <input
+                      name="label"
+                      defaultValue={c.label}
+                      aria-label="Libellé du critère"
+                      className={`flex-1 border-0 bg-transparent px-1 py-0.5 text-sm outline-none focus:bg-panel-2 ${c.done ? "text-muted line-through" : "text-text"}`}
+                    />
+                    <button type="submit" className="px-1 text-xs text-muted transition hover:text-mint">
+                      Enregistrer
+                    </button>
+                  </form>
+                  <form action={deleteTaskCriterionAction.bind(null, c.id, projectId, taskId)}>
+                    <button type="submit" title="Supprimer" className="px-1 text-xs text-muted transition hover:text-red">
+                      ✕
+                    </button>
+                  </form>
+                </div>
+              ))}
+              {task.criteria.length === 0 ? (
+                <p className="py-1 text-sm text-muted">Aucun critère pour l’instant.</p>
+              ) : null}
             </div>
-          ) : null}
+            <form action={addTaskCriterionAction} className="mt-3 flex gap-2 border-t border-border pt-3">
+              <input type="hidden" name="taskId" value={taskId} />
+              <input type="hidden" name="projectId" value={projectId} />
+              <input name="label" required placeholder="Ajouter un critère…" className="input flex-1" />
+              <button type="submit" className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg">
+                Ajouter
+              </button>
+            </form>
+          </div>
 
           <div className="rounded-xl border border-border bg-panel p-5">
             <h2 className="text-sm font-semibold text-text">Commentaires internes</h2>
@@ -134,6 +176,72 @@ export default async function TaskDetailPage({
               <Row label="Passé" value={fmtHours(task.spentHours)} />
             </dl>
           </div>
+
+          {/* L'API acceptait déjà ces corrections, aucun écran ne les appelait :
+              un titre mal saisi ou une estimation à revoir restaient figés. */}
+          <details className="rounded-xl border border-border bg-panel p-5">
+            <summary className="cursor-pointer text-sm font-semibold text-text">Modifier la tâche</summary>
+            <form action={updateTaskAction} className="mt-3 flex flex-col gap-2.5">
+              <input type="hidden" name="taskId" value={taskId} />
+              <input type="hidden" name="projectId" value={projectId} />
+              <label className="flex flex-col gap-1 text-xs text-muted">
+                Titre
+                <input name="title" defaultValue={task.title} required className="input" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-muted">
+                Description
+                <textarea name="description" defaultValue={task.description} rows={3} className="input" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-muted">
+                Lot
+                <select name="epicId" defaultValue={task.epicId} className="input">
+                  {epics.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-muted">
+                Assigné
+                <select name="assigneeId" defaultValue={task.assigneeId ?? ""} className="input">
+                  <option value="">Non assigné</option>
+                  {team.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex flex-col gap-1 text-xs text-muted">
+                  Estimé (h)
+                  <input name="estHours" defaultValue={String(task.estHours).replace(".", ",")} className="input" />
+                </label>
+                <label className="flex flex-col gap-1 text-xs text-muted">
+                  Échéance
+                  <input
+                    name="dueAt"
+                    type="date"
+                    defaultValue={task.dueAt ? new Date(task.dueAt).toISOString().slice(0, 10) : ""}
+                    className="input"
+                  />
+                </label>
+              </div>
+              <button type="submit" className="mt-1 rounded-lg bg-mint px-3 py-2 text-xs font-semibold text-bg">
+                Enregistrer
+              </button>
+            </form>
+            {/* Critères, commentaires et chronomètres tombent avec la tâche. */}
+            <form action={deleteTaskAction.bind(null, taskId, projectId)} className="mt-3 border-t border-border pt-3">
+              <button
+                type="submit"
+                className="w-full rounded-lg border border-red/40 px-3 py-2 text-xs font-medium text-red transition hover:bg-red/10"
+              >
+                Supprimer la tâche
+              </button>
+            </form>
+          </details>
 
           <div className="flex flex-col gap-2 rounded-xl border border-border bg-panel p-5">
             {advanceLabel ? (

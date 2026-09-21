@@ -32,5 +32,20 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
   });
   if (!task || task.epic.projectId !== projectId) return { task: null };
 
-  return { task };
+  // De quoi alimenter le formulaire de modification : les lots du projet et
+  // l'équipe interne, à qui la tâche peut être réassignée.
+  const [epics, team] = await Promise.all([
+    prisma.epic.findMany({
+      where: { projectId },
+      orderBy: { order: "asc" },
+      select: { id: true, title: true },
+    }),
+    prisma.user.findMany({
+      where: { role: { in: ["DEV", "PM", "DIR"] } },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
+
+  return { task, epics, team };
 });

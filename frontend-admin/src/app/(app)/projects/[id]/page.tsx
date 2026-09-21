@@ -4,7 +4,8 @@ import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { fmtHours, fmtEUR, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel } from "@/lib/format";
 import {
-  createEpicAction, createTaskAction, importProjectJsonAction, updateClientContactAction, updateProjectDescriptionAction,
+  createEpicAction, createTaskAction, deleteEpicAction, importProjectJsonAction, updateClientContactAction,
+  updateEpicAction, updateProjectDescriptionAction,
   addClientQuestionAction, markQuestionAskedAction, answerClientQuestionAction,
   updateProjectAction, updateClientAction,
 } from "../actions";
@@ -415,6 +416,11 @@ type EpicWithTasks = {
   id: string;
   title: string;
   estHours: number;
+  // Les trois champs suivants n'étaient pas repris ici tant que le lot ne se
+  // modifiait pas ; le formulaire de reprise en a besoin.
+  objective: string | null;
+  leadId: string | null;
+  dueAt: Date | null;
   lead: { name: string } | null;
   tasks: { id: string; title: string; status: TaskStatus; estHours: number; spentHours: number; assignee: { name: string } | null }[];
 };
@@ -463,6 +469,64 @@ function ListView({
                   </div>
                 </div>
               </summary>
+              {/* Un lot mal nommé, une estimation à refaire, un responsable
+                  qui change : l'API l'acceptait déjà, rien ne l'appelait. */}
+              <details className="border-t border-border px-5 py-2">
+                <summary className="cursor-pointer text-xs font-medium text-mint">Modifier le lot</summary>
+                <form action={updateEpicAction} className="mt-2 flex flex-wrap items-end gap-2">
+                  <input type="hidden" name="projectId" value={projectId} />
+                  <input type="hidden" name="epicId" value={epic.id} />
+                  <label className="flex flex-col gap-1 text-xs text-muted">
+                    Nom
+                    <input name="title" defaultValue={epic.title} required className="input w-56" />
+                  </label>
+                  <label className="flex flex-col gap-1 text-xs text-muted">
+                    Objectif
+                    <input name="objective" defaultValue={epic.objective ?? ""} className="input w-56" />
+                  </label>
+                  <label className="flex flex-col gap-1 text-xs text-muted">
+                    Budget (h)
+                    <input
+                      name="estHours"
+                      defaultValue={String(epic.estHours).replace(".", ",")}
+                      className="input w-24"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-xs text-muted">
+                    Responsable
+                    <select name="leadId" defaultValue={epic.leadId ?? ""} className="input w-44">
+                      <option value="">Non assigné</option>
+                      {team.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1 text-xs text-muted">
+                    Échéance
+                    <input
+                      name="dueAt"
+                      type="date"
+                      defaultValue={epic.dueAt ? new Date(epic.dueAt).toISOString().slice(0, 10) : ""}
+                      className="input w-36"
+                    />
+                  </label>
+                  <button type="submit" className="rounded-lg bg-mint px-3 py-2 text-xs font-semibold text-bg">
+                    Enregistrer
+                  </button>
+                </form>
+                {/* Un lot qui porte encore des tâches n'est pas supprimable :
+                    l'API refuse et le dit. */}
+                <form action={deleteEpicAction.bind(null, epic.id, projectId)} className="mt-2">
+                  <button
+                    type="submit"
+                    className="rounded-lg border border-red/40 px-3 py-1.5 text-xs font-medium text-red transition hover:bg-red/10"
+                  >
+                    Supprimer le lot
+                  </button>
+                </form>
+              </details>
               <div className="border-t border-border px-5 py-3">
                 <table className="w-full border-collapse text-sm">
                   <tbody className="divide-y divide-border">

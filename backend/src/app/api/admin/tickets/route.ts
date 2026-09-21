@@ -103,12 +103,6 @@ export const GET = adminRoute(
   },
 );
 
-const NEXT_STATUS: Record<TaskStatus, TaskStatus | null> = {
-  A_FAIRE: "EN_COURS",
-  EN_COURS: "EN_REVUE",
-  EN_REVUE: "TERMINE",
-  TERMINE: null,
-};
 
 const bodySchema = z.discriminatedUnion("action", [
   z.object({
@@ -126,11 +120,6 @@ const bodySchema = z.discriminatedUnion("action", [
     devNature: z.enum(["FRONT", "BACK", "API", "DESIGN"]).nullable(),
     estHours: z.number().min(0),
     assigneeId: z.string().nullable(),
-  }),
-  z.object({
-    action: z.literal("update-status"),
-    ticketId: z.string().min(1),
-    transition: z.enum(["advance", "reopen"]),
   }),
   // Le kanban déplace une carte vers une colonne précise : l'enchaînement pas
   // à pas d'`update-status` ne sait pas exprimer ce geste.
@@ -292,20 +281,6 @@ export const POST = adminRoute(
         );
         // La référence sert au frontend pour rediriger vers le ticket créé.
         return { ok: true, ref: ticket.ref };
-      }
-
-      case "update-status": {
-        const ticket = await prisma.ticket.findUnique({
-          where: { id: body.ticketId },
-        });
-        if (!ticket) badRequest("Ticket introuvable");
-
-        const nextStatus =
-          body.transition === "reopen" ? "A_FAIRE" : NEXT_STATUS[ticket.status];
-        // Un ticket déjà terminé n'a pas d'étape suivante.
-        if (!nextStatus) return { ok: true, ref: ticket.ref };
-
-        return applyTicketStatus(ticket, nextStatus, user);
       }
 
       case "set-status": {
