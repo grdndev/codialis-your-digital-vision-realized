@@ -3,15 +3,18 @@ import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import type { Prisma, Role, Severity, TaskStatus, TicketType } from "@prisma/client";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
+import { projectScope } from "@/lib/project-access";
 import { closeSessions, openSession } from "@/lib/work-sessions";
 
 export const dynamic = "force-dynamic";
 
 // Écran « Tickets » — liste filtrable.
 //
-// Le filtrage par rôle est appliqué ICI, pas à l'affichage : un développeur ne
-// voit que les tickets des projets sur lesquels il est affecté, et la requête
-// ne doit jamais rapporter les autres, même s'ils ne sont pas rendus.
+// La liste des tickets n'est pas cloisonnée : toute l'équipe interne les voit.
+// Ce qui l'est, c'est la LISTE DES PROJETS servant de filtres, et seulement
+// quand un développeur demande « assigné à moi » — on ouvre alors l'écran pour
+// trier son propre travail, et les projets où il n'en a aucun n'y ont pas leur
+// place. Le tri est fait ici, pas à l'affichage.
 
 const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
 const SEVERITIES: Severity[] = ["BLOQUANT", "MAJEUR", "MINEUR"];
@@ -66,8 +69,13 @@ export const GET = adminRoute(
       ];
     }
 
+    // « Moi » demandé par un développeur : les filtres de projet se réduisent
+    // aux projets où il a du travail assigné (voir project-access.ts).
+    const projectsWhere = assigneeFilter === "me" ? await projectScope(user) : {};
+
     const [projects, tickets, team] = await Promise.all([
       prisma.project.findMany({
+        where: projectsWhere,
         include: { client: true },
         orderBy: { name: "asc" },
       }),

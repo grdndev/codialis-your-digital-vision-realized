@@ -67,9 +67,9 @@ const nightOwl: Schedule = { ...DEFAULT_SCHEDULE, startMin: 14 * 60, breakStartM
 hours = splitHours([s("a", at(16, 9), at(16, 20))], nightOwl);
 check("horaires 14h-22h sans pause : 9h-20h → 6h", near(hours.get("a")!, 6), String(hours.get("a")));
 
-const withOvertime: Schedule = { ...DEFAULT_SCHEDULE, overtimeStartMin: 19 * 60, overtimeEndMin: 21 * 60 };
-hours = splitHours([s("a", at(16, 17), at(16, 22))], withOvertime);
-check("heures supplémentaires 19h-21h comptées", near(hours.get("a")!, 3), `${hours.get("a")} (17h-18h + 19h-21h)`);
+// Plus de plage supplémentaire dans les horaires : une soirée se déclare en RH.
+hours = splitHours([s("a", at(16, 17), at(16, 22))], DEFAULT_SCHEDULE);
+check("soirée 19h-21h non comptée", near(hours.get("a")!, 1), `${hours.get("a")} (17h-18h seulement)`);
 
 const sixDays: Schedule = { ...DEFAULT_SCHEDULE, weekdays: [1, 2, 3, 4, 5, 6] };
 hours = splitHours([s("a", at(19, 9), at(19, 12))], sixDays);

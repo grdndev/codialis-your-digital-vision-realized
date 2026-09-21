@@ -105,6 +105,30 @@ export async function updateProjectAction(formData: FormData) {
   redirect(`/projects/${projectId}`);
 }
 
+// Changer la phase depuis l'en-tête du projet. Le formulaire complet reste
+// dans l'onglet Fiche : ce raccourci existe parce que la phase est ce qu'on
+// modifie le plus souvent, et qu'elle y était introuvable.
+export async function updateProjectPhaseAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  if (!projectId) return;
+
+  try {
+    await apiPost(PROJECTS, {
+      action: "update-project-phase",
+      projectId,
+      group: String(formData.get("group") ?? "DEV"),
+      phaseLabel: String(formData.get("phaseLabel") ?? "").trim(),
+    });
+  } catch (err) {
+    if (err instanceof ApiError) fail(err.message);
+    throw err;
+  }
+
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/dashboard");
+}
+
 export async function updateClientAction(formData: FormData) {
   const clientId = String(formData.get("clientId") ?? "");
   const name = String(formData.get("name") ?? "").trim();

@@ -2,6 +2,11 @@ import { updateScheduleAction } from "./actions";
 
 // Réglage des horaires de travail. Rendu côté serveur : des champs `time` et
 // des cases à cocher suffisent, aucun état à tenir dans le navigateur.
+//
+// Les heures supplémentaires ne se règlent PAS ici : elles se déclarent dans
+// l'écran RH, à la date où elles ont été faites, et la direction les valide.
+// Une plage horaire réglée d'avance les aurait comptées toutes les semaines,
+// sans validation et sans solde.
 
 export type ScheduleSettings = {
   startMin: number;
@@ -9,8 +14,6 @@ export type ScheduleSettings = {
   breakEndMin: number | null;
   endMin: number;
   weekdays: string;
-  overtimeStartMin: number | null;
-  overtimeEndMin: number | null;
   isDefault: boolean;
 };
 
@@ -86,18 +89,6 @@ export function ScheduleForm({ schedule }: { schedule: ScheduleSettings }) {
             </label>
           ))}
         </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-medium text-muted">Heures supplémentaires</p>
-        <div className="grid max-w-sm grid-cols-2 gap-4">
-          <TimeField name="overtimeStart" label="Début" value={schedule.overtimeStartMin} />
-          <TimeField name="overtimeEnd" label="Fin" value={schedule.overtimeEndMin} />
-        </div>
-        <p className="max-w-xl text-xs text-muted">
-          Plage comptée en plus des horaires habituels — une soirée de mise en production,
-          par exemple. Laissée vide, rien n’est compté en dehors des horaires.
-        </p>
       </div>
 
       <button

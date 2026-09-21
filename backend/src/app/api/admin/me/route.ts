@@ -55,8 +55,6 @@ export const GET = adminRoute([], async ({ user }) => {
               breakEndMin: schedule ? schedule.breakEndMin : DEFAULT_SCHEDULE.breakEndMin,
               endMin: schedule?.endMin ?? DEFAULT_SCHEDULE.endMin,
               weekdays: schedule?.weekdays ?? DEFAULT_SCHEDULE.weekdays.join(","),
-              overtimeStartMin: schedule ? schedule.overtimeStartMin : null,
-              overtimeEndMin: schedule ? schedule.overtimeEndMin : null,
               // Vrai tant que la personne n'a rien réglé : l'écran le dit.
               isDefault: !schedule,
             },
@@ -75,7 +73,9 @@ const bodySchema = z.discriminatedUnion("action", [
     photo: z.string().nullable(),
   }),
   // Horaires de travail. Les minutes depuis minuit évitent tout fuseau : c'est
-  // une heure locale de bureau, pas un instant.
+  // une heure locale de bureau, pas un instant. Aucune plage supplémentaire
+  // n'est réglable ici : une soirée travaillée se déclare en RH, où elle est
+  // validée et alimente le solde d'heures.
   z.object({
     action: z.literal("update-schedule"),
     startMin: z.number().int().min(0).max(1440),
@@ -83,8 +83,6 @@ const bodySchema = z.discriminatedUnion("action", [
     breakStartMin: z.number().int().min(0).max(1440).nullable(),
     breakEndMin: z.number().int().min(0).max(1440).nullable(),
     weekdays: z.array(z.number().int().min(0).max(6)).min(1),
-    overtimeStartMin: z.number().int().min(0).max(1440).nullable(),
-    overtimeEndMin: z.number().int().min(0).max(1440).nullable(),
   }),
   z.object({
     action: z.literal("set-absence-mode"),
@@ -129,19 +127,12 @@ export const POST = adminRoute([], async ({ user, }, request) => {
         body.breakStartMin !== null &&
         body.breakEndMin !== null &&
         body.breakEndMin > body.breakStartMin;
-      const hasOvertime =
-        body.overtimeStartMin !== null &&
-        body.overtimeEndMin !== null &&
-        body.overtimeEndMin > body.overtimeStartMin;
-
       const data = {
         startMin: body.startMin,
         endMin: body.endMin,
         breakStartMin: hasBreak ? body.breakStartMin : null,
         breakEndMin: hasBreak ? body.breakEndMin : null,
         weekdays: [...new Set(body.weekdays)].sort((a, b) => a - b).join(","),
-        overtimeStartMin: hasOvertime ? body.overtimeStartMin : null,
-        overtimeEndMin: hasOvertime ? body.overtimeEndMin : null,
       };
       await prisma.workSchedule.upsert({
         where: { userId: user.id },

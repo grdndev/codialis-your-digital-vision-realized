@@ -79,7 +79,7 @@ DEC-010 [2026-09-17] ACTIVE l'import JSON d'un projet est réservé à PM et DIR
 DEC-011 [2026-09-17] ACTIVE la référence d'un ticket CHANGE quand il change de projet why=arbitrage utilisateur explicite ; une référence porte le projet alt=référence figée (état initial)
 DEC-012 [2026-09-17] ACTIVE les pièces jointes passent par Google Drive (scope drive.file), pas par un stockage maison why=rien à héberger ni à sauvegarder alt=fichiers sur le serveur, base64 en base
 DEC-013 [2026-09-17] ACTIVE emails transactionnels via Brevo en `fetch` brut, sans SDK why=même parti pris que Gemini et Drive, une dépendance de moins alt=SDK officiel
-DEC-014 [2026-09-17] ACTIVE AUCUN cloisonnement interne : DEV, PM et DIR voient tous les projets, tickets, tâches et ressources why=arbitrage Denis ; ProjectAssignment n'a jamais été écrite par aucun écran, la table est vide en prod, la règle ne masquait donc des projets qu'à tout le monde alt=affectation par projet (DEC-002), ANNULE CC-338 — à signaler à Jayan et Gabrielle
+DEC-014 [2026-09-17] SUPERSEDED-BY:DEC-023 AUCUN cloisonnement interne : DEV, PM et DIR voient tous les projets, tickets, tâches et ressources why=arbitrage Denis ; ProjectAssignment n'a jamais été écrite par aucun écran, la table est vide en prod, la règle ne masquait donc des projets qu'à tout le monde alt=affectation par projet (DEC-002), ANNULE CC-338 — à signaler à Jayan et Gabrielle
 DEC-015 [2026-09-17] ACTIVE les restrictions d'ÉCRITURE demeurent (clôture PM/DIR, import JSON PM/DIR, création client/projet PM/DIR) why=DEC-014 ne porte que sur la lecture alt=tout ouvrir
 DEC-016 [2026-09-18] ACTIVE l'écran Tickets filtre « assigné à » sur Moi PAR DÉFAUT why=on l'ouvre pour voir ce qu'on a à faire, pas les 236 tickets de l'agence ; le défaut ne s'écrit pas dans l'adresse alt=aucun filtre par défaut
 DEC-018 [2026-09-18] ACTIVE la page Programme partenaire est une page HTML simple du site (gabarit des pages d'expertise), pas le bundle React livré why=elle doit hériter du bandeau, du pied de page, des couleurs et des polices du site, et le bundle autonome ne le permettait pas alt=publier le bundle tel quel (design divergent, sans titre, formulaire qui n'envoie rien)
@@ -87,6 +87,10 @@ DEC-020 [2026-09-21] ACTIVE les tâches internes sont ouvertes à toute l'équip
 DEC-021 [2026-09-21] ACTIVE la recherche des tickets n'est PAS retenue d'une visite à l'autre, contrairement aux filtres why=retrouver l'écran avec les mots tapés la semaine dernière n'aide personne ; `q` est retiré du cookie de mémoire d'écran alt=tout retenir
 DEC-022 [2026-09-21] ACTIVE créer un ticket depuis une fiche projet rouvre le formulaire sur ce projet ; depuis l'écran Tickets, on va sur le ticket créé why=CC-340, on signale plusieurs bugs d'affilée depuis un projet alt=toujours rediriger vers le ticket
 DEC-019 [2026-09-18] ACTIVE la candidature partenaire part dans /api/contact, profil et niveau dans le message why=elle atterrit ainsi dans « Demandes de Contact » du back-office sans toucher au schéma alt=nouvelle table et nouvelle route
+DEC-023 [2026-09-21] ACTIVE un DEV ne voit que les projets où il a du travail ASSIGNÉ : au moins une tâche ou un ticket à son nom why=arbitrage Denis du 21/09, reprend la lecture que DEC-014 avait ouverte en entier ; l'assignation est la seule chose que les écrans écrivent vraiment, contrairement à ProjectAssignment (TRAP-014) alt=tout ouvert (DEC-014), affectation par projet (DEC-002)
+DEC-024 [2026-09-21] ACTIVE portée de DEC-023 : écran Projets, fiche projet appelée par son adresse, tableau de bord, et filtres de projet de l'écran Tickets quand « assigné à moi » est demandé why=une liste réduite mais un projet lisible par son adresse ne cloisonne rien ; la LISTE DES TICKETS, elle, reste ouverte à toute l'équipe alt=filtrer seulement la liste des projets
+DEC-025 [2026-09-21] ACTIVE les heures supplémentaires se DÉCLARENT en RH (HoursEntry, validées par la direction), elles ne se règlent plus en plage horaire dans Paramètres why=demande du 21/09 ; une plage réglée d'avance comptait une soirée toutes les semaines, sans validation et sans solde alt=plage horaire dans les horaires de travail (colonnes overtime*, supprimées)
+DEC-026 [2026-09-21] ACTIVE la phase d'un projet se change depuis l'EN-TÊTE du projet, pour PM et DIR why=elle ne vivait que dans « Modifier le projet », replié, dans l'onglet Fiche : la chefferie ne la trouvait pas, alors que l'API l'autorisait déjà alt=le formulaire complet seul
 DEC-017 [2026-09-18] ACTIVE les 162 remontées client sont devenues des tickets ordinaires TERMINE/CLOS, marqueur `clientReported` retiré why=arbitrage Denis du 18/09 ; la file de triage est vidée alt=ne fermer que le triage en gardant le marqueur (préservait l'écran Bugs du portail client) — sauvegarde ~/backups/remontees-client/avant-20260918-060340.json, restaurable par `npx tsx prisma/close-client-reports.ts --restore=`
 
 ## TRAP
@@ -107,6 +111,8 @@ TRAP-014 ProjectAssignment n'est écrite QUE par les seeds, jamais par l'applica
 TRAP-015b `clientReported` alimente DEUX écrans : le triage interne ET la liste « Bugs » du portail client → le retirer vide aussi ce que le client voit de ses propres signalements
 TRAP-017 le premier `button[type=submit]` d'une page du back-office est celui de la DÉCONNEXION (barre du haut) → viser le formulaire par un de ses champs (`champ.closest("form")`), sinon un test se déconnecte et atterrit sur /login
 TRAP-016 une case cochée par JavaScript ne déclenche aucun évènement → après un « tout sélectionner », réémettre un `change` depuis une case pour que React recompte
+TRAP-018 le cloisonnement des projets (DEC-023) repose sur l'ASSIGNATION d'une tâche ou d'un ticket → retirer l'assignée d'un ticket fait disparaître le projet de sa liste ; c'est voulu, mais ça surprend
+TRAP-019 le formulaire d'horaires envoie 0 pour dimanche alors que parseWeekdays attend l'ISO 1..7 → dimanche coché est silencieusement ignoré (samedi, 6, fonctionne)
 TRAP-015 un cloisonnement de lecture se teste avec un compte qui n'a RIEN (ni affectation, ni tâche, ni ticket) → le jeu d'essai donnait du travail aux deux développeurs sur les deux projets, ce qui masquait le défaut
 
 ## STATE
@@ -117,6 +123,9 @@ done=vérifications : work-time 18/18, hr-calendar 18/18, sessions 31/31, partag
 done=[18/09] écran Tickets : bandeau de sélection conditionnel, case « tout sélectionner », projets sur une ligne scrollable, groupes de filtres insécables, filtre « assigné à »
 done=[21/09] CC-340, CC-341, CC-342, CC-344 livrés ; CC-343 : les 24 actions de modification/suppression orphelines ont toutes un écran, plus aucune action d'écriture n'est orpheline
 done=[18/09] site vitrine : header, footer et socle CSS mutualisés dans site-chrome.js et site.css ; Partner Program recréé depuis la référence, candidature reliée à /api/contact, lien ajouté au header
+done=[21/09] projets cloisonnés pour les DEV (DEC-023/024), phase modifiable depuis l'en-tête (DEC-026), plage d'heures supplémentaires retirée de Paramètres (DEC-025, migration retrait_plage_heures_supp), encadré RH renommé « Heures supplémentaires et récupération »
+done=[21/09] vérifications : work-time 18/18 après retrait de la plage supplémentaire, hr-calendar 18/18, accès+phase 20/20 (HTTP), horaires+tableau de bord 8/8 (HTTP), écrans dans Chrome 13/13 chefferie + 9/9 développeur
+done=[21/09] horaires écrits en prod : Sylvie 9-12/13-17, Luc et Gabrielle 9-12/13h30-17h30 ; Denis l'était déjà, Jayan reste sur le défaut de l'agence
 wip=aucun
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — le socle Drive est committé, il manque le client ID et le secret OAuth d'un projet Google Cloud à créer par l'utilisateur
@@ -127,4 +136,6 @@ manual=une tâche importée (lot « DEV », « Faire une page en attendant le de
 manual=frontend-public : déploiement par git pull sur Hostinger ; contrôler le rendu du header/footer et de Partner Program après publication
 manual=le sitemap EN LIGNE ne contient que 3 URLs contre 12 dans le dépôt — il n'a jamais été redéployé
 manual=le portail client n'a plus de liste de bugs signalés (DEC-017) — à revoir si un compte client est créé
+manual=l'écran Temps (/time, ouvert aux DEV) liste TOUS les projets non clôturés et le temps de toute l'équipe — hors portée de DEC-024, à trancher si le cloisonnement doit y descendre
+manual=DEC-023 annule le cloisonnement ouvert par DEC-014 — prévenir Jayan et Gabrielle, et CC-338 redevient d'actualité sur une autre base (assignation, pas affectation)
 manual=le README n'a pas de partie « Fonctionnalités » au format BxFy ; la référence fonctionnelle reste la liste de tickets en production

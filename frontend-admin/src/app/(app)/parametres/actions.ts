@@ -94,8 +94,6 @@ export async function updateScheduleAction(formData: FormData): Promise<void> {
     breakEndMin: minutesOf(formData.get("breakEnd")),
     // Sans jour coché, on ne compterait jamais rien : la semaine ouvrée reprend.
     weekdays: weekdays.length ? weekdays : [1, 2, 3, 4, 5],
-    overtimeStartMin: minutesOf(formData.get("overtimeStart")),
-    overtimeEndMin: minutesOf(formData.get("overtimeEnd")),
   });
   revalidatePath("/parametres");
   revalidatePath("/time");

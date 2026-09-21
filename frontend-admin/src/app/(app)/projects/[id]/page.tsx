@@ -7,7 +7,7 @@ import {
   createEpicAction, createTaskAction, deleteEpicAction, importProjectJsonAction, updateClientContactAction,
   updateEpicAction, updateProjectDescriptionAction,
   addClientQuestionAction, markQuestionAskedAction, answerClientQuestionAction,
-  updateProjectAction, updateClientAction,
+  updateProjectAction, updateClientAction, updateProjectPhaseAction,
 } from "../actions";
 import type { ClientQuestionStatus, ProjectGroup, TaskStatus } from "@/lib/types";
 import type { ClientRef } from "@/lib/dto";
@@ -37,6 +37,15 @@ export default async function ProjectDetailPage({
   // supprimé depuis, on renvoie à la liste plutôt que sur une page d'erreur
   // dont on ne sait pas sortir.
   if (result.access === "not-found") redirect("/projects?liste=1");
+  // Un projet hors périmètre se dit, il ne disparaît pas en silence : le lien
+  // vient forcément de quelque part, et « rien ne s'est passé » n'explique rien.
+  if (result.access === "forbidden") {
+    redirect(
+      `/projects?liste=1&error=${encodeURIComponent(
+        "Ce projet ne vous est pas ouvert : aucune tâche ni aucun ticket ne vous y est assigné.",
+      )}`,
+    );
+  }
   const { project, team, apis, questions, tickets, clients } = result;
   // Un développeur consulte, il ne reconfigure pas le projet ni le client.
   const canEdit = user.role === "DIR" || user.role === "PM";
@@ -70,9 +79,41 @@ export default async function ProjectDetailPage({
             </h1>
             <p className="mt-1 max-w-2xl text-sm text-muted">{project.description}</p>
           </div>
-          <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${GROUP_BADGE_CLASS[project.group]}`}>
-            {project.phaseLabel || GROUP_LABEL[project.group]}
-          </span>
+          {/* La phase se change ICI. Elle ne vivait que dans « Modifier le
+              projet », replié, dans l'onglet Fiche : la chefferie ne la
+              trouvait pas. Le formulaire complet reste, pour le reste. */}
+          {canEdit ? (
+            <form action={updateProjectPhaseAction} className="flex shrink-0 items-end gap-2">
+              <input type="hidden" name="projectId" value={project.id} />
+              <label className="flex flex-col gap-1 text-[11px] text-muted">
+                Phase
+                <select name="group" defaultValue={project.group} className="input h-8 py-0 text-xs">
+                  {(["DEV", "FIN", "WAR", "MAI", "CLO"] as ProjectGroup[]).map((g) => (
+                    <option key={g} value={g}>{GROUP_LABEL[g]}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-[11px] text-muted">
+                Libellé
+                <input
+                  name="phaseLabel"
+                  defaultValue={project.phaseLabel}
+                  placeholder={GROUP_LABEL[project.group]}
+                  className="input h-8 w-40 py-0 text-xs"
+                />
+              </label>
+              <button
+                type="submit"
+                className="h-8 rounded-lg border border-border px-3 text-xs font-medium text-text transition hover:border-mint/50 hover:text-mint"
+              >
+                Changer
+              </button>
+            </form>
+          ) : (
+            <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${GROUP_BADGE_CLASS[project.group]}`}>
+              {project.phaseLabel || GROUP_LABEL[project.group]}
+            </span>
+          )}
         </div>
       </div>
 

@@ -342,7 +342,9 @@ export default async function RhPage() {
 
       <div className="grid grid-cols-2 gap-6">
         <div className="rounded-xl border border-border bg-panel p-5">
-          <h2 className="text-sm font-semibold text-text">Mes heures</h2>
+          <h2 className="text-sm font-semibold text-text">
+            Heures supplémentaires et récupération
+          </h2>
           <div className="mt-3 flex flex-col divide-y divide-border">
             {myHours.length === 0 ? (
               <p className="py-2 text-sm text-muted">Aucune heure déclarée ce mois-ci.</p>

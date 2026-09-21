@@ -848,9 +848,8 @@ model WorkSchedule {
   endMin           Int      @default(1080)
   // Jours travaillés au format ISO : 1 = lundi … 7 = dimanche.
   weekdays         String   @default("1,2,3,4,5")
-  // Plage supplémentaire facultative, comptée en plus des horaires ordinaires.
-  overtimeStartMin Int?
-  overtimeEndMin   Int?
+  // Pas de plage supplémentaire : les heures supplémentaires se déclarent en RH
+  // (HoursEntry), à leur date, et la direction les valide.
   updatedAt        DateTime @updatedAt
 }
 

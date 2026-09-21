@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { devCanSeeProject } from "@/lib/project-access";
 
 export const dynamic = "force-dynamic";
 
@@ -12,12 +13,14 @@ export const dynamic = "force-dynamic";
 // les vues Liste et Kanban, qui sont les plus consultées.
 //
 // `access` distingue les deux raisons d'un écran vide : le projet n'existe pas,
-// ou le développeur n'y est pas assigné — l'écran affiche un message différent
-// dans chaque cas.
+// ou le développeur n'y a aucune tâche ni aucun ticket assigné — l'écran renvoie
+// à la liste avec un message différent dans chaque cas. Le contrôle est ici et
+// pas seulement sur la liste : sans lui, l'adresse d'un projet masqué suffirait
+// à le lire en entier.
 
 const querySchema = z.object({ id: z.string().min(1), fiche: z.boolean() });
 
-export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
+export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
   const params = request.nextUrl.searchParams;
   const parsed = querySchema.safeParse({
     id: params.get("id"),
@@ -37,6 +40,7 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
     },
   });
   if (!project) return { access: "not-found" as const };
+  if (!(await devCanSeeProject(user, project.id))) return { access: "forbidden" as const };
 
   const [team, apis, questions, tickets, clients] = await Promise.all([
     prisma.user.findMany({ where: { role: { in: ["DEV", "PM"] } }, orderBy: { name: "asc" } }),

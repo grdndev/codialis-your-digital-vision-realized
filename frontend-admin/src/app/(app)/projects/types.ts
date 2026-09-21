@@ -58,11 +58,13 @@ export type ClientQuestionRow = {
   createdAt: Date;
 };
 
-// `access` ne distingue plus qu'un cas d'écran vide : le projet n'existe pas.
-// Toute l'équipe interne voit tous les projets. `apis` et `questions`
-// n'arrivent remplis que si l'onglet Fiche est demandé.
+// `access` distingue deux écrans vides : le projet n'existe pas, ou il n'est pas
+// ouvert au développeur qui l'appelle — aucune tâche ni ticket ne lui y est
+// assigné. `apis` et `questions` n'arrivent remplis que si l'onglet Fiche est
+// demandé.
 export type ProjectDetailResponse =
   | { access: "not-found" }
+  | { access: "forbidden" }
   | {
       access: "ok";
       project: ProjectDetail;

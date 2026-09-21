@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { visibleProjectIds } from "@/lib/project-access";
 import { closeSessions, openSession, refreshProjectSpent } from "@/lib/work-sessions";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
 import type { TaskStatus } from "@prisma/client";
@@ -11,22 +12,37 @@ export const dynamic = "force-dynamic";
 // (liste, détail, fiche, détail de tâche), regroupées ici parce qu'elles
 // touchent le même agrégat.
 
-// Lecture ouverte aux développeurs : ils travaillent sur ces projets, la liste
-// leur sert. La création d'un client ou d'un projet reste à la direction et à
-// la chefferie, contrôlée plus bas dans le POST.
-export const GET = adminRoute(["DEV", "PM", "DIR"], async () => ({
-  // Toute l'équipe interne voit tous les projets.
-  allProjects: await prisma.project.findMany({
-    include: { client: true },
-    orderBy: [{ openedAt: "desc" }],
-  }),
-  // Le formulaire « nouveau projet » doit pouvoir rattacher à un client
-  // existant : un projet sans client n'a pas de place dans le modèle.
-  clients: await prisma.client.findMany({
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  }),
-}));
+// Lecture ouverte aux développeurs, mais bornée : un développeur ne voit que
+// les projets où il a une tâche ou un ticket assigné (voir project-access.ts).
+// Le tri des projets se fait donc ici et non à l'affichage — la requête ne doit
+// jamais rapporter les autres. La création d'un client ou d'un projet reste à la
+// direction et à la chefferie, contrôlée plus bas dans le POST.
+export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }) => {
+  // `null` = rôle non cloisonné (chefferie, direction) : aucun filtre. Une
+  // liste vide, elle, est un développeur sans travail assigné, donc sans projet.
+  const ids = await visibleProjectIds(user);
+  const scope = ids === null ? {} : { id: { in: ids } };
+  const [allProjects, clients] = await Promise.all([
+    prisma.project.findMany({
+      where: scope,
+      include: { client: true },
+      orderBy: [{ openedAt: "desc" }],
+    }),
+    // Le formulaire « nouveau projet » doit pouvoir rattacher à un client
+    // existant : un projet sans client n'a pas de place dans le modèle. La
+    // liste suit le même périmètre que les projets, sinon l'écran annoncerait
+    // à un développeur plus de clients que de projets visibles. Hors
+    // cloisonnement, elle reste ENTIÈRE : un client tout juste créé n'a pas
+    // encore de projet, et c'est précisément pour lui en ouvrir un qu'on le
+    // cherche dans cette liste.
+    prisma.client.findMany({
+      where: ids === null ? {} : { projects: { some: scope } },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
+  return { allProjects, clients };
+});
 
 // Le sigle affiché dans les pastilles du back-office. Déduit du nom plutôt que
 // saisi : un champ de plus à remplir pour une valeur qu'on sait calculer.
@@ -186,6 +202,15 @@ const bodySchema = z.discriminatedUnion("action", [
     deadlineNote: z.string().max(200).nullable(),
     openedAt: z.string().datetime(),
   }),
+  // La phase se change seule, depuis l'en-tête du projet : c'est le geste le
+  // plus courant de la chefferie, et il n'a pas à passer par le formulaire
+  // complet, où il était replié dans l'onglet Fiche.
+  z.object({
+    action: z.literal("update-project-phase"),
+    projectId: z.string().min(1),
+    group: z.enum(["DEV", "FIN", "WAR", "MAI", "CLO"]),
+    phaseLabel: z.string().max(200),
+  }),
   z.object({
     action: z.literal("update-client"),
     clientId: z.string().min(1),
@@ -221,6 +246,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
     body.action === "create-client" ||
     body.action === "create-project" ||
     body.action === "update-project" ||
+    body.action === "update-project-phase" ||
     body.action === "update-client" ||
     // Poser d'un coup les lots et les tickets d'un projet, c'est en dessiner la
     // structure : même main que la création.
@@ -578,6 +604,25 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
           // Clôturer horodate la clôture ; rouvrir l'efface. La date suit la
           // phase plutôt que d'être saisie à part, où elle pourrait la démentir.
           closedAt: body.group === "CLO" ? new Date() : null,
+        },
+      });
+      return;
+    }
+
+    case "update-project-phase": {
+      // On relit la clôture : repasser un projet clôturé en « Clôturé » ne doit
+      // pas décaler sa date de clôture à aujourd'hui.
+      const current = await prisma.project.findUnique({
+        where: { id: body.projectId },
+        select: { closedAt: true },
+      });
+      if (!current) badRequest("Projet introuvable");
+      await prisma.project.update({
+        where: { id: body.projectId },
+        data: {
+          group: body.group,
+          phaseLabel: body.phaseLabel.trim(),
+          closedAt: body.group === "CLO" ? (current.closedAt ?? new Date()) : null,
         },
       });
       return;

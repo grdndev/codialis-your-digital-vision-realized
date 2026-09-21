@@ -24,8 +24,6 @@ async function scheduleOf(tx: Tx, userId: string): Promise<Schedule> {
     breakEndMin: row.breakEndMin,
     endMin: row.endMin,
     weekdays: parseWeekdays(row.weekdays),
-    overtimeStartMin: row.overtimeStartMin,
-    overtimeEndMin: row.overtimeEndMin,
   };
 }
 

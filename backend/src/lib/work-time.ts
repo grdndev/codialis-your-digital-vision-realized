@@ -24,8 +24,6 @@ export type Schedule = {
   endMin: number;
   // Jours ISO travaillés : 1 = lundi … 7 = dimanche.
   weekdays: number[];
-  overtimeStartMin: number | null;
-  overtimeEndMin: number | null;
 };
 
 export type Session = {
@@ -41,8 +39,6 @@ export const DEFAULT_SCHEDULE: Schedule = {
   breakEndMin: 13 * 60,
   endMin: 18 * 60,
   weekdays: [1, 2, 3, 4, 5],
-  overtimeStartMin: null,
-  overtimeEndMin: null,
 };
 
 export function parseWeekdays(raw: string): number[] {
@@ -65,8 +61,13 @@ function atMinutes(day: Date, minutes: number): number {
 
 type Window = { start: number; end: number };
 
-// Plages travaillées d'une journée : matin, après-midi, plus les heures
-// supplémentaires déclarées. Une journée non travaillée ou fériée n'en a aucune.
+// Plages travaillées d'une journée : matin et après-midi. Une journée non
+// travaillée ou fériée n'en a aucune.
+//
+// Il n'y a PAS de plage supplémentaire : le temps mesuré s'arrête aux horaires.
+// Une soirée travaillée se déclare dans l'écran RH (heures supplémentaires), là
+// où la direction la valide et où elle alimente le solde d'heures — une plage
+// réglée dans Paramètres l'aurait comptée en double et sans validation.
 export function windowsForDay(day: Date, schedule: Schedule): Window[] {
   if (!schedule.weekdays.includes(isoWeekday(day))) return [];
   if (isHoliday(isoOf(day))) return [];
@@ -90,11 +91,6 @@ export function windowsForDay(day: Date, schedule: Schedule): Window[] {
     } else {
       windows.push({ start: atMinutes(day, startMin), end: atMinutes(day, endMin) });
     }
-  }
-
-  const { overtimeStartMin, overtimeEndMin } = schedule;
-  if (overtimeStartMin !== null && overtimeEndMin !== null && overtimeEndMin > overtimeStartMin) {
-    windows.push({ start: atMinutes(day, overtimeStartMin), end: atMinutes(day, overtimeEndMin) });
   }
 
   return windows.sort((a, b) => a.start - b.start);

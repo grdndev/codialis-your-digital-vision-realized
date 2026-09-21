@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { projectScope } from "@/lib/project-access";
 import type { TaskStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -16,10 +17,13 @@ export const dynamic = "force-dynamic";
 // une cheffe de projet : ni à elle-même, ni à un développeur.
 
 export const GET = adminRoute(["DIR", "PM", "DEV"], async ({ user }) => {
+  // Le tableau de bord montre des projets : il suit le même cloisonnement que
+  // l'écran Projets, sinon la liste y réapparaîtrait en entier.
+  const scope = await projectScope(user);
   const [activeProjects, openTickets, clientCount, myInternalTasks, team, givenInternalTasks, totalProjects] =
     await Promise.all([
       prisma.project.findMany({
-        where: { group: "DEV" },
+        where: { group: "DEV", ...scope },
         include: { client: true },
         orderBy: { lastActivityAt: "desc" },
       }),
@@ -43,7 +47,7 @@ export const GET = adminRoute(["DIR", "PM", "DEV"], async ({ user }) => {
         include: { assignee: true },
         orderBy: { createdAt: "desc" },
       }),
-      prisma.project.count(),
+      prisma.project.count({ where: scope }),
     ]);
 
   return {
