@@ -83,6 +83,9 @@ DEC-014 [2026-09-17] ACTIVE AUCUN cloisonnement interne : DEV, PM et DIR voient 
 DEC-015 [2026-09-17] ACTIVE les restrictions d'ÉCRITURE demeurent (clôture PM/DIR, import JSON PM/DIR, création client/projet PM/DIR) why=DEC-014 ne porte que sur la lecture alt=tout ouvrir
 DEC-016 [2026-09-18] ACTIVE l'écran Tickets filtre « assigné à » sur Moi PAR DÉFAUT why=on l'ouvre pour voir ce qu'on a à faire, pas les 236 tickets de l'agence ; le défaut ne s'écrit pas dans l'adresse alt=aucun filtre par défaut
 DEC-018 [2026-09-18] ACTIVE la page Programme partenaire est une page HTML simple du site (gabarit des pages d'expertise), pas le bundle React livré why=elle doit hériter du bandeau, du pied de page, des couleurs et des polices du site, et le bundle autonome ne le permettait pas alt=publier le bundle tel quel (design divergent, sans titre, formulaire qui n'envoie rien)
+DEC-020 [2026-09-21] ACTIVE les tâches internes sont ouvertes à toute l'équipe, chacun peut s'en poser une ou en confier une à n'importe quel collègue why=CC-344 ; elles étaient réservées à DIR, qui ne pouvait les confier qu'à un PM alt=distribution réservée à la direction
+DEC-021 [2026-09-21] ACTIVE la recherche des tickets n'est PAS retenue d'une visite à l'autre, contrairement aux filtres why=retrouver l'écran avec les mots tapés la semaine dernière n'aide personne ; `q` est retiré du cookie de mémoire d'écran alt=tout retenir
+DEC-022 [2026-09-21] ACTIVE créer un ticket depuis une fiche projet rouvre le formulaire sur ce projet ; depuis l'écran Tickets, on va sur le ticket créé why=CC-340, on signale plusieurs bugs d'affilée depuis un projet alt=toujours rediriger vers le ticket
 DEC-019 [2026-09-18] ACTIVE la candidature partenaire part dans /api/contact, profil et niveau dans le message why=elle atterrit ainsi dans « Demandes de Contact » du back-office sans toucher au schéma alt=nouvelle table et nouvelle route
 DEC-017 [2026-09-18] ACTIVE les 162 remontées client sont devenues des tickets ordinaires TERMINE/CLOS, marqueur `clientReported` retiré why=arbitrage Denis du 18/09 ; la file de triage est vidée alt=ne fermer que le triage en gardant le marqueur (préservait l'écran Bugs du portail client) — sauvegarde ~/backups/remontees-client/avant-20260918-060340.json, restaurable par `npx tsx prisma/close-client-reports.ts --restore=`
 
@@ -102,6 +105,7 @@ TRAP-012 les bornes de période du planning RH sont décidées par l'ÉCRAN et n
 TRAP-013 le conteneur codialis-api affiche un avertissement OpenSSL de Prisma sur chaque commande node → bruit, pas une erreur
 TRAP-014 ProjectAssignment n'est écrite QUE par les seeds, jamais par l'application → ne fonder aucune règle dessus sans construire d'abord l'écran qui la remplit (a produit des 404 inexplicables sur des tickets existants)
 TRAP-015b `clientReported` alimente DEUX écrans : le triage interne ET la liste « Bugs » du portail client → le retirer vide aussi ce que le client voit de ses propres signalements
+TRAP-017 le premier `button[type=submit]` d'une page du back-office est celui de la DÉCONNEXION (barre du haut) → viser le formulaire par un de ses champs (`champ.closest("form")`), sinon un test se déconnecte et atterrit sur /login
 TRAP-016 une case cochée par JavaScript ne déclenche aucun évènement → après un « tout sélectionner », réémettre un `change` depuis une case pour que React recompte
 TRAP-015 un cloisonnement de lecture se teste avec un compte qui n'a RIEN (ni affectation, ni tâche, ni ticket) → le jeu d'essai donnait du travail aux deux développeurs sur les deux projets, ce qui masquait le défaut
 
@@ -111,13 +115,13 @@ done=CC-301 à CC-339 traités et déployés SAUF CC-302 ; les livrés sont en E
 done=temps mesuré (CC-330) en production ; import Asana fait (6 projets + Top formation)
 done=vérifications : work-time 18/18, hr-calendar 18/18, sessions 31/31, partage du temps 9/9, accès 17/17 puis 10/10 après DEC-014, filtres+absences 15/15, masse+import 24/24, filtre assigné 7/7, écran Tickets dans Chrome 15/15
 done=[18/09] écran Tickets : bandeau de sélection conditionnel, case « tout sélectionner », projets sur une ligne scrollable, groupes de filtres insécables, filtre « assigné à »
+done=[21/09] CC-340, CC-341, CC-342, CC-344 livrés ; CC-343 : les 24 actions de modification/suppression orphelines ont toutes un écran, plus aucune action d'écriture n'est orpheline
 done=[18/09] site vitrine : header, footer et socle CSS mutualisés dans site-chrome.js et site.css ; Partner Program recréé depuis la référence, candidature reliée à /api/contact, lien ajouté au header
 wip=aucun
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — le socle Drive est committé, il manque le client ID et le secret OAuth d'un projet Google Cloud à créer par l'utilisateur
 blocked=DEC-009 — confirmer que le calendrier RH peut rester visible par toute l'équipe
 blocked=DEC-014 annule CC-338 (livré le matin même) — prévenir Jayan et Gabrielle, le ticket est resté EN_REVUE avec un commentaire expliquant la volte-face
-manual=balayage éditabilité : l'API accepte la modification des lots, tâches, critères de tâche, deals, saisies de temps, actions et des 7 types de ressources, mais AUCUN écran ne l'appelle encore
 manual=secrets exposés dans les exports Asana importés (Stripe live, OVH, root VPS, Cloudflare R2, Brevo, PayPal, Orange) → à faire tourner
 manual=une tâche importée (lot « DEV », « Faire une page en attendant le dev du site et la déployer ») contient encore des identifiants FTP et base OVH dans sa description → à nettoyer, proposé, sans réponse
 manual=frontend-public : déploiement par git pull sur Hostinger ; contrôler le rendu du header/footer et de Partner Program après publication
