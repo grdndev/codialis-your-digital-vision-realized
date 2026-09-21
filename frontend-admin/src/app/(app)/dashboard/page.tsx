@@ -13,7 +13,7 @@ export default async function DashboardPage() {
     openTickets,
     clientCount,
     myInternalTasks,
-    pmUsers,
+    team,
     givenInternalTasks,
     totalProjects,
   } = await apiGet<DashboardScreen>("/api/admin/dashboard");
@@ -163,14 +163,16 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {user.role === "DIR" ? (
-          <div className="rounded-xl border border-border bg-panel">
+        <div className="rounded-xl border border-border bg-panel">
             <div className="border-b border-border px-5 py-3">
-              <h2 className="text-sm font-semibold text-text">Tâches assignées</h2>
+              <h2 className="text-sm font-semibold text-text">Tâches que j’ai confiées</h2>
             </div>
             <div className="flex flex-col divide-y divide-border">
               {givenInternalTasks.length === 0 ? (
-                <p className="px-5 py-4 text-sm text-muted">Vous n’avez confié aucune tâche interne.</p>
+                <p className="px-5 py-4 text-sm text-muted">
+                  Aucune tâche confiée. Vous pouvez vous en poser une à vous-même — un rappel,
+                  une relance — ou en confier une à un collègue.
+                </p>
               ) : (
                 givenInternalTasks.map((t) => (
                   <div key={t.id} className="flex items-center justify-between gap-4 px-5 py-3 text-sm">
@@ -188,20 +190,27 @@ export default async function DashboardPage() {
               )}
             </div>
             <details className="border-t border-border px-5 py-3">
-              <summary className="cursor-pointer text-xs font-medium text-mint">+ Assigner une tâche</summary>
+              <summary className="cursor-pointer text-xs font-medium text-mint">+ Poser une tâche</summary>
               <form action={assignInternalTaskAction} className="mt-2 flex flex-col gap-2">
-                <select name="assigneeId" required className="input">
-                  <option value="">Assigner à…</option>
-                  {pmUsers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                {/* Soi-même en premier : le cas courant est le rappel qu'on se
+                    pose, pas la tâche confiée à quelqu'un d'autre. */}
+                <select name="assigneeId" required defaultValue={user.id} className="input">
+                  <option value={user.id}>Pour moi ({user.name})</option>
+                  {team
+                    .filter((u) => u.id !== user.id)
+                    .map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}
+                      </option>
+                    ))}
                 </select>
                 <input name="title" placeholder="Titre (ex : faire une formation)" required className="input" />
                 <input name="description" placeholder="Détail (optionnel)" className="input" />
                 <input name="dueAt" type="date" className="input" />
-                <button type="submit" className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg">Assigner</button>
+                <button type="submit" className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg">Créer la tâche</button>
               </form>
             </details>
           </div>
-        ) : null}
       </div>
     </div>
   );

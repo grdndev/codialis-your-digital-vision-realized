@@ -61,8 +61,12 @@ export function proxy(request: NextRequest) {
   if (FILTER_MEMORY_PATHS.has(pathname)) {
     const cookieName = filterCookieName(pathname);
     if (search.has("f")) {
+      // Les filtres se retiennent, pas la recherche : retrouver l'écran avec
+      // les mots tapés la semaine dernière ne rendrait service à personne.
+      const aRetenir = new URLSearchParams(search);
+      aRetenir.delete("q");
       const response = NextResponse.next();
-      response.cookies.set(cookieName, search.toString(), {
+      response.cookies.set(cookieName, aRetenir.toString(), {
         maxAge: COOKIE_MAX_AGE,
         sameSite: "lax",
         path: "/",

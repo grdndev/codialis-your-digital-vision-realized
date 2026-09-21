@@ -30,6 +30,17 @@ export async function createTicketAction(formData: FormData) {
   });
 
   revalidatePath("/tickets");
+
+  // Venu d'un projet, on y reste : le formulaire se rouvre vide sur le même
+  // projet, avec la référence qui vient d'être créée en bandeau. Signaler un
+  // deuxième bug ne demande plus de revenir au projet puis de rouvrir le
+  // formulaire. Depuis l'écran Tickets, on va au contraire sur le ticket créé,
+  // c'est ce qu'on attend d'une création à l'unité.
+  const depuisProjet = String(formData.get("fromProject") ?? "");
+  if (depuisProjet) {
+    revalidatePath(`/projects/${depuisProjet}`);
+    redirect(`/tickets/new?project=${encodeURIComponent(depuisProjet)}&cree=${encodeURIComponent(ref)}`);
+  }
   redirect(`/tickets/${ref}`);
 }
 

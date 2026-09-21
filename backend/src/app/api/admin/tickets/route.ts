@@ -44,6 +44,12 @@ export const GET = adminRoute(
     // pour cela que l'écran l'applique par défaut.
     const assigneeFilter = params.get("assignee");
 
+    // Recherche libre. Elle porte sur la référence, le titre, la description et
+    // les étapes de reproduction : on cherche un ticket soit par son numéro,
+    // soit par un mot dont on se souvient. Elle se CROISE avec les filtres, elle
+    // ne les remplace pas.
+    const recherche = (params.get("q") ?? "").trim();
+
     const where: Prisma.TicketWhereInput = {};
     if (assigneeFilter === "me") where.assigneeId = user.id;
     else if (assigneeFilter === "none") where.assigneeId = null;
@@ -51,6 +57,14 @@ export const GET = adminRoute(
     if (typeFilter.length) where.type = { in: typeFilter };
     if (statusFilter.length) where.status = { in: statusFilter };
     if (severityFilter.length) where.severity = { in: severityFilter };
+    if (recherche) {
+      where.OR = [
+        { ref: { contains: recherche } },
+        { title: { contains: recherche } },
+        { description: { contains: recherche } },
+        { steps: { contains: recherche } },
+      ];
+    }
 
     const [projects, tickets, team] = await Promise.all([
       prisma.project.findMany({

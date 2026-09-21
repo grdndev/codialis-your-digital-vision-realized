@@ -37,6 +37,7 @@ export default async function TicketsPage({
     status?: string;
     severity?: string;
     assignee?: string;
+    q?: string;
     view?: string;
     f?: string;
   }>;
@@ -59,6 +60,8 @@ export default async function TicketsPage({
   if (sp.severity) filters.set("severity", sp.severity);
   const assignee = sp.assignee ?? DEFAULT_ASSIGNEE;
   filters.set("assignee", assignee);
+  const recherche = (sp.q ?? "").trim();
+  if (recherche) filters.set("q", recherche);
   const { projects, tickets, team } = await apiGet<TicketsScreen>(`/api/admin/tickets?${filters}`);
 
   const bugCount = tickets.filter((t) => t.type === "BUG").length;
@@ -73,12 +76,14 @@ export default async function TicketsPage({
     return (sp[key] ?? "").split(",").filter(Boolean);
   }
 
-  function buildHref(next: Partial<Record<FilterKey | "view" | "assignee", string | null>>) {
+  function buildHref(next: Partial<Record<FilterKey | "view" | "assignee" | "q", string | null>>) {
     const params = new URLSearchParams();
     for (const key of FILTER_KEYS) {
       const value = key in next ? next[key] : (sp[key] ?? null);
       if (value) params.set(key, value);
     }
+    const q = "q" in next ? next.q : recherche || null;
+    if (q) params.set("q", q);
     const who = "assignee" in next ? next.assignee : assignee;
     // Le défaut ne s'écrit pas dans l'adresse tant qu'on ne l'a pas quitté.
     if (who && who !== DEFAULT_ASSIGNEE) params.set("assignee", who);
@@ -121,6 +126,38 @@ export default async function TicketsPage({
           </Link>
         </div>
       </div>
+
+      {/* La recherche porte sur la référence, le titre, la description et les
+          étapes. Elle se croise avec les filtres : les champs cachés les
+          reconduisent, sans quoi chercher les remettrait tous à zéro. */}
+      <form method="get" action="/tickets" className="flex flex-wrap items-center gap-2">
+        <input type="hidden" name="f" value="1" />
+        {FILTER_KEYS.map((key) =>
+          sp[key] ? <input key={key} type="hidden" name={key} value={sp[key]} /> : null,
+        )}
+        {assignee !== DEFAULT_ASSIGNEE ? (
+          <input type="hidden" name="assignee" value={assignee} />
+        ) : null}
+        {sp.view ? <input type="hidden" name="view" value={sp.view} /> : null}
+        <input
+          name="q"
+          defaultValue={recherche}
+          placeholder="Rechercher une référence, un titre, un mot de la description…"
+          className="input flex-1 min-w-[260px]"
+          aria-label="Rechercher dans les tickets"
+        />
+        <button
+          type="submit"
+          className="rounded-lg bg-mint px-4 py-2 text-xs font-semibold text-bg transition hover:brightness-110"
+        >
+          Rechercher
+        </button>
+        {recherche ? (
+          <Link href={buildHref({ q: null })} className="text-xs text-muted hover:text-text">
+            Effacer
+          </Link>
+        ) : null}
+      </form>
 
       {/* Les projets ont leur propre ligne : ils sont nombreux et leurs noms
           longs. Elle défile horizontalement plutôt que de pousser les autres
@@ -198,7 +235,10 @@ export default async function TicketsPage({
           ))}
         </FilterGroup>
 
-        <span className="ml-auto text-muted">{tickets.length} tickets</span>
+        <span className="ml-auto text-muted">
+          {tickets.length} ticket{tickets.length > 1 ? "s" : ""}
+          {recherche ? ` pour « ${recherche} »` : ""}
+        </span>
       </div>
 
       {view === "table" ? (

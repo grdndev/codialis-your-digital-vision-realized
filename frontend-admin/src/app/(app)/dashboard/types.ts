@@ -7,8 +7,9 @@ export type DashboardScreen = {
   openTickets: DashboardTicket[];
   clientCount: number;
   myInternalTasks: (InternalTaskRow & { assigner: UserRef })[];
-  // Vide pour une cheffe de projet : ces deux listes sont réservées à la direction.
-  pmUsers: UserRef[];
+  // Toute l'équipe interne : chacun peut se confier une tâche ou en confier une
+  // à un collègue.
+  team: UserRef[];
   givenInternalTasks: (InternalTaskRow & { assignee: UserRef })[];
   totalProjects: number;
 };

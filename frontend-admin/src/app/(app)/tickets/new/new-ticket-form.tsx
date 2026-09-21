@@ -9,10 +9,14 @@ export function NewTicketForm({
   projects,
   team,
   initialProjectId,
+  fromProjectId,
 }: {
   projects: Project[];
   team: { id: string; name: string }[];
   initialProjectId?: string;
+  // Renseigné quand le formulaire est ouvert depuis une fiche projet : on y
+  // revient après la création plutôt que de partir sur le ticket créé.
+  fromProjectId?: string;
 }) {
   const [type, setType] = useState<"BUG" | "DEV">("BUG");
   // Un projet passé en paramètre n'est retenu que s'il existe vraiment dans la
@@ -24,6 +28,7 @@ export function NewTicketForm({
 
   return (
     <form action={createTicketAction} className="flex max-w-2xl flex-col gap-4 rounded-xl border border-border bg-panel p-6">
+      {fromProjectId ? <input type="hidden" name="fromProject" value={fromProjectId} /> : null}
       <div className="flex gap-2">
         {(["BUG", "DEV"] as const).map((t) => (
           <label
