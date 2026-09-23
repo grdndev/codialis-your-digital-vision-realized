@@ -32,7 +32,9 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/site/reglages", label: "Réglages du site", roles: ["DIR", "PM"] },
   { href: "/site/messages", label: "Demandes de contact", roles: ["DIR", "PM"] },
   { href: "/site/veille", label: "Veille", roles: ["DIR", "PM"] },
-  { href: "/equipe", label: "Comptes", roles: ["DIR"] },
+    // La chefferie gère les comptes au même titre que la direction : mêmes
+  // droits, aucune restriction en écriture (demande du 22/09).
+  { href: "/equipe", label: "Comptes", roles: ["DIR", "PM"] },
   { href: "/parametres", label: "Paramètres", roles: ["DEV", "PM", "DIR"] },
 ];
 

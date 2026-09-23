@@ -28,7 +28,7 @@ function initialsOf(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export const GET = adminRoute(["DIR"], async () => {
+export const GET = adminRoute(["DIR", "PM"], async () => {
   const users = await prisma.user.findMany({
     orderBy: [{ role: "asc" }, { name: "asc" }],
     select: {
@@ -98,7 +98,7 @@ async function assertNotLastDirector(userId: string) {
   if (directors <= 1) badRequest("Impossible : c'est le dernier compte de direction");
 }
 
-export const POST = adminRoute(["DIR"], async ({ user }, request) => {
+export const POST = adminRoute(["DIR", "PM"], async ({ user }, request) => {
   const parsed = bodySchema.safeParse(await jsonBody(request));
   if (!parsed.success) badRequest("Requête invalide");
   const body = parsed.data;

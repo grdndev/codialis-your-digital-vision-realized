@@ -92,6 +92,7 @@ DEC-024 [2026-09-21] ACTIVE portée de DEC-023 : écran Projets, fiche projet ap
 DEC-025 [2026-09-21] ACTIVE les heures supplémentaires se DÉCLARENT en RH (HoursEntry, validées par la direction), elles ne se règlent plus en plage horaire dans Paramètres why=demande du 21/09 ; une plage réglée d'avance comptait une soirée toutes les semaines, sans validation et sans solde alt=plage horaire dans les horaires de travail (colonnes overtime*, supprimées)
 DEC-026 [2026-09-21] ACTIVE la phase d'un projet se change depuis l'EN-TÊTE du projet, pour PM et DIR why=elle ne vivait que dans « Modifier le projet », replié, dans l'onglet Fiche : la chefferie ne la trouvait pas, alors que l'API l'autorisait déjà alt=le formulaire complet seul
 DEC-017 [2026-09-18] ACTIVE les 162 remontées client sont devenues des tickets ordinaires TERMINE/CLOS, marqueur `clientReported` retiré why=arbitrage Denis du 18/09 ; la file de triage est vidée alt=ne fermer que le triage en gardant le marqueur (préservait l'écran Bugs du portail client) — sauvegarde ~/backups/remontees-client/avant-20260918-060340.json, restaurable par `npx tsx prisma/close-client-reports.ts --restore=`
+DEC-031 [2026-09-23] ACTIVE la chefferie (PM) gère les COMPTES au même titre que la direction : même onglet, mêmes droits, y compris changer un rôle why=demande du 23/09 ; la gestion des comptes était le dernier écran réservé à DIR alors que le PM recrute et fait entrer les gens alt=lecture seule pour le PM, création sans changement de rôle
 
 ## TRAP
 TRAP-001 le serveur `next dev` garde l'ANCIEN client Prisma après une migration → le redémarrer, sinon « Cannot read properties of undefined » sur le nouveau modèle
@@ -114,6 +115,7 @@ TRAP-016 une case cochée par JavaScript ne déclenche aucun évènement → apr
 TRAP-018 le cloisonnement des projets (DEC-023) repose sur l'ASSIGNATION d'une tâche ou d'un ticket → retirer l'assignée d'un ticket fait disparaître le projet de sa liste ; c'est voulu, mais ça surprend
 TRAP-019 le formulaire d'horaires envoie 0 pour dimanche alors que parseWeekdays attend l'ISO 1..7 → dimanche coché est silencieusement ignoré (samedi, 6, fonctionne)
 TRAP-015 un cloisonnement de lecture se teste avec un compte qui n'a RIEN (ni affectation, ni tâche, ni ticket) → le jeu d'essai donnait du travail aux deux développeurs sur les deux projets, ce qui masquait le défaut
+TRAP-023 la création d'un compte ANNULE le compte si l'e-mail d'invitation ne part pas (route accounts) → sans BREVO_API_KEY, toute vérification locale de la création échoue ; pointer BREVO_API_URL sur un faux serveur local
 
 ## STATE
 branch=main
@@ -126,6 +128,7 @@ done=[18/09] site vitrine : header, footer et socle CSS mutualisés dans site-ch
 done=[21/09] projets cloisonnés pour les DEV (DEC-023/024), phase modifiable depuis l'en-tête (DEC-026), plage d'heures supplémentaires retirée de Paramètres (DEC-025, migration retrait_plage_heures_supp), encadré RH renommé « Heures supplémentaires et récupération »
 done=[21/09] vérifications : work-time 18/18 après retrait de la plage supplémentaire, hr-calendar 18/18, accès+phase 20/20 (HTTP), horaires+tableau de bord 8/8 (HTTP), écrans dans Chrome 13/13 chefferie + 9/9 développeur
 done=[21/09] horaires écrits en prod : Sylvie 9-12/13-17, Luc et Gabrielle 9-12/13h30-17h30 ; Denis l'était déjà, Jayan reste sur le défaut de l'agence
+done=[23/09] onglet Comptes (/equipe) ouvert au PM avec les mêmes droits que DIR (DEC-031) ; 19/19 API + 8/8 écran
 wip=aucun
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — le socle Drive est committé, il manque le client ID et le secret OAuth d'un projet Google Cloud à créer par l'utilisateur

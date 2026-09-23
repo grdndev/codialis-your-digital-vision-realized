@@ -22,7 +22,7 @@ export default async function EquipePage({
     error?: string;
   }>;
 }) {
-  const me = await requireRole("DIR");
+  const me = await requireRole("DIR", "PM");
   const sp = await searchParams;
   const { users, clients, balances } = await apiGet<AccountsScreen>("/api/admin/accounts");
   const editing = sp.edit ? users.find((u) => u.id === sp.edit) : undefined;
