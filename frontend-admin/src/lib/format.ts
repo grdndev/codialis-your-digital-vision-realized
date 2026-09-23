@@ -250,3 +250,14 @@ export function projectLabel(clientName: string | null | undefined, projectName:
   if (!client || client.toLowerCase() === project.toLowerCase()) return project;
   return `${client} — ${project}`;
 }
+
+// Un compte supprimé laisse derrière lui ce qu'il a écrit, sans auteur : la
+// colonne passe à NULL plutôt que de rendre le compte indestructible. Les
+// écrans doivent donc toujours savoir afficher un commentaire orphelin.
+export function authorName(author: { name: string } | null | undefined): string {
+  return author?.name ?? "Compte supprimé";
+}
+
+export function authorInitials(author: { initials: string } | null | undefined): string {
+  return author?.initials ?? "—";
+}

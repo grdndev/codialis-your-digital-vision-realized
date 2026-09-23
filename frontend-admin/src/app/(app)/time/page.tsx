@@ -2,7 +2,7 @@ import { requireUser } from "@/lib/auth";
 import { ScreenTabs } from "../finance/screen-tabs";
 import { apiGet } from "@/lib/api";
 import type { TimeScreen } from "./types";
-import { fmtHours, pctOf, projectLabel } from "@/lib/format";
+import { fmtHours, pctOf, projectLabel, authorName } from "@/lib/format";
 import { addTimeEntryAction, deleteTimeEntryAction, updateTimeEntryAction } from "./actions";
 
 function dateKey(d: Date) {
@@ -34,7 +34,7 @@ export default async function TimePage() {
   const totalHours = weekEntries.reduce((s, e) => s + e.hours, 0);
   const billableHours = weekEntries.filter((e) => e.billable).reduce((s, e) => s + e.hours, 0);
   const byPerson = new Map<string, number>();
-  for (const e of weekEntries) byPerson.set(e.user.name, (byPerson.get(e.user.name) ?? 0) + e.hours);
+  for (const e of weekEntries) byPerson.set(authorName(e.user), (byPerson.get(authorName(e.user)) ?? 0) + e.hours);
 
   const alerts = activeProjects
     .map((p) => ({ p, pct: pctOf(p.hoursSpent, p.hoursSold) }))
@@ -53,7 +53,7 @@ export default async function TimePage() {
   const teamGroups = new Map<string, { who: string; label: string; project: string; bill: boolean; source: string; d: Record<string, number> }>();
   for (const e of weekEntries) {
     const key = `${e.userId}::${e.label}::${e.projectId}`;
-    if (!teamGroups.has(key)) teamGroups.set(key, { who: e.user.name, label: e.label, project: e.project?.client.name ?? "—", bill: e.billable, source: e.source, d: {} });
+    if (!teamGroups.has(key)) teamGroups.set(key, { who: authorName(e.user), label: e.label, project: e.project?.client.name ?? "—", bill: e.billable, source: e.source, d: {} });
     teamGroups.get(key)!.d[dateKey(e.date)] = (teamGroups.get(key)!.d[dateKey(e.date)] ?? 0) + e.hours;
   }
 

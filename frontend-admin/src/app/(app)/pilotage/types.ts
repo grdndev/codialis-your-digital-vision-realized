@@ -29,13 +29,13 @@ export type TeamProfitRow = {
 export type DecisionRow = {
   id: string;
   date: Date;
-  authorId: string;
+  authorId: string | null;
   title: string;
   detail: string;
   impact: string;
   tag: string;
   createdAt: Date;
-  author: UserRef;
+  author: UserRef | null;
 };
 
 // Factures sans relation projet : l'écran n'en somme que les montants.

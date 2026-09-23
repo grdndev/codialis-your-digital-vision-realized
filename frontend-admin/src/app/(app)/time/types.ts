@@ -2,7 +2,7 @@ import type { ProjectWithClient, TaskRow, TicketRow, UserRef } from "@/lib/dto";
 
 export type TimeEntryRow = {
   id: string;
-  userId: string;
+  userId: string | null;
   projectId: string | null;
   taskId: string | null;
   ticketId: string | null;
@@ -11,7 +11,7 @@ export type TimeEntryRow = {
   hours: number;
   billable: boolean;
   source: string;
-  user: UserRef;
+  user: UserRef | null;
   project: ProjectWithClient | null;
 };
 

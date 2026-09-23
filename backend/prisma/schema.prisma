@@ -47,6 +47,16 @@ enum DevNature {
   DESIGN
 }
 
+// Supprimer un compte ne doit RIEN détruire de ce que la personne a produit.
+// Tout ce qu'elle a écrit (commentaires de tâche et de ticket, notes de
+// prospection, messages, décisions, catégories) la survit sans auteur, ses
+// tâches et ses tickets se désassignent, ses saisies de temps restent
+// imputées au projet. Ces relations sont donc FACULTATIVES : MySQL passe la
+// colonne à NULL au lieu de refuser la suppression (un `authorId` obligatoire
+// rendait tout compte ayant écrit une seule ligne indestructible).
+// Seule exception : TeamProfitSnapshot, qui mesure la rentabilité DE la
+// personne et ne veut plus rien dire sans elle — il part en cascade.
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -237,8 +247,8 @@ model TaskComment {
   id        String   @id @default(cuid())
   taskId    String
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id])
   body      String   @db.Text
   createdAt DateTime @default(now())
 }
@@ -302,8 +312,8 @@ model TicketComment {
   id        String   @id @default(cuid())
   ticketId  String
   ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id])
   body      String   @db.Text
   createdAt DateTime @default(now())
 }
@@ -385,8 +395,8 @@ model DealNote {
   id        String   @id @default(cuid())
   dealId    String
   deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id])
   body      String   @db.Text
   createdAt DateTime @default(now())
 }
@@ -424,8 +434,8 @@ model Message {
   id             String        @id @default(cuid())
   threadId       String
   thread         MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  authorId       String
-  author         User          @relation(fields: [authorId], references: [id])
+  authorId       String?
+  author         User?         @relation(fields: [authorId], references: [id])
   body           String        @db.Text
   citedTicketRef String?
   citedLabel     String?
@@ -560,8 +570,8 @@ model CustomCategory {
   visibility CategoryVisibility
   format     CategoryFormat
   columns    String             @db.Text
-  authorId   String
-  author     User               @relation(fields: [authorId], references: [id])
+  authorId   String?
+  author     User?              @relation(fields: [authorId], references: [id])
   createdAt  DateTime           @default(now())
 
   rows CustomCategoryRow[]
@@ -694,8 +704,8 @@ model CompanySetting {
 model Decision {
   id        String   @id @default(cuid())
   date      DateTime
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id])
   title     String
   detail    String   @db.Text
   impact    String
@@ -705,8 +715,8 @@ model Decision {
 
 model TimeEntry {
   id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
   projectId String?
   project   Project? @relation(fields: [projectId], references: [id])
   taskId    String?
@@ -931,7 +941,7 @@ model ActionItem {
 model TeamProfitSnapshot {
   id              String @id @default(cuid())
   userId          String
-  user            User   @relation(fields: [userId], references: [id])
+  user            User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   period          String
   billableHours   Float
   internalHours   Float
@@ -988,8 +998,8 @@ model Rdv {
   project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   whenAt     DateTime
   whereLabel String
-  hostId     String
-  host       User     @relation(fields: [hostId], references: [id])
+  hostId     String?
+  host       User?    @relation(fields: [hostId], references: [id])
   cadence    String
   agenda     String   @db.Text
   isPast     Boolean  @default(false)

@@ -28,10 +28,10 @@ export type TicketCriterionRow = {
 export type TicketCommentRow = {
   id: string;
   ticketId: string;
-  authorId: string;
+  authorId: string | null;
   body: string;
   createdAt: Date;
-  author: UserRef;
+  author: UserRef | null;
 };
 
 export type TicketAttachmentRow = {

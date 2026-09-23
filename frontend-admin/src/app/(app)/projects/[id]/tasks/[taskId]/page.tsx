@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
-import { fmtHours, fmtDate, STATUS_BADGE_CLASS, STATUS_LABEL, projectLabel } from "@/lib/format";
+import { fmtHours, fmtDate, STATUS_BADGE_CLASS, STATUS_LABEL, projectLabel, authorName, authorInitials } from "@/lib/format";
 import {
   setTaskStatusAction,
   toggleTaskCriterionAction,
@@ -138,11 +138,11 @@ export default async function TaskDetailPage({
               {task.comments.map((c) => (
                 <div key={c.id} className="flex gap-3">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-mint/15 text-xs font-medium text-mint">
-                    {c.author.initials}
+                    {authorInitials(c.author)}
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs text-muted">
-                      <span className="font-medium text-text">{c.author.name}</span> · {fmtDate(c.createdAt)}
+                      <span className="font-medium text-text">{authorName(c.author)}</span> · {fmtDate(c.createdAt)}
                     </p>
                     <p className="mt-0.5 text-sm text-text">{c.body}</p>
                   </div>

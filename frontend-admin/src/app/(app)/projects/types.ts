@@ -92,10 +92,10 @@ export type TaskCriterionRow = {
 export type TaskCommentRow = {
   id: string;
   taskId: string;
-  authorId: string;
+  authorId: string | null;
   body: string;
   createdAt: Date;
-  author: UserRef;
+  author: UserRef | null;
 };
 
 export type TaskAttachmentRow = {

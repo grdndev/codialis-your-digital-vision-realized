@@ -4,10 +4,10 @@ import type { DealStage } from "@/lib/types";
 export type DealNoteRow = {
   id: string;
   dealId: string;
-  authorId: string;
+  authorId: string | null;
   body: string;
   createdAt: Date;
-  author: UserRef;
+  author: UserRef | null;
 };
 
 export type DealRow = {

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
 import type { PilotageScreen } from "./types";
-import { fmtHours, fmtEUR, fmtDate, currentMonthBounds, monthProgressFraction } from "@/lib/format";
+import { fmtHours, fmtEUR, fmtDate, currentMonthBounds, monthProgressFraction, authorName } from "@/lib/format";
 import { addDecisionAction, updateMonthlyChargesAction, updateMonthlyRevenueTargetAction } from "./actions";
 
 const CONCENTRATION_ALERT_PCT = 25;
@@ -242,7 +242,7 @@ export default async function PilotagePage() {
             <div key={dec.id} className="py-2.5 text-sm">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-text">{dec.title}</span>
-                <span className="text-xs text-muted">{fmtDate(dec.date)} · {dec.author.name}</span>
+                <span className="text-xs text-muted">{fmtDate(dec.date)} · {authorName(dec.author)}</span>
               </div>
               <p className="mt-0.5 text-muted">{dec.detail}</p>
               <p className="mt-0.5 text-xs text-mint">{dec.impact} · <span className="text-muted">{dec.tag}</span></p>

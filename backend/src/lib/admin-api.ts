@@ -45,8 +45,12 @@ function prismaError(err: unknown): { message: string; status: number } | null {
   switch (err.code) {
     case "P2002":
       return { message: "Cette valeur est déjà utilisée", status: 400 };
+    // P2003 couvre les DEUX sens de la contrainte : on pointe quelque chose qui
+    // n'existe pas, ou on supprime quelque chose qui est encore pointé. Le
+    // message ne disait que le premier, et annonçait donc « n'existe pas » à
+    // propos d'un élément bien présent — incompréhensible à l'écran.
     case "P2003":
-      return { message: "Référence introuvable : l'élément lié n'existe pas", status: 400 };
+      return { message: "Élément lié introuvable, ou encore rattaché à d'autres données", status: 400 };
     case "P2025":
       return { message: "Introuvable", status: 404 };
     default:

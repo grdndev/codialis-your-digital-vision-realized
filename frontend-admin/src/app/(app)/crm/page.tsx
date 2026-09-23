@@ -3,7 +3,7 @@ import { apiGet } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import type { ClientRef } from "@/lib/dto";
 import type { CrmScreen, DealRow } from "./types";
-import { fmtEUR, fmtDate, DEAL_STAGE_LABEL } from "@/lib/format";
+import { fmtEUR, fmtDate, DEAL_STAGE_LABEL, authorName } from "@/lib/format";
 import { PipelineBoard, type BoardColumn } from "./pipeline-board";
 import { updateDealAction, setLossReasonAction, addDealNoteAction, createDealAction, updateQuarterlyTargetAction, importDealsCsvAction, convertDealToProjectAction } from "./actions";
 import type { DealStage } from "@/lib/types";
@@ -233,7 +233,7 @@ function DealDetail({ deal: d, clients }: { deal: DealRow; clients: ClientRef[] 
             <div className="mt-2 flex flex-col gap-2">
               {d.notes.map((n) => (
                 <div key={n.id} className="rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm">
-                  <p className="text-xs text-muted">{n.author.name} · {fmtDate(n.createdAt)}</p>
+                  <p className="text-xs text-muted">{authorName(n.author)} · {fmtDate(n.createdAt)}</p>
                   <p className="mt-0.5 text-text">{n.body}</p>
                 </div>
               ))}

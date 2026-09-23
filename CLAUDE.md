@@ -93,6 +93,8 @@ DEC-025 [2026-09-21] ACTIVE les heures supplémentaires se DÉCLARENT en RH (Hou
 DEC-026 [2026-09-21] ACTIVE la phase d'un projet se change depuis l'EN-TÊTE du projet, pour PM et DIR why=elle ne vivait que dans « Modifier le projet », replié, dans l'onglet Fiche : la chefferie ne la trouvait pas, alors que l'API l'autorisait déjà alt=le formulaire complet seul
 DEC-017 [2026-09-18] ACTIVE les 162 remontées client sont devenues des tickets ordinaires TERMINE/CLOS, marqueur `clientReported` retiré why=arbitrage Denis du 18/09 ; la file de triage est vidée alt=ne fermer que le triage en gardant le marqueur (préservait l'écran Bugs du portail client) — sauvegarde ~/backups/remontees-client/avant-20260918-060340.json, restaurable par `npx tsx prisma/close-client-reports.ts --restore=`
 DEC-031 [2026-09-23] ACTIVE la chefferie (PM) gère les COMPTES au même titre que la direction : même onglet, mêmes droits, y compris changer un rôle why=demande du 23/09 ; la gestion des comptes était le dernier écran réservé à DIR alors que le PM recrute et fait entrer les gens alt=lecture seule pour le PM, création sans changement de rôle
+DEC-032 [2026-09-23] ACTIVE supprimer un compte ne DÉTRUIT rien de ce qu'il a produit : commentaires, notes, messages, décisions, catégories et saisies de temps lui survivent sans auteur (colonne à NULL), tâches et tickets se désassignent why=arbitrage Denis du 23/09 ; un `authorId` obligatoire rendait indestructible tout compte ayant écrit une seule ligne, et l'échec s'affichait en « Référence introuvable » alt=cascade (perte de l'historique), compte désactivé au lieu de supprimé, anonymisation vers un compte « Compte supprimé »
+DEC-033 [2026-09-23] ACTIVE seule exception à DEC-032 : TeamProfitSnapshot part en CASCADE avec le compte why=c'est la rentabilité DE la personne, période par période ; une ligne sans personne n'est pas un historique, c'est du bruit dans l'écran Pilotage alt=le garder sans utilisateur comme le reste
 
 ## TRAP
 TRAP-001 le serveur `next dev` garde l'ANCIEN client Prisma après une migration → le redémarrer, sinon « Cannot read properties of undefined » sur le nouveau modèle
@@ -116,6 +118,8 @@ TRAP-018 le cloisonnement des projets (DEC-023) repose sur l'ASSIGNATION d'une t
 TRAP-019 le formulaire d'horaires envoie 0 pour dimanche alors que parseWeekdays attend l'ISO 1..7 → dimanche coché est silencieusement ignoré (samedi, 6, fonctionne)
 TRAP-015 un cloisonnement de lecture se teste avec un compte qui n'a RIEN (ni affectation, ni tâche, ni ticket) → le jeu d'essai donnait du travail aux deux développeurs sur les deux projets, ce qui masquait le défaut
 TRAP-023 la création d'un compte ANNULE le compte si l'e-mail d'invitation ne part pas (route accounts) → sans BREVO_API_KEY, toute vérification locale de la création échoue ; pointer BREVO_API_URL sur un faux serveur local
+TRAP-024 les types de `frontend-admin/src/app/(app)/*/types.ts` sont écrits À LA MAIN : rendre une colonne nullable côté Prisma ne produit AUCUNE erreur TypeScript, le plantage n'arrive qu'à l'affichage → après un changement de nullabilité, chercher les déréférencements à la main (`grep -rn "author\."`)
+TRAP-025 `npx prisma format` réaligne des modèles sans rapport avec la modification → relire `git diff` et remettre ce qui n'était pas demandé (a touché WorkSchedule)
 
 ## STATE
 branch=main
@@ -129,6 +133,7 @@ done=[21/09] projets cloisonnés pour les DEV (DEC-023/024), phase modifiable de
 done=[21/09] vérifications : work-time 18/18 après retrait de la plage supplémentaire, hr-calendar 18/18, accès+phase 20/20 (HTTP), horaires+tableau de bord 8/8 (HTTP), écrans dans Chrome 13/13 chefferie + 9/9 développeur
 done=[21/09] horaires écrits en prod : Sylvie 9-12/13-17, Luc et Gabrielle 9-12/13h30-17h30 ; Denis l'était déjà, Jayan reste sur le défaut de l'agence
 done=[23/09] onglet Comptes (/equipe) ouvert au PM avec les mêmes droits que DIR (DEC-031) ; 19/19 API + 8/8 écran
+done=[23/09] suppression d'un compte débloquée (DEC-032/033, migration auteur_facultatif_sur_suppression_de_compte) ; authorName/authorInitials dans format.ts ; message P2003 corrigé ; 24/24 bout en bout + calculs 18/18, 18/18, 18/18
 wip=aucun
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — le socle Drive est committé, il manque le client ID et le secret OAuth d'un projet Google Cloud à créer par l'utilisateur
@@ -141,4 +146,5 @@ manual=le sitemap EN LIGNE ne contient que 3 URLs contre 12 dans le dépôt — 
 manual=le portail client n'a plus de liste de bugs signalés (DEC-017) — à revoir si un compte client est créé
 manual=l'écran Temps (/time, ouvert aux DEV) liste TOUS les projets non clôturés et le temps de toute l'équipe — hors portée de DEC-024, à trancher si le cloisonnement doit y descendre
 manual=DEC-023 annule le cloisonnement ouvert par DEC-014 — prévenir Jayan et Gabrielle, et CC-338 redevient d'actualité sur une autre base (assignation, pas affectation)
+manual=la suppression d'un compte désassigne ses tâches et ses tickets SANS prévenir — Sylvie porte 67 tâches et 15 tickets créés, à vérifier avant de la supprimer
 manual=le README n'a pas de partie « Fonctionnalités » au format BxFy ; la référence fonctionnelle reste la liste de tickets en production
