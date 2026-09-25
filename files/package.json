@@ -1,0 +1,9 @@
+{
+  "name": "codialis-files",
+  "private": true,
+  "type": "module",
+  "description": "Service de stockage de fichiers de Codialis. Aucune dependance : Node suffit.",
+  "scripts": {
+    "start": "node src/serveur.js"
+  }
+}

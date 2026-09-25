@@ -1,0 +1,7 @@
+# Le jeton partagé avec codialis.backend reste hors du dépôt, comme backend/.env.
+.env
+
+# Fichiers déposés : ils vivent dans un volume, pas dans le dépôt. Le dossier
+# lui-même doit exister pour servir de point de montage en local.
+public/*
+!public/.gitkeep

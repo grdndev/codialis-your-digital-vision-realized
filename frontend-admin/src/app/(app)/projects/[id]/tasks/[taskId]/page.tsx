@@ -12,7 +12,10 @@ import {
   deleteTaskCriterionAction,
   updateTaskAction,
   updateTaskCriterionAction,
+  addTaskAttachmentAction,
+  removeTaskAttachmentAction,
 } from "../../../actions";
+import { Attachments } from "../../../../attachments";
 import type { TaskDetailResponse } from "../../../types";
 import type { TaskStatus } from "@/lib/types";
 
@@ -38,11 +41,11 @@ export default async function TaskDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string; taskId: string }>;
-  searchParams: Promise<{ info?: string }>;
+  searchParams: Promise<{ info?: string; error?: string }>;
 }) {
   await requireUser();
   const { id: projectId, taskId } = await params;
-  const { info } = await searchParams;
+  const { info, error } = await searchParams;
 
   // Le backend vérifie que la tâche appartient bien à ce projet, et que le
   // rôle y a accès : dans les deux cas d'échec il renvoie `null`.
@@ -62,6 +65,12 @@ export default async function TaskDetailPage({
       {info ? (
         <p className="rounded-lg border border-amber/30 bg-amber/5 px-4 py-2.5 text-sm text-text">
           {info}
+        </p>
+      ) : null}
+
+      {error ? (
+        <p className="rounded-lg border border-red/30 bg-red/5 px-4 py-2.5 text-sm text-text">
+          {error}
         </p>
       ) : null}
 
@@ -164,6 +173,12 @@ export default async function TaskDetailPage({
               </button>
             </form>
           </div>
+
+          <Attachments
+            pieces={task.attachments}
+            onAdd={addTaskAttachmentAction.bind(null, taskId, projectId)}
+            onRemove={removeTaskAttachmentAction.bind(null, taskId, projectId)}
+          />
         </div>
 
         <div className="flex flex-col gap-4">

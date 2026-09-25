@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { reprendreFichiersJoints } from "@/lib/files";
 import { prisma } from "@/lib/prisma";
 import { visibleProjectIds } from "@/lib/project-access";
 import { closeSessions, openSession, refreshProjectSpent } from "@/lib/work-sessions";
@@ -400,7 +401,12 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
     }
 
     case "delete-task": {
+      const pieces = await prisma.taskAttachment.findMany({
+        where: { taskId: body.taskId },
+        select: { fileId: true },
+      });
       await prisma.task.delete({ where: { id: body.taskId } });
+      await reprendreFichiersJoints(pieces.map((p) => p.fileId));
       await recomputeProjectProgress(body.projectId);
       await prisma.$transaction((tx) => refreshProjectSpent(tx, body.projectId));
       return;

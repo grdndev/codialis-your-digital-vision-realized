@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { parseNumber } from "@/lib/format";
 import { redirect } from "next/navigation";
-import { apiPost } from "@/lib/api";
+import { ApiError, apiDelete, apiPost, apiUpload } from "@/lib/api";
 import type { DevNature, Severity, TaskStatus, TicketType } from "@/lib/types";
 
 const TICKETS = "/api/admin/tickets";
@@ -177,5 +177,36 @@ export async function addTicketCommentAction(formData: FormData) {
   if (!ticketId || !body) return;
 
   await apiPost(TICKETS, { action: "add-comment", ticketId, body });
+  revalidatePath(`/tickets/${ref}`);
+}
+
+// Pièces jointes. Le fichier arrive du navigateur dans le FormData de l'action,
+// et repart au backend en binaire : frontend-admin ne fait que relayer, il ne
+// connaît ni le port privé du stockage ni son jeton.
+export async function addTicketAttachmentAction(ticketId: string, ref: string, formData: FormData) {
+  const fichier = formData.get("fichier");
+  if (!(fichier instanceof File) || fichier.size === 0) return;
+
+  const adresse =
+    `/api/admin/attachments?kind=ticket&id=${encodeURIComponent(ticketId)}` +
+    `&filename=${encodeURIComponent(fichier.name)}`;
+
+  try {
+    await apiUpload(adresse, await fichier.arrayBuffer());
+  } catch (err) {
+    if (err instanceof ApiError) redirect(`/tickets/${ref}?error=${encodeURIComponent(err.message)}`);
+    throw err;
+  }
+
+  revalidatePath(`/tickets/${ref}`);
+}
+
+export async function removeTicketAttachmentAction(ref: string, attachmentId: string) {
+  try {
+    await apiDelete(`/api/admin/attachments?attachmentId=${encodeURIComponent(attachmentId)}`);
+  } catch (err) {
+    if (err instanceof ApiError) redirect(`/tickets/${ref}?error=${encodeURIComponent(err.message)}`);
+    throw err;
+  }
   revalidatePath(`/tickets/${ref}`);
 }

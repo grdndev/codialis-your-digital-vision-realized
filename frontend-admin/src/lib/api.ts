@@ -136,3 +136,33 @@ export async function apiPublicPost<T = Record<string, unknown>>(
   }
   return { ok: true, data: parsed as T };
 }
+
+// Envoi d'un FICHIER au backend : le corps n'est pas du JSON, c'est le contenu
+// brut, et la destination passe par l'adresse. Même relais de session que le
+// reste — le navigateur ne parle jamais au backend ni au stockage en écriture.
+export async function apiUpload<T>(path: string, contenu: ArrayBuffer): Promise<T> {
+  const token = await sessionToken();
+  const res = await fetch(backendUrl(path), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/octet-stream",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: contenu,
+    cache: "no-store",
+  });
+  return handle<T>(res, "/tickets");
+}
+
+// Suppression d'une pièce jointe : la seule mutation du back-office qui n'est
+// pas un POST, parce que la route de fichiers distingue l'envoi du retrait par
+// la méthode plutôt que par une action dans un corps JSON.
+export async function apiDelete<T>(path: string): Promise<T> {
+  const token = await sessionToken();
+  const res = await fetch(backendUrl(path), {
+    method: "DELETE",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    cache: "no-store",
+  });
+  return handle<T>(res, "/tickets");
+}

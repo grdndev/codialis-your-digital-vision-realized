@@ -41,9 +41,15 @@ services:
       NODE_ENV: production
       # Origines autorisées sur les routes publiques du site vitrine.
       CORS_ORIGINS: http://localhost:3001
+      # Stockage de fichiers : port PRIVÉ, et le même jeton que le service.
+      FILES_INTERNAL_URL: http://files:3004
+      FILES_PUBLIC_URL: http://localhost:3003
+      FILES_TOKEN: jeton-local-non-secret
     depends_on:
       db:
         condition: service_healthy
+      files:
+        condition: service_started
     expose:
       - "3001"
     # La base locale part toujours vide : on applique le schéma avant de servir,
@@ -94,3 +100,22 @@ services:
         conf/httpd.conf &&
         echo 'Include conf/extra/zz-proxy.conf' >> conf/httpd.conf &&
         httpd-foreground
+
+  files:
+    build:
+      context: ./files
+    container_name: codialis-files-local
+    environment:
+      # Jeton de développement : la pile locale n'est pas exposée, et un secret
+      # en clair ici évite un fichier .env de plus à créer avant de démarrer.
+      FILES_TOKEN: jeton-local-non-secret
+      FILES_PUBLIC_URL: http://localhost:3003
+      NODE_ENV: production
+    ports:
+      # Seul le port public est publié : le port privé (3004) reste joignable
+      # uniquement depuis le réseau de la pile, comme en production.
+      - "3003:3003"
+    volumes:
+      # Montage direct plutôt qu'un volume nommé : en local, on veut voir et
+      # poser les fichiers depuis l'hôte.
+      - ./files/public:/app/public

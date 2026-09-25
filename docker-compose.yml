@@ -42,8 +42,12 @@ services:
     depends_on:
       codialis.db:
         condition: service_healthy
+      codialis.files:
+        condition: service_started
     # Toute la configuration (DATABASE_URL, AUTH_SECRET, CORS_ORIGINS,
-    # GOOGLE_API_KEY) vient de backend/.env, hors du dépôt.
+    # GOOGLE_API_KEY) vient de backend/.env, hors du dépôt. S'y ajoutent
+    # FILES_TOKEN — la MÊME valeur que dans files/.env — et, si l'on veut
+    # déroger aux défauts, FILES_INTERNAL_URL et FILES_PUBLIC_URL.
     env_file:
       - backend/.env
     networks:
@@ -79,8 +83,38 @@ services:
       - "traefik.http.routers.codialis_admin.tls.certresolver=myresolver"
       - "traefik.http.services.codialis_admin.loadbalancer.server.port=3002"
 
+  # Stockage de fichiers. Deux ports : 3003 en lecture publique (le seul déclaré
+  # à Traefik) et 3004 en écriture, joint uniquement par codialis.backend.
+  codialis.files:
+    build:
+      context: ./files
+    container_name: codialis-files
+    restart: unless-stopped
+    # FILES_TOKEN, la même valeur que dans backend/.env. Hors du dépôt : c'est
+    # la seule chose qui sépare les routes d'écriture des autres webapps de
+    # l'agence, qui partagent toutes le réseau `proxy`.
+    env_file:
+      - files/.env
+    volumes:
+      - codialis_files:/app/public
+    networks:
+      proxy:
+        aliases:
+          # Alias plutôt que le nom du service : un nom contenant un point est
+          # résolu de façon capricieuse (même raison que `api` et `db`).
+          - files
+    labels:
+      # SEUL le port public est déclaré. Le port privé (3004) n'a aucun routeur,
+      # il reste donc injoignable depuis Internet.
+      - "traefik.enable=true"
+      - "traefik.http.routers.codialis_files.rule=Host(`files.codialis.com`)"
+      - "traefik.http.routers.codialis_files.entrypoints=websecure"
+      - "traefik.http.routers.codialis_files.tls.certresolver=myresolver"
+      - "traefik.http.services.codialis_files.loadbalancer.server.port=3003"
+
 networks:
   proxy:
     external: true
 volumes:
   codialis_mysqldata:
+  codialis_files:

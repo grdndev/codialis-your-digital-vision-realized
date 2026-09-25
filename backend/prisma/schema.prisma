@@ -258,6 +258,11 @@ model TaskAttachment {
   taskId    String
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   filename  String
+  // Identifiant dans codialis.files, qui est AUSSI le nom du fichier sur
+  // disque. Distinct de `driveFileId` : les deux stockages cohabitent le
+  // temps que le service maison fasse ses preuves (DEC-027). NULL sur une
+  // pièce jointe qui n'est qu'un libellé, sans fichier à servir.
+  fileId    String?
   meta      String   @default("")
   createdAt DateTime @default(now())
 }
@@ -328,6 +333,7 @@ model TicketAttachment {
   // Le fichier lui-même vit dans Google Drive, pas ici : la base n'en garde que
   // de quoi le retrouver et l'afficher. `driveFileId` est NULL sur les lignes
   // d'avant la reprise, qui n'avaient qu'un nom et aucun contenu.
+  fileId      String?
   driveFileId String?
   mimeType    String  @default("")
   sizeBytes   Int     @default(0)

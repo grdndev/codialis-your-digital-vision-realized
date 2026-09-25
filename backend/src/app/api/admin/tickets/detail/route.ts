@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { adminRoute, badRequest } from "@/lib/admin-api";
+import { avecUrlPublique } from "@/lib/files";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -49,5 +50,10 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
     }),
   ]);
 
-  return { ticket, epics, team, projects };
+  return {
+    ticket: { ...ticket, attachments: ticket.attachments.map(avecUrlPublique) },
+    epics,
+    team,
+    projects,
+  };
 });

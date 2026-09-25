@@ -102,6 +102,9 @@ export type TaskAttachmentRow = {
   id: string;
   taskId: string;
   filename: string;
+  // `null` quand la pièce jointe n'est qu'un libellé, sans fichier à servir.
+  fileId: string | null;
+  url: string | null;
   meta: string;
   createdAt: Date;
 };

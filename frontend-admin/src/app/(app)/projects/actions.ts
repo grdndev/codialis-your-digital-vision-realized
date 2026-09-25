@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { parseNumber } from "@/lib/format";
 import { redirect } from "next/navigation";
-import { ApiError, apiPost } from "@/lib/api";
+import { ApiError, apiDelete, apiPost, apiUpload } from "@/lib/api";
 import type { TaskStatus } from "@/lib/types";
 
 const PROJECTS = "/api/admin/projects";
@@ -436,4 +436,44 @@ export async function updateTaskAction(formData: FormData): Promise<void> {
   if (notice) {
     redirect(`/projects/${projectId}/tasks/${taskId}?info=${encodeURIComponent(notice)}`);
   }
+}
+
+// Pièces jointes d'une tâche — même relais que pour un ticket : le fichier
+// traverse frontend-admin en binaire, seul le backend parle au stockage.
+export async function addTaskAttachmentAction(
+  taskId: string,
+  projectId: string,
+  formData: FormData,
+) {
+  const fichier = formData.get("fichier");
+  if (!(fichier instanceof File) || fichier.size === 0) return;
+
+  const retour = `/projects/${projectId}/tasks/${taskId}`;
+  const adresse =
+    `/api/admin/attachments?kind=task&id=${encodeURIComponent(taskId)}` +
+    `&filename=${encodeURIComponent(fichier.name)}`;
+
+  try {
+    await apiUpload(adresse, await fichier.arrayBuffer());
+  } catch (err) {
+    if (err instanceof ApiError) redirect(`${retour}?error=${encodeURIComponent(err.message)}`);
+    throw err;
+  }
+
+  revalidatePath(retour);
+}
+
+export async function removeTaskAttachmentAction(
+  taskId: string,
+  projectId: string,
+  attachmentId: string,
+) {
+  const retour = `/projects/${projectId}/tasks/${taskId}`;
+  try {
+    await apiDelete(`/api/admin/attachments?attachmentId=${encodeURIComponent(attachmentId)}`);
+  } catch (err) {
+    if (err instanceof ApiError) redirect(`${retour}?error=${encodeURIComponent(err.message)}`);
+    throw err;
+  }
+  revalidatePath(retour);
 }

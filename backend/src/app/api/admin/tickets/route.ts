@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { reprendreFichiersJoints } from "@/lib/files";
 import { prisma } from "@/lib/prisma";
 import type { Prisma, Role, Severity, TaskStatus, TicketType } from "@prisma/client";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
@@ -428,7 +429,14 @@ export const POST = adminRoute(
           where: { ticketId: body.ticketId },
           data: { ticketId: null },
         });
+        const pieces = await prisma.ticketAttachment.findMany({
+          where: { ticketId: body.ticketId },
+          select: { fileId: true },
+        });
         await prisma.ticket.delete({ where: { id: body.ticketId } });
+        // Après la base : la cascade a emporté les lignes, à nous de reprendre
+        // les fichiers qu'elles désignaient.
+        await reprendreFichiersJoints(pieces.map((p) => p.fileId));
         return { ok: true, ref: ticket.ref };
       }
 

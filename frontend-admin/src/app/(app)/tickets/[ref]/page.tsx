@@ -12,7 +12,10 @@ import {
   deleteTicketCriterionAction,
   addTicketCommentAction,
   deleteTicketAction,
+  addTicketAttachmentAction,
+  removeTicketAttachmentAction,
 } from "../actions";
+import { Attachments } from "../../attachments";
 import type { TicketDetailResponse } from "../types";
 import type { TaskStatus } from "@/lib/types";
 
@@ -36,14 +39,14 @@ export default async function TicketDetailPage({
   searchParams,
 }: {
   params: Promise<{ ref: string }>;
-  searchParams: Promise<{ info?: string }>;
+  searchParams: Promise<{ info?: string; error?: string }>;
 }) {
   const user = await requireUser();
   // Un développeur va jusqu'à « En revue » : la clôture appartient à la
   // chefferie de projet et à la direction.
   const canClose = user.role !== "DEV";
   const { ref } = await params;
-  const { info } = await searchParams;
+  const { info, error } = await searchParams;
 
   const { ticket, epics, team, projects } = await apiGet<TicketDetailResponse>(
     `/api/admin/tickets/detail?ref=${encodeURIComponent(ref)}`,
@@ -63,6 +66,12 @@ export default async function TicketDetailPage({
       {info ? (
         <p className="rounded-lg border border-amber/30 bg-amber/5 px-4 py-2.5 text-sm text-text">
           {info}
+        </p>
+      ) : null}
+
+      {error ? (
+        <p className="rounded-lg border border-red/30 bg-red/5 px-4 py-2.5 text-sm text-text">
+          {error}
         </p>
       ) : null}
 
@@ -198,19 +207,11 @@ export default async function TicketDetailPage({
             </div>
           ) : null}
 
-          {ticket.attachments.length > 0 ? (
-            <div className="rounded-xl border border-border bg-panel p-5">
-              <h2 className="text-sm font-semibold text-text">Pièces jointes</h2>
-              <div className="mt-3 flex flex-col gap-2">
-                {ticket.attachments.map((f) => (
-                  <div key={f.id} className="flex items-center justify-between rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm">
-                    <span className="text-text">{f.filename}</span>
-                    <span className="text-xs text-muted">{f.meta}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
+          <Attachments
+            pieces={ticket.attachments}
+            onAdd={addTicketAttachmentAction.bind(null, ticket.id, ref)}
+            onRemove={removeTicketAttachmentAction.bind(null, ref)}
+          />
 
           <div className="rounded-xl border border-border bg-panel p-5">
             <h2 className="text-sm font-semibold text-text">Critères d’acceptation</h2>
