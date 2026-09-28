@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { ScreenTabs } from "./screen-tabs";
 import type { FinanceScreen } from "./types";
 import { fmtHours, fmtEUR, fmtDate, pctOf, currentPeriodLabel, INVOICE_STATUS_BADGE_CLASS, INVOICE_STATUS_LABEL, projectLabel } from "@/lib/format";
-import { createInvoiceAction, markInvoicePaidAction, updateInvoiceAction, deleteInvoiceAction } from "./actions";
+import { createInvoiceAction, markInvoicePaidAction, setInvoiceStatusAction, updateInvoiceAction, deleteInvoiceAction } from "./actions";
 
 export default async function FinancePage({
   searchParams,
@@ -98,6 +98,16 @@ export default async function FinancePage({
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${INVOICE_STATUS_BADGE_CLASS[inv.status]}`}>
                     {INVOICE_STATUS_LABEL[inv.status]}
                   </span>
+                  {inv.status === "EN_ATTENTE" ? (
+                    <form action={setInvoiceStatusAction.bind(null, inv.id, "EN_RETARD")}>
+                      <button type="submit" className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:border-amber/50 hover:text-amber">Marquer en retard</button>
+                    </form>
+                  ) : null}
+                  {inv.status === "EN_RETARD" ? (
+                    <form action={setInvoiceStatusAction.bind(null, inv.id, "EN_ATTENTE")}>
+                      <button type="submit" className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:text-text">Remettre en attente</button>
+                    </form>
+                  ) : null}
                   {inv.status !== "PAYEE" ? (
                     <form action={markInvoicePaidAction.bind(null, inv.id)}>
                       <button type="submit" className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:text-text">Marquer payée</button>

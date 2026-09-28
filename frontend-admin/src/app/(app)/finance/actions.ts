@@ -29,6 +29,16 @@ export async function markInvoicePaidAction(invoiceId: string) {
   revalidatePath("/finance");
 }
 
+export async function setInvoiceStatusAction(invoiceId: string, status: "EN_ATTENTE" | "EN_RETARD") {
+  try {
+    await apiPost("/api/admin/finance", { action: "set-invoice-status", invoiceId, status });
+  } catch (err) {
+    if (err instanceof ApiError) redirect(`/finance?error=${encodeURIComponent(err.message)}`);
+    throw err;
+  }
+  revalidatePath("/finance");
+}
+
 export async function updateInvoiceAction(formData: FormData) {
   const invoiceId = String(formData.get("invoiceId") ?? "");
   const label = String(formData.get("label") ?? "").trim();

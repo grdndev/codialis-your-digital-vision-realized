@@ -46,6 +46,14 @@ const bodySchema = z.discriminatedUnion("action", [
     action: z.literal("mark-paid"),
     invoiceId: z.string().min(1),
   }),
+  // « En retard » se pose à la main : c'est la personne qui relance le client
+  // qui sait si l'échéance dépassée est un retard ou un délai convenu (CC-348).
+  // « Payée » garde son action, qui date aussi le règlement.
+  z.object({
+    action: z.literal("set-invoice-status"),
+    invoiceId: z.string().min(1),
+    status: z.enum(["EN_ATTENTE", "EN_RETARD"]),
+  }),
   // Une facture se corrige TANT QU'ELLE N'EST PAS PAYÉE. Une fois réglée, c'est
   // une pièce comptable : on la rectifie par un avoir, pas en réécrivant le
   // montant. La référence, elle, ne bouge jamais — c'est par elle que le client
@@ -101,6 +109,12 @@ export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
     if (invoice.status === "PAYEE") {
       badRequest("Une facture payée ne se modifie plus : passez par un avoir");
     }
+  }
+
+  if (body.action === "set-invoice-status") {
+    if (invoice.status === "PAYEE") badRequest("Une facture payée ne change plus de statut");
+    await prisma.invoice.update({ where: { id: body.invoiceId }, data: { status: body.status } });
+    return;
   }
 
   if (body.action === "update-invoice") {

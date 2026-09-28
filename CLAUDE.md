@@ -110,6 +110,7 @@ DEC-032 [2026-09-23] ACTIVE supprimer un compte ne DÉTRUIT rien de ce qu'il a p
 DEC-033 [2026-09-23] ACTIVE seule exception à DEC-032 : TeamProfitSnapshot part en CASCADE avec le compte why=c'est la rentabilité DE la personne, période par période ; une ligne sans personne n'est pas un historique, c'est du bruit dans l'écran Pilotage alt=le garder sans utilisateur comme le reste
 DEC-034 [2026-09-25] ACTIVE le navigateur n'écrit JAMAIS dans codialis.files : il envoie le fichier à frontend-admin, qui le relaie au backend, qui seul détient le port privé et le jeton ; la LECTURE, elle, est directe depuis files.codialis.com why=demande initiale du 22/09 ; faire transiter chaque image par deux serveurs Next à l'affichage serait payer deux fois pour rien alt=envoi direct navigateur → stockage (il faudrait exposer le jeton), lecture relayée par le backend
 DEC-035 [2026-09-25] ACTIVE les pièces jointes ont leur propre route (/api/admin/attachments), hors de la convention « une seule route POST par écran » why=le corps n'est pas du JSON mais le fichier brut ; la destination passe donc par l'adresse, et le retrait par DELETE alt=base64 dans le JSON de la route d'écran (33 % de plus, et 25 Mo deviennent 33)
+DEC-036 [2026-09-28] ACTIVE « En retard » se pose À LA MAIN sur une facture (action set-invoice-status, EN_ATTENTE ↔ EN_RETARD), jamais sur une facture payée why=CC-348 ; c'est qui relance le client qui sait si une échéance dépassée est un retard ou un délai convenu alt=passage automatique à l'échéance (non demandé)
 
 ## TRAP
 TRAP-001 le serveur `next dev` garde l'ANCIEN client Prisma après une migration → le redémarrer, sinon « Cannot read properties of undefined » sur le nouveau modèle
@@ -162,6 +163,7 @@ done=[23/09] suppression d'un compte débloquée (DEC-032/033, migration auteur_
 done=[25/09] pièces jointes de bout en bout : relais backend (lib/files.ts + /api/admin/attachments), colonne fileId (migration piece_jointe_fichier_maison), bloc partagé sur fiche ticket et fiche tâche ; 26/26 HTTP + 8/8 par les actions serveur + calculs 18/18, 18/18, 18/18
 done=[28/09] CC-352 : le bandeau de modification de masse disparaît après « Appliquer » ; 9/9 dans Chrome
 done=[28/09] CC-345 : commentaires multilignes sur fiche ticket et fiche tâche ; descriptions et commentaires gardent leurs sauts de ligne à l'affichage ; 14/14 dans Chrome
+done=[28/09] CC-348 : marquer une facture en retard / la remettre en attente (DEC-036) ; 11/11 HTTP + 9/9 dans Chrome
 wip=aucun
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — débloqué par DEC-027 (codialis.files) ; le socle Drive reste committé et inutilisé, on le retire quand le service maison aura fait ses preuves
