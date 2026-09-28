@@ -146,6 +146,7 @@ TRAP-028 Next REFUSE une action serveur sans en-tête `Origin` (protection CSRF)
 TRAP-029 supprimer un ticket ou une tâche efface ses pièces jointes EN CASCADE côté base, sans passer par la route de retrait → relever les fileId AVANT la suppression et reprendre les fichiers après, sinon le volume se remplit d'orphelins
 TRAP-030 après une action de formulaire réussie, React vide le formulaire par un `reset` : les cases se décochent SANS évènement `change` → tout compteur tenu par `onChange` doit aussi écouter `onReset` (CC-352, bandeau de masse resté affiché)
 TRAP-031 une `<textarea>` envoyée par formulaire arrive avec des retours à la ligne en `\r\n` (norme HTML) → passer par `parseMultiline` (lib/format.ts) avant d'écrire, sinon la base mélange `\r\n` et `\n` et un `split("\n")` garde des `\r`
+TRAP-032 le conteneur codialis-api NE migre PAS au démarrage (`CMD next start`) → entre `docker compose up -d --build` et `migrate deploy`, tout écran qui lit une nouvelle table plante ; lancer la migration immédiatement après le rebuild (Facturation cassée quelques minutes le 28/09)
 
 ## STATE
 branch=main
@@ -166,6 +167,7 @@ done=[28/09] CC-352 : le bandeau de modification de masse disparaît après « A
 done=[28/09] CC-345 : commentaires multilignes sur fiche ticket et fiche tâche ; descriptions et commentaires gardent leurs sauts de ligne à l'affichage ; 14/14 dans Chrome
 done=[28/09] CC-348 : marquer une facture en retard / la remettre en attente (DEC-036) ; 11/11 HTTP + 9/9 dans Chrome
 done=[28/09] CC-349 : historique de commentaires sur chaque facture (DEC-037, migration commentaires_facture) ; 25/25 HTTP (dont CC-348) + 16/16 dans Chrome + calculs 18/18, 18/18, 18/18
+done=[28/09] CC-345, CC-348, CC-349, CC-352 déployés (5400e83), migration commentaires_facture appliquée en prod ; CC-302, CC-345, CC-348, CC-349, CC-352 passés en EN_REVUE
 wip=aucun
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — débloqué par DEC-027 (codialis.files) ; le socle Drive reste committé et inutilisé, on le retire quand le service maison aura fait ses preuves
