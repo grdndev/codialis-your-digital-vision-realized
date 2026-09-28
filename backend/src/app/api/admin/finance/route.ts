@@ -13,7 +13,13 @@ export const dynamic = "force-dynamic";
 export const GET = adminRoute(["PM", "DIR"], async () => {
   const [invoices, activeProjects, projects] = await Promise.all([
     prisma.invoice.findMany({
-      include: { project: { include: { client: true } } },
+      include: {
+        project: { include: { client: true } },
+        comments: {
+          include: { author: { select: { id: true, name: true, initials: true, role: true } } },
+          orderBy: { createdAt: "asc" },
+        },
+      },
       orderBy: { issuedAt: "desc" },
     }),
     prisma.project.findMany({
@@ -66,9 +72,16 @@ const bodySchema = z.discriminatedUnion("action", [
     dueAt: z.string().datetime().nullable(),
   }),
   z.object({ action: z.literal("delete-invoice"), invoiceId: z.string().min(1) }),
+  // L'historique reste ouvert sur une facture payée : c'est souvent là qu'on
+  // note comment et quand elle a été réglée.
+  z.object({
+    action: z.literal("add-invoice-comment"),
+    invoiceId: z.string().min(1),
+    body: z.string().trim().min(1),
+  }),
 ]);
 
-export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
+export const POST = adminRoute(["PM", "DIR"], async ({ user }, request) => {
   const parsed = bodySchema.safeParse(await jsonBody(request));
   if (!parsed.success) badRequest("Requête invalide");
   const body = parsed.data;
@@ -104,6 +117,13 @@ export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
     select: { status: true },
   });
   if (!invoice) notFound("Facture introuvable");
+
+  if (body.action === "add-invoice-comment") {
+    await prisma.invoiceComment.create({
+      data: { invoiceId: body.invoiceId, authorId: user.id, body: body.body },
+    });
+    return;
+  }
 
   if (body.action === "update-invoice" || body.action === "delete-invoice") {
     if (invoice.status === "PAYEE") {

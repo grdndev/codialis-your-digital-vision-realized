@@ -1,5 +1,14 @@
-import type { ClientRef, ProjectWithClient } from "@/lib/dto";
+import type { ClientRef, ProjectWithClient, UserRef } from "@/lib/dto";
 import type { InvoiceStatus } from "@/lib/types";
+
+export type InvoiceCommentRow = {
+  id: string;
+  invoiceId: string;
+  authorId: string | null;
+  body: string;
+  createdAt: Date;
+  author: UserRef | null;
+};
 
 export type InvoiceRow = {
   id: string;
@@ -12,6 +21,7 @@ export type InvoiceRow = {
   paidAt: Date | null;
   status: InvoiceStatus;
   project: { id: string; name: string; client: ClientRef };
+  comments: InvoiceCommentRow[];
 };
 
 // `activeProjects` est filtré côté API sur soldAmount ET costAmount non nuls

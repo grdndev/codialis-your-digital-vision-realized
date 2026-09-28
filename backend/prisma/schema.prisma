@@ -103,6 +103,7 @@ model User {
   ticketComments  TicketComment[]
 
   dealNotes             DealNote[]
+  invoiceComments       InvoiceComment[]
   messages              Message[]
   threadMemberships     ThreadParticipant[]
   ownedApis             ApiCredential[]
@@ -608,6 +609,23 @@ model Invoice {
   dueAt     DateTime?
   paidAt    DateTime?
   status    InvoiceStatus
+
+  comments InvoiceComment[]
+}
+
+// Historique d'une facture : relances, promesses de paiement, échanges avec le
+// client (CC-349). L'auteur est facultatif pour la même raison que partout
+// ailleurs : un compte supprimé laisse ses commentaires derrière lui.
+model InvoiceComment {
+  id        String   @id @default(cuid())
+  invoiceId String
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id])
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([invoiceId])
 }
 
 model MaintenanceContract {

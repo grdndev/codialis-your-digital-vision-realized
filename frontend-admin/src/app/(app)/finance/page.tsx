@@ -1,9 +1,9 @@
 import { apiGet } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import { ScreenTabs } from "./screen-tabs";
-import type { FinanceScreen } from "./types";
-import { fmtHours, fmtEUR, fmtDate, pctOf, currentPeriodLabel, INVOICE_STATUS_BADGE_CLASS, INVOICE_STATUS_LABEL, projectLabel } from "@/lib/format";
-import { createInvoiceAction, markInvoicePaidAction, setInvoiceStatusAction, updateInvoiceAction, deleteInvoiceAction } from "./actions";
+import type { FinanceScreen, InvoiceRow } from "./types";
+import { fmtHours, fmtEUR, fmtDate, pctOf, currentPeriodLabel, INVOICE_STATUS_BADGE_CLASS, INVOICE_STATUS_LABEL, projectLabel, authorName, authorInitials } from "@/lib/format";
+import { addInvoiceCommentAction, createInvoiceAction, markInvoicePaidAction, setInvoiceStatusAction, updateInvoiceAction, deleteInvoiceAction } from "./actions";
 
 export default async function FinancePage({
   searchParams,
@@ -144,6 +144,7 @@ export default async function FinancePage({
                   </div>
                 </details>
               ) : null}
+              <InvoiceHistory invoice={inv} />
             </div>
           ))}
         </div>
@@ -161,6 +162,45 @@ export default async function FinancePage({
         </details>
       </div>
     </div>
+  );
+}
+
+// Historique d'une facture (CC-349) : relances, promesses de paiement,
+// échanges avec le client. Ouvert aussi sur une facture payée.
+function InvoiceHistory({ invoice }: { invoice: InvoiceRow }) {
+  return (
+    <details>
+      <summary className="cursor-pointer text-xs text-muted hover:text-text">
+        Historique ({invoice.comments.length})
+      </summary>
+      <div className="mt-2 flex flex-col gap-2.5">
+        {invoice.comments.map((c) => (
+          <div key={c.id} className="flex gap-2.5">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-mint/15 text-[10px] font-medium text-mint">
+              {authorInitials(c.author)}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-muted">
+                <span className="font-medium text-text">{authorName(c.author)}</span> · {fmtDate(c.createdAt)}
+              </p>
+              <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-text">{c.body}</p>
+            </div>
+          </div>
+        ))}
+        <form action={addInvoiceCommentAction.bind(null, invoice.id)} className="flex items-end gap-2">
+          <textarea
+            name="body"
+            required
+            rows={2}
+            placeholder="Ajouter un commentaire…"
+            className="field-sizing-content min-h-16 max-h-60 flex-1 resize-y rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm text-text"
+          />
+          <button type="submit" className="rounded-lg bg-mint px-3 py-2 text-xs font-semibold text-bg">
+            Envoyer
+          </button>
+        </form>
+      </div>
+    </details>
   );
 }
 

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { parseNumber } from "@/lib/format";
+import { parseMultiline, parseNumber } from "@/lib/format";
 import { redirect } from "next/navigation";
 import { ApiError, apiPost } from "@/lib/api";
 
@@ -36,6 +36,14 @@ export async function setInvoiceStatusAction(invoiceId: string, status: "EN_ATTE
     if (err instanceof ApiError) redirect(`/finance?error=${encodeURIComponent(err.message)}`);
     throw err;
   }
+  revalidatePath("/finance");
+}
+
+export async function addInvoiceCommentAction(invoiceId: string, formData: FormData) {
+  const body = parseMultiline(formData.get("body"));
+  if (!body) return;
+
+  await apiPost("/api/admin/finance", { action: "add-invoice-comment", invoiceId, body });
   revalidatePath("/finance");
 }
 
