@@ -224,6 +224,15 @@ export function parseNumber(value: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+// Lecture d'une zone de texte multiligne. Le navigateur envoie ses retours à la
+// ligne en « \r\n » (norme des formulaires) : on les ramène à « \n », seule
+// forme que le reste du code découpe et affiche.
+export function parseMultiline(value: unknown): string {
+  return String(value ?? "")
+    .replace(/\r\n?/g, "\n")
+    .trim();
+}
+
 // Pourcentage d'une part sur un tout. Un tout nul ou absent vaut 0 % et non
 // NaN : un projet fraîchement ouvert n'a ni heures vendues ni montant, et
 // « NaN% » s'affichait tel quel à l'écran.

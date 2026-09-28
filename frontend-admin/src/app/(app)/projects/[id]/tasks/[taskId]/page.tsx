@@ -86,7 +86,7 @@ export default async function TaskDetailPage({
                 {STATUS_LABEL[task.status]}
               </span>
             </div>
-            <p className="mt-4 text-sm text-muted">{task.description || "Aucune description."}</p>
+            <p className="mt-4 whitespace-pre-wrap break-words text-sm text-muted">{task.description || "Aucune description."}</p>
           </div>
 
           {/* Les critères ne savaient que se cocher : la liste posée à la
@@ -153,20 +153,24 @@ export default async function TaskDetailPage({
                     <p className="text-xs text-muted">
                       <span className="font-medium text-text">{authorName(c.author)}</span> · {fmtDate(c.createdAt)}
                     </p>
-                    <p className="mt-0.5 text-sm text-text">{c.body}</p>
+                    <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-text">{c.body}</p>
                   </div>
                 </div>
               ))}
               {task.comments.length === 0 ? <p className="text-sm text-muted">Aucun commentaire pour l’instant.</p> : null}
             </div>
-            <form action={addTaskCommentAction} className="mt-4 flex gap-2">
+            <form action={addTaskCommentAction} className="mt-4 flex items-end gap-2">
               <input type="hidden" name="taskId" value={taskId} />
               <input type="hidden" name="projectId" value={projectId} />
-              <input
+              {/* Multiligne : Entrée passe à la ligne, l'envoi se fait au bouton. La
+                  hauteur suit le contenu, `rows` sert de repli aux navigateurs
+                  qui ignorent `field-sizing` (CC-345). */}
+              <textarea
                 name="body"
                 required
+                rows={3}
                 placeholder="Ajouter un commentaire…"
-                className="flex-1 rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm text-text"
+                className="field-sizing-content min-h-20 max-h-80 flex-1 resize-y rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm text-text"
               />
               <button type="submit" className="rounded-lg bg-mint px-3 py-2 text-xs font-semibold text-bg">
                 Envoyer

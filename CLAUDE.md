@@ -40,6 +40,7 @@ erreurs=badRequest(message) lisible par l'utilisateur, jamais un code technique
 dates_bureau=minutes depuis minuit (heure locale de bureau), pas d'instant, pas de fuseau
 refs=maxSuffix + withUniqueRef (lib/refs.ts), jamais dérivées d'un COUNT
 nombres_saisis=parseNumber (frontend-admin/src/lib/format.ts), jamais parseFloat
+textes_multilignes=parseMultiline (frontend-admin/src/lib/format.ts) à la lecture, `whitespace-pre-wrap` à l'affichage
 libelle_projet=projectLabel(client, projet), jamais `client — projet` en dur
 tests=script assertif dans prisma/test-*.ts (calcul pur) ou dans le scratchpad (bout en bout HTTP) ; pas de framework de test dans le repo
 
@@ -142,6 +143,7 @@ TRAP-027 une action serveur limite son corps à 1 Mo PAR DÉFAUT → toute pièc
 TRAP-028 Next REFUSE une action serveur sans en-tête `Origin` (protection CSRF) → un test qui rejoue un formulaire à la main reçoit 500 tant qu'il ne l'envoie pas
 TRAP-029 supprimer un ticket ou une tâche efface ses pièces jointes EN CASCADE côté base, sans passer par la route de retrait → relever les fileId AVANT la suppression et reprendre les fichiers après, sinon le volume se remplit d'orphelins
 TRAP-030 après une action de formulaire réussie, React vide le formulaire par un `reset` : les cases se décochent SANS évènement `change` → tout compteur tenu par `onChange` doit aussi écouter `onReset` (CC-352, bandeau de masse resté affiché)
+TRAP-031 une `<textarea>` envoyée par formulaire arrive avec des retours à la ligne en `\r\n` (norme HTML) → passer par `parseMultiline` (lib/format.ts) avant d'écrire, sinon la base mélange `\r\n` et `\n` et un `split("\n")` garde des `\r`
 
 ## STATE
 branch=main
@@ -159,6 +161,7 @@ done=[23/09] onglet Comptes (/equipe) ouvert au PM avec les mêmes droits que DI
 done=[23/09] suppression d'un compte débloquée (DEC-032/033, migration auteur_facultatif_sur_suppression_de_compte) ; authorName/authorInitials dans format.ts ; message P2003 corrigé ; 24/24 bout en bout + calculs 18/18, 18/18, 18/18
 done=[25/09] pièces jointes de bout en bout : relais backend (lib/files.ts + /api/admin/attachments), colonne fileId (migration piece_jointe_fichier_maison), bloc partagé sur fiche ticket et fiche tâche ; 26/26 HTTP + 8/8 par les actions serveur + calculs 18/18, 18/18, 18/18
 done=[28/09] CC-352 : le bandeau de modification de masse disparaît après « Appliquer » ; 9/9 dans Chrome
+done=[28/09] CC-345 : commentaires multilignes sur fiche ticket et fiche tâche ; descriptions et commentaires gardent leurs sauts de ligne à l'affichage ; 14/14 dans Chrome
 wip=aucun
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — débloqué par DEC-027 (codialis.files) ; le socle Drive reste committé et inutilisé, on le retire quand le service maison aura fait ses preuves

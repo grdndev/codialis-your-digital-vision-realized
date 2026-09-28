@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { parseNumber } from "@/lib/format";
+import { parseMultiline, parseNumber } from "@/lib/format";
 import { redirect } from "next/navigation";
 import { ApiError, apiDelete, apiPost, apiUpload } from "@/lib/api";
 import type { DevNature, Severity, TaskStatus, TicketType } from "@/lib/types";
@@ -173,7 +173,7 @@ export async function deleteTicketCriterionAction(criterionId: string) {
 export async function addTicketCommentAction(formData: FormData) {
   const ticketId = String(formData.get("ticketId") ?? "");
   const ref = String(formData.get("ref") ?? "");
-  const body = String(formData.get("body") ?? "").trim();
+  const body = parseMultiline(formData.get("body"));
   if (!ticketId || !body) return;
 
   await apiPost(TICKETS, { action: "add-comment", ticketId, body });

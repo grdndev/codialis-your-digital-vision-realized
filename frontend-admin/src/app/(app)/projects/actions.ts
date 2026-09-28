@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { parseNumber } from "@/lib/format";
+import { parseMultiline, parseNumber } from "@/lib/format";
 import { redirect } from "next/navigation";
 import { ApiError, apiDelete, apiPost, apiUpload } from "@/lib/api";
 import type { TaskStatus } from "@/lib/types";
@@ -263,7 +263,7 @@ export async function toggleTaskCriterionAction(
 export async function addTaskCommentAction(formData: FormData) {
   const taskId = String(formData.get("taskId") ?? "");
   const projectId = String(formData.get("projectId") ?? "");
-  const body = String(formData.get("body") ?? "").trim();
+  const body = parseMultiline(formData.get("body"));
   if (!taskId || !body) return;
 
   await apiPost(PROJECTS, { action: "add-task-comment", taskId, body });
