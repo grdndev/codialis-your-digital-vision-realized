@@ -29,8 +29,17 @@ export function TicketSelection({
     setCount(boxes ? [...boxes].filter((b) => b.checked).length : 0);
   }
 
+  // Après l'envoi, React vide le formulaire par un `reset`, qui décoche les
+  // cases sans émettre de `change` : sans ce second écouteur, le compteur
+  // gardait l'ancienne sélection et le bandeau restait affiché sur rien (CC-352).
   return (
-    <form ref={formRef} action={action} onChange={recount} className="flex flex-col gap-3">
+    <form
+      ref={formRef}
+      action={action}
+      onChange={recount}
+      onReset={() => setCount(0)}
+      className="flex flex-col gap-3"
+    >
       {/* Le bandeau n'apparaît qu'une fois quelque chose de coché : tant qu'il
           n'y a rien à traiter, il n'a rien à dire. */}
       {count > 0 ? (
