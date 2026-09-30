@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="preconnect" href="https://unpkg.com" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <!-- Start the existing runtime downloads together instead of discovering Babel after React. -->
+    <link rel="preload" as="script" href="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z" />
+    <link rel="preload" as="script" href="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1" />
+    <link rel="preload" as="script" href="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" />
     <script src="./support.js"></script>
     <script src="./responsive.js"></script>
     <script src="./i18n-dict.js"></script>
@@ -127,7 +131,9 @@
           }
           .cod-h1line {
             display: block;
-            animation: cod-rise 1.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+            /* Keep the primary heading visible as soon as the runtime renders it. */
+            opacity: 1;
+            transform: none;
           }
           @keyframes cod-bounce {
             0%,
@@ -182,6 +188,7 @@
         <!-- NAV -->
         <div data-cod-header></div>
 
+        <main id="main-content">
         <!-- HERO (spotlight vert) -->
         <header
           id="top"
@@ -413,20 +420,20 @@
                 color: #edf3f7;
               "
             >
-              <span class="cod-h1line" style="animation-delay: 0.15s"
+              <span class="cod-h1line"
                 >Nous concevons les plateformes</span
               >
-              <span class="cod-h1line" style="animation-delay: 0.6s"
+              <span class="cod-h1line"
                 >digitales qui font
                 <span
                   style="
                     color: #2fed7f;
-                    animation: cod-neon 2.6s ease-in-out infinite;
+                    text-shadow: 0 0 18px rgba(47, 237, 127, 0.45);
                   "
                   >avancer</span
                 ></span
               >
-              <span class="cod-h1line" style="animation-delay: 1.05s"
+              <span class="cod-h1line"
                 >les entreprises.</span
               >
             </h1>
@@ -438,8 +445,6 @@
                 gap: 12px 26px;
                 justify-content: center;
                 margin-bottom: 40px;
-                animation: cod-rise 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-                animation-delay: 1.6s;
               "
             >
               <sc-for list="{{ heroChecks }}" as="c" hint-placeholder-count="3">
@@ -477,8 +482,6 @@
                 flex-wrap: wrap;
                 gap: 14px;
                 justify-content: center;
-                animation: cod-rise 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-                animation-delay: 1.95s;
               "
             >
               <a
@@ -552,8 +555,6 @@
                 background: rgba(255, 255, 255, 0.05);
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 backdrop-filter: blur(8px);
-                animation: cod-rise 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-                animation-delay: 2.3s;
               "
             >
               <div style="display: flex; align-items: center">
@@ -3120,6 +3121,7 @@
           </div>
         </section>
 
+        </main>
         <!-- FOOTER (bleu foncé B) -->
     <div data-cod-footer></div>
 
