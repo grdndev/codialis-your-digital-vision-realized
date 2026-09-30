@@ -94,6 +94,13 @@
       .final { text-align: center; }
       .final h2 { margin-bottom: 14px; }
       .final p { margin: 0 auto 26px; max-width: 56ch; }
+      #references { scroll-margin-top: 100px; }
+      .reference-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .reference-grid .card p + p { margin-top: 14px; }
+      @media (max-width: 720px) {
+        .reference-grid { grid-template-columns: 1fr; }
+        #references { scroll-margin-top: 20px; }
+      }
 </style>
       <script src="./site-chrome.js?v=20260930-2" defer></script>
   </head>
@@ -143,10 +150,32 @@
   <p>Retrouvez les <a href="/portfolio">réalisations présentées par Codialis</a> et notre <a href="https://www.francenum.gouv.fr/activateurs/codialis">fiche Activateur France Num</a>. Pour un projet dans l’océan Indien, consultez aussi notre <a href="/agence-informatique-reunion">présentation de l’établissement à La Réunion</a>.</p>
 </div></section>
 <section class="band" id="references"><div class="wrap">
-<h2>Equatis : un parcours partagé dans l’immobilier</h2>
-<p>Equatis est une plateforme métier en production pour la gestion de programmes et de lots immobiliers. Elle réunit promoteurs, collaborateurs, notaires et acquéreurs autour d’un même parcours. Le développement s’appuie sur Next.js.</p>
-<p>Cette réalisation, présentée dans la brochure de Codialis, illustre le besoin d’un logiciel adapté à plusieurs populations. Pour un projet de ce type, les informations à consulter, les actions autorisées et les étapes de validation doivent être définies pour chaque rôle.</p>
-<p><a href="/portfolio">Découvrir les réalisations de Codialis</a></p>
+  <p class="kicker">Références logiciels métier</p>
+  <h2>Quatre projets, quatre réalités métier</h2>
+  <p>Immobilier, formation, automobile et BTP : chaque projet part des dossiers, des décisions et des échanges propres à son activité. Voici les usages au cœur des logiciels conçus par Codialis.</p>
+  <div class="grid reference-grid">
+    <article class="card" id="equatis">
+      <h3>Equatis — programmes et lots immobiliers</h3>
+      <p>Equatis est une plateforme métier en production, développée avec Next.js. Elle réunit promoteurs, collaborateurs, notaires et acquéreurs autour de la gestion de programmes et de lots immobiliers.</p>
+      <p>Le travail porte sur un parcours partagé entre quatre populations : informations accessibles, actions autorisées et étapes de validation doivent correspondre au rôle de chacun. Cette réalisation illustre la conception d’un logiciel collaboratif adapté aux intervenants d’une opération immobilière.</p>
+    </article>
+    <article class="card" id="top-formation">
+      <h3>Top Formation — gestion d’un CFA et organisme de formation</h3>
+      <p>Le projet Top Formation, à La Réunion, vise à réunir les équipes administratives, commerciales, pédagogiques, de facturation et de direction dans une plateforme commune.</p>
+      <p>Le périmètre fonctionnel prévoit le suivi du candidat à l’apprenant : dossiers et documents, relations avec les entreprises, signatures, présences et espaces formateur et apprenant. Il inclut des alertes par site et par profil, un circuit de validation des factures formateurs et une assistance IA à la correction des évaluations. Le développement est organisé progressivement par pôle.</p>
+    </article>
+    <article class="card" id="garageflow">
+      <h3>GarageFlow / NCD de l’Est — gestion automobile</h3>
+      <p>GarageFlow est un logiciel métier conçu pour NCD de l’Est, autour du parcours d’un véhicule sinistré : ouverture du dossier, rendez-vous, expertise, chiffrage, pièces, interventions atelier et restitution.</p>
+      <p>Son périmètre relie le garage, les assurances, les experts et le client, avec une organisation multi-sites, le suivi des véhicules de prêt et un espace de consultation du dossier. Les échanges et saisies manuelles restent prévus lorsque les outils tiers n’offrent pas d’API. La connexion DARVA est prévue sous réserve d’accréditation.</p>
+    </article>
+    <article class="card" id="mystock-btp">
+      <h3>BTP — ETPO / Technirep, gestion du matériel</h3>
+      <p>Le projet MYSTOCK pour Technirep porte sur la gestion du parc matériel et des stocks entre dépôts et chantiers. Son périmètre couvre réservations, disponibilité, retraits, retours, transferts et inventaires.</p>
+      <p>Il prévoit des droits distincts pour les équipes terrain, les magasiniers et les administrateurs, un historique des mouvements, le suivi des échéances de contrôle et l’imputation des coûts au chantier. Le pré-remplissage de fiches à partir de documents par OCR et IA fait également partie du périmètre. Les évolutions complémentaires sont organisées par lots.</p>
+    </article>
+  </div>
+  <p><a href="/contact">Échanger sur un logiciel adapté à votre métier</a> · <a href="/portfolio">Découvrir les autres réalisations de Codialis</a></p>
 </div></section>
 <section id="faq"><div class="wrap"><h2>Questions fréquentes sur les logiciels métier</h2><div class="grid"><div class="card"><h3>Quand remplacer un fichier Excel par un logiciel métier ?</h3><p>Quand plusieurs personnes doivent travailler sur les mêmes données, avec des droits distincts, des validations ou un historique fiable, un tableur peut devenir difficile à maintenir. Le nombre de fichiers ne suffit pas à décider : il faut regarder les erreurs, les doubles saisies et les opérations qui bloquent réellement l’équipe.</p></div><div class="card"><h3>Faut-il développer un logiciel sur mesure ou choisir un outil existant ?</h3><p>Comparez la couverture de vos besoins, les possibilités de paramétrage, les intégrations, les licences et le coût de maintenance. Le sur-mesure est pertinent pour des règles spécifiques qui structurent votre activité ; un outil existant peut suffire pour des fonctions standard.</p></div><div class="card"><h3>Peut-on reprendre un logiciel ou une base de données existants ?</h3><p>La reprise dépend de l’accès au code, aux exports et à la documentation, ainsi que des droits d’utilisation. Un inventaire technique et un essai sur un échantillon permettent d’identifier les données récupérables, les adaptations et les risques avant de s’engager sur la migration.</p></div><div class="card"><h3>Quel budget et quel délai prévoir ?</h3><p>Ils dépendent du nombre de parcours, des règles métier, des connexions, de la qualité des données à reprendre et des contraintes de déploiement. Définir un premier périmètre utile permet de préparer un devis et un calendrier réalistes. Aucun délai unique ne convient à tous les logiciels métier.</p></div><div class="card"><h3>Qui peut accéder aux données et récupérer le logiciel ?</h3><p>Les rôles, les droits sur le code, les exports de données, la documentation et les conditions de maintenance doivent être définis dans le contrat et le cadrage. Précisez les besoins de réversibilité avant le développement, puis vérifiez-les à la livraison.</p></div></div></div></section><section class="band"><div class="wrap final"><h2>Cadrons votre premier parcours métier</h2><p>Présentez le fonctionnement actuel, les difficultés rencontrées et le résultat attendu. Nous pourrons examiner le périmètre à développer et les connexions nécessaires.</p><a class="cta" href="/contact">Demander un devis logiciel métier</a> <a href="https://calendly.com/contact-codialis/30min">Prendre rendez-vous</a></div></section></main>
     <div data-cod-footer>
