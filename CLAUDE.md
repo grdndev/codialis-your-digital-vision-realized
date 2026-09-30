@@ -127,6 +127,7 @@ DEC-046 [2026-09-30] ACTIVE « Qui est là » lit AUSSI le planning de la semain
 DEC-047 [2026-09-30] ACTIVE une facture se SUPPRIME même payée (PM et DIR), après confirmation qui prévient qu'elle sort de l'encaissé ; son MONTANT, lui, ne se modifie toujours plus une fois payée why=demande du 30/09 : F-2601 et F-2602 (Sumvibes, 1 €, reliquat de CC-324) étaient marquées payées et indélébiles, et le message renvoyait à un « avoir » que le CRM n'a pas alt=facture payée intouchable (état initial), remise en attente puis suppression
 DEC-048 [2026-09-30] ACTIVE les fenêtres flottantes (Exporter, Importer du JSON, Nouvel épic, confirmation de suppression de facture) se ferment au clic extérieur, sur Échap et après l'envoi de leur formulaire : composant Popover (frontend-admin/src/app/(app)/popover.tsx) why=demande du 30/09 sur l'export ; même comportement pour les fenêtres de la même barre alt=`<details>` nu, qui ne se ferme qu'en recliquant son bouton
 DEC-049 [2026-09-30] ACTIVE les images jointes s'ouvrent dans une visionneuse (`<dialog>` modal, ← → entre les images de la fiche, damier derrière les images transparentes, lien vers l'original) au lieu d'un nouvel onglet why=demande du 30/09 alt=lien vers files.codialis.com (état initial)
+DEC-050 [2026-09-30] ACTIVE heures vendues = montant vendu ÷ taux horaire de l'agence, au dixième ; PM/DIR règlent le taux horaire ET la durée d'une journée dans « Rentabilité & temps », le taux journalier en découle (défaut 90 €/h × 8 h = 720 €) ; recalculées SEULEMENT quand le montant change, un projet déjà vendu garde ses heures ; sans montant, les heures restent saisies why=CC-357, arbitrage Denis du 30/09 alt=taux journalier seul (conversion en heures ambiguë), recalcul de tous les projets à chaque changement de taux
 DEC-037 [2026-09-28] ACTIVE une facture a un HISTORIQUE de commentaires (InvoiceComment), ouvert même une fois payée, sans modification ni suppression ; l'auteur suit DEC-032 (NULL si le compte est supprimé), les commentaires suivent la facture en CASCADE why=CC-349 ; c'est souvent après le règlement qu'on note comment il s'est fait alt=champ de notes unique sur la facture (écrasé à chaque saisie)
 
 ## TRAP
@@ -197,7 +198,7 @@ done=[30/09] déployé (11a56cd), les 5 migrations appliquées en prod juste apr
 wip=aucun
 done=[30/09] CC-355 : pastilles du planning de la semaine dans « Qui est là », grille en semaines entières ; hr-calendar 27/27, 11/11 dans Chrome
 done=[30/09] hors tickets : suppression des factures payées (DEC-047), fenêtres flottantes qui se ferment (DEC-048), visionneuse d'images (DEC-049) ; 18/18 et 16/16 dans Chrome
-wip=CC-357 EN_COURS : taux horaire et durée d'une journée réglables par PM/DIR (défaut 90 €/h × 8 h = 720 €), heures vendues = prix ÷ taux, recalculées seulement quand le prix change ; migration taux_agence écrite, écrans à faire
+done=[30/09] CC-357 : taux de l'agence et heures vendues calculées (DEC-050, migration taux_agence) ; 18/18 HTTP + Chrome, billing 32/32
 next=CC-356 (onglet Objectifs avec historique atteint/non atteint et raison)
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — débloqué par DEC-027 (codialis.files) ; le socle Drive reste committé et inutilisé, on le retire quand le service maison aura fait ses preuves
@@ -215,6 +216,7 @@ manual=AVANT le premier déploiement : créer files/.env sur le serveur avec FIL
 manual=les fichiers servis par codialis.files sont PUBLICS pour qui a l'URL (non devinable, 32 hexadécimaux) — à confronter au cloisonnement des projets (DEC-023/024) avant d'y mettre des pièces jointes de tickets
 manual=backend/src/lib/drive.ts et prisma/drive-consent.ts sont du code MORT, importés nulle part — à supprimer une fois codialis.files éprouvé (DEC-027)
 manual=après déploiement : rattacher les factures existantes à leur échéance (TRAP-037) et saisir le prix total + l'échéancier des projets ouverts dans Facturation → « Échéancier des projets » — soldAmount était NULL sur tous les projets facturés au relevé du 30/09
+manual=update-project (formulaire « Modifier le projet ») REDATE la clôture à chaque enregistrement d'un projet clôturé (`closedAt: new Date()`), contrairement à update-project-phase qui la garde — bug existant, non corrigé, à proposer
 manual=signaler à Luc que « ticket » et « gravité » ne sont pas des filtres de Ressources (DEC-039), et lui demander s'il visait un autre écran
 manual=CC-346 et le point 2 de CC-353 sont le même besoin, livrés ensemble
 manual=le README n'a pas de partie « Fonctionnalités » au format BxFy ; la référence fonctionnelle reste la liste de tickets en production

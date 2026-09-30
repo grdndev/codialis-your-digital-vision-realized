@@ -50,6 +50,13 @@ export function milestoneName(index: number, count: number): string {
   return `Échéance ${index + 1}`;
 }
 
+// Heures vendues déduites d'un prix (CC-357), au dixième d'heure : c'est la
+// précision des heures partout ailleurs dans le back-office.
+export function hoursFromPrice(amount: number, hourlyRate: number): number {
+  if (!(amount > 0) || !(hourlyRate > 0)) return 0;
+  return Math.round((amount / hourlyRate) * 10) / 10;
+}
+
 function cents(n: number): number {
   return Math.round(n * 100) / 100;
 }

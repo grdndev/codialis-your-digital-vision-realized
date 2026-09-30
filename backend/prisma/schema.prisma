@@ -773,6 +773,11 @@ model CompanySetting {
   quarterlyTargetEUR      Float  @default(130000)
   monthlyChargesEUR       Float  @default(21400)
   monthlyRevenueTargetEUR Float  @default(45000)
+  // Taux de l'agence (CC-357), réglés par la chefferie et la direction dans
+  // « Rentabilité & temps ». Les heures vendues d'un projet s'en déduisent :
+  // montant vendu ÷ taux horaire. 90 €/h sur 8 h, c'est 720 € la journée.
+  hourlyRateEUR           Float  @default(90)
+  workdayHours            Float  @default(8)
 }
 
 model Decision {

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
 import { PLAN_PRESETS, isValidPlan, milestoneName, nextMilestone, parsePlan } from "@/lib/billing";
 import { Prisma } from "@prisma/client";
+import { agencyRates, soldHoursFor } from "@/lib/agency-rates";
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +69,7 @@ export const GET = adminRoute(["PM", "DIR"], async () => {
       next: nextMilestone(p.soldAmount, plan, own),
     };
   });
-  return { invoices, activeProjects, projects, billing, planPresets: PLAN_PRESETS };
+  return { invoices, activeProjects, projects, billing, planPresets: PLAN_PRESETS, rates: await agencyRates() };
 });
 
 const bodySchema = z.discriminatedUnion("action", [
@@ -94,6 +95,13 @@ const bodySchema = z.discriminatedUnion("action", [
     projectId: z.string().min(1),
     total: z.number().positive().nullable(),
     plan: z.string().max(20),
+  }),
+  // Taux de l'agence (CC-357) : les heures vendues d'un projet s'en déduisent.
+  // Une journée tient dans 24 h ; un taux nul rendrait toute heure infinie.
+  z.object({
+    action: z.literal("update-rates"),
+    hourlyRate: z.number().positive().max(10_000),
+    workdayHours: z.number().positive().max(24),
   }),
   z.object({
     action: z.literal("mark-paid"),
@@ -142,14 +150,35 @@ export const POST = adminRoute(["PM", "DIR"], async ({ user }, request) => {
   if (!parsed.success) badRequest("Requête invalide");
   const body = parsed.data;
 
+  if (body.action === "update-rates") {
+    // Ligne unique de paramètres d'entreprise, créée si besoin. Les projets
+    // déjà vendus gardent leurs heures : le nouveau taux vaut pour les prix
+    // saisis ensuite.
+    const data = { hourlyRateEUR: body.hourlyRate, workdayHours: body.workdayHours };
+    const existing = await prisma.companySetting.findFirst({ select: { id: true } });
+    if (existing) await prisma.companySetting.update({ where: { id: existing.id }, data });
+    else await prisma.companySetting.create({ data });
+    return;
+  }
+
   if (body.action === "update-project-billing") {
     const plan = body.plan.split(",").map((p) => Number(p.trim()));
     if (!isValidPlan(plan)) {
       badRequest("Échéancier invalide : de 2 à 4 pourcentages entiers qui font 100 %");
     }
+    const current = await prisma.project.findUnique({
+      where: { id: body.projectId },
+      select: { soldAmount: true, hoursSold: true },
+    });
+    if (!current) notFound("Projet introuvable");
     await prisma.project.update({
       where: { id: body.projectId },
-      data: { soldAmount: body.total, billingPlan: plan.join(",") },
+      data: {
+        soldAmount: body.total,
+        billingPlan: plan.join(","),
+        // Le prix total est le montant vendu : les heures vendues le suivent.
+        hoursSold: await soldHoursFor(body.total, current, current.hoursSold),
+      },
     });
     return;
   }

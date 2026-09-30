@@ -5,7 +5,7 @@ import type { BillingRow, FinanceScreen, InvoiceRow } from "./types";
 import { InvoiceForm } from "./invoice-form";
 import { Popover } from "../popover";
 import { fmtHours, fmtEUR, fmtDate, pctOf, currentPeriodLabel, INVOICE_STATUS_BADGE_CLASS, INVOICE_STATUS_LABEL, projectLabel, authorName, authorInitials } from "@/lib/format";
-import { addInvoiceCommentAction, markInvoicePaidAction, setInvoiceStatusAction, updateInvoiceAction, deleteInvoiceAction, updateProjectBillingAction, setInvoiceMilestoneAction } from "./actions";
+import { addInvoiceCommentAction, markInvoicePaidAction, setInvoiceStatusAction, updateInvoiceAction, deleteInvoiceAction, updateProjectBillingAction, setInvoiceMilestoneAction, updateRatesAction } from "./actions";
 import type { ProjectWithClient } from "@/lib/dto";
 
 export default async function FinancePage({
@@ -17,7 +17,7 @@ export default async function FinancePage({
   // Refus de l'API — une facture payée, par exemple — remonté dans l'URL.
   const { error } = await searchParams;
 
-  const { invoices, activeProjects, projects, billing, planPresets } = await apiGet<FinanceScreen>("/api/admin/finance");
+  const { invoices, activeProjects, projects, billing, planPresets, rates } = await apiGet<FinanceScreen>("/api/admin/finance");
   const billingByProject = new Map(billing.map((b) => [b.projectId, b]));
 
   const billed = invoices.reduce((s, i) => s + i.amount, 0);
@@ -82,6 +82,8 @@ export default async function FinancePage({
           </tbody>
         </table>
       </div>
+
+      <AgencyRates rates={rates} />
 
       <BillingPlans projects={projects} billingByProject={billingByProject} planPresets={planPresets} />
 
@@ -166,6 +168,37 @@ export default async function FinancePage({
 
 const planLabel = (plan: string) => plan.split(",").join(" / ");
 
+// Taux de l'agence (CC-357). On règle le taux horaire et la durée d'une
+// journée ; le taux journalier s'en déduit, et les heures vendues de chaque
+// projet se calculent sur son montant vendu. Changer le taux ne réécrit pas
+// les projets déjà vendus : il vaut pour les prix saisis ensuite.
+function AgencyRates({ rates }: { rates: { hourlyRate: number; workdayHours: number } }) {
+  const frenchNumber = (n: number) => String(n).replace(".", ",");
+  return (
+    <div className="rounded-xl border border-border bg-panel p-5">
+      <h2 className="text-sm font-semibold text-text">Taux de l’agence</h2>
+      <p className="mt-1 text-xs text-muted">
+        Soit {fmtEUR(rates.hourlyRate * rates.workdayHours)} la journée. Les heures vendues
+        d’un projet se calculent sur son montant vendu, au moment où il est saisi : changer
+        le taux ne réécrit pas les projets déjà vendus.
+      </p>
+      <form action={updateRatesAction} className="mt-3 flex flex-wrap items-end gap-3">
+        <label className="flex flex-col gap-1 text-xs text-muted">
+          Taux horaire (€/h)
+          <input name="hourlyRate" defaultValue={frenchNumber(rates.hourlyRate)} className="input w-32" />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-muted">
+          Durée d’une journée (h)
+          <input name="workdayHours" defaultValue={frenchNumber(rates.workdayHours)} className="input w-32" />
+        </label>
+        <button type="submit" className="rounded-lg border border-border px-3 py-2 text-xs text-muted hover:text-text">
+          Enregistrer
+        </button>
+      </form>
+    </div>
+  );
+}
+
 // Échéancier de chaque projet ouvert (CC-350) : son prix total, son découpage
 // en pourcentages, ce qui en est déjà facturé et l'échéance qui vient. Le prix
 // est le « montant vendu » de la fiche projet : le changer ici le change
@@ -208,6 +241,7 @@ function BillingPlans({
                 ))}
               </select>
               <span className="col-span-2 text-xs text-muted">
+                {b.total ? `${fmtHours(p.hoursSold)} vendues · ` : ""}
                 facturé {fmtEUR(b.planInvoiced)}
                 {remaining !== null ? ` · reste ${fmtEUR(remaining)}` : ""}
                 {b.extraInvoiced ? ` · + ${fmtEUR(b.extraInvoiced)} hors échéancier` : ""}

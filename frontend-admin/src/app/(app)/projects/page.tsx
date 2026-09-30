@@ -234,7 +234,7 @@ export default async function ProjectsPage({
               </Field>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              <Field label="Heures vendues">
+              <Field label="Heures vendues" hint="calculées si un montant est saisi">
                 <input name="hoursSold" defaultValue="0" className="input" />
               </Field>
               <Field label="Montant vendu (€)" hint="facultatif">

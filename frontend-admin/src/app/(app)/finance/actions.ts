@@ -36,6 +36,21 @@ export async function createInvoiceAction(formData: FormData) {
   revalidatePath("/finance");
 }
 
+// Taux horaire et durée d'une journée (CC-357). Saisis à la française : « 102,5 ».
+export async function updateRatesAction(formData: FormData) {
+  const hourlyRate = parseNumber(formData.get("hourlyRate"));
+  const workdayHours = parseNumber(formData.get("workdayHours"));
+  if (hourlyRate <= 0 || workdayHours <= 0) {
+    redirect(`/finance?error=${encodeURIComponent("Le taux horaire et la durée d'une journée doivent être positifs")}`);
+  }
+  try {
+    await apiPost("/api/admin/finance", { action: "update-rates", hourlyRate, workdayHours });
+  } catch (err) {
+    fail(err);
+  }
+  revalidatePath("/finance");
+}
+
 // Prix total vidé = plus de prix : le projet ne peut alors plus émettre
 // d'échéance, seulement des factures libres.
 export async function updateProjectBillingAction(formData: FormData) {

@@ -57,4 +57,6 @@ export type FinanceScreen = {
   // Un par projet de `projects`.
   billing: BillingRow[];
   planPresets: string[];
+  // Taux de l'agence (CC-357) : les heures vendues s'en déduisent.
+  rates: { hourlyRate: number; workdayHours: number };
 };

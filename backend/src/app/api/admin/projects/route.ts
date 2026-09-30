@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { visibleProjectIds } from "@/lib/project-access";
 import { closeSessions, openSession, refreshProjectSpent } from "@/lib/work-sessions";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
+import { soldHoursFor } from "@/lib/agency-rates";
 import type { TaskStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -309,7 +310,9 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
           // groupe (voir GROUP_LABEL côté front) : inutile d'en inventer un.
           phaseLabel: body.phaseLabel.trim(),
           description: "",
-          hoursSold: body.hoursSold,
+          // Un montant vendu donne les heures vendues au taux de l'agence
+          // (CC-357) ; sans montant, ce sont les heures saisies.
+          hoursSold: await soldHoursFor(body.soldAmount, null, body.hoursSold),
           hoursSpent: 0,
           progressPct: 0,
           openedAt: new Date(),
@@ -617,6 +620,11 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
         select: { id: true },
       });
       if (!client) badRequest("Client introuvable");
+      const current = await prisma.project.findUnique({
+        where: { id: body.projectId },
+        select: { soldAmount: true, hoursSold: true },
+      });
+      if (!current) badRequest("Projet introuvable");
 
       await prisma.project.update({
         where: { id: body.projectId },
@@ -626,7 +634,8 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
           group: body.group,
           phaseLabel: body.phaseLabel.trim(),
           description: body.description,
-          hoursSold: body.hoursSold,
+          // Recalculées si le montant change, gardées sinon (CC-357).
+          hoursSold: await soldHoursFor(body.soldAmount, current, body.hoursSold),
           soldAmount: body.soldAmount,
           costAmount: body.costAmount,
           deadlineAt: body.deadlineAt ? new Date(body.deadlineAt) : null,

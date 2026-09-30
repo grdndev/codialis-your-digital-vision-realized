@@ -395,8 +395,18 @@ function FicheView({
                   <textarea name="description" rows={2} defaultValue={project.description} className="input" />
                 </PField>
                 <div className="grid grid-cols-3 gap-3">
-                  <PField label="Heures vendues">
-                    <input name="hoursSold" defaultValue={project.hoursSold} className="input" />
+                  {/* Avec un montant vendu, les heures s'en déduisent au taux de
+                      l'agence (CC-357) : on les montre sans les laisser saisir.
+                      Le champ caché garde la valeur pour un projet sans prix. */}
+                  <PField label="Heures vendues" hint={project.soldAmount ? "calculées" : undefined}>
+                    {project.soldAmount ? (
+                      <>
+                        <input type="hidden" name="hoursSold" value={project.hoursSold} />
+                        <p className="input text-muted">{fmtHours(project.hoursSold)}</p>
+                      </>
+                    ) : (
+                      <input name="hoursSold" defaultValue={project.hoursSold} className="input" />
+                    )}
                   </PField>
                   <PField label="Montant vendu (€)">
                     <input name="soldAmount" defaultValue={project.soldAmount ?? ""} className="input" />
@@ -418,7 +428,9 @@ function FicheView({
                 </div>
                 <p className="text-xs text-muted">
                   L’avancement et les heures passées ne se saisissent pas : ils suivent les tâches et
-                  les saisies de temps. Passer la phase en « Clôturé » horodate la clôture.
+                  les saisies de temps. Les heures vendues se déduisent du montant vendu, au taux
+                  réglé dans « Rentabilité &amp; temps ». Passer la phase en « Clôturé » horodate la
+                  clôture.
                 </p>
                 <button type="submit" className="self-start rounded-lg bg-mint px-4 py-2 text-xs font-semibold text-bg">
                   Enregistrer

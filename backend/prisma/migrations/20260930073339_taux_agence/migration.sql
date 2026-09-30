@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `CompanySetting` ADD COLUMN `hourlyRateEUR` DOUBLE NOT NULL DEFAULT 90,
+    ADD COLUMN `workdayHours` DOUBLE NOT NULL DEFAULT 8;

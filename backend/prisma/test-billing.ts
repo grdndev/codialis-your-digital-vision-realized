@@ -3,7 +3,7 @@
 //   npx tsx prisma/test-billing.ts
 //
 // Module pur : le test tourne sans base ni application.
-import { isValidPlan, milestoneName, nextMilestone, parsePlan } from "@/lib/billing";
+import { hoursFromPrice, isValidPlan, milestoneName, nextMilestone, parsePlan } from "@/lib/billing";
 
 let failures = 0;
 
@@ -86,6 +86,13 @@ check("40/30/30 : acompte", pick(nextMilestone(8000, [40, 30, 30], [])), { index
 console.log("Sans prix");
 check("prix absent", pick(nextMilestone(null, plan, [])), "no-total");
 check("prix nul", pick(nextMilestone(0, plan, [])), "no-total");
+
+console.log("Heures vendues depuis le prix (CC-357)");
+check("7 200 € à 90 €/h = 80 h", hoursFromPrice(7200, 90), 80);
+check("arrondi au dixième", hoursFromPrice(1000, 90), 11.1);
+check("720 € à 102,86 €/h ≈ 7 h", hoursFromPrice(720, 102.86), 7);
+check("prix nul : 0 h", hoursFromPrice(0, 90), 0);
+check("taux nul : 0 h plutôt qu'une division par zéro", hoursFromPrice(1000, 0), 0);
 
 console.log(failures ? `\n${failures} échec(s)` : "\nTout est bon.");
 process.exit(failures ? 1 : 0);
