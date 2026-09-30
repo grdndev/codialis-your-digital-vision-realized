@@ -94,6 +94,11 @@
       .final { text-align: center; }
       .final h2 { margin-bottom: 14px; }
       .final p { margin: 0 auto 26px; max-width: 56ch; }
+      .service-shortcuts { margin-top: 20px; font-size: 15px; }
+      #faq, #references, #experience-equipe { scroll-margin-top: 112px; }
+      @media (max-width: 1100px) {
+        #faq, #references, #experience-equipe { scroll-margin-top: 20px; }
+      }
 </style>
       <script src="./site-chrome.js?v=20260930-2" defer></script>
   </head>
@@ -105,7 +110,7 @@
 <section class="hero"><div class="wrap">
       <p class="crumb"><a href="/">Accueil</a> › Agence IA : intégrer les LLM et le RAG à vos outils métier.</p>
       <h1>Agence IA : intégrer les LLM et le RAG à vos outils métier.</h1>
-      <p class="lead">Vous cherchez à exploiter vos documents ou à automatiser une tâche avec l&#x27;intelligence artificielle ? Codialis accompagne l&#x27;intégration de LLM, de recherche documentaire RAG et de solutions IA sur mesure. Le cadrage part du travail à accomplir, des données accessibles et d&#x27;un résultat que votre équipe pourra vérifier.</p><a class="cta" href="/contact">Étudier mon cas d’usage IA</a></div>
+      <p class="lead">Vous cherchez à exploiter vos documents ou à automatiser une tâche avec l&#x27;intelligence artificielle ? Codialis accompagne l&#x27;intégration de LLM, de recherche documentaire RAG et de solutions IA sur mesure. Le cadrage part du travail à accomplir, des données accessibles et d&#x27;un résultat que votre équipe pourra vérifier.</p><a class="cta" href="/contact">Étudier mon cas d’usage IA</a><p class="service-shortcuts"><a href="#experience-equipe">Voir l’expérience de l’équipe</a> · <a href="#faq">Questions fréquentes</a></p></div>
       </section>
 <section class="band"><div class="wrap">
       <h2>Choisir un cas d’usage vérifiable</h2>
@@ -123,6 +128,18 @@
       <h3>Garder le contrôle des données</h3>
       <p>Le choix du fournisseur de modèle, de l&#x27;hébergement et des durées de conservation dépend de la sensibilité des informations. Les droits documentaires doivent s&#x27;appliquer aussi aux réponses générées. Les décisions sensibles nécessitent une validation humaine.</p></div></div></div>
       </section>
+<section class="band" id="recette-rag"><div class="wrap">
+  <h2>Comment vérifier un assistant RAG avant sa mise en service ?</h2>
+  <p>Un exemple de recette consiste à demander une procédure à partir d’un corpus documentaire identifié. La vérification porte à la fois sur les passages retrouvés et sur la réponse produite. Voici quatre situations à inclure dans les essais de votre projet :</p>
+  <ul>
+    <li><strong>Une réponse documentée :</strong> l’assistant retrouve le bon passage et renvoie vers une source consultable.</li>
+    <li><strong>Une information absente :</strong> il signale ce manque au lieu de présenter une supposition comme un fait.</li>
+    <li><strong>Deux versions contradictoires :</strong> le système signale le conflit et applique la règle de version définie pour le corpus.</li>
+    <li><strong>Un document à accès restreint :</strong> son contenu ne doit pas apparaître dans la réponse d’un utilisateur non autorisé.</li>
+  </ul>
+  <p>Le jeu d’essai, les résultats attendus, le temps de réponse et le coût d’usage servent à décider si le pilote peut être élargi. Les seuils sont convenus pour votre cas d’usage ; une démonstration réussie ne suffit pas à les valider.</p>
+  <p>Pour préparer vos questions, le <a href="https://www.entreprises.gouv.fr/la-dge/publications/guide-de-la-generation-augmentee-par-recuperation-rag">guide RAG de la Direction générale des Entreprises</a> présente les usages, prérequis, coûts et choix technologiques à examiner.</p>
+</div></section>
 <section class="band"><div class="wrap">
       <h2>Ce qui détermine le coût d’un projet IA</h2>
       <p class="lead">Le travail dépend du volume et de l&#x27;état des documents, des connexions à vos logiciels, des règles d&#x27;accès et du niveau de qualité attendu. Au développement s&#x27;ajoutent les coûts d&#x27;usage : appels au modèle, recherche documentaire, hébergement et suivi. Le cadrage permet de comparer ces postes au bénéfice visé.</p></div>
