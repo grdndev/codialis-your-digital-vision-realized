@@ -37,3 +37,39 @@ a:hover { color: var(--cod-accent-hover); }
 [data-cod-footer] h4 { color: #8291a6 !important; font-family: "IBM Plex Mono", monospace !important; font-size: 12px !important; font-weight: 500; letter-spacing: 0.15em; }
 [data-cod-footer] a { color: #b7c2d2; font-size: 15px; line-height: 1.4; }
 [data-cod-footer] a:hover { color: var(--cod-accent); }
+
+/* Les pages de service statiques n’utilisent pas le menu mobile du runtime.
+   Leur navigation reste dans le flux pour ne pas masquer le titre ou les liens. */
+.cod-service-page .cod-navtoggle { display: none !important; }
+@media (max-width: 1100px) {
+  .cod-service-page #cod-nav {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    margin: 12px;
+    padding: 12px !important;
+    gap: 10px !important;
+    border-radius: 18px !important;
+    flex-wrap: wrap;
+  }
+  .cod-service-page #cod-nav .cod-navlinks {
+    order: 3;
+    width: 100%;
+    padding: 0 !important;
+    border: 0 !important;
+    flex-wrap: wrap;
+    gap: 2px 6px !important;
+  }
+  .cod-service-page #cod-nav .cod-navlinks a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 8px !important;
+  }
+  .cod-service-page [data-cod-footer] footer > div:last-child {
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+}

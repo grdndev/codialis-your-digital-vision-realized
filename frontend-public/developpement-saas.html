@@ -95,9 +95,9 @@
       .final h2 { margin-bottom: 14px; }
       .final p { margin: 0 auto 26px; max-width: 56ch; }
 </style>
-      <script src="./site-chrome.js" defer></script>
+      <script src="./site-chrome.js?v=20260930-2" defer></script>
   </head>
-  <body>
+  <body class="cod-service-page">
     <div data-cod-header>
       <nav class="wrap" aria-label="Navigation principale" style="padding-top:24px;padding-bottom:24px"><a href="/">Codialis</a> · <a href="/#expertises">Expertises</a> · <a href="/portfolio">Réalisations</a> · <a href="/contact">Contact</a></nav></div>
 
@@ -131,11 +131,17 @@
       <h2>Travailler avec Codialis</h2>
       <p class="lead">Notre approche combine cadrage et architecture, conception des parcours, développement itératif, puis déploiement et accompagnement. Codialis présente ses implantations en Île-de-France et à La Réunion. Pour commencer, partagez vos objectifs, vos contraintes et un exemple de parcours utilisateur.</p></div>
       </section>
-<section class="band"><div class="wrap">
-      <h2>Deux références SaaS présentées sur France Num</h2>
-      <p>Notre fiche Activateur France Num décrit <strong>Eventpass</strong>, une plateforme de billetterie, et <strong>Mezabo</strong>, un SaaS B2B de commercialisation de prospects. Ces exemples illustrent deux périmètres différents : un parcours événementiel et un outil de gestion commerciale.</p>
-      <p><a href="https://www.francenum.gouv.fr/activateurs/codialis">Consulter les références publiées sur France Num</a></p></div>
-      </section>
+<section class="band" id="references"><div class="wrap">
+<h2>Deux réalisations SaaS, deux parcours métier</h2>
+<div class="grid">
+<article class="card"><h3>Event Pass : de l’achat du billet au contrôle d’entrée</h3>
+<p><strong>Périmètre réalisé :</strong> billetterie avec billets PDF à QR code, scan dans une PWA, paiements Stripe Connect et gestion de plusieurs devises. L’application associe React, Node.js et PostgreSQL.</p>
+<p>Le parcours couvre l’émission du billet et sa lecture à l’entrée de l’événement. Le contrôle sur mobile et les flux de paiement sont ainsi traités comme deux parties du même produit.</p></article>
+<article class="card"><h3>Mezabo : commercialisation de prospects B2B</h3>
+<p><strong>Périmètre réalisé :</strong> collecte et commercialisation de leads dans la banque et l’assurance, traçabilité horodatée, crédits prépayés, facturation avec Stripe Billing et authentification à deux facteurs.</p>
+<p>Ce type de plateforme relie accès aux données, consommation de crédits et suivi de facturation. La traçabilité technique documente les opérations ; elle ne constitue pas, à elle seule, une garantie de conformité réglementaire.</p></article>
+</div><p>Ces deux références sont également présentées sur notre <a href="https://www.francenum.gouv.fr/activateurs/codialis">fiche Activateur France Num</a>. Pour votre projet, le périmètre, les contrôles de recette et les indicateurs de résultat seront définis à partir de vos usages.</p>
+</div></section>
       <section id="faq"><div class="wrap">
       <h2>Questions fréquentes</h2><div class="grid"><div class="card">
       <h3>Faut-il développer toutes les fonctionnalités dès le départ ?</h3>
@@ -152,6 +158,7 @@
       <ul>
       <li><a href="/agence-ia">Intégration IA, LLM et RAG</a></li>
       <li><a href="/crm-erp-api">CRM, ERP et intégration API</a></li>
+      <li><a href="/logiciel-metier-sur-mesure">Logiciel métier sur mesure</a></li>
       <li><a href="/application-mobile">Applications mobiles</a></li>
       <li><a href="/agence-informatique-reunion">Codialis à La Réunion</a></li></ul>
       <p>Consultez nos <a href="/portfolio">réalisations</a> et notre <a href="https://www.francenum.gouv.fr/activateurs/codialis">fiche Activateur France Num</a>.</p></div>
@@ -164,7 +171,7 @@
     <div data-cod-footer>
       <footer><div class="wrap">
       <p>Codialis — ingénierie logicielle sur mesure</p>
-      <nav aria-label="Nos expertises"><a href="/developpement-saas">Développement SaaS</a> · <a href="/agence-ia">Intégration IA, LLM et RAG</a> · <a href="/crm-erp-api">CRM, ERP et intégration API</a> · <a href="/application-mobile">Applications mobiles</a> · <a href="/agence-informatique-reunion">Codialis à La Réunion</a></nav>
+      <nav aria-label="Nos expertises"><a href="/logiciel-metier-sur-mesure">Logiciel métier sur mesure</a> · <a href="/developpement-saas">Développement SaaS</a> · <a href="/agence-ia">Intégration IA, LLM et RAG</a> · <a href="/crm-erp-api">CRM, ERP et intégration API</a> · <a href="/application-mobile">Applications mobiles</a> · <a href="/agence-informatique-reunion">Codialis à La Réunion</a></nav>
       <p><a href="/contact">Nous contacter</a> · <a href="/legal">Mentions légales</a></p></div></footer></div>
   </body>
 </html>
