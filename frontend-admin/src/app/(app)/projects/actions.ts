@@ -129,6 +129,33 @@ export async function updateProjectPhaseAction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
+// Garantie et maintenance (CC-351). Une date vidée retire la couverture.
+export async function updateProjectCoverageAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  if (!projectId) return;
+  // <input type="date"> ne donne qu'un jour : minuit UTC, comme l'échéance.
+  const day = (key: string) => {
+    const raw = String(formData.get(key) ?? "");
+    return raw ? new Date(`${raw}T00:00:00.000Z`).toISOString() : null;
+  };
+
+  try {
+    await apiPost(PROJECTS, {
+      action: "update-project-coverage",
+      projectId,
+      warrantyEndsAt: day("warrantyEndsAt"),
+      maintenanceEndsAt: day("maintenanceEndsAt"),
+    });
+  } catch (err) {
+    if (err instanceof ApiError) fail(err.message);
+    throw err;
+  }
+
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/maintenance");
+}
+
 export async function updateClientAction(formData: FormData) {
   const clientId = String(formData.get("clientId") ?? "");
   const name = String(formData.get("name") ?? "").trim();
@@ -168,6 +195,7 @@ export async function importProjectJsonAction(formData: FormData): Promise<void>
   const projectId = String(formData.get("projectId") ?? "");
   const payload = String(formData.get("payload") ?? "").trim();
   if (!projectId || !payload) return;
+  const ticketAssigneeId = String(formData.get("ticketAssigneeId") ?? "") || null;
 
   let message: string;
   try {
@@ -175,7 +203,7 @@ export async function importProjectJsonAction(formData: FormData): Promise<void>
       createdEpics: number;
       createdTasks: number;
       createdTickets: number;
-    }>(PROJECTS, { action: "import-json", projectId, payload });
+    }>(PROJECTS, { action: "import-json", projectId, payload, ticketAssigneeId });
     message = `Import terminé : ${result.createdEpics} lot(s), ${result.createdTasks} tâche(s), ${result.createdTickets} ticket(s).`;
   } catch (err) {
     if (!(err instanceof ApiError)) throw err;

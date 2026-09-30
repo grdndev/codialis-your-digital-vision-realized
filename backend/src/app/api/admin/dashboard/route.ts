@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
-import { projectScope } from "@/lib/project-access";
+import { projectScope, visibleProjectIds } from "@/lib/project-access";
 import type { TaskStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -15,12 +15,35 @@ export const dynamic = "force-dynamic";
 // soi-même — un rappel, une relance — et peut en confier à un collègue. Elles
 // étaient réservées à la direction, qui ne pouvait d'ailleurs les confier qu'à
 // une cheffe de projet : ni à elle-même, ni à un développeur.
+//
+// Les objectifs du mois (CC-347) sont posés par la direction et lus par toute
+// l'équipe : ceux qui restent à atteindre, et ceux atteints depuis le début du
+// mois. Le début du mois vient de l'écran (`monthStart`), comme sur Pilotage :
+// c'est lui qui dit de quel mois il parle.
 
-export const GET = adminRoute(["DIR", "PM", "DEV"], async ({ user }) => {
+const PROJECT_OF_GOAL = {
+  select: {
+    id: true,
+    name: true,
+    progressPct: true,
+    hoursSpent: true,
+    hoursSold: true,
+    deadlineAt: true,
+    client: { select: { name: true } },
+  },
+} as const;
+
+export const GET = adminRoute(["DIR", "PM", "DEV"], async ({ user }, request) => {
+  const requestedStart = new Date(request.nextUrl.searchParams.get("monthStart") ?? "");
+  const now = new Date();
+  const monthStart = Number.isNaN(requestedStart.getTime())
+    ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+    : requestedStart;
   // Le tableau de bord montre des projets : il suit le même cloisonnement que
   // l'écran Projets, sinon la liste y réapparaîtrait en entier.
   const scope = await projectScope(user);
-  const [activeProjects, openTickets, clientCount, myInternalTasks, team, givenInternalTasks, totalProjects] =
+  const visibleIds = await visibleProjectIds(user);
+  const [activeProjects, openTickets, clientCount, myInternalTasks, team, givenInternalTasks, totalProjects, goals, goalProjects] =
     await Promise.all([
       prisma.project.findMany({
         where: { group: "DEV", ...scope },
@@ -48,6 +71,20 @@ export const GET = adminRoute(["DIR", "PM", "DEV"], async ({ user }) => {
         orderBy: { createdAt: "desc" },
       }),
       prisma.project.count({ where: scope }),
+      prisma.monthlyGoal.findMany({
+        where: { OR: [{ doneAt: null }, { doneAt: { gte: monthStart } }] },
+        include: { project: PROJECT_OF_GOAL },
+        orderBy: { dueAt: "asc" },
+      }),
+      // Les projets rattachables à un objectif, pour le formulaire de la
+      // direction : personne d'autre n'en pose.
+      user.role === "DIR"
+        ? prisma.project.findMany({
+            where: { group: { not: "CLO" } },
+            select: { id: true, name: true, client: { select: { name: true } } },
+            orderBy: { name: "asc" },
+          })
+        : [],
     ]);
 
   return {
@@ -59,6 +96,14 @@ export const GET = adminRoute(["DIR", "PM", "DEV"], async ({ user }) => {
     team: team.map((u) => ({ id: u.id, name: u.name, initials: u.initials, role: u.role })),
     givenInternalTasks,
     totalProjects,
+    // Un objectif se lit par tous ; le projet qu'il suit, seulement par qui
+    // peut ouvrir ce projet (DEC-024) — sinon le Dashboard montrerait
+    // l'avancement d'un projet cloisonné.
+    goals: goals.map((g) => ({
+      ...g,
+      project: g.project && (visibleIds === null || visibleIds.includes(g.project.id)) ? g.project : null,
+    })),
+    goalProjects,
   };
 });
 
@@ -81,7 +126,30 @@ const bodySchema = z.discriminatedUnion("action", [
     action: z.literal("advance-internal-task"),
     taskId: z.string().min(1),
   }),
+  z.object({
+    action: z.literal("create-goal"),
+    title: z.string().trim().min(1).max(300),
+    detail: z.string().max(5000),
+    dueAt: z.string().datetime(),
+    projectId: z.string().min(1).nullable(),
+  }),
+  z.object({
+    action: z.literal("update-goal"),
+    goalId: z.string().min(1),
+    title: z.string().trim().min(1).max(300),
+    detail: z.string().max(5000),
+    dueAt: z.string().datetime(),
+    projectId: z.string().min(1).nullable(),
+  }),
+  // Atteint / pas encore : la bascule lit l'état en base, deux clics
+  // concurrents ne se contredisent pas.
+  z.object({ action: z.literal("toggle-goal"), goalId: z.string().min(1) }),
+  z.object({ action: z.literal("delete-goal"), goalId: z.string().min(1) }),
 ]);
+
+// Les objectifs se pilotent par la direction (CC-347) : Jayan les pose, les
+// ajuste, les déclare atteints. Le reste de l'équipe les lit.
+const GOAL_ACTIONS = new Set(["create-goal", "update-goal", "toggle-goal", "delete-goal"]);
 
 // Poser une tâche interne et faire avancer la sienne appartiennent à toute
 // l'équipe.
@@ -89,6 +157,40 @@ export const POST = adminRoute(["DIR", "PM", "DEV"], async ({ user }, request) =
   const parsed = bodySchema.safeParse(await jsonBody(request));
   if (!parsed.success) badRequest("Requête invalide");
   const body = parsed.data;
+
+  if (GOAL_ACTIONS.has(body.action) && user.role !== "DIR") {
+    badRequest("Les objectifs du mois sont posés par la direction");
+  }
+
+  if (body.action === "create-goal" || body.action === "update-goal") {
+    const data = {
+      title: body.title,
+      detail: body.detail.trim(),
+      dueAt: new Date(body.dueAt),
+      projectId: body.projectId,
+    };
+    if (body.action === "create-goal") {
+      await prisma.monthlyGoal.create({ data: { ...data, authorId: user.id } });
+    } else {
+      await prisma.monthlyGoal.update({ where: { id: body.goalId }, data });
+    }
+    return;
+  }
+
+  if (body.action === "toggle-goal") {
+    const goal = await prisma.monthlyGoal.findUnique({ where: { id: body.goalId }, select: { doneAt: true } });
+    if (!goal) badRequest("Objectif introuvable");
+    await prisma.monthlyGoal.update({
+      where: { id: body.goalId },
+      data: { doneAt: goal.doneAt ? null : new Date() },
+    });
+    return;
+  }
+
+  if (body.action === "delete-goal") {
+    await prisma.monthlyGoal.delete({ where: { id: body.goalId } });
+    return;
+  }
 
   if (body.action === "assign-internal-task") {
     await prisma.internalTask.create({

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
-import { MOCKUP_STATUS_BADGE_CLASS, MOCKUP_STATUS_LABEL } from "@/lib/format";
+import { MOCKUP_STATUS_BADGE_CLASS, MOCKUP_STATUS_LABEL, projectLabel } from "@/lib/format";
+import type { MockupStatus } from "@/lib/types";
+import { Pagination, paginate, parsePaging } from "../list-controls";
 import {
   addApiAction, updateApiAction, deleteApiAction,
   updateUrlAction, deleteUrlAction,
@@ -16,6 +18,35 @@ import {
 } from "./actions";
 import type { CustomCategoryRow, ResourcePanel, ResourcesScreen } from "./types";
 
+const MOCKUP_STATUSES: MockupStatus[] = ["BROUILLON", "A_VALIDER", "EN_INTEGRATION", "VALIDE"];
+
+// Filtres de l'écran (CC-353). Ils portent sur ce que chaque onglet contient
+// réellement : la recherche partout, la personne sur les APIs (leur
+// propriétaire), le statut sur les maquettes et les documents. Le projet reste
+// le premier critère, puisque toute ressource appartient à un projet.
+type ResourceFilters = { q: string; owner: string; status: string };
+
+type ResourceQuery = {
+  project?: string;
+  tab?: string;
+  edit?: string;
+  q?: string;
+  owner?: string;
+  status?: string;
+  page?: string;
+  page2?: string;
+  per?: string;
+};
+
+// Deux listes vivent sur l'onglet « Cahier des charges » : chacune a sa page
+// (`page` et `page2`), la taille de page est commune.
+type PageKey = "page" | "page2";
+
+function matches(q: string, ...fields: (string | null | undefined)[]): boolean {
+  if (!q) return true;
+  return fields.some((f) => (f ?? "").toLowerCase().includes(q));
+}
+
 const BASE_TABS = [
   { id: "api", label: "APIs & clés" },
   { id: "url", label: "URLs & accès" },
@@ -27,7 +58,7 @@ const BASE_TABS = [
 export default async function ResourcesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string; tab?: string; edit?: string }>;
+  searchParams: Promise<ResourceQuery>;
 }) {
   const user = await requireUser();
   const sp = await searchParams;
@@ -43,6 +74,42 @@ export default async function ResourcesPage({
   const project = projects.find((p) => p.id === activeProjectId);
   const tabs = [...BASE_TABS, ...customCategories.map((c) => ({ id: `custom:${c.id}`, label: c.name }))];
 
+  const filters: ResourceFilters = {
+    q: (sp.q ?? "").trim().toLowerCase(),
+    owner: sp.owner ?? "",
+    status: sp.status ?? "",
+  };
+  const { page, perPage } = parsePaging(sp.page, sp.per);
+  const { page: page2 } = parsePaging(sp.page2, sp.per);
+
+  // Les liens de page reconduisent le projet, l'onglet et les filtres : changer
+  // de page ne doit rien défaire de ce qu'on a choisi.
+  function pageHref(key: PageKey, target: number, per: number) {
+    const query = new URLSearchParams();
+    if (activeProjectId) query.set("project", activeProjectId);
+    query.set("tab", activeTab);
+    if (sp.q) query.set("q", sp.q);
+    if (sp.owner) query.set("owner", sp.owner);
+    if (sp.status) query.set("status", sp.status);
+    const other: PageKey = key === "page" ? "page2" : "page";
+    const otherValue = key === "page" ? sp.page2 : sp.page;
+    if (otherValue && per === perPage) query.set(other, otherValue);
+    if (target > 1) query.set(key, String(target));
+    query.set("per", String(per));
+    return `/resources?${query}`;
+  }
+
+  // Le statut n'a de sens que sur les maquettes (valeurs fixes) et les
+  // documents (valeurs libres, reprises de celles déjà saisies).
+  const statusOptions =
+    activeTab === "mock"
+      ? MOCKUP_STATUSES.map((s) => ({ value: s, label: MOCKUP_STATUS_LABEL[s] }))
+      : activeTab === "doc" && panel?.kind === "doc"
+        ? [...new Set([...panel.cdc, ...panel.techDocs].map((d) => d.status).filter(Boolean))]
+            .sort((a, b) => a.localeCompare(b, "fr"))
+            .map((s) => ({ value: s, label: s }))
+        : [];
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -50,19 +117,71 @@ export default async function ResourcesPage({
         <p className="mt-1 text-sm text-muted">APIs, URLs, comptes de test, maquettes, cahier des charges</p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {projects.map((p) => (
+      {/* Un formulaire GET : chaque filtre s'écrit dans l'adresse, et les
+          critères se combinent. Changer de projet garde l'onglet s'il est
+          commun à tous ; celui d'une catégorie propre au projet quitté ne le
+          serait pas, l'API retombe alors sur le premier. */}
+      <form method="get" action="/resources" className="flex flex-wrap items-end gap-2 text-xs">
+        {!activeTab.startsWith("custom:") ? <input type="hidden" name="tab" value={activeTab} /> : null}
+        <input type="hidden" name="per" value={perPage} />
+        <label className="flex flex-col gap-1 text-muted">
+          Projet
+          <select name="project" defaultValue={activeProjectId ?? ""} className="input h-9 w-64 py-0 text-xs">
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {projectLabel(p.client.name, p.name)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-muted">
+          Recherche
+          <input
+            name="q"
+            defaultValue={sp.q ?? ""}
+            placeholder="Nom, URL, identifiant, note…"
+            className="input h-9 w-64 py-0 text-xs"
+          />
+        </label>
+        {activeTab === "api" ? (
+          <label className="flex flex-col gap-1 text-muted">
+            Personne
+            <select name="owner" defaultValue={filters.owner} className="input h-9 w-44 py-0 text-xs">
+              <option value="">Tout le monde</option>
+              {team.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+              <option value="none">Sans propriétaire</option>
+            </select>
+          </label>
+        ) : null}
+        {statusOptions.length ? (
+          <label className="flex flex-col gap-1 text-muted">
+            Statut
+            <select name="status" defaultValue={filters.status} className="input h-9 w-44 py-0 text-xs">
+              <option value="">Tous statuts</option>
+              {statusOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        <button type="submit" className="h-9 rounded-lg bg-mint px-4 font-semibold text-bg transition hover:brightness-110">
+          Filtrer
+        </button>
+        {filters.q || filters.owner || filters.status ? (
           <Link
-            key={p.id}
-            href={`/resources?project=${p.id}`}
-            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-              activeProjectId === p.id ? "border-mint/40 bg-mint/10 text-text" : "border-border text-muted hover:text-text"
-            }`}
+            href={`/resources?project=${activeProjectId ?? ""}&tab=${activeTab}`}
+            className="self-center font-medium text-mint hover:underline"
           >
-            {p.client.name}
+            Réinitialiser les filtres
           </Link>
-        ))}
-      </div>
+        ) : null}
+      </form>
 
       {!project ? (
         <p className="rounded-xl border border-border bg-panel px-5 py-6 text-sm text-muted">Aucun projet disponible.</p>
@@ -82,7 +201,18 @@ export default async function ResourcesPage({
             ))}
           </div>
 
-          <ResourceTabContent projectId={project.id} activeTab={activeTab} team={team} customCategories={customCategories} panel={panel} canUploadCdc={user.role === "PM"} editId={sp.edit} />
+          <ResourceTabContent
+            projectId={project.id}
+            activeTab={activeTab}
+            team={team}
+            customCategories={customCategories}
+            panel={panel}
+            canUploadCdc={user.role === "PM"}
+            editId={sp.edit}
+            filters={filters}
+            paging={{ page, page2, perPage }}
+            pageHref={pageHref}
+          />
 
           <NewCategoryForm projectId={project.id} />
         </>
@@ -99,6 +229,9 @@ async function ResourceTabContent({
   panel,
   canUploadCdc,
   editId,
+  filters,
+  paging,
+  pageHref,
 }: {
   projectId: string;
   activeTab: string;
@@ -107,15 +240,41 @@ async function ResourceTabContent({
   panel: ResourcePanel | null;
   canUploadCdc: boolean;
   editId?: string;
+  filters: ResourceFilters;
+  paging: { page: number; page2: number; perPage: number };
+  pageHref: (key: PageKey, page: number, perPage: number) => string;
 }) {
+  const { q } = filters;
+  // Pied de liste : la pagination, dès qu'il y a quelque chose à paginer.
+  const footer = (key: PageKey, pg: { page: number; pageCount: number; total: number }) =>
+    pg.total > 0 ? (
+      <Pagination
+        page={pg.page}
+        pageCount={pg.pageCount}
+        perPage={paging.perPage}
+        total={pg.total}
+        hrefFor={(target, per) => pageHref(key, target, per)}
+      />
+    ) : null;
+
   if (activeTab === "api") {
-    const apis = panel?.kind === "api" ? panel.apis : [];
+    const allApis = panel?.kind === "api" ? panel.apis : [];
     // L'identifiant peut désigner une ligne d'un autre projet ou déjà effacée :
     // on ne reprend que ce qui est bien devant nous.
-    const editApi = editId ? apis.find((a) => a.id === editId) : undefined;
+    const editApi = editId ? allApis.find((a) => a.id === editId) : undefined;
+    const pg = paginate(
+      allApis.filter(
+        (a) =>
+          matches(q, a.name, a.role, a.env, a.baseUrl, a.authType, a.expiryNote, a.owner?.name) &&
+          (!filters.owner || (a.ownerId ?? "none") === filters.owner),
+      ),
+      paging.page,
+      paging.perPage,
+    );
+    const apis = pg.rows;
     return (
       <div className="flex flex-col gap-3">
-        {apis.length === 0 ? <EmptyState /> : (
+        {allApis.length === 0 ? <EmptyState /> : pg.total === 0 ? <NoMatch /> : (
           <div className="overflow-x-auto rounded-xl border border-border bg-panel">
             <table className="w-full min-w-[800px] border-collapse text-sm">
               <thead><tr className="border-b border-border text-left text-xs text-muted">
@@ -160,6 +319,7 @@ async function ResourceTabContent({
             </table>
           </div>
         )}
+        {footer("page", pg)}
         {/* Un seul formulaire pour les deux gestes : `edit` désigne la ligne à
             reprendre, et le champ caché bascule l'action. Ouvert d'office en
             modification, pour ne pas avoir à déplier après avoir cliqué. */}
@@ -200,11 +360,17 @@ async function ResourceTabContent({
   }
 
   if (activeTab === "url") {
-    const urls = panel?.kind === "url" ? panel.urls : [];
-    const editUrl = editId ? urls.find((u) => u.id === editId) : undefined;
+    const allUrls = panel?.kind === "url" ? panel.urls : [];
+    const editUrl = editId ? allUrls.find((u) => u.id === editId) : undefined;
+    const pg = paginate(
+      allUrls.filter((u) => matches(q, u.env, u.url, u.access, u.deployNote)),
+      paging.page,
+      paging.perPage,
+    );
+    const urls = pg.rows;
     return (
       <div className="flex flex-col gap-3">
-        {urls.length === 0 ? <EmptyState /> : (
+        {allUrls.length === 0 ? <EmptyState /> : pg.total === 0 ? <NoMatch /> : (
           <div className="overflow-x-auto rounded-xl border border-border bg-panel">
             <table className="w-full min-w-[700px] border-collapse text-sm">
               <thead><tr className="border-b border-border text-left text-xs text-muted">
@@ -231,6 +397,7 @@ async function ResourceTabContent({
             </table>
           </div>
         )}
+        {footer("page", pg)}
         <details open={!!editUrl}>
           <summary className="cursor-pointer text-xs font-medium text-mint">
             {editUrl ? `Modifier · ${editUrl.env}` : "+ Ajouter une URL"}
@@ -252,11 +419,17 @@ async function ResourceTabContent({
   }
 
   if (activeTab === "acc") {
-    const accounts = panel?.kind === "acc" ? panel.accounts : [];
-    const editAcc = editId ? accounts.find((a) => a.id === editId) : undefined;
+    const allAccounts = panel?.kind === "acc" ? panel.accounts : [];
+    const editAcc = editId ? allAccounts.find((a) => a.id === editId) : undefined;
+    const pg = paginate(
+      allAccounts.filter((a) => matches(q, a.role, a.login, a.env, a.note)),
+      paging.page,
+      paging.perPage,
+    );
+    const accounts = pg.rows;
     return (
       <div className="flex flex-col gap-3">
-        {accounts.length === 0 ? <EmptyState /> : (
+        {allAccounts.length === 0 ? <EmptyState /> : pg.total === 0 ? <NoMatch /> : (
           <div className="overflow-x-auto rounded-xl border border-border bg-panel">
             <table className="w-full min-w-[700px] border-collapse text-sm">
               <thead><tr className="border-b border-border text-left text-xs text-muted">
@@ -284,6 +457,7 @@ async function ResourceTabContent({
             </table>
           </div>
         )}
+        {footer("page", pg)}
         <details open={!!editAcc}>
           <summary className="cursor-pointer text-xs font-medium text-mint">
             {editAcc ? `Modifier · ${editAcc.role}` : "+ Ajouter un compte"}
@@ -306,9 +480,17 @@ async function ResourceTabContent({
   }
 
   if (activeTab === "mock") {
-    const mockups = panel?.kind === "mock" ? panel.mockups : [];
+    const allMockups = panel?.kind === "mock" ? panel.mockups : [];
     const sources = panel?.kind === "mock" ? panel.sources : [];
-    const editMock = editId ? mockups.find((m) => m.id === editId) : undefined;
+    const editMock = editId ? allMockups.find((m) => m.id === editId) : undefined;
+    const pg = paginate(
+      allMockups.filter(
+        (m) => matches(q, m.name, m.version) && (!filters.status || m.status === filters.status),
+      ),
+      paging.page,
+      paging.perPage,
+    );
+    const mockups = pg.rows;
     return (
       <div className="flex flex-col gap-4">
         {sources.length > 0 ? (
@@ -320,7 +502,7 @@ async function ResourceTabContent({
             ))}
           </div>
         ) : null}
-        {mockups.length === 0 ? <EmptyState /> : (
+        {allMockups.length === 0 ? <EmptyState /> : pg.total === 0 ? <NoMatch /> : (
           <div className="grid grid-cols-3 gap-3">
             {mockups.map((m) => (
               <div key={m.id} className="rounded-xl border border-border bg-panel p-4">
@@ -340,6 +522,7 @@ async function ResourceTabContent({
             ))}
           </div>
         )}
+        {footer("page", pg)}
         <details open={!!editMock}>
           <summary className="cursor-pointer text-xs font-medium text-mint">
             {editMock ? `Modifier · ${editMock.name}` : "+ Ajouter un écran"}
@@ -363,16 +546,29 @@ async function ResourceTabContent({
   }
 
   if (activeTab === "doc") {
-    const cdc = panel?.kind === "doc" ? panel.cdc : [];
-    const techDocs = panel?.kind === "doc" ? panel.techDocs : [];
-    const editCdc = editId ? cdc.find((c) => c.id === editId) : undefined;
-    const editTech = editId ? techDocs.find((t) => t.id === editId) : undefined;
+    const allCdc = panel?.kind === "doc" ? panel.cdc : [];
+    const allTechDocs = panel?.kind === "doc" ? panel.techDocs : [];
+    const editCdc = editId ? allCdc.find((c) => c.id === editId) : undefined;
+    const editTech = editId ? allTechDocs.find((t) => t.id === editId) : undefined;
+    const byStatus = (status: string) => !filters.status || status === filters.status;
+    const pgCdc = paginate(
+      allCdc.filter((c) => matches(q, c.name, c.version, c.meta) && byStatus(c.status)),
+      paging.page,
+      paging.perPage,
+    );
+    const pgTech = paginate(
+      allTechDocs.filter((t) => matches(q, t.name, t.ext, t.meta) && byStatus(t.status)),
+      paging.page2,
+      paging.perPage,
+    );
+    const cdc = pgCdc.rows;
+    const techDocs = pgTech.rows;
     return (
       <div className="grid grid-cols-2 gap-6">
         <div className="rounded-xl border border-border bg-panel p-5">
           <h3 className="text-sm font-semibold text-text">Cahier des charges</h3>
           <div className="mt-3 flex flex-col gap-2">
-            {cdc.length === 0 ? <EmptyState /> : cdc.map((c) => (
+            {allCdc.length === 0 ? <EmptyState /> : pgCdc.total === 0 ? <NoMatch /> : cdc.map((c) => (
               <div key={c.id} className="rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-text">{c.name}</span>
@@ -390,6 +586,7 @@ async function ResourceTabContent({
               </div>
             ))}
           </div>
+          <div className="mt-3">{footer("page", pgCdc)}</div>
           {canUploadCdc ? (
             <details className="mt-3" open={!!editCdc}>
               <summary className="cursor-pointer text-xs font-medium text-mint">
@@ -414,7 +611,7 @@ async function ResourceTabContent({
         <div className="rounded-xl border border-border bg-panel p-5">
           <h3 className="text-sm font-semibold text-text">Documents techniques</h3>
           <div className="mt-3 flex flex-col gap-2">
-            {techDocs.length === 0 ? <EmptyState /> : techDocs.map((t) => (
+            {allTechDocs.length === 0 ? <EmptyState /> : pgTech.total === 0 ? <NoMatch /> : techDocs.map((t) => (
               <div key={t.id} className="rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-text">{t.name}</span>
@@ -430,6 +627,7 @@ async function ResourceTabContent({
               </div>
             ))}
           </div>
+          <div className="mt-3">{footer("page2", pgTech)}</div>
           <details className="mt-3" open={!!editTech}>
             <summary className="cursor-pointer text-xs font-medium text-mint">
               {editTech ? `Modifier · ${editTech.name}` : "+ Ajouter un document"}
@@ -457,6 +655,11 @@ async function ResourceTabContent({
     if (!category) return <EmptyState />;
     const columns: string[] = JSON.parse(category.columns);
     const editRow = editId ? category.rows.find((r) => r.id === editId) : undefined;
+    const pg = paginate(
+      category.rows.filter((r) => matches(q, ...(JSON.parse(r.data) as string[]))),
+      paging.page,
+      paging.perPage,
+    );
     const editCategorie = editId === category.id;
     return (
       <div className="rounded-xl border border-border bg-panel p-5">
@@ -496,7 +699,7 @@ async function ResourceTabContent({
               <th className="px-3 py-2 font-medium"></th>
             </tr></thead>
             <tbody className="divide-y divide-border">
-              {category.rows.map((r) => {
+              {pg.rows.map((r) => {
                 const values: string[] = JSON.parse(r.data);
                 return (
                   <tr key={r.id}>
@@ -512,7 +715,9 @@ async function ResourceTabContent({
               })}
             </tbody>
           </table>
+          {category.rows.length > 0 && pg.total === 0 ? <NoMatch /> : null}
         </div>
+        <div className="mt-3">{footer("page", pg)}</div>
         <details className="mt-3" open={!!editRow}>
           <summary className="cursor-pointer text-xs font-medium text-mint">
             {editRow ? "Modifier la ligne" : "+ Ajouter une ligne"}
@@ -584,6 +789,10 @@ function AnnulerLien({ href }: { href: string }) {
       Annuler
     </Link>
   );
+}
+
+function NoMatch() {
+  return <p className="rounded-xl border border-border bg-panel px-5 py-6 text-sm text-muted">Aucune ressource pour ces filtres.</p>;
 }
 
 function EmptyState() {

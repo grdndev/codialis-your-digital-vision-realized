@@ -74,6 +74,12 @@ model User {
   jobTitle String? @db.VarChar(255)
   photo    String? @db.LongText
 
+  // Couleurs du back-office choisies par la personne dans Paramètres (CC-353) :
+  // un objet JSON { jeton: "#rrggbb" } où ne figurent que les couleurs
+  // modifiées. NULL = couleurs de l'agence. Réglage personnel : il ne change
+  // l'écran de personne d'autre.
+  themeColors String? @db.Text
+
   // Soldes « à ancre » : la direction saisit un solde réel et la date du jour
   // devient l'ancre ; l'affiché est recalculé à partir de là (voir
   // src/lib/balances.ts). NULL = jamais défini — aucun congé payé ne peut alors
@@ -104,6 +110,7 @@ model User {
 
   dealNotes             DealNote[]
   invoiceComments       InvoiceComment[]
+  monthlyGoals          MonthlyGoal[]
   messages              Message[]
   threadMemberships     ThreadParticipant[]
   ownedApis             ApiCredential[]
@@ -158,6 +165,18 @@ model Project {
   costAmount     Float?
   createdAt      DateTime     @default(now())
 
+  // Couverture après livraison (CC-351) : dernier jour couvert par la garantie
+  // et par la maintenance, à minuit UTC comme `deadlineAt`. Les deux se
+  // cumulent et ne dépendent pas de la phase : un projet peut être en
+  // maintenance sous contrat tout en restant sous garantie. NULL = pas couvert.
+  warrantyEndsAt    DateTime?
+  maintenanceEndsAt DateTime?
+
+  // Échéancier de facturation (CC-350) : pourcentages du prix total
+  // (`soldAmount`) séparés par des virgules, « 30,40,30 » par exemple. NULL =
+  // l'échéancier habituel de l'agence (voir src/lib/billing.ts).
+  billingPlan String? @db.VarChar(20)
+
   epics                Epic[]
   tickets              Ticket[]
   assignments          ProjectAssignment[]
@@ -179,6 +198,28 @@ model Project {
   actionItems          ActionItem[]
   deals                Deal[]
   timeEntries          TimeEntry[]
+  monthlyGoals         MonthlyGoal[]
+}
+
+// Objectifs du mois (CC-347), posés par la direction et affichés à toute
+// l'équipe sur le Dashboard : un intitulé, une échéance, et facultativement le
+// projet dont l'avancement dit où l'on en est. `doneAt` date l'objectif atteint.
+// Auteur et projet sont facultatifs pour la même raison que partout ailleurs
+// (DEC-032) : supprimer un compte ou un projet ne fait pas disparaître
+// l'objectif, il perd seulement son rattachement.
+model MonthlyGoal {
+  id        String    @id @default(cuid())
+  title     String    @db.VarChar(300)
+  detail    String    @db.Text
+  dueAt     DateTime
+  projectId String?
+  project   Project?  @relation(fields: [projectId], references: [id])
+  authorId  String?
+  author    User?     @relation(fields: [authorId], references: [id])
+  doneAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([dueAt])
 }
 
 model ProjectAssignment {
@@ -609,8 +650,17 @@ model Invoice {
   dueAt     DateTime?
   paidAt    DateTime?
   status    InvoiceStatus
+  // Rang de l'échéance du projet que la facture règle (0 = acompte), posé à
+  // la création depuis l'échéancier (CC-350). NULL = facture libre, hors
+  // échéancier : un avenant, une prestation en plus.
+  milestone Int?
 
   comments InvoiceComment[]
+
+  // Une échéance ne se facture qu'une fois : un double clic sur « facture
+  // suivante » ne doit pas émettre deux acomptes. Les factures libres (NULL)
+  // n'y sont pas soumises, MySQL admettant plusieurs NULL dans un index unique.
+  @@unique([projectId, milestone])
 }
 
 // Historique d'une facture : relances, promesses de paiement, échanges avec le

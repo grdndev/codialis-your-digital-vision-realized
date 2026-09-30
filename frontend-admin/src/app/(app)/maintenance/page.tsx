@@ -2,13 +2,13 @@ import Link from "next/link";
 import { apiGet } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import type { MaintenanceScreen } from "./types";
-import { fmtHours, fmtEUR, fmtDate, daysFromNow, projectLabel } from "@/lib/format";
+import { fmtHours, fmtEUR, fmtDate, daysFromNow, projectLabel, coverageStatus } from "@/lib/format";
 import { startMaintenanceContractAction } from "./actions";
 
 export default async function MaintenancePage() {
   await requireRole("PM", "DIR");
 
-  const { warranty, contracts } = await apiGet<MaintenanceScreen>("/api/admin/maintenance");
+  const { warranty, contracts, maintained } = await apiGet<MaintenanceScreen>("/api/admin/maintenance");
 
   return (
     <div className="flex flex-col gap-6">
@@ -16,6 +16,7 @@ export default async function MaintenancePage() {
         <h1 className="text-xl font-semibold text-text">Maintenance &amp; garantie</h1>
         <p className="mt-1 text-sm text-muted">
           {warranty.length} projets sous garantie · {contracts.length} contrats actifs
+          {maintained.length ? ` · ${maintained.length} sous maintenance sans contrat` : ""}
         </p>
       </div>
 
@@ -26,7 +27,10 @@ export default async function MaintenancePage() {
             <p className="px-5 py-4 text-sm text-muted">Aucun projet sous garantie.</p>
           ) : (
             warranty.map((p) => {
-              const days = p.deadlineAt ? daysFromNow(p.deadlineAt) : null;
+              // La date de fin de garantie (CC-351) prime ; les projets d'avant
+              // n'avaient que l'échéance pour la porter.
+              const end = p.warrantyEndsAt ?? p.deadlineAt;
+              const days = end ? daysFromNow(end) : null;
               return (
                 <div key={p.id} className="flex items-center justify-between gap-4 px-5 py-3 text-sm">
                   <div className="min-w-0">
@@ -35,7 +39,11 @@ export default async function MaintenancePage() {
                   </div>
                   <div className="flex shrink-0 items-center gap-4">
                     <span className={days !== null && days <= 10 ? "font-medium text-amber" : "text-muted"}>
-                      {days !== null ? (days >= 0 ? `garantie · ${days} j` : "garantie échue") : "—"}
+                      {days !== null && end
+                        ? days >= 0
+                          ? `garantie jusqu’au ${fmtDate(end)} · ${days} j`
+                          : `garantie échue le ${fmtDate(end)}`
+                        : "fin de garantie non renseignée"}
                     </span>
                     <details>
                       <summary className="cursor-pointer list-none rounded-lg border border-border px-2.5 py-1.5 text-xs text-muted hover:text-text">Proposer un contrat</summary>
@@ -60,7 +68,8 @@ export default async function MaintenancePage() {
           <table className="w-full min-w-[700px] border-collapse text-sm">
             <thead><tr className="border-b border-border text-left text-xs text-muted">
               <th className="px-5 py-3 font-medium">Client</th><th className="px-5 py-3 font-medium">Prix</th>
-              <th className="px-5 py-3 font-medium">Heures du mois</th><th className="px-5 py-3 font-medium">Renouvellement</th>
+              <th className="px-5 py-3 font-medium">Heures du mois</th><th className="px-5 py-3 font-medium">Fin de maintenance</th>
+              <th className="px-5 py-3 font-medium">Renouvellement</th>
             </tr></thead>
             <tbody className="divide-y divide-border">
               {contracts.map((c) => {
@@ -74,6 +83,9 @@ export default async function MaintenancePage() {
                     <td className="whitespace-nowrap px-5 py-3">
                       <span className={over ? "font-medium text-amber" : "text-muted"}>{fmtHours(c.usedHoursThisMonth)} / {fmtHours(c.includedHours)}</span>
                     </td>
+                    <td className="whitespace-nowrap px-5 py-3 text-muted">
+                      {coverageStatus(c.project.maintenanceEndsAt)?.text ?? "—"}
+                    </td>
                     <td className="whitespace-nowrap px-5 py-3 text-muted">{c.renewalNote}</td>
                   </tr>
                 );
@@ -82,6 +94,27 @@ export default async function MaintenancePage() {
           </table>
         </div>
       </div>
+
+      {maintained.length ? (
+        <div className="rounded-xl border border-border bg-panel">
+          <div className="border-b border-border px-5 py-3">
+            <h2 className="text-sm font-semibold text-text">Sous maintenance, sans contrat enregistré</h2>
+          </div>
+          <div className="flex flex-col divide-y divide-border">
+            {maintained.map((p) => {
+              const status = coverageStatus(p.maintenanceEndsAt);
+              return (
+                <div key={p.id} className="flex items-center justify-between gap-4 px-5 py-3 text-sm">
+                  <Link href={`/projects/${p.id}`} className="text-text hover:text-mint">{projectLabel(p.client.name, p.name)}</Link>
+                  <span className={status && status.active && status.days <= 30 ? "font-medium text-amber" : "text-muted"}>
+                    {status ? `maintenance ${status.text}` : "fin de maintenance non renseignée"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -43,10 +43,14 @@ export const GET = adminRoute(
       SEVERITIES.includes(s as Severity),
     ) as Severity[];
 
-    // « Assigné à » n'est pas une liste : les trois cas s'excluent. `me` est le
-    // cas courant — on ouvre l'écran pour voir ce qu'on a à faire — et c'est
-    // pour cela que l'écran l'applique par défaut.
+    // « Assigné à » vaut `me`, `none` ou `all` sur l'écran : les trois cas
+    // s'excluent. `me` est le cas courant — on ouvre l'écran pour voir ce qu'on
+    // a à faire — et c'est pour cela que l'écran l'applique par défaut.
+    // L'export, lui, désigne des PERSONNES : une liste d'identifiants de
+    // comptes, où `none` ajoute les tickets sans assigné.
     const assigneeFilter = params.get("assignee");
+    const assigneeIds =
+      assigneeFilter && !["me", "none", "all"].includes(assigneeFilter) ? listOf("assignee") : [];
 
     // Recherche libre. Elle porte sur la référence, le titre, la description et
     // les étapes de reproduction : on cherche un ticket soit par son numéro,
@@ -57,6 +61,17 @@ export const GET = adminRoute(
     const where: Prisma.TicketWhereInput = {};
     if (assigneeFilter === "me") where.assigneeId = user.id;
     else if (assigneeFilter === "none") where.assigneeId = null;
+    else if (assigneeIds.length) {
+      const ids = assigneeIds.filter((id) => id !== "none");
+      where.AND = [
+        {
+          OR: [
+            ...(ids.length ? [{ assigneeId: { in: ids } }] : []),
+            ...(assigneeIds.includes("none") ? [{ assigneeId: null }] : []),
+          ],
+        },
+      ];
+    }
     if (projectFilter.length) where.projectId = { in: projectFilter };
     if (typeFilter.length) where.type = { in: typeFilter };
     if (statusFilter.length) where.status = { in: statusFilter };

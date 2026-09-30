@@ -233,6 +233,16 @@ export function parseMultiline(value: unknown): string {
     .trim();
 }
 
+// Garantie ou maintenance d'un projet (CC-351). La date est le DERNIER jour
+// couvert : le compte à rebours arrondi au jour supérieur le garde « couvert »
+// jusqu'au soir de ce jour-là, et « échu » dès le lendemain.
+export function coverageStatus(end: Date | null): { active: boolean; days: number; text: string } | null {
+  if (!end) return null;
+  const days = daysFromNow(end);
+  if (days < 0) return { active: false, days, text: `échue le ${fmtDate(end)}` };
+  return { active: true, days, text: `jusqu’au ${fmtDate(end)} · ${days} j` };
+}
+
 // Pourcentage d'une part sur un tout. Un tout nul ou absent vaut 0 % et non
 // NaN : un projet fraîchement ouvert n'a ni heures vendues ni montant, et
 // « NaN% » s'affichait tel quel à l'écran.

@@ -6,6 +6,7 @@ import { apiGet } from "@/lib/api";
 import { SESSION_COOKIE } from "@/lib/session-cookie";
 import { defaultPathFor } from "@/lib/nav";
 import type { Role, SessionUser } from "@/lib/types";
+import type { ThemeColors } from "@/lib/theme";
 
 export { SESSION_COOKIE };
 
@@ -47,16 +48,25 @@ export async function clearSessionCookie() {
 // `cache()` déduplique l'appel sur la durée d'une requête : le layout et la
 // page qu'il enveloppe demandent tous les deux l'utilisateur courant, mais le
 // backend n'est interrogé qu'une fois.
-export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
+const getSession = cache(async (): Promise<{ user: SessionUser; theme: ThemeColors | null } | null> => {
   const store = await cookies();
   if (!store.get(SESSION_COOKIE)) return null;
   try {
-    const { user } = await apiGet<{ user: SessionUser }>("/api/admin/me");
-    return user;
+    return await apiGet<{ user: SessionUser; theme: ThemeColors | null }>("/api/admin/me");
   } catch {
     return null;
   }
 });
+
+export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
+  return (await getSession())?.user ?? null;
+});
+
+// Couleurs choisies par la personne connectée, lues dans le même appel que
+// son identité : aucune requête de plus par page.
+export async function getCurrentTheme(): Promise<ThemeColors | null> {
+  return (await getSession())?.theme ?? null;
+}
 
 export async function requireUser(): Promise<SessionUser> {
   const user = await getCurrentUser();

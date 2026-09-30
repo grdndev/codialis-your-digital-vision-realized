@@ -5,12 +5,38 @@ import { DEFAULT_SCHEDULE } from "@/lib/work-time";
 
 export const dynamic = "force-dynamic";
 
+// Couleurs du back-office qu'une personne peut changer pour elle-même (CC-353).
+// Les noms sont ceux des variables CSS de frontend-admin (`--color-<nom>`) ;
+// les couleurs d'état — alerte, erreur, information — n'y figurent pas, elles
+// portent un sens qui doit rester le même pour toute l'équipe.
+const THEME_KEYS = ["bg", "panel", "panel-2", "border", "text", "muted", "mint"] as const;
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+// Relecture défensive : une valeur qui ne serait pas une couleur hexadécimale
+// finirait telle quelle dans une feuille de style.
+function readThemeColors(raw: string | null): Record<string, string> | null {
+  if (!raw) return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    const colors: Record<string, string> = {};
+    for (const key of THEME_KEYS) {
+      const value = (parsed as Record<string, unknown>)[key];
+      if (typeof value === "string" && HEX_COLOR.test(value)) colors[key] = value.toLowerCase();
+    }
+    return Object.keys(colors).length ? colors : null;
+  } catch {
+    return null;
+  }
+}
+
 // GET /api/admin/me — identité de la session, pour le bandeau et les gardes de
 // rôle du frontend, plus les réglages personnels de l'écran Paramètres. Ni le
 // hash du mot de passe ni les relations ne sortent.
 //
 // `user` garde exactement la forme qu'attendent les layouts : les réglages
-// arrivent à côté, dans `settings`, pour ne pas alourdir la session.
+// arrivent à côté, dans `settings`, pour ne pas alourdir la session. `theme`
+// est à part parce que CHAQUE page le lit pour poser ses couleurs.
 export const GET = adminRoute([], async ({ user }) => {
   // La réponse automatique d'absence est propre à la personne connectée
   // (`AbsenceSetting.pmId`) et ne concerne que celles qui suivent des clients.
@@ -42,6 +68,7 @@ export const GET = adminRoute([], async ({ user }) => {
       role: user.role,
       clientId: user.clientId,
     },
+    theme: readThemeColors(user.themeColors),
     settings: {
       jobTitle: user.jobTitle,
       photo: user.photo,
@@ -96,6 +123,12 @@ const bodySchema = z.discriminatedUnion("action", [
     message: z.string().max(2000),
   }),
   z.object({ action: z.literal("toggle-absence-enabled") }),
+  // Seules les couleurs qui s'écartent de celles de l'agence sont envoyées ;
+  // un objet vide revient aux couleurs par défaut.
+  z.object({
+    action: z.literal("set-theme-colors"),
+    colors: z.partialRecord(z.enum(THEME_KEYS), z.string().regex(HEX_COLOR)),
+  }),
 ]);
 
 // POST /api/admin/me — ses propres réglages, jamais ceux d'un autre : la clé
@@ -168,6 +201,17 @@ export const POST = adminRoute([], async ({ user, }, request) => {
         where: { pmId: user.id },
         update: data,
         create: { pmId: user.id, ...data },
+      });
+      return;
+    }
+
+    case "set-theme-colors": {
+      const colors = Object.fromEntries(
+        Object.entries(body.colors).map(([key, value]) => [key, value.toLowerCase()]),
+      );
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { themeColors: Object.keys(colors).length ? JSON.stringify(colors) : null },
       });
       return;
     }

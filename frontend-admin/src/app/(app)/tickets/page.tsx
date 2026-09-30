@@ -15,6 +15,8 @@ import {
 import type { Severity, TaskStatus } from "@/lib/types";
 import { bulkUpdateTicketsAction, setTicketStatusAction } from "./actions";
 import { SelectAllTickets, TicketSelection } from "./selection";
+import { FilterGroup, FilterLink } from "../list-controls";
+import { TicketExportPanel } from "./export-panel";
 import type { TicketsScreen } from "./types";
 
 const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
@@ -121,6 +123,7 @@ export default async function TicketsPage({
               Kanban
             </Link>
           </div>
+          <TicketExportPanel people={team} projects={projects} />
           <Link href="/tickets/new" className="rounded-lg bg-mint px-3 py-2 text-xs font-semibold text-bg">
             + Nouveau ticket
           </Link>
@@ -449,25 +452,5 @@ function MoveButton({
         {label}
       </button>
     </form>
-  );
-}
-
-// Un groupe de choix ne se coupe pas : `flex-nowrap` garde « Tous types ·
-// Bugs · Développement » d'un seul tenant, le retour à la ligne se fait entre
-// les groupes.
-function FilterGroup({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-nowrap items-center gap-2">{children}</div>;
-}
-
-function FilterLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className={`whitespace-nowrap rounded-full border px-2.5 py-1 transition ${
-        active ? "border-mint/40 bg-mint/10 text-text" : "border-border text-muted hover:text-text"
-      }`}
-    >
-      {children}
-    </Link>
   );
 }

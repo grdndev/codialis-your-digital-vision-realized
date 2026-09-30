@@ -108,6 +108,9 @@ export function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
+// Les icônes de l'onglet (favicon, icon, apple-icon) sont servies sans session :
+// la page de connexion les demande aussi, et une redirection vers /login à leur
+// place laissait l'onglet sans icône.
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon|apple-icon).*)"],
 };

@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
 import { createClientAction, createProjectAction } from "./actions";
 import type { ProjectsScreen } from "./types";
-import { fmtHours, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, projectLabel } from "@/lib/format";
+import { fmtHours, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, projectLabel, coverageStatus } from "@/lib/format";
 import type { ProjectGroup } from "@/lib/types";
 
 const PHASES: { id: "all" | ProjectGroup; label: string }[] = [
@@ -134,6 +134,8 @@ export default async function ProjectsPage({
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${GROUP_BADGE_CLASS[p.group]}`}>
                       {p.phaseLabel || GROUP_LABEL[p.group]}
                     </span>
+                    <CoverageLine label="garantie" end={p.warrantyEndsAt} />
+                    <CoverageLine label="maintenance" end={p.maintenanceEndsAt} />
                   </td>
                   <td className="whitespace-nowrap px-5 py-3 text-muted">
                     {fmtHours(p.hoursSpent)} / {fmtHours(p.hoursSold)}
@@ -254,6 +256,18 @@ export default async function ProjectsPage({
       </div>
       ) : null}
     </div>
+  );
+}
+
+// Une couverture échue ne s'affiche plus dans la liste : elle ne dit plus rien
+// de ce qu'on doit au client. La fiche projet, elle, la garde en clair.
+function CoverageLine({ label, end }: { label: string; end: Date | null }) {
+  const status = coverageStatus(end);
+  if (!status?.active) return null;
+  return (
+    <p className={`mt-1 text-[11px] ${status.days <= 30 ? "text-amber" : "text-muted"}`}>
+      {label} {status.text}
+    </p>
   );
 }
 

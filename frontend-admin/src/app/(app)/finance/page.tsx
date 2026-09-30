@@ -1,9 +1,11 @@
 import { apiGet } from "@/lib/api";
 import { requireRole } from "@/lib/auth";
 import { ScreenTabs } from "./screen-tabs";
-import type { FinanceScreen, InvoiceRow } from "./types";
+import type { BillingRow, FinanceScreen, InvoiceRow } from "./types";
+import { InvoiceForm } from "./invoice-form";
 import { fmtHours, fmtEUR, fmtDate, pctOf, currentPeriodLabel, INVOICE_STATUS_BADGE_CLASS, INVOICE_STATUS_LABEL, projectLabel, authorName, authorInitials } from "@/lib/format";
-import { addInvoiceCommentAction, createInvoiceAction, markInvoicePaidAction, setInvoiceStatusAction, updateInvoiceAction, deleteInvoiceAction } from "./actions";
+import { addInvoiceCommentAction, markInvoicePaidAction, setInvoiceStatusAction, updateInvoiceAction, deleteInvoiceAction, updateProjectBillingAction, setInvoiceMilestoneAction } from "./actions";
+import type { ProjectWithClient } from "@/lib/dto";
 
 export default async function FinancePage({
   searchParams,
@@ -14,7 +16,8 @@ export default async function FinancePage({
   // Refus de l'API — une facture payée, par exemple — remonté dans l'URL.
   const { error } = await searchParams;
 
-  const { invoices, activeProjects, projects } = await apiGet<FinanceScreen>("/api/admin/finance");
+  const { invoices, activeProjects, projects, billing, planPresets } = await apiGet<FinanceScreen>("/api/admin/finance");
+  const billingByProject = new Map(billing.map((b) => [b.projectId, b]));
 
   const billed = invoices.reduce((s, i) => s + i.amount, 0);
   const collected = invoices.filter((i) => i.status === "PAYEE").reduce((s, i) => s + i.amount, 0);
@@ -79,6 +82,8 @@ export default async function FinancePage({
         </table>
       </div>
 
+      <BillingPlans projects={projects} billingByProject={billingByProject} planPresets={planPresets} />
+
       <div className="rounded-xl border border-border bg-panel p-5">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-text">Factures</h2>
@@ -89,7 +94,9 @@ export default async function FinancePage({
               <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-text">{inv.ref} · {inv.label}</p>
+                  {/* Le projet n'apparaissait que si le libellé le nommait. */}
                   <p className="text-xs text-muted">
+                    {projectLabel(inv.project.client.name, inv.project.name)} ·{" "}
                     {inv.status === "PAYEE" ? `payée ${fmtDate(inv.paidAt)}` : inv.dueAt ? `échue ${fmtDate(inv.dueAt)}` : `émise ${fmtDate(inv.issuedAt)}`}
                   </p>
                 </div>
@@ -144,24 +151,117 @@ export default async function FinancePage({
                   </div>
                 </details>
               ) : null}
+              <InvoiceMilestone invoice={inv} billing={billingByProject.get(inv.projectId)} />
               <InvoiceHistory invoice={inv} />
             </div>
           ))}
         </div>
         <details className="mt-4"><summary className="cursor-pointer text-xs font-medium text-mint">+ Créer une facture</summary>
-          <form action={createInvoiceAction} className="mt-2 grid grid-cols-4 gap-2">
-            <select name="projectId" className="input" required>
-              <option value="">Projet</option>
-              {projects.map((p) => <option key={p.id} value={p.id}>{projectLabel(p.client.name, p.name)}</option>)}
-            </select>
-            <input name="label" placeholder="Libellé (ex : jalon 3)" className="input" required />
-            <input name="amount" placeholder="Montant €" className="input" required />
-            <input name="dueAt" type="date" className="input" />
-            <button type="submit" className="col-span-4 rounded-lg bg-mint px-3 py-2 text-xs font-semibold text-bg">Créer la facture</button>
-          </form>
+          <InvoiceForm
+            projects={projects.map((p) => ({ id: p.id, label: projectLabel(p.client.name, p.name) }))}
+            nextByProject={Object.fromEntries(billing.map((b) => [b.projectId, b.next]))}
+          />
         </details>
       </div>
     </div>
+  );
+}
+
+const planLabel = (plan: string) => plan.split(",").join(" / ");
+
+// Échéancier de chaque projet ouvert (CC-350) : son prix total, son découpage
+// en pourcentages, ce qui en est déjà facturé et l'échéance qui vient. Le prix
+// est le « montant vendu » de la fiche projet : le changer ici le change
+// là-bas, et inversement.
+function BillingPlans({
+  projects,
+  billingByProject,
+  planPresets,
+}: {
+  projects: ProjectWithClient[];
+  billingByProject: Map<string, BillingRow>;
+  planPresets: string[];
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-panel p-5">
+      <h2 className="text-sm font-semibold text-text">Échéancier des projets</h2>
+      <p className="mt-1 text-xs text-muted">
+        Prix total et découpage de la facturation. « Créer une facture » propose ensuite
+        l’échéance suivante toute calculée ; le solde reprend ce qui reste réellement à
+        facturer, arrondis et changements de prix compris.
+      </p>
+      <div className="mt-3 flex flex-col divide-y divide-border text-sm">
+        {projects.map((p) => {
+          const b = billingByProject.get(p.id);
+          if (!b) return null;
+          const options = planPresets.includes(b.plan) ? planPresets : [b.plan, ...planPresets];
+          const remaining = b.total ? b.total - b.planInvoiced : null;
+          return (
+            <form key={p.id} action={updateProjectBillingAction} className="grid grid-cols-12 items-center gap-3 py-2.5">
+              <input type="hidden" name="projectId" value={p.id} />
+              <span className="col-span-3 truncate text-text">{projectLabel(p.client.name, p.name)}</span>
+              <label className="col-span-2 flex items-center gap-1.5 text-xs text-muted">
+                <input name="total" defaultValue={b.total ?? ""} placeholder="Prix total €" className="input text-xs" aria-label="Prix total" />
+              </label>
+              <select name="plan" defaultValue={b.plan} className="input col-span-2 text-xs" aria-label="Échéancier">
+                {options.map((o) => (
+                  <option key={o} value={o}>
+                    {planLabel(o)}
+                  </option>
+                ))}
+              </select>
+              <span className="col-span-2 text-xs text-muted">
+                facturé {fmtEUR(b.planInvoiced)}
+                {remaining !== null ? ` · reste ${fmtEUR(remaining)}` : ""}
+                {b.extraInvoiced ? ` · + ${fmtEUR(b.extraInvoiced)} hors échéancier` : ""}
+              </span>
+              <span className="col-span-2 text-xs">
+                {b.next.status === "next" ? (
+                  <span className="text-mint">
+                    à venir : {b.next.label} · {fmtEUR(b.next.amount)}
+                  </span>
+                ) : b.next.status === "done" ? (
+                  <span className="text-muted">échéancier soldé</span>
+                ) : (
+                  <span className="text-amber">prix total à renseigner</span>
+                )}
+              </span>
+              <button type="submit" className="col-span-1 rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:text-text">
+                Enregistrer
+              </button>
+            </form>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// L'échéance qu'une facture règle. Les factures émises avant l'échéancier
+// n'en ont pas : sans ce rattachement, un projet déjà facturé à mi-parcours
+// se verrait proposer son acompte. Un projet clôturé n'a plus d'échéancier.
+function InvoiceMilestone({ invoice, billing }: { invoice: InvoiceRow; billing: BillingRow | undefined }) {
+  if (!billing) return null;
+  const current = billing.steps.find((s) => s.index === invoice.milestone);
+  return (
+    <details>
+      <summary className="cursor-pointer text-xs text-muted hover:text-text">
+        Échéance : {current ? `${current.name} (${current.pct} %)` : "hors échéancier"}
+      </summary>
+      <form action={setInvoiceMilestoneAction.bind(null, invoice.id)} className="mt-2 flex items-center gap-2">
+        <select name="milestone" defaultValue={invoice.milestone ?? ""} className="input w-56 text-xs">
+          <option value="">Hors échéancier</option>
+          {billing.steps.map((s) => (
+            <option key={s.index} value={s.index}>
+              {s.name} ({s.pct} %)
+            </option>
+          ))}
+        </select>
+        <button type="submit" className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:text-text">
+          Rattacher
+        </button>
+      </form>
+    </details>
   );
 }
 

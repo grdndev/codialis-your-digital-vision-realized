@@ -158,6 +158,9 @@ const bodySchema = z.discriminatedUnion("action", [
     action: z.literal("import-json"),
     projectId: z.string().min(1),
     payload: z.string().min(1).max(500_000),
+    // À qui confier d'emblée les tickets créés (CC-354). `null` : personne,
+    // ils attendent d'être distribués — c'était le seul comportement possible.
+    ticketAssigneeId: z.string().min(1).nullable().default(null),
   }),
   z.object({ action: z.literal("toggle-task-criterion"), criterionId: z.string().min(1) }),
   z.object({
@@ -212,6 +215,14 @@ const bodySchema = z.discriminatedUnion("action", [
     group: z.enum(["DEV", "FIN", "WAR", "MAI", "CLO"]),
     phaseLabel: z.string().max(200),
   }),
+  // Garantie et maintenance (CC-351) : le dernier jour couvert de chacune,
+  // indépendamment de la phase. `null` retire la couverture.
+  z.object({
+    action: z.literal("update-project-coverage"),
+    projectId: z.string().min(1),
+    warrantyEndsAt: z.string().datetime().nullable(),
+    maintenanceEndsAt: z.string().datetime().nullable(),
+  }),
   z.object({
     action: z.literal("update-client"),
     clientId: z.string().min(1),
@@ -248,6 +259,8 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
     body.action === "create-project" ||
     body.action === "update-project" ||
     body.action === "update-project-phase" ||
+    // Ce qui est couvert après livraison relève du contrat avec le client.
+    body.action === "update-project-coverage" ||
     body.action === "update-client" ||
     // Poser d'un coup les lots et les tickets d'un projet, c'est en dessiner la
     // structure : même main que la création.
@@ -458,6 +471,17 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       const { epics, tickets } = content.data;
       if (!epics.length && !tickets.length) badRequest("Rien à importer.");
 
+      // Vérifié AVANT d'écrire quoi que ce soit : un assigné refusé à mi-course
+      // laisserait un import à moitié fait. Seule l'équipe interne porte des
+      // tickets, un compte client n'en reçoit pas.
+      if (body.ticketAssigneeId) {
+        const assignee = await prisma.user.findUnique({
+          where: { id: body.ticketAssigneeId },
+          select: { role: true },
+        });
+        if (!assignee || assignee.role === "CLIENT") badRequest("Personne à assigner introuvable");
+      }
+
       // Les lots déjà présents sont réutilisés, pas dupliqués : réimporter un
       // fichier corrigé ne doit pas créer un deuxième « Lot 1 ».
       const existingEpics = await prisma.epic.findMany({
@@ -526,6 +550,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
                 description: ticket.description ?? "",
                 steps: ticket.steps ?? "",
                 estHours: ticket.estHours ?? 0,
+                assigneeId: body.ticketAssigneeId,
                 creatorId: user.id,
               },
             }),
@@ -629,6 +654,17 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
           group: body.group,
           phaseLabel: body.phaseLabel.trim(),
           closedAt: body.group === "CLO" ? (current.closedAt ?? new Date()) : null,
+        },
+      });
+      return;
+    }
+
+    case "update-project-coverage": {
+      await prisma.project.update({
+        where: { id: body.projectId },
+        data: {
+          warrantyEndsAt: body.warrantyEndsAt ? new Date(body.warrantyEndsAt) : null,
+          maintenanceEndsAt: body.maintenanceEndsAt ? new Date(body.maintenanceEndsAt) : null,
         },
       });
       return;

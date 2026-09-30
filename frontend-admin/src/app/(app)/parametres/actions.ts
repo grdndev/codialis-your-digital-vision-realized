@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { ApiError, apiPost } from "@/lib/api";
 import { setSessionCookie } from "@/lib/auth";
+import { THEME_TOKENS, isHexColor } from "@/lib/theme";
+import type { ThemeColors } from "@/lib/theme";
 
 export type ChangeState = { done?: boolean; error?: string };
 
@@ -97,4 +99,23 @@ export async function updateScheduleAction(formData: FormData): Promise<void> {
   });
   revalidatePath("/parametres");
   revalidatePath("/time");
+}
+
+// Couleurs de l'interface (CC-353). Seules partent celles qui s'écartent des
+// couleurs de l'agence : les enregistrer toutes figerait les valeurs par
+// défaut du jour, et un changement de charte ne toucherait plus personne.
+export async function saveThemeColorsAction(formData: FormData): Promise<void> {
+  const colors: ThemeColors = {};
+  for (const token of THEME_TOKENS) {
+    const value = String(formData.get(token.key) ?? "").toLowerCase();
+    if (isHexColor(value) && value !== token.default) colors[token.key] = value;
+  }
+  await apiPost(ME, { action: "set-theme-colors", colors });
+  // Le layout de toutes les pages pose les couleurs : c'est lui qu'on revalide.
+  revalidatePath("/", "layout");
+}
+
+export async function resetThemeColorsAction(): Promise<void> {
+  await apiPost(ME, { action: "set-theme-colors", colors: {} });
+  revalidatePath("/", "layout");
 }

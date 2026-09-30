@@ -2,18 +2,53 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
-import { fmtHours, fmtEUR, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel } from "@/lib/format";
+import { fmtHours, fmtEUR, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel, coverageStatus } from "@/lib/format";
 import {
   createEpicAction, createTaskAction, deleteEpicAction, importProjectJsonAction, updateClientContactAction,
   updateEpicAction, updateProjectDescriptionAction,
   addClientQuestionAction, markQuestionAskedAction, answerClientQuestionAction,
-  updateProjectAction, updateClientAction, updateProjectPhaseAction,
+  updateProjectAction, updateClientAction, updateProjectPhaseAction, updateProjectCoverageAction,
 } from "../actions";
 import type { ClientQuestionStatus, ProjectGroup, TaskStatus } from "@/lib/types";
 import type { ClientRef } from "@/lib/dto";
 import type {
   ApiCredentialRow, ClientQuestionRow, ProjectDetail, ProjectDetailResponse, ProjectTicketRow,
 } from "../types";
+import {
+  FilterGroup, FilterLink, Pagination, listParam, paginate, parsePaging, toggleValue,
+} from "../../list-controls";
+import { TicketExportPanel } from "../../tickets/export-panel";
+
+const TICKET_STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
+// Valeur d'adresse du filtre « Non assigné » : un identifiant de compte ne
+// peut pas la prendre.
+const UNASSIGNED = "none";
+
+type ProjectQuery = { view?: string; info?: string; status?: string; assignee?: string; page?: string; per?: string };
+type ProjectQueryKey = Exclude<keyof ProjectQuery, "info">;
+
+// Les tickets d'un projet se filtrent par statut et par assigné, chaque critère
+// acceptant plusieurs valeurs ; les deux se croisent. Un projet en porte
+// facilement une centaine, et les retrouver à l'œil devenait impossible
+// (CC-346, CC-353).
+function filterProjectTickets(tickets: ProjectTicketRow[], status: string[], assignee: string[]) {
+  return tickets.filter(
+    (t) =>
+      (!status.length || status.includes(t.status)) &&
+      (!assignee.length || assignee.includes(t.assigneeId ?? UNASSIGNED)),
+  );
+}
+
+// Les assignés proposés au filtre sont ceux qui portent au moins un ticket du
+// projet : offrir le nom de quelqu'un qui n'y a rien ne mènerait qu'à une liste
+// vide.
+function ticketAssignees(tickets: ProjectTicketRow[]) {
+  const byId = new Map<string, string>();
+  for (const t of tickets) if (t.assignee) byId.set(t.assignee.id, t.assignee.name);
+  return [...byId.entries()]
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name, "fr"));
+}
 
 
 export default async function ProjectDetailPage({
@@ -21,11 +56,12 @@ export default async function ProjectDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ view?: string; info?: string }>;
+  searchParams: Promise<ProjectQuery>;
 }) {
   const user = await requireUser();
   const { id } = await params;
-  const { view, info } = await searchParams;
+  const sp = await searchParams;
+  const { view, info } = sp;
   const activeView = view === "kanban" ? "kanban" : view === "fiche" ? "fiche" : "list";
 
   // Les données de la fiche ne sont chargées que si son onglet est ouvert.
@@ -53,6 +89,31 @@ export default async function ProjectDetailPage({
   const workEpics = project.epics.filter((e) => e.tasks.length > 0 || e.estHours > 0);
   const allTasks = project.epics.flatMap((e) => e.tasks.map((t) => ({ ...t, epicTitle: e.title })));
 
+  const statusFilter = listParam(sp.status);
+  const assigneeFilter = listParam(sp.assignee);
+  const shownTickets = filterProjectTickets(tickets, statusFilter, assigneeFilter);
+  const { page, perPage } = parsePaging(sp.page, sp.per);
+
+  // Toute adresse de l'écran reconduit la vue, les filtres et la page en
+  // cours ; `next` ne dit que ce qui change. Toucher un filtre ramène en
+  // première page, sans quoi on tomberait sur une page vide.
+  function projectHref(next: Partial<Record<ProjectQueryKey, string | null>>) {
+    const merged: Partial<Record<ProjectQueryKey, string | null>> = {
+      view: activeView === "list" ? null : activeView,
+      status: sp.status ?? null,
+      assignee: sp.assignee ?? null,
+      page: sp.page ?? null,
+      per: sp.per ?? null,
+      ...next,
+    };
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(merged)) if (value) query.set(key, value);
+    const qs = query.toString();
+    return `/projects/${project.id}${qs ? `?${qs}` : ""}`;
+  }
+  const filterHref = (next: Partial<Record<"status" | "assignee", string | null>>) =>
+    projectHref({ ...next, page: null });
+
   const deadline = project.group === "CLO"
     ? project.closedAt ? `clôturé ${fmtDate(project.closedAt)}` : "—"
     : project.deadlineAt
@@ -78,6 +139,7 @@ export default async function ProjectDetailPage({
               {projectLabel(project.client.name, project.name)}
             </h1>
             <p className="mt-1 max-w-2xl text-sm text-muted">{project.description}</p>
+            <CoverageBadges warrantyEndsAt={project.warrantyEndsAt} maintenanceEndsAt={project.maintenanceEndsAt} />
           </div>
           {/* La phase se change ICI. Elle ne vivait que dans « Modifier le
               projet », replié, dans l'onglet Fiche : la chefferie ne la
@@ -127,13 +189,13 @@ export default async function ProjectDetailPage({
       <div className="flex items-center justify-between">
         <div className="flex gap-1 rounded-lg border border-border bg-panel p-1 text-sm">
           <Link
-            href={`/projects/${project.id}?view=list`}
+            href={projectHref({ view: null })}
             className={`rounded-md px-3 py-1.5 ${activeView === "list" ? "bg-mint/10 text-mint" : "text-muted"}`}
           >
             Liste
           </Link>
           <Link
-            href={`/projects/${project.id}?view=kanban`}
+            href={projectHref({ view: "kanban" })}
             className={`rounded-md px-3 py-1.5 ${activeView === "kanban" ? "bg-mint/10 text-mint" : "text-muted"}`}
           >
             Kanban
@@ -148,7 +210,8 @@ export default async function ProjectDetailPage({
         {activeView !== "fiche" ? (
           <div className="flex items-center gap-2">
             <NewEpicDisclosure projectId={project.id} team={team} />
-            <ImportJsonDisclosure projectId={project.id} />
+            <ImportJsonDisclosure projectId={project.id} team={team} />
+            <TicketExportPanel people={ticketAssignees(tickets)} projectId={project.id} />
             {/* Depuis la fiche d'un projet, on ne pouvait ouvrir qu'un lot :
                 signaler un bug obligeait à repasser par l'écran Tickets et à
                 y resélectionner le projet. */}
@@ -162,13 +225,91 @@ export default async function ProjectDetailPage({
         ) : null}
       </div>
 
+      {activeView !== "fiche" ? (
+        <TicketFilters
+          statusFilter={statusFilter}
+          assigneeFilter={assigneeFilter}
+          assignees={ticketAssignees(tickets)}
+          shown={shownTickets.length}
+          total={tickets.length}
+          filterHref={filterHref}
+        />
+      ) : null}
+
       {activeView === "list" ? (
-        <ListView epics={workEpics} projectId={project.id} team={team} tickets={tickets} />
+        <ListView
+          epics={workEpics}
+          projectId={project.id}
+          team={team}
+          tickets={tickets}
+          ticketPage={paginate(shownTickets, page, perPage)}
+          perPage={perPage}
+          pageHref={(p, per) => projectHref({ page: p > 1 ? String(p) : null, per: String(per) })}
+        />
       ) : activeView === "kanban" ? (
-        <KanbanView tasks={allTasks} projectId={project.id} tickets={tickets} />
+        <KanbanView tasks={allTasks} projectId={project.id} tickets={shownTickets} />
       ) : (
         <FicheView project={project} deadline={deadline} apis={apis} questions={questions} clients={clients} canEdit={canEdit} />
       )}
+    </div>
+  );
+}
+
+// Les filtres s'appliquent aux tickets des vues Liste et Kanban, pas aux
+// tâches des lots : c'est dans la liste des tickets qu'on se perdait.
+function TicketFilters({
+  statusFilter,
+  assigneeFilter,
+  assignees,
+  shown,
+  total,
+  filterHref,
+}: {
+  statusFilter: string[];
+  assigneeFilter: string[];
+  assignees: { id: string; name: string }[];
+  shown: number;
+  total: number;
+  filterHref: (next: Partial<Record<"status" | "assignee", string | null>>) => string;
+}) {
+  const filtered = statusFilter.length > 0 || assigneeFilter.length > 0;
+  return (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
+      <span className="font-medium text-muted">Tickets</span>
+      <FilterGroup>
+        <FilterLink href={filterHref({ status: null })} active={!statusFilter.length}>
+          Tous statuts
+        </FilterLink>
+        {TICKET_STATUSES.map((s) => (
+          <FilterLink key={s} href={filterHref({ status: toggleValue(statusFilter, s) })} active={statusFilter.includes(s)}>
+            {STATUS_LABEL[s]}
+          </FilterLink>
+        ))}
+      </FilterGroup>
+      <FilterGroup>
+        <FilterLink href={filterHref({ assignee: null })} active={!assigneeFilter.length}>
+          Tous les assignés
+        </FilterLink>
+        {assignees.map((a) => (
+          <FilterLink key={a.id} href={filterHref({ assignee: toggleValue(assigneeFilter, a.id) })} active={assigneeFilter.includes(a.id)}>
+            {a.name}
+          </FilterLink>
+        ))}
+        <FilterLink
+          href={filterHref({ assignee: toggleValue(assigneeFilter, UNASSIGNED) })}
+          active={assigneeFilter.includes(UNASSIGNED)}
+        >
+          Non assigné
+        </FilterLink>
+      </FilterGroup>
+      <span className="ml-auto flex items-center gap-3 text-muted">
+        {filtered ? `${shown} ticket${shown > 1 ? "s" : ""} sur ${total}` : `${total} ticket${total > 1 ? "s" : ""}`}
+        {filtered ? (
+          <Link href={filterHref({ status: null, assignee: null })} className="font-medium text-mint hover:underline">
+            Réinitialiser les filtres
+          </Link>
+        ) : null}
+      </span>
     </div>
   );
 }
@@ -193,6 +334,30 @@ function FicheView({
   return (
     <div className="grid grid-cols-2 gap-6">
       <div className="flex flex-col gap-6">
+        {/* Visible d'emblée, pas replié dans « Modifier le projet » : c'est là
+            que la phase se perdait (DEC-026). */}
+        {canEdit ? (
+          <div className="rounded-xl border border-border bg-panel p-5">
+            <h2 className="text-sm font-semibold text-text">Garantie et maintenance</h2>
+            <p className="mt-1 text-xs text-muted">
+              Dernier jour couvert de chacune. Les deux se cumulent et ne dépendent pas de la
+              phase ; une date vidée retire la couverture.
+            </p>
+            <form action={updateProjectCoverageAction} className="mt-3 flex flex-wrap items-end gap-3">
+              <input type="hidden" name="projectId" value={project.id} />
+              <PField label="Fin de garantie">
+                <input name="warrantyEndsAt" type="date" defaultValue={day(project.warrantyEndsAt)} className="input w-44" />
+              </PField>
+              <PField label="Fin de maintenance">
+                <input name="maintenanceEndsAt" type="date" defaultValue={day(project.maintenanceEndsAt)} className="input w-44" />
+              </PField>
+              <button type="submit" className="rounded-lg bg-mint px-4 py-2 text-xs font-semibold text-bg">
+                Enregistrer
+              </button>
+            </form>
+          </div>
+        ) : null}
+
         {canEdit ? (
           <div className="rounded-xl border border-border bg-panel p-5">
             <details>
@@ -415,6 +580,31 @@ function ClientQuestionRow({
   );
 }
 
+// Couverture après livraison, visible de toute l'équipe : un bug remonté sur
+// un projet sous garantie ne se chiffre pas, sous maintenance il se décompte
+// du contrat.
+function CoverageBadges({ warrantyEndsAt, maintenanceEndsAt }: { warrantyEndsAt: Date | null; maintenanceEndsAt: Date | null }) {
+  const items = [
+    { label: "Garantie", status: coverageStatus(warrantyEndsAt) },
+    { label: "Maintenance", status: coverageStatus(maintenanceEndsAt) },
+  ].filter((i) => i.status);
+  if (!items.length) return null;
+  return (
+    <div className="mt-2 flex flex-wrap gap-2">
+      {items.map(({ label, status }) => (
+        <span
+          key={label}
+          className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            !status!.active ? "bg-white/5 text-muted" : status!.days <= 30 ? "bg-amber/10 text-amber" : "bg-blue/10 text-blue"
+          }`}
+        >
+          {label} {status!.text}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -471,11 +661,19 @@ function ListView({
   projectId,
   team,
   tickets,
+  ticketPage,
+  perPage,
+  pageHref,
 }: {
   epics: EpicWithTasks[];
   projectId: string;
   team: { id: string; name: string }[];
+  // Tous les tickets du projet, pour le décompte d'en-tête ; `ticketPage` ne
+  // porte que la page affichée, filtres appliqués.
   tickets: ProjectTicketRow[];
+  ticketPage: { rows: ProjectTicketRow[]; page: number; pageCount: number; total: number };
+  perPage: number;
+  pageHref: (page: number, perPage: number) => string;
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -611,10 +809,12 @@ function ListView({
         </div>
         {tickets.length === 0 ? (
           <p className="px-5 py-4 text-sm text-muted">Aucun ticket sur ce projet.</p>
+        ) : ticketPage.total === 0 ? (
+          <p className="px-5 py-4 text-sm text-muted">Aucun ticket pour ces filtres.</p>
         ) : (
           <table className="w-full border-collapse text-sm">
             <tbody className="divide-y divide-border">
-              {tickets.map((t) => (
+              {ticketPage.rows.map((t) => (
                 <tr key={t.id} className="transition hover:bg-panel-2">
                   <td className="whitespace-nowrap px-5 py-2">
                     <Link href={`/tickets/${t.ref}`} className="font-medium text-text hover:text-mint">
@@ -645,6 +845,17 @@ function ListView({
             </tbody>
           </table>
         )}
+        {ticketPage.total > 0 ? (
+          <div className="border-t border-border px-5 py-3">
+            <Pagination
+              page={ticketPage.page}
+              pageCount={ticketPage.pageCount}
+              perPage={perPage}
+              total={ticketPage.total}
+              hrefFor={pageHref}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -748,7 +959,7 @@ const IMPORT_EXAMPLE = `{
 
 // Import en masse. Un lot dont le titre existe déjà est réutilisé et non
 // dupliqué : réimporter un fichier corrigé ne crée pas un second « Lot 1 ».
-function ImportJsonDisclosure({ projectId }: { projectId: string }) {
+function ImportJsonDisclosure({ projectId, team }: { projectId: string; team: { id: string; name: string }[] }) {
   return (
     <details className="relative">
       <summary className="cursor-pointer list-none rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted transition hover:text-text">
@@ -772,6 +983,20 @@ function ImportJsonDisclosure({ projectId }: { projectId: string }) {
           placeholder={IMPORT_EXAMPLE}
           className="input min-h-[240px] resize-y font-mono text-xs"
         />
+        {/* Les tickets importés partaient tous sans assigné : il fallait
+            ensuite les reprendre un par un (CC-354). « Personne » reste le
+            défaut, pour qui préfère les distribuer après coup. */}
+        <label className="flex items-center justify-between gap-3 text-xs text-muted">
+          Assigner les tickets créés à
+          <select name="ticketAssigneeId" defaultValue="" className="input h-8 w-56 py-0 text-xs">
+            <option value="">Personne (à distribuer)</option>
+            {team.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        </label>
         <button type="submit" className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg">
           Importer
         </button>

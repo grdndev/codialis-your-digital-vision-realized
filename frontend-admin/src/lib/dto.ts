@@ -42,6 +42,12 @@ export type ProjectRow = {
   lastActivityAt: Date;
   soldAmount: number | null;
   costAmount: number | null;
+  // Dernier jour couvert, à minuit UTC ; null = pas couvert (CC-351).
+  warrantyEndsAt: Date | null;
+  maintenanceEndsAt: Date | null;
+  // Pourcentages de l'échéancier de facturation, « 30,40,30 » ; null = celui
+  // de l'agence (CC-350).
+  billingPlan: string | null;
 };
 
 export type ProjectWithClient = ProjectRow & { client: ClientRef };

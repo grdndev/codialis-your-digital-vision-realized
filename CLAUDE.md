@@ -21,7 +21,7 @@ prod_services=codialis.db(codialis-db) codialis.backend(codialis-api) codialis.a
 typecheck=npx tsc --noEmit  scope=backend et frontend-admin séparément
 lint=./node_modules/.bin/eslint src  why=`npx eslint` échoue hors du dossier de l'app
 build=npx next build
-test_calcul=npx tsx prisma/test-work-time.ts | npx tsx prisma/test-work-calendar.ts | npx tsx prisma/test-hr-calendar.ts
+test_calcul=npx tsx prisma/test-work-time.ts | npx tsx prisma/test-work-calendar.ts | npx tsx prisma/test-hr-calendar.ts | npx tsx prisma/test-billing.ts
 seed_test=DATABASE_URL=… npx tsx prisma/seed-test.ts  DANGER=local uniquement, vide la base avant de semer
 migrate_local=DATABASE_URL=… npx prisma migrate dev --name … --skip-seed
 migrate_prod=docker compose exec codialis.backend npx prisma migrate deploy
@@ -56,6 +56,7 @@ backend/src/lib/hr-calendar.ts=étalement des absences et règles récurrentes s
 backend/src/lib/balances.ts=soldes de congés et d'heures, calculés jamais stockés
 backend/src/lib/work-calendar.ts=jours ouvrés, fériés français, isoOf
 backend/src/lib/refs.ts=attribution des références lisibles
+backend/src/lib/billing.ts=échéancier de facturation d'un projet (pourcentages, échéance suivante, solde), calcul pur
 backend/src/lib/files.ts=client de codialis.files (envoi, suppression, url publique) ; seul le backend connaît le port privé et le jeton
 backend/src/app/api/admin/attachments/=pièces jointes : POST = le fichier BRUT en corps, DELETE = retrait ; hors convention « une route par écran » parce que ce n'est pas du JSON
 backend/prisma/schema.prisma=schéma unique
@@ -66,6 +67,9 @@ frontend-admin/src/app/(client)/portal/=portail client
 frontend-admin/src/lib/api.ts=apiGet/apiPost, relais du Bearer, réanimation des dates ISO
 frontend-admin/src/lib/nav.ts=menu et rôles autorisés par écran
 frontend-admin/src/app/(app)/attachments.tsx=bloc « Pièces jointes » partagé par la fiche ticket et la fiche tâche
+frontend-admin/src/app/(app)/list-controls.tsx=filtres en pastilles et pagination 15/25/50 partagés (Tickets, fiche projet, Ressources)
+frontend-admin/src/app/(app)/tickets/export/route.ts=export CSV/JSON des tickets (route de frontend-admin, relit GET /api/admin/tickets)
+frontend-admin/src/lib/theme.ts=couleurs réglables du back-office (jetons = variables CSS de globals.css)
 frontend-admin/src/proxy.ts=garde de session + mémoire d'écran (filtres, dernier projet)
 files/src/stockage.js=ce qu'est un fichier stocké (validation, écriture, suppression), partagé serveur+CLI
 files/src/serveur.js=deux serveurs HTTP dans un process : 3003 lecture publique, 3004 écriture privée
@@ -111,6 +115,14 @@ DEC-033 [2026-09-23] ACTIVE seule exception à DEC-032 : TeamProfitSnapshot part
 DEC-034 [2026-09-25] ACTIVE le navigateur n'écrit JAMAIS dans codialis.files : il envoie le fichier à frontend-admin, qui le relaie au backend, qui seul détient le port privé et le jeton ; la LECTURE, elle, est directe depuis files.codialis.com why=demande initiale du 22/09 ; faire transiter chaque image par deux serveurs Next à l'affichage serait payer deux fois pour rien alt=envoi direct navigateur → stockage (il faudrait exposer le jeton), lecture relayée par le backend
 DEC-035 [2026-09-25] ACTIVE les pièces jointes ont leur propre route (/api/admin/attachments), hors de la convention « une seule route POST par écran » why=le corps n'est pas du JSON mais le fichier brut ; la destination passe donc par l'adresse, et le retrait par DELETE alt=base64 dans le JSON de la route d'écran (33 % de plus, et 25 Mo deviennent 33)
 DEC-036 [2026-09-28] ACTIVE « En retard » se pose À LA MAIN sur une facture (action set-invoice-status, EN_ATTENTE ↔ EN_RETARD), jamais sur une facture payée why=CC-348 ; c'est qui relance le client qui sait si une échéance dépassée est un retard ou un délai convenu alt=passage automatique à l'échéance (non demandé)
+DEC-038 [2026-09-30] ACTIVE les couleurs du back-office sont un réglage PERSONNEL (User.themeColors, seules les couleurs modifiées), 7 jetons ; les couleurs d'état (alerte, erreur, info) restent fixes why=CC-353, arbitrage Denis du 30/09 ; Paramètres est ouvert aux DEV, un thème commun laisserait chacun changer l'écran de tous alt=thème d'agence réglé par DIR/PM
+DEC-039 [2026-09-30] ACTIVE filtres de Ressources = projet, recherche, personne (propriétaire d'une API), statut (maquettes, documents) ; « ticket » et « gravité » demandés par CC-353 sont ÉCARTÉS why=ces notions n'existent pas sur une ressource, arbitrage Denis du 30/09 — à signaler à Luc alt=attendre sa précision
+DEC-040 [2026-09-30] ACTIVE objectifs du mois = objectifs LIBRES (intitulé, échéance, projet facultatif) posés par la direction SEULE, lus par toute l'équipe en tête du Dashboard ; un DEV ne voit pas l'avancement d'un projet qu'il ne peut pas ouvrir (DEC-024) why=CC-347, arbitrage Denis du 30/09 alt=objectif de CA de Pilotage recopié sur le Dashboard
+DEC-041 [2026-09-30] ACTIVE échéancier de facturation : prix total = soldAmount (le « montant vendu » de la fiche), pourcentages dans Project.billingPlan (NULL = 30/40/30 ; proposés 30/40/30, 40/30/30, 50/50) ; l'API fixe libellé et montant de l'échéance suivante ; le SOLDE = total − déjà facturé sur l'échéancier ; facture libre = milestone NULL, hors échéancier ; une échéance = une seule facture (index unique projet+échéance) why=CC-350 alt=libellé et montant saisis à la main (état initial, conservé en « facture libre »)
+DEC-042 [2026-09-30] ACTIVE rattacher une facture à une échéance est permis MÊME PAYÉE (set-invoice-milestone) why=reprendre les factures émises avant l'échéancier ; ni montant ni libellé ne bougent, la pièce comptable reste intacte alt=réservé aux factures non payées
+DEC-043 [2026-09-30] ACTIVE garantie et maintenance = deux dates de fin sur le projet (dernier jour couvert, minuit UTC), cumulables et indépendantes de la phase ; posées par PM/DIR dans un bloc NON replié de l'onglet Fiche, lues par tous en en-tête why=CC-351 ; la phase WAR/MAI est exclusive et sans date alt=phase seule
+DEC-044 [2026-09-30] ACTIVE import JSON : un seul choix d'assigné pour TOUS les tickets créés, « Personne » par défaut ; les tâches importées restent sans assigné why=CC-354 ne parle que des tickets alt=assigné par ticket dans le JSON
+DEC-045 [2026-09-30] ACTIVE export des tickets en CSV (point-virgule, BOM UTF-8, heure de La Réunion, décimales à virgule) ou JSON (codes bruts, instants ISO, champs de l'import), par une route de frontend-admin qui relit GET /api/admin/tickets ; `assignee` y accepte une liste d'identifiants (+ `none`) why=CC-353 ; les droits restent ceux de la liste des tickets alt=route d'export dans le backend
 DEC-037 [2026-09-28] ACTIVE une facture a un HISTORIQUE de commentaires (InvoiceComment), ouvert même une fois payée, sans modification ni suppression ; l'auteur suit DEC-032 (NULL si le compte est supprimé), les commentaires suivent la facture en CASCADE why=CC-349 ; c'est souvent après le règlement qu'on note comment il s'est fait alt=champ de notes unique sur la facture (écrasé à chaque saisie)
 
 ## TRAP
@@ -146,6 +158,12 @@ TRAP-028 Next REFUSE une action serveur sans en-tête `Origin` (protection CSRF)
 TRAP-029 supprimer un ticket ou une tâche efface ses pièces jointes EN CASCADE côté base, sans passer par la route de retrait → relever les fileId AVANT la suppression et reprendre les fichiers après, sinon le volume se remplit d'orphelins
 TRAP-030 après une action de formulaire réussie, React vide le formulaire par un `reset` : les cases se décochent SANS évènement `change` → tout compteur tenu par `onChange` doit aussi écouter `onReset` (CC-352, bandeau de masse resté affiché)
 TRAP-031 une `<textarea>` envoyée par formulaire arrive avec des retours à la ligne en `\r\n` (norme HTML) → passer par `parseMultiline` (lib/format.ts) avant d'écrire, sinon la base mélange `\r\n` et `\n` et un `split("\n")` garde des `\r`
+TRAP-033 `prisma migrate dev` REFUSE de créer une migration qui lève un avertissement (index unique ajouté…) quand l'environnement n'est pas interactif → `rtk proxy npx prisma migrate diff --from-url <base locale> --to-schema-datamodel prisma/schema.prisma --script` dans un dossier de migration daté, puis `migrate deploy`
+TRAP-034 le hook rtk réécrit la sortie de certaines commandes (`prisma migrate diff` affiché « No such file or directory », `next build` résumé en « 1 routes ») → `rtk proxy <commande>` pour la sortie brute
+TRAP-035 test Playwright : `waitForLoadState("networkidle")` après un clic sur un `<Link>` rend la main AVANT la navigation côté client → attendre le changement d'adresse (`waitForURL(u => u.href !== avant)`)
+TRAP-036 `Intl.NumberFormat("fr-FR")` sépare les milliers par U+202F et met U+00A0 avant « € » → normaliser les espaces avant de comparer un montant dans un test
+TRAP-037 les factures d'avant l'échéancier ont milestone NULL → tant qu'elles ne sont pas rattachées, l'échéancier propose l'ACOMPTE à un projet déjà facturé (Top formation a un « Mi parcours ») ; rattacher depuis Facturation → facture → « Échéance »
+TRAP-038 le mode auto de Claude Code REFUSE les écritures sur le serveur de prod (ssh + docker compose exec) : la lecture passe, le changement de statut d'un ticket et le déploiement exigent une permission explicite de Denis
 TRAP-032 le conteneur codialis-api NE migre PAS au démarrage (`CMD next start`) → entre `docker compose up -d --build` et `migrate deploy`, tout écran qui lit une nouvelle table plante ; lancer la migration immédiatement après le rebuild (Facturation cassée quelques minutes le 28/09)
 
 ## STATE
@@ -168,7 +186,10 @@ done=[28/09] CC-345 : commentaires multilignes sur fiche ticket et fiche tâche 
 done=[28/09] CC-348 : marquer une facture en retard / la remettre en attente (DEC-036) ; 11/11 HTTP + 9/9 dans Chrome
 done=[28/09] CC-349 : historique de commentaires sur chaque facture (DEC-037, migration commentaires_facture) ; 25/25 HTTP (dont CC-348) + 16/16 dans Chrome + calculs 18/18, 18/18, 18/18
 done=[28/09] CC-345, CC-348, CC-349, CC-352 déployés (5400e83), migration commentaires_facture appliquée en prod ; CC-302, CC-345, CC-348, CC-349, CC-352 passés en EN_REVUE
-wip=aucun
+done=[30/09] CC-346, CC-347, CC-350, CC-351, CC-353 (8 points), CC-354 codés et vérifiés en local : CC-353 46/46 dans Chrome, CC-354 11/11, CC-351 17/17, CC-350 30/30, CC-347 22/22 (HTTP + Chrome) ; calculs 18/18, 26/26, 18/18, billing 27/27 ; types, lint et build des deux applications OK
+done=[30/09] 5 migrations : couleurs_personnelles, couverture_garantie_maintenance, echeancier_facturation, echeance_unique_par_projet, objectifs_du_mois
+wip=[30/09] déploiement des tickets du 30/09 NON FAIT (TRAP-038) ; les 6 tickets sont restés À FAIRE en prod, ni EN_COURS ni EN_REVUE
+next=avec la permission de Denis : push, déploiement, `migrate deploy` IMMÉDIATEMENT après le rebuild (TRAP-032), puis CC-346/347/350/351/353/354 en EN_REVUE (par la logique de l'écran : chronomètre de l'assigné)
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — débloqué par DEC-027 (codialis.files) ; le socle Drive reste committé et inutilisé, on le retire quand le service maison aura fait ses preuves
 blocked=DEC-009 — confirmer que le calendrier RH peut rester visible par toute l'équipe
@@ -184,4 +205,7 @@ manual=la suppression d'un compte désassigne ses tâches et ses tickets SANS pr
 manual=AVANT le premier déploiement : créer files/.env sur le serveur avec FILES_TOKEN, et la MÊME valeur dans backend/.env, sinon `docker compose up` échoue (TRAP-021) et les envois répondent « stockage non configuré »
 manual=les fichiers servis par codialis.files sont PUBLICS pour qui a l'URL (non devinable, 32 hexadécimaux) — à confronter au cloisonnement des projets (DEC-023/024) avant d'y mettre des pièces jointes de tickets
 manual=backend/src/lib/drive.ts et prisma/drive-consent.ts sont du code MORT, importés nulle part — à supprimer une fois codialis.files éprouvé (DEC-027)
+manual=après déploiement : rattacher les factures existantes à leur échéance (TRAP-037) et saisir le prix total + l'échéancier des projets ouverts dans Facturation → « Échéancier des projets » — soldAmount était NULL sur tous les projets facturés au relevé du 30/09
+manual=signaler à Luc que « ticket » et « gravité » ne sont pas des filtres de Ressources (DEC-039), et lui demander s'il visait un autre écran
+manual=CC-346 et le point 2 de CC-353 sont le même besoin, livrés ensemble
 manual=le README n'a pas de partie « Fonctionnalités » au format BxFy ; la référence fonctionnelle reste la liste de tickets en production

@@ -6,6 +6,8 @@ import type { AbsenceMode, SessionUser } from "@/lib/types";
 import { ImageField } from "../site/image-field";
 import { ChangePasswordForm } from "./change-form";
 import { ScheduleForm } from "./schedule-form";
+import { ThemeForm } from "./theme-form";
+import type { ThemeColors } from "@/lib/theme";
 import type { ScheduleSettings } from "./schedule-form";
 import {
   updateProfileAction,
@@ -18,6 +20,7 @@ const MODES: AbsenceMode[] = ["OUVERT", "HORAIRES", "CONGES"];
 
 type MeResponse = {
   user: SessionUser;
+  theme: ThemeColors | null;
   settings: {
     jobTitle: string | null;
     photo: string | null;
@@ -33,7 +36,7 @@ type MeResponse = {
 
 export default async function ParametresPage() {
   const user = await requireUser();
-  const { settings } = await apiGet<MeResponse>("/api/admin/me");
+  const { settings, theme } = await apiGet<MeResponse>("/api/admin/me");
 
   // La réponse d'absence ne concerne que les comptes qui suivent des clients.
   const hasAbsence = user.role === "PM" || user.role === "DIR";
@@ -105,6 +108,16 @@ export default async function ParametresPage() {
           <ScheduleForm schedule={settings.schedule} />
         </div>
       ) : null}
+
+      <div className="rounded-xl border border-border bg-panel p-5">
+        <h2 className="text-sm font-semibold text-text">Couleurs de l’interface</h2>
+        <p className="mt-1 max-w-xl text-xs text-muted">
+          Réglage personnel : il ne change que votre écran, pas celui de vos collègues. Les
+          couleurs s’appliquent en direct pendant le choix et sont gardées après
+          enregistrement, y compris à la prochaine connexion.
+        </p>
+        <ThemeForm saved={theme} />
+      </div>
 
       <div className="rounded-xl border border-border bg-panel p-5">
         <h2 className="text-sm font-semibold text-text">Mon mot de passe</h2>

@@ -20,6 +20,8 @@ export type InvoiceRow = {
   dueAt: Date | null;
   paidAt: Date | null;
   status: InvoiceStatus;
+  // Rang de l'échéance réglée (0 = acompte) ; null = facture libre.
+  milestone: number | null;
   project: { id: string; name: string; client: ClientRef };
   comments: InvoiceCommentRow[];
 };
@@ -31,8 +33,28 @@ export type FinanceProject = Omit<ProjectWithClient, "soldAmount" | "costAmount"
   costAmount: number;
 };
 
+// Prochaine échéance d'un projet, calculée par l'API (src/lib/billing.ts du
+// backend) : l'écran l'annonce, il ne la recalcule pas.
+export type NextMilestone =
+  | { status: "no-total" }
+  | { status: "done" }
+  | { status: "next"; index: number; name: string; pct: number; amount: number; label: string };
+
+export type BillingRow = {
+  projectId: string;
+  total: number | null;
+  plan: string;
+  steps: { index: number; name: string; pct: number }[];
+  planInvoiced: number;
+  extraInvoiced: number;
+  next: NextMilestone;
+};
+
 export type FinanceScreen = {
   invoices: InvoiceRow[];
   activeProjects: FinanceProject[];
   projects: ProjectWithClient[];
+  // Un par projet de `projects`.
+  billing: BillingRow[];
+  planPresets: string[];
 };
