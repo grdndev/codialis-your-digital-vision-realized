@@ -15,8 +15,11 @@ function near(a: number, b: number) {
   return Math.abs(a - b) < 0.011;
 }
 
-// Mercredi 16 septembre 2026, jour ouvré ordinaire.
-const at = (day: number, h: number, m = 0) => new Date(Date.UTC(2026, 8, day, h, m));
+// Mercredi 16 septembre 2026, jour ouvré ordinaire. `at` donne l'INSTANT
+// correspondant à une heure locale de La Réunion (UTC+4) : c'est dans cette
+// heure-là que s'expriment les horaires.
+const at = (day: number, h: number, m = 0) => new Date(Date.UTC(2026, 8, day, h - 4, m));
+const localDay = (day: number) => new Date(Date.UTC(2026, 8, day));
 const s = (id: string, from: Date, to: Date): Session => ({ id, startedAt: from, endedAt: to });
 
 console.log("── Rognage sur les horaires ──");
@@ -32,7 +35,7 @@ check("oubliée du vendredi 17h au lundi 10h = 1h + 1h", near(hours.get("a")!, 2
 
 // 11 novembre 2026, férié.
 hours = splitHours(
-  [{ id: "a", startedAt: new Date(Date.UTC(2026, 10, 11, 9)), endedAt: new Date(Date.UTC(2026, 10, 11, 17)) }],
+  [{ id: "a", startedAt: new Date(Date.UTC(2026, 10, 11, 5)), endedAt: new Date(Date.UTC(2026, 10, 11, 13)) }],
   DEFAULT_SCHEDULE,
 );
 check("un jour férié ne compte pas", near(hours.get("a")!, 0), String(hours.get("a")));
@@ -83,7 +86,25 @@ hours = splitHours([s("a", at(16, 20), at(16, 22))], DEFAULT_SCHEDULE);
 check("session entièrement hors horaires → 0h", near(hours.get("a")!, 0), String(hours.get("a")));
 check("jours de semaine mal formés → semaine ouvrée par défaut", JSON.stringify(parseWeekdays("bof")) === "[1,2,3,4,5]");
 check("pause à l'envers ignorée",
-  windowsForDay(at(16, 0), { ...DEFAULT_SCHEDULE, breakStartMin: 800, breakEndMin: 700 }).length === 1);
+  windowsForDay(localDay(16), { ...DEFAULT_SCHEDULE, breakStartMin: 800, breakEndMin: 700 }).length === 1);
+
+console.log("\n── Heure de La Réunion (UTC+4) ──");
+// Les sessions sont des INSTANTS (UTC en base), les horaires des heures de
+// bureau à La Réunion. Le calcul lisait les horaires en UTC : 9h-12h devenait
+// 13h-16h locales, et le travail du matin comptait 0 h.
+const utc = (iso: string) => new Date(iso);
+hours = splitHours([s("a", utc("2026-09-30T07:20:00Z"), utc("2026-09-30T07:45:00Z"))], DEFAULT_SCHEDULE);
+check("11h20-11h45 à La Réunion (07h20-07h45 UTC) = 25 min", near(hours.get("a")!, 0.42), String(hours.get("a")));
+hours = splitHours([s("a", utc("2026-09-30T05:00:00Z"), utc("2026-09-30T09:00:00Z"))], DEFAULT_SCHEDULE);
+check("9h-13h locales (05h-09h UTC) = 3 h, pause retirée", near(hours.get("a")!, 3), String(hours.get("a")));
+hours = splitHours([s("a", utc("2026-09-30T13:00:00Z"), utc("2026-09-30T15:00:00Z"))], DEFAULT_SCHEDULE);
+check("17h-19h locales (13h-15h UTC) = 1 h, arrêt à 18h", near(hours.get("a")!, 1), String(hours.get("a")));
+// Vendredi 2 octobre 22h UTC = samedi 3 octobre 2h à La Réunion.
+hours = splitHours([s("a", utc("2026-10-02T21:00:00Z"), utc("2026-10-03T06:00:00Z"))], DEFAULT_SCHEDULE);
+check("le samedi local ne compte pas, même s'il est encore vendredi en UTC", near(hours.get("a")!, 0), String(hours.get("a")));
+// Un lundi ordinaire : la session commence avant l'ouverture du bureau.
+hours = splitHours([s("a", utc("2026-11-02T04:00:00Z"), utc("2026-11-02T06:00:00Z"))], DEFAULT_SCHEDULE);
+check("lundi 2 novembre 8h-10h locales = 1 h (dès 9h)", near(hours.get("a")!, 1), String(hours.get("a")));
 
 console.log(fails ? `\n${fails} échec(s)` : "\nCalcul du temps mesuré : tout passe");
 process.exit(fails ? 1 : 0);

@@ -170,6 +170,7 @@ TRAP-036 `Intl.NumberFormat("fr-FR")` sépare les milliers par U+202F et met U+0
 TRAP-037 les factures d'avant l'échéancier ont milestone NULL → tant qu'elles ne sont pas rattachées, l'échéancier propose l'ACOMPTE à un projet déjà facturé (Top formation a un « Mi parcours ») ; rattacher depuis Facturation → facture → « Échéance »
 TRAP-038 le mode auto de Claude Code REFUSE les écritures sur le serveur de prod (ssh + docker compose exec) : la lecture passe, le changement de statut d'un ticket et le déploiement exigent une permission explicite de Denis
 TRAP-039 chaque déploiement invalide les actions serveur des pages déjà ouvertes : un clic depuis une page chargée avant le rebuild ne fait RIEN à l'écran (« Failed to find Server Action » dans le journal de codialis-admin) → recharger la page ; regrouper les déploiements plutôt que d'en enchaîner plusieurs dans la journée
+TRAP-040 les horaires de travail sont des heures de BUREAU À LA RÉUNION, les sessions des instants UTC → le calcul (work-time.ts) décale les instants de +4 h avant de les rogner ; il les lisait en UTC jusqu'au 30/09 (9h-12h comptait 13h-16h locales, le matin valait 0 h) sans qu'aucun test ne le voie, les tests écrivant leurs heures en UTC comme si c'était l'heure locale
 TRAP-032 le conteneur codialis-api NE migre PAS au démarrage (`CMD next start`) → entre `docker compose up -d --build` et `migrate deploy`, tout écran qui lit une nouvelle table plante ; lancer la migration immédiatement après le rebuild (Facturation cassée quelques minutes le 28/09)
 
 ## STATE
@@ -199,6 +200,8 @@ wip=aucun
 done=[30/09] CC-355 : pastilles du planning de la semaine dans « Qui est là », grille en semaines entières ; hr-calendar 27/27, 11/11 dans Chrome
 done=[30/09] hors tickets : suppression des factures payées (DEC-047), fenêtres flottantes qui se ferment (DEC-048), visionneuse d'images (DEC-049) ; 18/18 et 16/16 dans Chrome
 done=[30/09] CC-357 : taux de l'agence et heures vendues calculées (DEC-050, migration taux_agence) ; 18/18 HTTP + Chrome, billing 32/32
+done=[30/09] temps mesuré : horaires lus en heure de La Réunion (TRAP-040), work-time 23/23 dont 5 cas en instants réels
+next=recalculer en prod les sessions et les heures passées depuis le 17/09 (accord de Denis du 30/09), sauvegarde des anciennes valeurs dans ~/backups/temps-mesure/
 next=CC-356 (onglet Objectifs avec historique atteint/non atteint et raison)
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — débloqué par DEC-027 (codialis.files) ; le socle Drive reste committé et inutilisé, on le retire quand le service maison aura fait ses preuves

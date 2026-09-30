@@ -17,6 +17,16 @@ import { isHoliday, isoOf } from "@/lib/work-calendar";
 // rend juste le cas des recouvrements partiels. A de 9h à 13h et B de 11h à 13h
 // donnent A = 3h et B = 1h, pas 2h chacune.
 
+// Les horaires sont des heures de BUREAU à La Réunion ; les sessions, des
+// instants (UTC en base). Le calcul lisait les horaires en UTC : 9h-12h
+// devenait 13h-16h locales, et le travail du matin ne comptait pas. Les
+// instants sont donc décalés à l'heure murale locale avant d'être comparés aux
+// horaires ; toutes les dates manipulées ensuite par les fonctions UTC de
+// `Date` représentent cette heure locale. Le décalage s'annule dans les
+// durées. La Réunion est à UTC+4 toute l'année, sans heure d'été.
+export const OFFICE_UTC_OFFSET_MINUTES = 4 * 60;
+const OFFSET_MS = OFFICE_UTC_OFFSET_MINUTES * 60_000;
+
 export type Schedule = {
   startMin: number;
   breakStartMin: number | null;
@@ -49,7 +59,8 @@ export function parseWeekdays(raw: string): number[] {
   return days.length ? [...new Set(days)].sort((a, b) => a - b) : [1, 2, 3, 4, 5];
 }
 
-// Jour ISO de la semaine d'une date, en UTC : 1 = lundi … 7 = dimanche.
+// Jour ISO de la semaine d'une date en heure locale (déjà décalée) :
+// 1 = lundi … 7 = dimanche.
 function isoWeekday(d: Date): number {
   const day = d.getUTCDay();
   return day === 0 ? 7 : day;
@@ -61,8 +72,9 @@ function atMinutes(day: Date, minutes: number): number {
 
 type Window = { start: number; end: number };
 
-// Plages travaillées d'une journée : matin et après-midi. Une journée non
-// travaillée ou fériée n'en a aucune.
+// Plages travaillées d'une journée locale, désignée par son minuit : matin et
+// après-midi, en heure locale décalée. Une journée non travaillée ou fériée
+// n'en a aucune.
 //
 // Il n'y a PAS de plage supplémentaire : le temps mesuré s'arrête aux horaires.
 // Une soirée travaillée se déclare dans l'écran RH (heures supplémentaires), là
@@ -99,18 +111,13 @@ export function windowsForDay(day: Date, schedule: Schedule): Window[] {
 // Découpe une session sur les plages travaillées qu'elle traverse. Une session
 // peut enjamber plusieurs jours : on parcourt chaque journée civile concernée.
 function clipToSchedule(session: Session, schedule: Schedule): Window[] {
-  const from = session.startedAt.getTime();
-  const to = session.endedAt.getTime();
+  const from = session.startedAt.getTime() + OFFSET_MS;
+  const to = session.endedAt.getTime() + OFFSET_MS;
   if (to <= from) return [];
 
   const pieces: Window[] = [];
-  const day = new Date(
-    Date.UTC(
-      session.startedAt.getUTCFullYear(),
-      session.startedAt.getUTCMonth(),
-      session.startedAt.getUTCDate(),
-    ),
-  );
+  const local = new Date(from);
+  const day = new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()));
 
   // Garde-fou : une session ouverte et oubliée des mois durant ne doit pas
   // faire boucler le calcul sur des milliers de journées.
