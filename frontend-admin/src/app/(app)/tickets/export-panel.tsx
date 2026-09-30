@@ -1,5 +1,6 @@
 import { STATUS_LABEL, projectLabel } from "@/lib/format";
 import type { TaskStatus } from "@/lib/types";
+import { Popover } from "../popover";
 
 const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
 
@@ -20,10 +21,10 @@ export function TicketExportPanel({
   projectId?: string;
 }) {
   return (
-    <details className="relative">
-      <summary className="cursor-pointer list-none rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted transition hover:text-text">
-        Exporter
-      </summary>
+    <Popover
+      summary="Exporter"
+      summaryClassName="cursor-pointer list-none rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted transition hover:text-text"
+    >
       <form
         method="get"
         action="/tickets/export"
@@ -85,6 +86,6 @@ export function TicketExportPanel({
           Télécharger
         </button>
       </form>
-    </details>
+    </Popover>
   );
 }

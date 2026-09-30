@@ -124,6 +124,9 @@ DEC-043 [2026-09-30] ACTIVE garantie et maintenance = deux dates de fin sur le p
 DEC-044 [2026-09-30] ACTIVE import JSON : un seul choix d'assigné pour TOUS les tickets créés, « Personne » par défaut ; les tâches importées restent sans assigné why=CC-354 ne parle que des tickets alt=assigné par ticket dans le JSON
 DEC-045 [2026-09-30] ACTIVE export des tickets en CSV (point-virgule, BOM UTF-8, heure de La Réunion, décimales à virgule) ou JSON (codes bruts, instants ISO, champs de l'import), par une route de frontend-admin qui relit GET /api/admin/tickets ; `assignee` y accepte une liste d'identifiants (+ `none`) why=CC-353 ; les droits restent ceux de la liste des tickets alt=route d'export dans le backend
 DEC-046 [2026-09-30] ACTIVE « Qui est là » lit AUSSI le planning de la semaine (PlannedShift) : télétravail, absence et « chez le client » y font une pastille, « bureau » aucune ; priorité demande d'absence > planning du jour > règle récurrente ; la grille couvre des semaines entières (bornes posées par l'écran, `calendarStart`/`calendarEnd`) why=CC-355 ; le planning est ce que l'équipe remplit réellement (Absences et règles vides en prod), et la semaine en cours déborde sur le mois voisin alt=planning ignoré (état initial), grille bornée au mois
+DEC-047 [2026-09-30] ACTIVE une facture se SUPPRIME même payée (PM et DIR), après confirmation qui prévient qu'elle sort de l'encaissé ; son MONTANT, lui, ne se modifie toujours plus une fois payée why=demande du 30/09 : F-2601 et F-2602 (Sumvibes, 1 €, reliquat de CC-324) étaient marquées payées et indélébiles, et le message renvoyait à un « avoir » que le CRM n'a pas alt=facture payée intouchable (état initial), remise en attente puis suppression
+DEC-048 [2026-09-30] ACTIVE les fenêtres flottantes (Exporter, Importer du JSON, Nouvel épic, confirmation de suppression de facture) se ferment au clic extérieur, sur Échap et après l'envoi de leur formulaire : composant Popover (frontend-admin/src/app/(app)/popover.tsx) why=demande du 30/09 sur l'export ; même comportement pour les fenêtres de la même barre alt=`<details>` nu, qui ne se ferme qu'en recliquant son bouton
+DEC-049 [2026-09-30] ACTIVE les images jointes s'ouvrent dans une visionneuse (`<dialog>` modal, ← → entre les images de la fiche, damier derrière les images transparentes, lien vers l'original) au lieu d'un nouvel onglet why=demande du 30/09 alt=lien vers files.codialis.com (état initial)
 DEC-037 [2026-09-28] ACTIVE une facture a un HISTORIQUE de commentaires (InvoiceComment), ouvert même une fois payée, sans modification ni suppression ; l'auteur suit DEC-032 (NULL si le compte est supprimé), les commentaires suivent la facture en CASCADE why=CC-349 ; c'est souvent après le règlement qu'on note comment il s'est fait alt=champ de notes unique sur la facture (écrasé à chaque saisie)
 
 ## TRAP
@@ -165,6 +168,7 @@ TRAP-035 test Playwright : `waitForLoadState("networkidle")` après un clic sur 
 TRAP-036 `Intl.NumberFormat("fr-FR")` sépare les milliers par U+202F et met U+00A0 avant « € » → normaliser les espaces avant de comparer un montant dans un test
 TRAP-037 les factures d'avant l'échéancier ont milestone NULL → tant qu'elles ne sont pas rattachées, l'échéancier propose l'ACOMPTE à un projet déjà facturé (Top formation a un « Mi parcours ») ; rattacher depuis Facturation → facture → « Échéance »
 TRAP-038 le mode auto de Claude Code REFUSE les écritures sur le serveur de prod (ssh + docker compose exec) : la lecture passe, le changement de statut d'un ticket et le déploiement exigent une permission explicite de Denis
+TRAP-039 chaque déploiement invalide les actions serveur des pages déjà ouvertes : un clic depuis une page chargée avant le rebuild ne fait RIEN à l'écran (« Failed to find Server Action » dans le journal de codialis-admin) → recharger la page ; regrouper les déploiements plutôt que d'en enchaîner plusieurs dans la journée
 TRAP-032 le conteneur codialis-api NE migre PAS au démarrage (`CMD next start`) → entre `docker compose up -d --build` et `migrate deploy`, tout écran qui lit une nouvelle table plante ; lancer la migration immédiatement après le rebuild (Facturation cassée quelques minutes le 28/09)
 
 ## STATE
@@ -192,7 +196,9 @@ done=[30/09] 5 migrations : couleurs_personnelles, couverture_garantie_maintenan
 done=[30/09] déployé (11a56cd), les 5 migrations appliquées en prod juste après le rebuild ; CC-346, CC-347, CC-350, CC-351, CC-353, CC-354 passés en EN_REVUE (directement : le passage EN_COURS avait été bloqué par TRAP-038)
 wip=aucun
 done=[30/09] CC-355 : pastilles du planning de la semaine dans « Qui est là », grille en semaines entières ; hr-calendar 27/27, 11/11 dans Chrome
-next=CC-356 (onglet Objectifs avec historique atteint/non atteint et raison), CC-357 (heures vendues déduites du prix et d'un taux réglable)
+done=[30/09] hors tickets : suppression des factures payées (DEC-047), fenêtres flottantes qui se ferment (DEC-048), visionneuse d'images (DEC-049) ; 18/18 et 16/16 dans Chrome
+wip=CC-357 EN_COURS : taux horaire et durée d'une journée réglables par PM/DIR (défaut 90 €/h × 8 h = 720 €), heures vendues = prix ÷ taux, recalculées seulement quand le prix change ; migration taux_agence écrite, écrans à faire
+next=CC-356 (onglet Objectifs avec historique atteint/non atteint et raison)
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — débloqué par DEC-027 (codialis.files) ; le socle Drive reste committé et inutilisé, on le retire quand le service maison aura fait ses preuves
 blocked=DEC-009 — confirmer que le calendrier RH peut rester visible par toute l'équipe

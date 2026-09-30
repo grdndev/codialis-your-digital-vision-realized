@@ -18,6 +18,7 @@ import {
   FilterGroup, FilterLink, Pagination, listParam, paginate, parsePaging, toggleValue,
 } from "../../list-controls";
 import { TicketExportPanel } from "../../tickets/export-panel";
+import { Popover } from "../../popover";
 
 const TICKET_STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
 // Valeur d'adresse du filtre « Non assigné » : un identifiant de compte ne
@@ -961,10 +962,10 @@ const IMPORT_EXAMPLE = `{
 // dupliqué : réimporter un fichier corrigé ne crée pas un second « Lot 1 ».
 function ImportJsonDisclosure({ projectId, team }: { projectId: string; team: { id: string; name: string }[] }) {
   return (
-    <details className="relative">
-      <summary className="cursor-pointer list-none rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted transition hover:text-text">
-        Importer du JSON
-      </summary>
+    <Popover
+      summary="Importer du JSON"
+      summaryClassName="cursor-pointer list-none rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted transition hover:text-text"
+    >
       <form
         action={importProjectJsonAction}
         className="absolute right-0 z-10 mt-2 flex w-[32rem] flex-col gap-2 rounded-xl border border-border bg-panel p-4 shadow-2xl"
@@ -1001,16 +1002,16 @@ function ImportJsonDisclosure({ projectId, team }: { projectId: string; team: { 
           Importer
         </button>
       </form>
-    </details>
+    </Popover>
   );
 }
 
 function NewEpicDisclosure({ projectId, team }: { projectId: string; team: { id: string; name: string }[] }) {
   return (
-    <details className="relative">
-      <summary className="cursor-pointer list-none rounded-lg bg-mint px-3 py-2 text-xs font-semibold text-bg">
-        + Nouvel épic
-      </summary>
+    <Popover
+      summary="+ Nouvel épic"
+      summaryClassName="cursor-pointer list-none rounded-lg bg-mint px-3 py-2 text-xs font-semibold text-bg"
+    >
       <form
         action={createEpicAction}
         className="absolute right-0 z-10 mt-2 flex w-72 flex-col gap-2 rounded-xl border border-border bg-panel p-4 shadow-2xl"
@@ -1043,7 +1044,7 @@ function NewEpicDisclosure({ projectId, team }: { projectId: string; team: { id:
           Créer l’épic
         </button>
       </form>
-    </details>
+    </Popover>
   );
 }
 

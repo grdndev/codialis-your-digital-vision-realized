@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { ScreenTabs } from "./screen-tabs";
 import type { BillingRow, FinanceScreen, InvoiceRow } from "./types";
 import { InvoiceForm } from "./invoice-form";
+import { Popover } from "../popover";
 import { fmtHours, fmtEUR, fmtDate, pctOf, currentPeriodLabel, INVOICE_STATUS_BADGE_CLASS, INVOICE_STATUS_LABEL, projectLabel, authorName, authorInitials } from "@/lib/format";
 import { addInvoiceCommentAction, markInvoicePaidAction, setInvoiceStatusAction, updateInvoiceAction, deleteInvoiceAction, updateProjectBillingAction, setInvoiceMilestoneAction } from "./actions";
 import type { ProjectWithClient } from "@/lib/dto";
@@ -120,11 +121,12 @@ export default async function FinancePage({
                       <button type="submit" className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:text-text">Marquer payée</button>
                     </form>
                   ) : null}
+                  <DeleteInvoice invoice={inv} />
                 </div>
               </div>
-              {/* Une facture payée est une pièce comptable : on la rectifie par
-                  un avoir, pas en réécrivant son montant. Tant qu'elle ne l'est
-                  pas, elle se corrige et se supprime. */}
+              {/* Le montant d'une facture payée ne se réécrit plus ; tant qu'elle
+                  ne l'est pas, elle se corrige. La suppression, elle, est sur la
+                  ligne, pour toutes. */}
               {inv.status !== "PAYEE" ? (
                 <details>
                   <summary className="cursor-pointer text-xs text-muted hover:text-text">Modifier</summary>
@@ -141,11 +143,6 @@ export default async function FinancePage({
                       />
                       <button type="submit" className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:text-text">
                         Enregistrer
-                      </button>
-                    </form>
-                    <form action={deleteInvoiceAction.bind(null, inv.id)}>
-                      <button type="submit" className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:border-red/50 hover:text-red">
-                        Supprimer
                       </button>
                     </form>
                   </div>
@@ -234,6 +231,31 @@ function BillingPlans({
         })}
       </div>
     </div>
+  );
+}
+
+// Suppression en deux temps : le bouton de la ligne ouvre la confirmation, sans
+// JavaScript. Une facture payée le dit, puisqu'elle sort alors de l'encaissé.
+function DeleteInvoice({ invoice }: { invoice: InvoiceRow }) {
+  return (
+    <Popover
+      summary="Supprimer"
+      summaryClassName="cursor-pointer list-none rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:border-red/50 hover:text-red"
+    >
+      <form
+        action={deleteInvoiceAction.bind(null, invoice.id)}
+        className="absolute right-0 z-10 mt-2 flex w-72 flex-col gap-2 rounded-xl border border-border bg-panel p-3 text-xs shadow-2xl"
+      >
+        <p className="text-text">Supprimer {invoice.ref} ({fmtEUR(invoice.amount)}) ?</p>
+        {invoice.status === "PAYEE" ? (
+          <p className="text-amber">Elle est marquée payée : son montant sortira aussi de l’encaissé.</p>
+        ) : null}
+        <p className="text-muted">Son historique part avec elle. C’est définitif.</p>
+        <button type="submit" className="rounded-lg bg-red/90 px-3 py-1.5 font-semibold text-bg hover:bg-red">
+          Confirmer la suppression
+        </button>
+      </form>
+    </Popover>
   );
 }
 

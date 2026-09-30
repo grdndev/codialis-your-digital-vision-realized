@@ -244,10 +244,13 @@ export const POST = adminRoute(["PM", "DIR"], async ({ user }, request) => {
     return;
   }
 
-  if (body.action === "update-invoice" || body.action === "delete-invoice") {
-    if (invoice.status === "PAYEE") {
-      badRequest("Une facture payée ne se modifie plus : passez par un avoir");
-    }
+  // Le montant d'une facture payée ne se réécrit pas. La SUPPRIMER, en
+  // revanche, reste possible : le CRM ne tient pas la comptabilité et n'a pas
+  // d'avoir, et une facture saisie par erreur puis marquée payée (les deux à
+  // 1 € de Sumvibes, CC-324) ne pouvait plus disparaître. L'écran demande une
+  // confirmation et prévient qu'elle sort de l'encaissé.
+  if (body.action === "update-invoice" && invoice.status === "PAYEE") {
+    badRequest("Une facture payée ne se modifie plus");
   }
 
   if (body.action === "set-invoice-status") {
