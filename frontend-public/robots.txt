@@ -4,60 +4,98 @@
 # --- Crawlers IA : accès explicite (ChatGPT, Claude, Perplexity, Gemini, etc.)
 User-agent: GPTBot
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: OAI-SearchBot
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: ChatGPT-User
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: Claude-Web
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: anthropic-ai
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: Perplexity-User
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: Google-Extended
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: GoogleOther
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: MistralAI-User
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: Amazonbot
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: Applebot-Extended
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: meta-externalagent
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: FacebookBot
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: cohere-ai
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: CCBot
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: DuckAssistBot
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 User-agent: YouBot
 Allow: /
+Disallow: /Chatbot.dc.html
+Disallow: /api/
 
 # --- Règles par défaut (tous les robots) -------------------------------------
 User-agent: *
