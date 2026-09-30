@@ -11,6 +11,8 @@ export type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", roles: ["DIR", "PM", "DEV"] },
+  // Ouvert à toute l'équipe, piloté par la direction (CC-356).
+  { href: "/objectifs", label: "Objectifs", roles: ["DIR", "PM", "DEV"] },
   { href: "/todo", label: "À traiter", roles: ["DIR"] },
   { href: "/projects", label: "Projets", roles: ["DEV", "PM", "DIR"] },
   { href: "/crm", label: "Prospection", roles: ["DIR", "PM"] },

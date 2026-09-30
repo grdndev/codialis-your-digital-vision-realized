@@ -201,23 +201,35 @@ model Project {
   monthlyGoals         MonthlyGoal[]
 }
 
-// Objectifs du mois (CC-347), posés par la direction et affichés à toute
-// l'équipe sur le Dashboard : un intitulé, une échéance, et facultativement le
-// projet dont l'avancement dit où l'on en est. `doneAt` date l'objectif atteint.
+// Objectifs (CC-347, CC-356), posés par la direction et lus par toute
+// l'équipe, sur le Dashboard et dans l'écran Objectifs : un intitulé, une
+// échéance, et facultativement le projet dont l'avancement dit où l'on en est.
+// Un objectif se CLÔT sur un constat — atteint ou non atteint, et pourquoi —
+// qui fait l'historique : `outcome` NULL = encore en cours.
 // Auteur et projet sont facultatifs pour la même raison que partout ailleurs
 // (DEC-032) : supprimer un compte ou un projet ne fait pas disparaître
 // l'objectif, il perd seulement son rattachement.
+enum GoalOutcome {
+  ATTEINT
+  NON_ATTEINT
+}
+
 model MonthlyGoal {
-  id        String    @id @default(cuid())
-  title     String    @db.VarChar(300)
-  detail    String    @db.Text
-  dueAt     DateTime
-  projectId String?
-  project   Project?  @relation(fields: [projectId], references: [id])
-  authorId  String?
-  author    User?     @relation(fields: [authorId], references: [id])
-  doneAt    DateTime?
-  createdAt DateTime  @default(now())
+  id          String       @id @default(cuid())
+  title       String       @db.VarChar(300)
+  detail      String       @db.Text
+  dueAt       DateTime
+  projectId   String?
+  project     Project?     @relation(fields: [projectId], references: [id])
+  authorId    String?
+  author      User?        @relation(fields: [authorId], references: [id])
+  outcome     GoalOutcome?
+  // Pourquoi l'objectif n'a pas été atteint (obligatoire dans ce cas), ou
+  // comment il l'a été : c'est ce qui rend l'historique utile.
+  outcomeNote String?      @db.Text
+  // Date du constat.
+  closedAt    DateTime?
+  createdAt   DateTime     @default(now())
 
   @@index([dueAt])
 }

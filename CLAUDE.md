@@ -57,6 +57,8 @@ backend/src/lib/balances.ts=soldes de congés et d'heures, calculés jamais stoc
 backend/src/lib/work-calendar.ts=jours ouvrés, fériés français, isoOf
 backend/src/lib/refs.ts=attribution des références lisibles
 backend/src/lib/billing.ts=échéancier de facturation d'un projet (pourcentages, échéance suivante, solde), calcul pur
+backend/src/lib/goals.ts=objectifs : lecture cloisonnée (Dashboard + écran Objectifs) et seules règles d'écriture (DIR)
+backend/src/lib/agency-rates.ts=taux horaire et durée d'une journée de l'agence, heures vendues d'un prix
 backend/src/lib/files.ts=client de codialis.files (envoi, suppression, url publique) ; seul le backend connaît le port privé et le jeton
 backend/src/app/api/admin/attachments/=pièces jointes : POST = le fichier BRUT en corps, DELETE = retrait ; hors convention « une route par écran » parce que ce n'est pas du JSON
 backend/prisma/schema.prisma=schéma unique
@@ -128,6 +130,8 @@ DEC-047 [2026-09-30] ACTIVE une facture se SUPPRIME même payée (PM et DIR), ap
 DEC-048 [2026-09-30] ACTIVE les fenêtres flottantes (Exporter, Importer du JSON, Nouvel épic, confirmation de suppression de facture) se ferment au clic extérieur, sur Échap et après l'envoi de leur formulaire : composant Popover (frontend-admin/src/app/(app)/popover.tsx) why=demande du 30/09 sur l'export ; même comportement pour les fenêtres de la même barre alt=`<details>` nu, qui ne se ferme qu'en recliquant son bouton
 DEC-049 [2026-09-30] ACTIVE les images jointes s'ouvrent dans une visionneuse (`<dialog>` modal, ← → entre les images de la fiche, damier derrière les images transparentes, lien vers l'original) au lieu d'un nouvel onglet why=demande du 30/09 alt=lien vers files.codialis.com (état initial)
 DEC-050 [2026-09-30] ACTIVE heures vendues = montant vendu ÷ taux horaire de l'agence, au dixième ; PM/DIR règlent le taux horaire ET la durée d'une journée dans « Rentabilité & temps », le taux journalier en découle (défaut 90 €/h × 8 h = 720 €) ; recalculées SEULEMENT quand le montant change, un projet déjà vendu garde ses heures ; sans montant, les heures restent saisies why=CC-357, arbitrage Denis du 30/09 alt=taux journalier seul (conversion en heures ambiguë), recalcul de tous les projets à chaque changement de taux
+DEC-051 [2026-09-30] ACTIVE un objectif se CLÔT sur un constat : atteint (commentaire facultatif) ou non atteint (raison OBLIGATOIRE), daté (closedAt) ; écran Objectifs ouvert à toute l'équipe (en cours + historique par mois d'échéance + taux d'atteinte), piloté par la direction seule ; le Dashboard garde les en cours et les clos du mois why=CC-356, « savoir s'il a été atteint ou non et pourquoi pour avoir un suivi » alt=case « atteint » sans constat (CC-347)
+DEC-052 [2026-09-30] ACTIVE exception à « une route POST par écran » : les objectifs ne s'ÉCRIVENT que par /api/admin/objectifs, y compris depuis le bloc du Dashboard ; la route du Dashboard ne fait que les lire why=une seule règle d'écriture (src/lib/goals.ts), pas deux copies qui divergent alt=mêmes actions dupliquées dans les deux routes
 DEC-037 [2026-09-28] ACTIVE une facture a un HISTORIQUE de commentaires (InvoiceComment), ouvert même une fois payée, sans modification ni suppression ; l'auteur suit DEC-032 (NULL si le compte est supprimé), les commentaires suivent la facture en CASCADE why=CC-349 ; c'est souvent après le règlement qu'on note comment il s'est fait alt=champ de notes unique sur la facture (écrasé à chaque saisie)
 
 ## TRAP
@@ -201,8 +205,11 @@ done=[30/09] CC-355 : pastilles du planning de la semaine dans « Qui est là »
 done=[30/09] hors tickets : suppression des factures payées (DEC-047), fenêtres flottantes qui se ferment (DEC-048), visionneuse d'images (DEC-049) ; 18/18 et 16/16 dans Chrome
 done=[30/09] CC-357 : taux de l'agence et heures vendues calculées (DEC-050, migration taux_agence) ; 18/18 HTTP + Chrome, billing 32/32
 done=[30/09] temps mesuré : horaires lus en heure de La Réunion (TRAP-040), work-time 23/23 dont 5 cas en instants réels
-next=recalculer en prod les sessions et les heures passées depuis le 17/09 (accord de Denis du 30/09), sauvegarde des anciennes valeurs dans ~/backups/temps-mesure/
-next=CC-356 (onglet Objectifs avec historique atteint/non atteint et raison)
+done=[30/09] temps mesuré recalculé en prod (accord de Denis) : 32 sessions, 132,97 h → 135,34 h ; dernière activité des projets remise à sa date ; sauvegarde ~/backups/temps-mesure/avant-20260930-074948.json sur le serveur
+done=[30/09] le recalcul a aligné ADD de 31 h à 95 h : son compteur était périmé, il vaut désormais tâches (24 h importées) + tickets (71,5 h, surtout des chronomètres restés « En cours » plusieurs jours chez Luc et Denis)
+done=[30/09] CC-356 : écran Objectifs, constat atteint/non atteint avec raison (DEC-051/052, migration objectifs_constat) ; 18/18 HTTP + Chrome
+wip=aucun
+next=attendre le retour de Gabrielle et Jayan sur les tickets en EN_REVUE
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — débloqué par DEC-027 (codialis.files) ; le socle Drive reste committé et inutilisé, on le retire quand le service maison aura fait ses preuves
 blocked=DEC-009 — confirmer que le calendrier RH peut rester visible par toute l'équipe
@@ -219,6 +226,8 @@ manual=AVANT le premier déploiement : créer files/.env sur le serveur avec FIL
 manual=les fichiers servis par codialis.files sont PUBLICS pour qui a l'URL (non devinable, 32 hexadécimaux) — à confronter au cloisonnement des projets (DEC-023/024) avant d'y mettre des pièces jointes de tickets
 manual=backend/src/lib/drive.ts et prisma/drive-consent.ts sont du code MORT, importés nulle part — à supprimer une fois codialis.files éprouvé (DEC-027)
 manual=après déploiement : rattacher les factures existantes à leur échéance (TRAP-037) et saisir le prix total + l'échéancier des projets ouverts dans Facturation → « Échéancier des projets » — soldAmount était NULL sur tous les projets facturés au relevé du 30/09
+manual=des chronomètres restent « En cours » plusieurs jours (Luc et Denis sur ADD) : ils comptent chaque journée de bureau ; à surveiller, ou à arrêter d'office en fin de journée si l'équipe le souhaite
+manual=des tâches importées portent des heures passées sans session ni saisie (ADD : 24 h) : la première session ouverte sur l'une d'elles recalculera son compteur à partir des seules sessions et saisies, et effacera ces heures importées (DEC-004)
 manual=update-project (formulaire « Modifier le projet ») REDATE la clôture à chaque enregistrement d'un projet clôturé (`closedAt: new Date()`), contrairement à update-project-phase qui la garde — bug existant, non corrigé, à proposer
 manual=signaler à Luc que « ticket » et « gravité » ne sont pas des filtres de Ressources (DEC-039), et lui demander s'il visait un autre écran
 manual=CC-346 et le point 2 de CC-353 sont le même besoin, livrés ensemble
