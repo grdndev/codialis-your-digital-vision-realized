@@ -36,6 +36,12 @@ const querySchema = z.object({
   monthStart: isoDateTime,
   monthEnd: isoDateTime,
   weekdays: z.array(isoDateTime).min(1).max(7),
+  // Bornes de la grille « Qui est là » (CC-355), semaines complètes : le mois
+  // commence et finit rarement un lundi et un dimanche, et la semaine en cours
+  // déborde souvent sur le mois voisin. Absentes, la grille reste le mois.
+  // `calendarEnd` est exclusive, comme `monthEnd`.
+  calendarStart: isoDateTime.optional(),
+  calendarEnd: isoDateTime.optional(),
 });
 
 // Une saisie est toujours pour soi, sauf la direction qui peut saisir pour un
@@ -58,6 +64,8 @@ export const GET = adminRoute(
       monthStart: params.get("monthStart"),
       monthEnd: params.get("monthEnd"),
       weekdays: params.getAll("weekday"),
+      calendarStart: params.get("calendarStart") ?? undefined,
+      calendarEnd: params.get("calendarEnd") ?? undefined,
     });
     if (!parsed.success) badRequest("Période invalide");
 
@@ -102,11 +110,13 @@ export const GET = adminRoute(
     // Calendrier d'équipe — « qui est là ce mois-ci ». Ouvert à toute
     // l'équipe : savoir qui est absent est le minimum pour s'organiser. Le
     // MOTIF, lui, reste à la direction ; le reste de l'écran RH ne change pas.
-    // `monthEnd` est une borne exclusive, le dernier jour affiché est la veille.
-    const lastDay = new Date(monthEnd);
+    // Les bornes de fin sont exclusives, le dernier jour affiché est la veille.
+    const calStart = parsed.data.calendarStart ? new Date(parsed.data.calendarStart) : monthStart;
+    const calEnd = parsed.data.calendarEnd ? new Date(parsed.data.calendarEnd) : monthEnd;
+    const lastDay = new Date(calEnd);
     lastDay.setUTCDate(lastDay.getUTCDate() - 1);
 
-    const [people, calAbsences, calRules, calTravels] = await Promise.all([
+    const [people, calAbsences, calRules, calTravels, calShifts] = await Promise.all([
       prisma.user.findMany({
         where: { role: { in: ["DEV", "PM", "DIR"] } },
         select: { id: true, name: true, initials: true, role: true },
@@ -116,25 +126,30 @@ export const GET = adminRoute(
         where: {
           status: { not: "REFUSE" },
           startDate: { lte: lastDay },
-          endDate: { gte: monthStart },
+          endDate: { gte: calStart },
         },
       }),
       prisma.presenceRecurrence.findMany({
         where: {
           startDate: { lte: lastDay },
-          OR: [{ endDate: null }, { endDate: { gte: monthStart } }],
+          OR: [{ endDate: null }, { endDate: { gte: calStart } }],
         },
       }),
       prisma.travelEntry.findMany({
         where: {
           status: { not: "REFUSE" },
           startDate: { lte: lastDay },
-          OR: [{ endDate: null }, { endDate: { gte: monthStart } }],
+          OR: [{ endDate: null }, { endDate: { gte: calStart } }],
         },
+      }),
+      // Le planning de la semaine de chacun (CC-355) : c'est là que l'équipe
+      // pose ses jours de télétravail et d'absence.
+      prisma.plannedShift.findMany({
+        where: { date: { gte: calStart, lt: calEnd } },
       }),
     ]);
 
-    const calendar = buildCalendar(monthStart, lastDay, {
+    const calendar = buildCalendar(calStart, lastDay, {
       absences: calAbsences.map((a) => ({
         userId: a.userId,
         type: a.type,
@@ -159,6 +174,12 @@ export const GET = adminRoute(
         startDate: t.startDate,
         endDate: t.endDate,
         destination: user.role === "DIR" ? t.destination : "",
+      })),
+      shifts: calShifts.map((s) => ({
+        userId: s.userId,
+        date: s.date,
+        kind: s.kind,
+        note: user.role === "DIR" ? s.note : "",
       })),
     });
 

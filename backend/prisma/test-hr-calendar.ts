@@ -88,5 +88,38 @@ const doubled = buildCalendar(d("2026-11-06"), d("2026-11-06"), {
 });
 check("pas de doublon quand règle et saisie disent la même chose", doubled["2026-11-06"].length === 1, JSON.stringify(doubled["2026-11-06"]));
 
+console.log("\n— Planning de la semaine (CC-355)");
+// Le planning jour par jour est ce que l'équipe remplit réellement : il doit
+// produire des pastilles comme une demande d'absence.
+const planned = buildCalendar(from, to, {
+  absences: [
+    { userId: "u3", type: "CONGE", startDate: d("2026-11-17"), endDate: d("2026-11-17"), halfDay: null, motif: "" },
+  ],
+  recurrences: [weekly],
+  travels: [],
+  shifts: [
+    { userId: "u2", date: d("2026-11-03"), kind: "TELETRAVAIL", note: "" },
+    { userId: "u2", date: d("2026-11-04"), kind: "ABSENCE", note: "rendez-vous" },
+    { userId: "u2", date: d("2026-11-05"), kind: "CLIENT", note: "" },
+    { userId: "u2", date: d("2026-11-06"), kind: "BUREAU", note: "" },
+    // u1 télétravaille le vendredi par règle, mais vient au bureau ce vendredi-là.
+    { userId: "u1", date: d("2026-11-13"), kind: "BUREAU", note: "" },
+    // u3 est en congé validé : le télétravail planifié avant la demande ne s'y ajoute pas.
+    { userId: "u3", date: d("2026-11-17"), kind: "TELETRAVAIL", note: "" },
+    // Hors période : ignoré.
+    { userId: "u2", date: d("2026-12-01"), kind: "TELETRAVAIL", note: "" },
+  ],
+});
+const on = (day: string, userId: string) => (planned[`2026-11-${day}`] ?? []).filter((e) => e.userId === userId).map((e) => e.kind);
+check("télétravail planifié : pastille télétravail", JSON.stringify(on("03", "u2")) === '["TELETRAVAIL"]', JSON.stringify(on("03", "u2")));
+check("absence planifiée : pastille absence", JSON.stringify(on("04", "u2")) === '["ABSENCE"]', JSON.stringify(on("04", "u2")));
+check("…avec sa note en motif", (planned["2026-11-04"] ?? []).some((e) => e.userId === "u2" && e.motif === "rendez-vous"));
+check("chez le client : pastille client", JSON.stringify(on("05", "u2")) === '["CLIENT"]', JSON.stringify(on("05", "u2")));
+check("au bureau : aucune pastille", on("06", "u2").length === 0, JSON.stringify(on("06", "u2")));
+check("« bureau » planifié l'emporte sur la règle du vendredi", on("13", "u1").length === 0, JSON.stringify(on("13", "u1")));
+check("…la règle vaut toujours les autres vendredis", JSON.stringify(on("20", "u1")) === '["TELETRAVAIL"]', JSON.stringify(on("20", "u1")));
+check("un congé validé l'emporte sur le planning du jour", JSON.stringify(on("17", "u3")) === '["CONGE"]', JSON.stringify(on("17", "u3")));
+check("un planning hors période est ignoré", !Object.keys(planned).some((k) => k.startsWith("2026-12")));
+
 console.log(`\n${pass} vérifications passées, ${fail} en échec`);
 process.exit(fail ? 1 : 0);

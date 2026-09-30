@@ -93,7 +93,8 @@ export type TeamBalanceRow = { userId: string; hours: Balance; leave: Balance };
 // des autres et la file de validation lui sont réservés.
 // Calendrier d'équipe — « qui est là ce mois-ci ». Rangé par date ISO. Le
 // motif n'est renseigné que pour la direction.
-export type CalendarKind = AbsenceType | "DEPLACEMENT";
+// `CLIENT` vient du planning de la semaine (« chez le client »).
+export type CalendarKind = AbsenceType | "DEPLACEMENT" | "CLIENT";
 
 export type CalendarEntryRow = {
   userId: string;

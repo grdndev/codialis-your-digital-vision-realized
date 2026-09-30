@@ -2,14 +2,18 @@ import { isoOf } from "@/lib/work-calendar";
 
 // Qui est là, jour par jour.
 //
-// Trois sources se superposent : les absences saisies, les règles récurrentes
-// (télétravail le vendredi, formation un lundi sur deux) et les déplacements.
+// Quatre sources se superposent : les absences saisies, les règles récurrentes
+// (télétravail le vendredi, formation un lundi sur deux), les déplacements, et
+// le planning de la semaine — bureau, télétravail, chez le client, absence,
+// posé jour par jour. C'est ce dernier que l'équipe remplit réellement : il
+// était ignoré, et les jours de télétravail ou d'absence n'avaient pas de
+// pastille (CC-355).
 // Ce module ne fait que les étaler sur des dates — il ne lit pas la base et ne
 // connaît pas de session, ce qui le rend vérifiable seul.
 //
 // Convention de jour de semaine : 0 = lundi … 6 = dimanche, celle du modèle.
 
-export type DayKind = "TELETRAVAIL" | "CONGE" | "ABSENCE" | "FORMATION" | "DEPLACEMENT";
+export type DayKind = "TELETRAVAIL" | "CONGE" | "ABSENCE" | "FORMATION" | "DEPLACEMENT" | "CLIENT";
 export type HalfDay = "AM" | "PM" | null;
 
 export type CalendarEntry = {
@@ -45,6 +49,13 @@ export type TravelInput = {
   startDate: Date;
   endDate: Date | null;
   destination: string;
+};
+
+export type ShiftInput = {
+  userId: string;
+  date: Date;
+  kind: "BUREAU" | "TELETRAVAIL" | "CLIENT" | "ABSENCE";
+  note: string;
 };
 
 function atUtcMidnight(d: Date): Date {
@@ -106,6 +117,7 @@ export function buildCalendar(
     absences: AbsenceInput[];
     recurrences: RecurrenceInput[];
     travels: TravelInput[];
+    shifts?: ShiftInput[];
   },
 ): Record<string, CalendarEntry[]> {
   const byDay: Record<string, CalendarEntry[]> = {};
@@ -132,8 +144,26 @@ export function buildCalendar(
     }
   }
 
+  // Le planning d'un jour précis est plus récent et plus précis qu'une règle
+  // qui revient chaque semaine : « bureau » ce vendredi efface le télétravail
+  // du vendredi. Une demande d'absence validée, elle, reste au-dessus de tout.
+  const plannedDays = new Set<string>();
+  const first = atUtcMidnight(from);
+  const last = atUtcMidnight(to);
+  for (const shift of sources.shifts ?? []) {
+    const day = atUtcMidnight(shift.date);
+    if (day < first || day > last) continue;
+    plannedDays.add(`${shift.userId}|${isoOf(day)}`);
+    if (shift.kind === "BUREAU") continue;
+    // Un jour déjà couvert par une demande (congé, formation…) garde celle-ci
+    // seule : la case du planning a pu être remplie avant la demande.
+    if ((byDay[isoOf(day)] ?? []).some((e) => e.userId === shift.userId)) continue;
+    push(day, { userId: shift.userId, kind: shift.kind, halfDay: null, motif: shift.note });
+  }
+
   for (const rule of sources.recurrences) {
     for (const day of recurrenceDays(rule, from, to)) {
+      if (plannedDays.has(`${rule.userId}|${isoOf(day)}`)) continue;
       push(day, {
         userId: rule.userId,
         kind: rule.effect as DayKind,

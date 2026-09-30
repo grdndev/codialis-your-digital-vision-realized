@@ -123,6 +123,7 @@ DEC-042 [2026-09-30] ACTIVE rattacher une facture à une échéance est permis M
 DEC-043 [2026-09-30] ACTIVE garantie et maintenance = deux dates de fin sur le projet (dernier jour couvert, minuit UTC), cumulables et indépendantes de la phase ; posées par PM/DIR dans un bloc NON replié de l'onglet Fiche, lues par tous en en-tête why=CC-351 ; la phase WAR/MAI est exclusive et sans date alt=phase seule
 DEC-044 [2026-09-30] ACTIVE import JSON : un seul choix d'assigné pour TOUS les tickets créés, « Personne » par défaut ; les tâches importées restent sans assigné why=CC-354 ne parle que des tickets alt=assigné par ticket dans le JSON
 DEC-045 [2026-09-30] ACTIVE export des tickets en CSV (point-virgule, BOM UTF-8, heure de La Réunion, décimales à virgule) ou JSON (codes bruts, instants ISO, champs de l'import), par une route de frontend-admin qui relit GET /api/admin/tickets ; `assignee` y accepte une liste d'identifiants (+ `none`) why=CC-353 ; les droits restent ceux de la liste des tickets alt=route d'export dans le backend
+DEC-046 [2026-09-30] ACTIVE « Qui est là » lit AUSSI le planning de la semaine (PlannedShift) : télétravail, absence et « chez le client » y font une pastille, « bureau » aucune ; priorité demande d'absence > planning du jour > règle récurrente ; la grille couvre des semaines entières (bornes posées par l'écran, `calendarStart`/`calendarEnd`) why=CC-355 ; le planning est ce que l'équipe remplit réellement (Absences et règles vides en prod), et la semaine en cours déborde sur le mois voisin alt=planning ignoré (état initial), grille bornée au mois
 DEC-037 [2026-09-28] ACTIVE une facture a un HISTORIQUE de commentaires (InvoiceComment), ouvert même une fois payée, sans modification ni suppression ; l'auteur suit DEC-032 (NULL si le compte est supprimé), les commentaires suivent la facture en CASCADE why=CC-349 ; c'est souvent après le règlement qu'on note comment il s'est fait alt=champ de notes unique sur la facture (écrasé à chaque saisie)
 
 ## TRAP
@@ -190,7 +191,8 @@ done=[30/09] CC-346, CC-347, CC-350, CC-351, CC-353 (8 points), CC-354 codés et
 done=[30/09] 5 migrations : couleurs_personnelles, couverture_garantie_maintenance, echeancier_facturation, echeance_unique_par_projet, objectifs_du_mois
 done=[30/09] déployé (11a56cd), les 5 migrations appliquées en prod juste après le rebuild ; CC-346, CC-347, CC-350, CC-351, CC-353, CC-354 passés en EN_REVUE (directement : le passage EN_COURS avait été bloqué par TRAP-038)
 wip=aucun
-next=CC-355, CC-356, CC-357 apparus en À FAIRE sur « Codialis CRM » pendant la livraison du 30/09, pas encore lus
+done=[30/09] CC-355 : pastilles du planning de la semaine dans « Qui est là », grille en semaines entières ; hr-calendar 27/27, 11/11 dans Chrome
+next=CC-356 (onglet Objectifs avec historique atteint/non atteint et raison), CC-357 (heures vendues déduites du prix et d'un taux réglable)
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — débloqué par DEC-027 (codialis.files) ; le socle Drive reste committé et inutilisé, on le retire quand le service maison aura fait ses preuves
 blocked=DEC-009 — confirmer que le calendrier RH peut rester visible par toute l'équipe

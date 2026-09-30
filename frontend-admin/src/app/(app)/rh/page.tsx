@@ -77,6 +77,7 @@ export default async function RhPage() {
   const user = await requireUser();
   const { start: monthStart, end: monthEnd } = currentMonthBounds();
   const weekdays = currentWeekdays();
+  const { start: calendarStart, end: calendarEnd } = fullWeeksAround(monthStart, monthEnd);
 
   // Les bornes de période partent d'ici : la grille du planning retrouve ses
   // créneaux par égalité exacte de date, un seul endroit doit décider ce
@@ -86,6 +87,8 @@ export default async function RhPage() {
     monthEnd: monthEnd.toISOString(),
   });
   for (const day of weekdays) query.append("weekday", day.toISOString());
+  query.set("calendarStart", calendarStart.toISOString());
+  query.set("calendarEnd", calendarEnd.toISOString());
 
   const {
     myHours,
@@ -126,7 +129,14 @@ export default async function RhPage() {
         <Kpi label="Récupérations du mois" value={fmtHours(recupTotal)} note={`${myHours.filter((e) => e.kind === "RECUP").length} demande(s)`} />
       </div>
 
-      <TeamCalendar monthStart={monthStart} monthEnd={monthEnd} calendar={calendar} people={people} />
+      <TeamCalendar
+        monthStart={monthStart}
+        monthEnd={monthEnd}
+        gridStart={calendarStart}
+        gridEnd={calendarEnd}
+        calendar={calendar}
+        people={people}
+      />
 
       {isDir ? (
         <>
@@ -721,12 +731,15 @@ function Kpi({ label, value, note }: { label: string; value: string; note: strin
   );
 }
 
+const DAY_MONTH = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" });
+
 const CALENDAR_LABEL: Record<CalendarKind, string> = {
   TELETRAVAIL: "Télétravail",
   CONGE: "Congés",
   ABSENCE: "Absence",
   FORMATION: "Formation",
   DEPLACEMENT: "Déplacement",
+  CLIENT: "Chez le client",
 };
 
 const CALENDAR_CLASS: Record<CalendarKind, string> = {
@@ -735,8 +748,21 @@ const CALENDAR_CLASS: Record<CalendarKind, string> = {
   ABSENCE: "bg-red/15 text-red",
   FORMATION: "bg-white/10 text-text",
   DEPLACEMENT: "bg-white/5 text-muted",
+  CLIENT: "bg-blue/15 text-blue",
 };
 
+
+// Du lundi qui ouvre la semaine du 1er au lundi qui suit la semaine du dernier
+// jour (borne exclusive) : la grille montre des semaines entières, et la
+// semaine en cours reste lisible quand elle déborde sur le mois voisin.
+function fullWeeksAround(monthStart: Date, monthEnd: Date): { start: Date; end: Date } {
+  const start = new Date(monthStart);
+  start.setUTCDate(start.getUTCDate() - ((start.getUTCDay() + 6) % 7));
+  const end = new Date(monthEnd);
+  const trailing = (7 - ((end.getUTCDay() + 6) % 7)) % 7;
+  end.setUTCDate(end.getUTCDate() + trailing);
+  return { start, end };
+}
 
 // « Qui est là ce mois-ci ». Une case par jour, une pastille par personne
 // concernée — le reste de l'équipe est au bureau, ce qui se lit à l'absence de
@@ -744,11 +770,15 @@ const CALENDAR_CLASS: Record<CalendarKind, string> = {
 function TeamCalendar({
   monthStart,
   monthEnd,
+  gridStart,
+  gridEnd,
   calendar,
   people,
 }: {
   monthStart: Date;
   monthEnd: Date;
+  gridStart: Date;
+  gridEnd: Date;
   calendar: Record<string, CalendarEntryRow[]>;
   people: { id: string; name: string; initials: string }[];
 }) {
@@ -756,15 +786,12 @@ function TeamCalendar({
 
   const days: Date[] = [];
   for (
-    const cursor = new Date(monthStart);
-    cursor < monthEnd;
+    const cursor = new Date(gridStart);
+    cursor < gridEnd;
     cursor.setUTCDate(cursor.getUTCDate() + 1)
   ) {
     days.push(new Date(cursor));
   }
-
-  // La grille commence un lundi : on décale du nombre de cases nécessaire.
-  const lead = (monthStart.getUTCDay() + 6) % 7;
   const kinds = [...new Set(Object.values(calendar).flat().map((e) => e.kind))];
 
   return (
@@ -773,8 +800,9 @@ function TeamCalendar({
         <div>
           <h2 className="text-sm font-semibold text-text">Qui est là</h2>
           <p className="mt-1 text-xs text-muted">
-            Congés, télétravail, formations et déplacements de l’équipe ce mois-ci. Un jour
-            sans pastille est un jour où tout le monde est au bureau.
+            Congés, télétravail, formations et déplacements de l’équipe ce mois-ci, demandes
+            et planning de la semaine compris. Un jour sans pastille est un jour où tout le
+            monde est au bureau.
           </p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
@@ -792,22 +820,21 @@ function TeamCalendar({
             {label}
           </div>
         ))}
-        {Array.from({ length: lead }, (_, i) => (
-          <div key={`vide-${i}`} />
-        ))}
         {days.map((day) => {
           const key = day.toISOString().slice(0, 10);
           const entries = calendar[key] ?? [];
           const weekend = day.getUTCDay() === 0 || day.getUTCDay() === 6;
+          // Les jours du mois voisin sont grisés, mais gardent leurs pastilles.
+          const outside = day < monthStart || day >= monthEnd;
           return (
             <div
               key={key}
               className={`min-h-[68px] rounded-lg border p-1.5 ${
-                weekend ? "border-border/40 bg-panel-2/40" : "border-border bg-panel-2"
+                weekend || outside ? "border-border/40 bg-panel-2/40" : "border-border bg-panel-2"
               }`}
             >
-              <p className={`text-[10px] ${weekend ? "text-muted/50" : "text-muted"}`}>
-                {day.getUTCDate()}
+              <p className={`text-[10px] ${weekend || outside ? "text-muted/50" : "text-muted"}`}>
+                {outside ? DAY_MONTH.format(day) : day.getUTCDate()}
               </p>
               <div className="mt-1 flex flex-wrap gap-1">
                 {entries.map((entry, i) => {
