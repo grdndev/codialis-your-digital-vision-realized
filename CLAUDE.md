@@ -175,6 +175,7 @@ TRAP-037 les factures d'avant l'échéancier ont milestone NULL → tant qu'elle
 TRAP-038 le mode auto de Claude Code REFUSE les écritures sur le serveur de prod (ssh + docker compose exec) : la lecture passe, le changement de statut d'un ticket et le déploiement exigent une permission explicite de Denis
 TRAP-039 chaque déploiement invalide les actions serveur des pages déjà ouvertes : un clic depuis une page chargée avant le rebuild ne fait RIEN à l'écran (« Failed to find Server Action » dans le journal de codialis-admin) → recharger la page ; regrouper les déploiements plutôt que d'en enchaîner plusieurs dans la journée
 TRAP-040 les horaires de travail sont des heures de BUREAU À LA RÉUNION, les sessions des instants UTC → le calcul (work-time.ts) décale les instants de +4 h avant de les rogner ; il les lisait en UTC jusqu'au 30/09 (9h-12h comptait 13h-16h locales, le matin valait 0 h) sans qu'aucun test ne le voie, les tests écrivant leurs heures en UTC comme si c'était l'heure locale
+TRAP-041 un statut de ticket ou de tâche écrit HORS de applyTicketStatus / des routes (script, updateMany) laisse tourner le chronomètre : close-client-reports.ts a passé AD-301 et AD-307 à TERMINE le 18/09 sans fermer leurs sessions, qui ont compté 56 h à Denis jusqu'au 30/09 → tout script qui change un statut doit appeler closeSessions/openSession (lib/work-sessions.ts) ; contrôle : `workSession` sans `endedAt` dont le ticket ou la tâche n'est pas EN_COURS
 TRAP-032 le conteneur codialis-api NE migre PAS au démarrage (`CMD next start`) → entre `docker compose up -d --build` et `migrate deploy`, tout écran qui lit une nouvelle table plante ; lancer la migration immédiatement après le rebuild (Facturation cassée quelques minutes le 28/09)
 
 ## STATE
@@ -206,7 +207,7 @@ done=[30/09] hors tickets : suppression des factures payées (DEC-047), fenêtre
 done=[30/09] CC-357 : taux de l'agence et heures vendues calculées (DEC-050, migration taux_agence) ; 18/18 HTTP + Chrome, billing 32/32
 done=[30/09] temps mesuré : horaires lus en heure de La Réunion (TRAP-040), work-time 23/23 dont 5 cas en instants réels
 done=[30/09] temps mesuré recalculé en prod (accord de Denis) : 32 sessions, 132,97 h → 135,34 h ; dernière activité des projets remise à sa date ; sauvegarde ~/backups/temps-mesure/avant-20260930-074948.json sur le serveur
-done=[30/09] le recalcul a aligné ADD de 31 h à 95 h : son compteur était périmé, il vaut désormais tâches (24 h importées) + tickets (71,5 h, surtout des chronomètres restés « En cours » plusieurs jours chez Luc et Denis)
+done=[30/09] le recalcul a aligné ADD de 31 h (compteur périmé) à 95 h, dont 56 h de deux chronomètres orphelins (TRAP-041) ; ceux-ci fermés à l'heure de leur clôture (18/09 06:03:40 UTC) : ADD = 43,26 h, AD-307 2,9 h, AD-301 0,66 h
 done=[30/09] CC-356 : écran Objectifs, constat atteint/non atteint avec raison (DEC-051/052, migration objectifs_constat) ; 18/18 HTTP + Chrome
 wip=aucun
 next=attendre le retour de Gabrielle et Jayan sur les tickets en EN_REVUE
@@ -226,7 +227,7 @@ manual=AVANT le premier déploiement : créer files/.env sur le serveur avec FIL
 manual=les fichiers servis par codialis.files sont PUBLICS pour qui a l'URL (non devinable, 32 hexadécimaux) — à confronter au cloisonnement des projets (DEC-023/024) avant d'y mettre des pièces jointes de tickets
 manual=backend/src/lib/drive.ts et prisma/drive-consent.ts sont du code MORT, importés nulle part — à supprimer une fois codialis.files éprouvé (DEC-027)
 manual=après déploiement : rattacher les factures existantes à leur échéance (TRAP-037) et saisir le prix total + l'échéancier des projets ouverts dans Facturation → « Échéancier des projets » — soldAmount était NULL sur tous les projets facturés au relevé du 30/09
-manual=des chronomètres restent « En cours » plusieurs jours (Luc et Denis sur ADD) : ils comptent chaque journée de bureau ; à surveiller, ou à arrêter d'office en fin de journée si l'équipe le souhaite
+manual=un chronomètre laissé « En cours » compte chaque journée de bureau jusqu'à ce qu'on change le statut (Luc sur AD-311 depuis le 28/09) : à surveiller, ou à arrêter d'office en fin de journée si l'équipe le souhaite
 manual=des tâches importées portent des heures passées sans session ni saisie (ADD : 24 h) : la première session ouverte sur l'une d'elles recalculera son compteur à partir des seules sessions et saisies, et effacera ces heures importées (DEC-004)
 manual=update-project (formulaire « Modifier le projet ») REDATE la clôture à chaque enregistrement d'un projet clôturé (`closedAt: new Date()`), contrairement à update-project-phase qui la garde — bug existant, non corrigé, à proposer
 manual=signaler à Luc que « ticket » et « gravité » ne sont pas des filtres de Ressources (DEC-039), et lui demander s'il visait un autre écran
