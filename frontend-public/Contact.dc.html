@@ -775,7 +775,10 @@
                     >
                   </label>
 
+                  <p role="alert" aria-live="polite" style="color:#ffb4b4;line-height:1.6;">{{ submitError }}</p>
                   <button
+                    disabled="{{ submitting }}"
+                    aria-busy="{{ submitting }}"
                     type="submit"
                     style="
                       display: inline-flex;
@@ -797,7 +800,7 @@
                     "
                     style-hover="transform:translateY(-2px);box-shadow:0 18px 40px -12px rgba(47,237,127,.6);"
                   >
-                    Envoyer ma demande<span
+                    {{ submitLabel }}<span
                       style="
                         display: inline-flex;
                         align-items: center;
@@ -1338,7 +1341,7 @@
     >
       class Component extends DCLogic {
         state = {
-          lang: (window.CodialisI18n ? window.CodialisI18n.get() : 'fr'), projectType: '', submitted: false, sentName: '', openFaq: -1,
+          lang: (window.CodialisI18n ? window.CodialisI18n.get() : 'fr'), projectType: '', submitted: false, submitting: false, submitError: '', sentName: '', openFaq: -1,
           // Remplacé par les réseaux du back-office (settings contact_socials) s'il y en a.
           socials: [
             { name: 'LinkedIn', icon: 'linkedin', href: 'https://www.linkedin.com/company/109392264/' },
@@ -1413,9 +1416,17 @@
             submitted: this.state.submitted,
             notSubmitted: !this.state.submitted,
             sentName: this.state.sentName,
-            onSubmit: (e) => {
+            submitting: this.state.submitting,
+            submitError: this.state.submitError,
+            submitLabel: this.state.submitting
+              ? (this.state.lang === 'en' ? 'Sending…' : 'Envoi en cours…')
+              : (this.state.lang === 'en' ? 'Send my request' : 'Envoyer ma demande'),
+            onSubmit: async (e) => {
               e.preventDefault();
+              if (this._contactSending || this.state.submitted) return;
               const form = e.target;
+              this._contactSending = true;
+              this.setState({ submitting: true, submitError: '' });
               let payload = {};
               let name = '';
               try {
@@ -1432,20 +1443,35 @@
                   message: g('message'),
                 };
               } catch (err) {}
-              // Optimiste : on affiche le remerciement tout de suite, l'envoi
-              // se fait en tâche de fond. La demande atterrit dans le back-office.
-              this.setState({ submitted: true, sentName: name });
-              try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) {}
+              // La confirmation attend l’enregistrement effectif par le serveur.
+              const controller = new AbortController();
+              const timeout = setTimeout(() => controller.abort(), 30000);
               try {
                 const apiBase = location.port === '3001' ? '' : 'https://landingback.codialis.com';
-                fetch(apiBase + '/api/contact', {
+                const response = await fetch(apiBase + '/api/contact', {
                   method: 'POST',
                   headers: { 'content-type': 'application/json' },
                   body: JSON.stringify(payload),
-                }).catch(() => {});
-              } catch (err) {}
+                  signal: controller.signal,
+                });
+                if (!response.ok) throw new Error('Envoi refusé');
+                const result = await response.json();
+                if (result.ok !== true) throw new Error('Confirmation absente');
+                this.setState({ submitted: true, sentName: name });
+                try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) {}
+              } catch (err) {
+                this.setState({
+                  submitError: this.state.lang === 'en'
+                    ? 'We could not confirm your request was received. Your text has been kept. Please contact us by email or phone before sending it again.'
+                    : 'La réception de votre demande n’a pas pu être confirmée. Votre saisie est conservée. Contactez-nous par e-mail ou téléphone avant de renouveler l’envoi.',
+                });
+              } finally {
+                clearTimeout(timeout);
+                this._contactSending = false;
+                this.setState({ submitting: false });
+              }
             },
-            resetForm: () => this.setState({ submitted: false, sentName: '', projectType: '' }),
+            resetForm: () => this.setState({ submitted: false, submitting: false, submitError: '', sentName: '', projectType: '' }),
             offices: [
               { city: 'Île-de-France', tag: 'Siège', desc: `Notre ancrage métropolitain, au plus près des donneurs d'ordre et de l'écosystème tech francilien.`, addr: '88 Rue du Génie, 94400 Vitry-sur-Seine', phone: '+33 (0)7 83 90 57 17', tel: 'tel:+33783905717' },
               { city: 'La Réunion', tag: 'Océan Indien', desc: `Notre implantation ultramarine, pour adresser les marchés de l'océan Indien avec la même exigence.`, addr: 'Espace Tarani, Chemin Pente Sassy 95, 97440 Saint-André', phone: '+262 (0)693 49 84 20', tel: 'tel:+262693498420' },
