@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jayan Grondin — fondateur de Codialis, architecture logicielle et IA</title>
+    <meta name="description" content="Jayan Grondin, fondateur de Codialis : architecture logicielle, SaaS et intégration IA. Parcours, mission documentaire RAG et références publiques." />
+    <link rel="canonical" href="https://codialis.com/jayan-grondin/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Codialis" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:title" content="Jayan Grondin — fondateur de Codialis, architecture logicielle et IA" />
+    <meta property="og:description" content="Jayan Grondin, fondateur de Codialis : architecture logicielle, SaaS et intégration IA. Parcours, mission documentaire RAG et références publiques." />
+    <meta property="og:url" content="https://codialis.com/jayan-grondin/" />
+    <meta property="og:image" content="https://codialis.com/assets/og-codialis.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Jayan Grondin — fondateur de Codialis, architecture logicielle et IA" />
+    <meta name="twitter:description" content="Jayan Grondin, fondateur de Codialis : architecture logicielle, SaaS et intégration IA. Parcours, mission documentaire RAG et références publiques." />
+    <meta name="twitter:image" content="https://codialis.com/assets/og-codialis.png" />
+    <meta name="theme-color" content="#0e1626" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon_io/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon_io/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon_io/favicon-16x16.png" />
+    <link rel="icon" href="/assets/favicon_io/favicon.ico" sizes="any" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet" />
+    
+    <style>
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { margin: 0; background: #0e1626; color: #eaf0f7;
+        font-family: "IBM Plex Sans", sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+      a { color: #2fed7f; text-decoration: none; }
+      a:hover { color: #7ff2b3; }
+      ::selection { background: #2fed7f; color: #08111e; }
+      .wrap { max-width: 1140px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 64px); }
+      .nav { position: sticky; top: 0; z-index: 50; background: rgba(14, 22, 38, 0.85);
+        backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+      .nav-in { display: flex; align-items: center; gap: 28px; height: 68px; }
+      .nav img { height: 22px; width: auto; }
+      .nav-links { display: flex; gap: 22px; flex-wrap: wrap; margin-left: auto; }
+      .nav-links a { color: #a6b3c6; font-size: 14px; }
+      .nav-links a:hover { color: #2fed7f; }
+      /* Sous 860 px les cinq onglets ne tiennent plus sur la ligne du bandeau :
+         ils passaient à la ligne dans une barre restée haute de 68 px, et
+         recouvraient le haut de la page. Le bandeau prend désormais la hauteur
+         de son contenu, le logo et le bouton gardent la première ligne, les
+         onglets passent en dessous. */
+      @media (max-width: 860px) {
+        .nav-in { height: auto; flex-wrap: wrap; gap: 12px 16px; padding-top: 14px; padding-bottom: 14px; }
+        .nav-links { order: 3; width: 100%; margin-left: 0; gap: 16px; }
+        .nav-in .cta { margin-left: auto; }
+      }
+      .cta { display: inline-block; padding: 11px 20px; border-radius: 11px;
+        background: #2fed7f; color: #08111e !important; font-weight: 600; font-size: 14px; }
+      h1 { font-family: "Space Grotesk", sans-serif; font-size: clamp(30px, 4.6vw, 54px);
+        line-height: 1.1; letter-spacing: -0.02em; color: #fff; margin: 0 0 22px; }
+      h2 { font-family: "Space Grotesk", sans-serif; font-size: clamp(24px, 3vw, 34px);
+        letter-spacing: -0.015em; color: #fff; margin: 0 0 18px; }
+      h3 { font-family: "Space Grotesk", sans-serif; font-size: 19px; color: #fff; margin: 0 0 10px; }
+      p { font-size: 16px; line-height: 1.75; color: #a6b3c6; }
+      .kicker { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: 0.22em;
+        text-transform: uppercase; color: #2fed7f; margin-bottom: 14px; }
+      .lead { font-size: 18px; line-height: 1.75; color: #cfd9e6; max-width: 68ch; }
+      section { padding: clamp(52px, 7vw, 92px) 0; }
+      .hero { padding-top: clamp(46px, 6vw, 76px); border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px; }
+      .card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 16px; padding: 26px 28px; }
+      .card p { font-size: 15px; margin: 0; }
+      .tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+      .tag { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: #7ff2b3;
+        border: 1px solid rgba(47, 237, 127, 0.3); border-radius: 999px; padding: 7px 14px; }
+      .band { background: #0a101e; border-top: 1px solid rgba(255, 255, 255, 0.06);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+      .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 22px; }
+      .stat b { display: block; font-family: "Space Grotesk", sans-serif; font-size: 34px; color: #2fed7f; }
+      .stat span { font-size: 14px; color: #a6b3c6; }
+      .crumb { font-size: 13px; color: #7c8ba0; margin-bottom: 20px; }
+      .crumb a { color: #7c8ba0; }
+      .crumb a:hover { color: #2fed7f; }
+      footer { border-top: 1px solid rgba(255, 255, 255, 0.06); padding: 46px 0 60px; }
+      footer p, footer a { font-size: 14px; }
+      .foot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 30px; }
+      .foot-grid h4 { font-family: "Space Grotesk", sans-serif; font-size: 14px; color: #fff;
+        margin: 0 0 12px; letter-spacing: 0.02em; }
+      .foot-grid ul { list-style: none; padding: 0; margin: 0; }
+      .foot-grid li { margin-bottom: 8px; }
+      .foot-grid a { color: #a6b3c6; }
+      .foot-grid a:hover { color: #2fed7f; }
+      .final { text-align: center; }
+      .final h2 { margin-bottom: 14px; }
+      .final p { margin: 0 auto 26px; max-width: 56ch; }
+      .service-shortcuts { margin-top: 20px; font-size: 15px; }
+      #faq, #references, #experience-equipe, #agents-ia-automatisation { scroll-margin-top: 112px; }
+      @media (max-width: 1100px) {
+        #faq, #references, #experience-equipe, #agents-ia-automatisation { scroll-margin-top: 20px; }
+      }
+#experience, #references, #sources { scroll-margin-top:112px; }
+li { line-height:1.8; margin-bottom:10px; color:#a6b3c6; }
+</style>
+      <script src="/site-chrome.js?v=20261001-profile2" defer></script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "ProfilePage", "@id": "https://codialis.com/jayan-grondin/#profile", "url": "https://codialis.com/jayan-grondin/", "name": "Jayan Grondin — fondateur de Codialis", "inLanguage": "fr-FR", "mainEntity": {"@id": "https://codialis.com/#jayan-grondin"}, "publisher": {"@id": "https://codialis.com/#organization"}}, {"@type": "Person", "@id": "https://codialis.com/#jayan-grondin", "name": "Jayan Grondin", "url": "https://codialis.com/jayan-grondin/", "jobTitle": "Fondateur de Codialis · Architecte logiciel", "worksFor": {"@id": "https://codialis.com/#organization"}, "sameAs": ["https://fr.linkedin.com/in/jayan-grondin"]}, {"@type": "Organization", "@id": "https://codialis.com/#organization", "name": "Codialis", "url": "https://codialis.com/", "founder": {"@id": "https://codialis.com/#jayan-grondin"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://codialis.com/"}, {"@type": "ListItem", "position": 2, "name": "Jayan Grondin", "item": "https://codialis.com/jayan-grondin/"}]}]}</script>
+</head>
+<body class="cod-service-page">
+<div data-cod-header><nav class="wrap" aria-label="Navigation principale" style="padding-top:24px;padding-bottom:24px"><a href="/">Codialis</a> · <a href="/logiciel-metier-sur-mesure">Logiciels métier</a> · <a href="/agence-ia">IA et automatisation</a> · <a href="/contact">Contact</a></nav></div>
+<main>
+<section class="hero"><div class="wrap">
+<p class="crumb"><a href="/">Accueil</a> › Jayan Grondin</p>
+<p class="kicker">Fondateur de Codialis · Architecture logicielle</p>
+<h1>Jayan Grondin</h1>
+<p class="lead">Jayan Grondin est le fondateur et dirigeant de Codialis, société française d’ingénierie logicielle. Il intervient en architecture et en développement logiciel, avec une expérience en plateformes SaaS et en intégration de l’intelligence artificielle aux outils métier.</p>
+<p>Codialis accompagne les entreprises depuis l’Île-de-France et La Réunion, avec des interventions sur place dans ces deux régions et un accompagnement international à distance.</p>
+<a class="cta" href="/contact">Présenter mon projet à Codialis</a>
+<p class="service-shortcuts"><a href="#experience">Expérience technique</a> · <a href="#references">Références de Codialis</a> · <a href="#sources">Profils et sources publiques</a></p>
+</div></section>
+<section id="experience"><div class="wrap">
+<h2>Une expérience en IA documentaire et développement SaaS</h2>
+<h3>DIOT-SIACI : analyse de contrats et préparation documentaire pour le RAG</h3>
+<p>D’avril à octobre 2025, Jayan Grondin a réalisé une mission d’ingénierie IA et de traitement documentaire chez DIOT-SIACI Saint Honoré. Cette expérience appartient à son parcours professionnel ; elle n’est pas présentée comme un contrat attribué à la société Codialis.</p>
+<div class="grid"><article class="card"><h3>Interface d’analyse de contrats</h3><p>Contribution au front d’un SaaS d’analyse et de comparaison de contrats par IA : lecture de PDF, surlignage de clauses, tableaux de données et suivi de consommation de tokens. Le périmètre communiqué comprend PDF.js et MUI DataGrid.</p></article><article class="card"><h3>Extraction pour un pipeline RAG</h3><p>Développement d’un package Python d’extraction de sommaires PDF. Le traitement combine lecture des documents, détection de structure et OCR pour préparer des éléments exploitables par la recherche documentaire.</p></article></div>
+<p>Ce parcours illustre deux dimensions complémentaires : préparer une information exploitable par le système et permettre à l’utilisateur d’en vérifier la restitution. Retrouvez les <a href="/agence-ia#recette-rag">scénarios de validation d’un assistant RAG</a> présentés par Codialis.</p>
+</div></section>
+<section class="band"><div class="wrap">
+<h2>Les sujets sur lesquels échanger avec Codialis</h2>
+<div class="grid">
+<article class="card"><h3>Logiciels métier et SaaS</h3><p>Cadrer les parcours utilisateurs, les règles métier, les droits d’accès, les données à reprendre et les interfaces. <a href="/logiciel-metier-sur-mesure">Logiciels métier sur mesure</a> · <a href="/developpement-saas">Développement SaaS</a>.</p></article>
+<article class="card"><h3>IA et automatisation</h3><p>Choisir une tâche vérifiable, préparer les sources, définir les actions autorisées et les étapes de validation humaine. <a href="/agence-ia#agents-ia-automatisation">Agents IA et automatisation</a> · <a href="/agence-ia">Intégration IA et RAG</a>.</p></article>
+<article class="card"><h3>CRM/ERP et intégrations</h3><p>Relier les outils de gestion et les applications existantes, selon les versions, licences et API disponibles. <a href="/crm-erp-api#odoo-hubspot">Connecteurs Odoo, HubSpot et logiciels métier</a>.</p></article>
+</div>
+<p>Un premier échange part de votre fonctionnement actuel, d’un exemple de dossier anonymisé et du résultat attendu. Les choix d’architecture et le périmètre de développement se décident à partir de ces contraintes.</p>
+</div></section>
+<section id="references"><div class="wrap">
+<h2>Les projets présentés par Codialis</h2>
+<p>Les références suivantes concernent les projets présentés par la société. Elles sont distinctes de la mission personnelle décrite plus haut ; chaque page précise les usages et le périmètre disponible.</p>
+<ul>
+<li><a href="/logiciel-metier-sur-mesure#equatis">Equatis</a> : plateforme immobilière en production, autour des programmes et lots, avec quatre populations d’utilisateurs.</li>
+<li><a href="/logiciel-metier-sur-mesure#top-formation">Top Formation</a> : plateforme pour un CFA et organisme de formation, avec un développement progressif par pôle.</li>
+<li><a href="/logiciel-metier-sur-mesure#garageflow">GarageFlow / NCD de l’Est</a> : parcours automobile, du dossier de sinistre à la restitution ; connexion DARVA prévue sous réserve d’accréditation.</li>
+<li><a href="/logiciel-metier-sur-mesure#mystock-btp">MYSTOCK pour Technirep</a> : périmètre de gestion du matériel et des stocks entre dépôts et chantiers.</li>
+</ul>
+<p><a href="/portfolio">Consulter les autres réalisations</a></p>
+</div></section>
+<section class="band" id="sources"><div class="wrap">
+<h2>Profils et sources publiques</h2>
+<ul>
+<li><a href="https://fr.linkedin.com/in/jayan-grondin">Profil professionnel de Jayan Grondin sur LinkedIn</a>.</li>
+<li><a href="https://www.francenum.gouv.fr/activateurs/codialis">Fiche Codialis dans l’annuaire des Activateurs France Num</a>, qui identifie Jayan Grondin comme fondateur et présente les prestations de la société.</li>
+<li><a href="https://numeum.fr/annuaire-des-adherents/codialis/">Fiche Codialis dans l’annuaire des adhérents Numeum</a>.</li>
+<li><a href="/legal">Mentions légales de Codialis</a> pour l’identité de l’éditeur.</li>
+</ul>
+<p>La présentation du parcours technique reprend les informations professionnelles fournies pour publication. Les inscriptions France Num et Numeum permettent de retrouver la société ; elles ne constituent pas une certification de ses logiciels.</p>
+</div></section>
+<section><div class="wrap final"><h2>Échanger sur votre projet logiciel ou IA</h2><p>Décrivez vos utilisateurs, vos outils actuels et ce que vous souhaitez améliorer. Codialis pourra examiner le périmètre et les connexions nécessaires.</p><a class="cta" href="/contact">Contacter Codialis</a> · <a href="https://calendly.com/contact-codialis/30min">Prendre rendez-vous</a></div></section>
+</main>
+<div data-cod-footer><footer><div class="wrap"><p>Codialis — ingénierie logicielle sur mesure</p><a href="/">Accueil</a> · <a href="/contact">Contact</a> · <a href="/legal">Mentions légales</a></div></footer></div>
+</body></html>

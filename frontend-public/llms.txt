@@ -3,7 +3,7 @@
 > Codialis est une société française d’ingénierie logicielle fondée et dirigée par Jayan Grondin. Elle conçoit des logiciels métier, SaaS et applications sur mesure, et intègre l’IA, le RAG et l’automatisation aux outils des entreprises.
 
 ## Société et équipe
-- [Codialis et Jayan Grondin](https://codialis.com/#jayan-grondin): Fondateur et architecte logiciel ; lien vers une mission personnelle documentée en IA/RAG.
+- [Codialis et Jayan Grondin](https://codialis.com/jayan-grondin/): Fondateur et architecte logiciel ; lien vers une mission personnelle documentée en IA/RAG.
 - [Mentions légales](https://codialis.com/legal): Identité juridique de CODIALIS EURL, SIREN 991 679 457.
 - [Activateur France Num](https://www.francenum.gouv.fr/activateurs/codialis): Fiche officielle de Codialis.
 - [Membre Numeum](https://numeum.fr/annuaire-des-adherents/codialis/): Annuaire officiel des adhérents.

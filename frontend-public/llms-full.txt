@@ -2,7 +2,7 @@
 
 ## Identité
 Codialis est une société française d’ingénierie logicielle, CODIALIS EURL, SIREN 991 679 457. Jayan Grondin en est le fondateur et dirigeant ; il intervient en architecture et développement logiciel. Le siège se situe en Île-de-France et un établissement est présent à Saint-André, à La Réunion. Les déplacements habituels couvrent l’Île-de-France et La Réunion ; les clients internationaux sont accompagnés à distance.
-Sources : https://codialis.com/#jayan-grondin ; https://codialis.com/legal
+Sources : https://codialis.com/jayan-grondin/ ; https://codialis.com/legal
 
 Codialis est membre de Numeum et Activateur France Num. Ces inscriptions ne constituent pas une certification technique des prestations.
 Sources : https://numeum.fr/annuaire-des-adherents/codialis/ ; https://www.francenum.gouv.fr/activateurs/codialis
