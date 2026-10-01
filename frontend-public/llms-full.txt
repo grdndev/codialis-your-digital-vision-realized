@@ -45,3 +45,67 @@ Rendez-vous : https://calendly.com/contact-codialis/30min
 Portfolio : https://codialis.com/portfolio
 
 Cette synthèse accompagne les pages publiques citées ; elle ne constitue ni une preuve de classement ni une garantie de recommandation par un moteur de réponse IA.
+
+## Catalogue par secteur
+Source publique : https://codialis.com/references/
+Les statuts et attributions ci-dessous ne constituent pas des témoignages indépendants.
+
+### Assurance et automobile
+- GarageFlow / NCD de l’Est : Dossier de réparation partagé entre garage, assureur et expert : devis, pièces, main-d’œuvre et IA documentaire. En production ; connexion DARVA prévue sous réserve d’accréditation. https://codialis.com/references/#garageflow
+- LeadAssurances : Génération et qualification de leads pour les courtiers en assurance, avec un blog intégré. Livré. https://codialis.com/references/#leadassurances
+- Mezabo : SaaS de collecte et de vente de leads : traçabilité du consentement RGPD horodatée, crédits prépayés, facturation et double authentification.  Mission freelance du parcours de Jayan Grondin. https://codialis.com/references/#mezabo
+- DIOT-SIACI : Contribution au front d’un SaaS d’analyse et de comparaison de contrats par IA, et package Python d’extraction de sommaires PDF pour un pipeline RAG. Lecture PDF, surlignage de clauses, tableaux virtualisés et suivi de consommation de tokens. Mission d’avril à octobre 2025. Mission freelance du parcours de Jayan Grondin. https://codialis.com/references/#diot-siaci
+
+### Immobilier
+- Equatis : SaaS de gestion des programmes et lots immobiliers, avec des espaces pour promoteurs, collaborateurs, notaires et acquéreurs. En production. https://codialis.com/references/#equatis
+- LOKPRO : Plateforme de réservation immobilière et de services au Cameroun.  https://codialis.com/references/#lokpro
+
+### Formation
+- Top Formation : Plateforme pour un CFA et organisme de formation à La Réunion : dossiers, parcours formateur et apprenant, documents, présences et assistance IA. Développement progressif par pôle ; les fonctions décrites incluent le périmètre prévu. https://codialis.com/references/#top-formation
+
+### Commerce, e-commerce et gestion
+- TAPIS : SaaS fondé sur la technologie NFC pour les commerçants.  https://codialis.com/references/#tapis
+- Vapecorner : Gestion de stock connectée à Hiboutik, avec analyse des données de vente et recommandations de réapprovisionnement. Livré. https://codialis.com/references/#vapecorner
+- Mister Couteau : Boutique en ligne avec personnalisation de produit dans le parcours d’achat. Projet terminé. https://codialis.com/references/#mister-couteau
+- BADUA : Développement d’un module connecté à Hiboutik.  https://codialis.com/references/#badua
+- Gweleo : Migration d’une boutique Magento 1 vers Magento 2.4.8.  https://codialis.com/references/#gweleo
+- STAR Aid / Damien Sangla : Travail sur un environnement CRM/ERP Odoo et sur ses données.  https://codialis.com/references/#star-aid
+- Coach BOOM IA : Stabilisation et mise en production d’un SaaS IA de création de fiches produits pour un projet basé à Montréal. Mission de septembre à novembre 2022. Mission freelance du parcours de Jayan Grondin. https://codialis.com/references/#coach-boom-ia
+
+### RH, recrutement et restauration
+- ADAPTEL : Mise en relation d’établissements HCR et d’intérimaires : matching, contrats, signature électronique et application mobile de pointage.  Mission freelance du parcours de Jayan Grondin. https://codialis.com/references/#adaptel
+- Cookstra : Application mobile reliant les employeurs de la restauration et les extras disponibles pour des missions. Application terminée. https://codialis.com/references/#cookstra
+
+### Santé
+- Mois du Kèr : Plateforme de dépistage cardiovasculaire destinée au personnel du CHU de La Réunion. Livré. https://codialis.com/references/#mois-du-ker
+- IDELIA : Moteur de recommandations IA intégré à WordPress : formulaires JotForm, base documentaire vectorielle et recherche web.  https://codialis.com/references/#idelia
+- ForeHealth : MVP mobile autour de l’analyse vidéo de signaux physiologiques, de l’agrégation de données IoT et d’un compagnon IA. Périmètre de MVP ; aucune performance clinique revendiquée. Mission freelance du parcours de Jayan Grondin. https://codialis.com/references/#forehealth
+- HAVATIME : Projet d’IA médicale autour de la photopléthysmographie à distance (rPPG). Périmètre de projet ; aucune validation clinique revendiquée. https://codialis.com/references/#havatime
+- CUREVA : Projet dans le domaine du soin des plaies. Le périmètre détaillé peut être présenté lors d’un échange adapté au besoin.  https://codialis.com/references/#cureva
+
+### BTP et chantiers
+- ETPO : Gestion des stocks pour les activités du BTP.  https://codialis.com/references/#etpo
+- Technirep / MYSTOCK : Gestion du matériel et des stocks entre dépôts et chantiers : réservations, retraits, retours, transferts et inventaires. Le périmètre fonctionnel et les lots complémentaires sont distingués des fonctions livrées. https://codialis.com/references/#technirep-mystock
+
+### Culture, événements et loisirs
+- Event Pass : Billetterie avec billets PDF et QR anti-fraude, scan PWA, paiements organisateurs et gestion de plusieurs devises.  https://codialis.com/references/#event-pass
+- Sumvibes : Marketplace mettant en relation compositeurs et artistes. Tests en cours. https://codialis.com/references/#sumvibes
+- Académie des dresseurs : Marketplace de cartes et decks, avec coaching en streaming.  https://codialis.com/references/#academie-dresseurs
+- MIRCEA : Projet de jeu vidéo. Phase de conception. https://codialis.com/references/#mircea
+- leDariel : Application mobile biblique, projet en Guadeloupe.  https://codialis.com/references/#ledariel
+
+### Finance et paiement
+- ALMA PAY : Agrégation de moyens de paiement en République démocratique du Congo. Intégration dépendante de la disponibilité de l’API du client. https://codialis.com/references/#alma-pay
+- OXY / AREA GROUP PLUS : Périmètre de plateforme de paiement en ligne : portefeuilles, flux et actifs financiers.  https://codialis.com/references/#oxy
+- AIVA : Agent IA vocal pour le planning, le budget et le portefeuille, dans le cadre d’un projet au Cameroun. Développement terminé. https://codialis.com/references/#aiva
+
+### Télécoms, applications et fonctions support
+- Welyat : Mise en relation avec des écoutants au moyen d’appels en temps réel. Livré. https://codialis.com/references/#welyat
+- Ragencia : Application mobile accompagnée de son API. En cours. https://codialis.com/references/#ragencia
+- CASEC Cressonnière : Assistant IA d’automatisation des fonctions support. Le périmètre présenté comprend le traitement des e-mails, le classement documentaire et la préparation de comptes rendus.  https://codialis.com/references/#casec
+
+### Secteur public et intercommunalités
+- SIREDOM : Référence du secteur public citée par Codialis.  https://codialis.com/references/#siredom
+- TCO — La Réunion : Référence de Codialis auprès de l’intercommunalité TCO à La Réunion.  https://codialis.com/references/#tco
+
+Étude non livrée : ouverture de compte bancaire assistée par IA (WhatsApp/Waha, OCR, API INSEE, Selenium/Playwright), périmètre chiffré uniquement. https://codialis.com/references/#lecture

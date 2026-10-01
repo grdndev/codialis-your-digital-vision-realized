@@ -17,6 +17,8 @@
 - [Applications mobiles](https://codialis.com/application-mobile): Applications iOS et Android connectées aux outils métier.
 
 ## Références et périmètres
+- [Catalogue des projets par secteur](https://codialis.com/references/): 36 références et projets ; périmètres, avancement et attribution des missions freelance.
+- [Agents IA et IA agentique](https://codialis.com/references/#agents-ia): AIVA, CASEC Cressonnière, IA documentaire et workflows ; distinctions entre agents, automatisation et RAG.
 - [Equatis](https://codialis.com/logiciel-metier-sur-mesure#equatis): Plateforme immobilière en production.
 - [Top Formation](https://codialis.com/logiciel-metier-sur-mesure#top-formation): Périmètre de plateforme CFA et organisme de formation, développement progressif.
 - [GarageFlow / NCD de l’Est](https://codialis.com/logiciel-metier-sur-mesure#garageflow): Parcours automobile ; connexion DARVA prévue sous réserve d’accréditation.
