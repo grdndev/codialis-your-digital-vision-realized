@@ -15,7 +15,7 @@ import {
 import type { Severity, TaskStatus } from "@/lib/types";
 import { bulkUpdateTicketsAction, setTicketStatusAction } from "./actions";
 import { BulkSelection, SelectAll } from "../bulk-selection";
-import { FilterGroup, FilterLink } from "../list-controls";
+import { FilterLink, FilterRow } from "../list-controls";
 import { TicketExportPanel } from "./export-panel";
 import type { TicketsScreen } from "./types";
 
@@ -162,29 +162,27 @@ export default async function TicketsPage({
         ) : null}
       </form>
 
-      {/* Les projets ont leur propre ligne : ils sont nombreux et leurs noms
-          longs. Elle défile horizontalement plutôt que de pousser les autres
-          filtres trois lignes plus bas. */}
-      <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 text-xs">
-        <FilterLink href={clearHref("project")} active={!selected("project").length}>
-          Tous les projets
-        </FilterLink>
-        {projects.map((p) => (
-          <FilterLink
-            key={p.id}
-            href={toggleHref("project", p.id)}
-            active={selected("project").includes(p.id)}
-          >
-            {projectLabel(p.client.name, p.name)}
+      {/* Un critère par ligne, son nom en tête : les groupes posés côte à côte
+          se décalaient d'une ligne à l'autre selon la largeur, et l'œil devait
+          chercher où commençait le suivant. Une ligne trop longue (les projets,
+          nombreux et aux noms longs) défile sur place plutôt que de se couper. */}
+      <div className="flex flex-col gap-2 text-xs">
+        <FilterRow label="Projet">
+          <FilterLink href={clearHref("project")} active={!selected("project").length}>
+            Tous les projets
           </FilterLink>
-        ))}
-      </div>
+          {projects.map((p) => (
+            <FilterLink
+              key={p.id}
+              href={toggleHref("project", p.id)}
+              active={selected("project").includes(p.id)}
+            >
+              {projectLabel(p.client.name, p.name)}
+            </FilterLink>
+          ))}
+        </FilterRow>
 
-      {/* Chaque critère est un groupe insécable : une liste de choix coupée en
-          deux au milieu ne se lit plus comme une liste. Le retour à la ligne se
-          fait ENTRE les groupes. */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
-        <FilterGroup>
+        <FilterRow label="Assigné à">
           <FilterLink href={buildHref({ assignee: "all" })} active={assignee === "all"}>
             Tous
           </FilterLink>
@@ -194,9 +192,9 @@ export default async function TicketsPage({
           <FilterLink href={buildHref({ assignee: "none" })} active={assignee === "none"}>
             Personne
           </FilterLink>
-        </FilterGroup>
+        </FilterRow>
 
-        <FilterGroup>
+        <FilterRow label="Type">
           <FilterLink href={clearHref("type")} active={!selected("type").length}>
             Tous types
           </FilterLink>
@@ -206,9 +204,9 @@ export default async function TicketsPage({
           <FilterLink href={toggleHref("type", "DEV")} active={selected("type").includes("DEV")}>
             Développement
           </FilterLink>
-        </FilterGroup>
+        </FilterRow>
 
-        <FilterGroup>
+        <FilterRow label="Gravité">
           <FilterLink href={clearHref("severity")} active={!selected("severity").length}>
             Toutes gravités
           </FilterLink>
@@ -221,9 +219,9 @@ export default async function TicketsPage({
               {SEVERITY_LABEL[sev]}
             </FilterLink>
           ))}
-        </FilterGroup>
+        </FilterRow>
 
-        <FilterGroup>
+        <FilterRow label="Statut">
           <FilterLink href={clearHref("status")} active={!selected("status").length}>
             Tous statuts
           </FilterLink>
@@ -236,12 +234,11 @@ export default async function TicketsPage({
               {STATUS_LABEL[s]}
             </FilterLink>
           ))}
-        </FilterGroup>
-
-        <span className="ml-auto text-muted">
-          {tickets.length} ticket{tickets.length > 1 ? "s" : ""}
-          {recherche ? ` pour « ${recherche} »` : ""}
-        </span>
+          <span className="ml-auto whitespace-nowrap pl-4 text-muted">
+            {tickets.length} ticket{tickets.length > 1 ? "s" : ""}
+            {recherche ? ` pour « ${recherche} »` : ""}
+          </span>
+        </FilterRow>
       </div>
 
       {view === "table" ? (

@@ -42,6 +42,20 @@ export function FilterGroup({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-nowrap items-center gap-2">{children}</div>;
 }
 
+// Un critère par ligne, son nom en tête (écran Tickets). Une ligne trop longue
+// défile sur place plutôt que de se couper : la suivante commence toujours au
+// même endroit.
+export function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-20 shrink-0 text-muted">{label}</span>
+      <div className="-mx-1 flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-x-auto px-1 py-0.5">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function FilterLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
   return (
     <Link
