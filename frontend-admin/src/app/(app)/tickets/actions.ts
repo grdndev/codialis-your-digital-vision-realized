@@ -92,6 +92,13 @@ export async function bulkUpdateTicketsAction(formData: FormData) {
 
   revalidatePath("/tickets");
   revalidatePath("/time");
+  // Le même bandeau sert aux tickets d'une fiche projet (CC-358), qui
+  // l'indique par un champ caché.
+  const projectId = String(formData.get("projectId") ?? "");
+  if (projectId) {
+    revalidatePath(`/projects/${projectId}`);
+    revalidatePath("/projects");
+  }
 }
 
 export async function updateTicketAction(formData: FormData) {

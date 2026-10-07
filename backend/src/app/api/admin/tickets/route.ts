@@ -321,7 +321,10 @@ export const POST = adminRoute(
         if (!tickets.length) badRequest("Aucun ticket sélectionné");
 
         // L'assigné se pose d'abord : changer de porteur arrête le chronomètre
-        // du précédent, et le statut demandé s'applique ensuite par-dessus.
+        // du précédent et le ticket revient à « À faire », puis le statut
+        // demandé s'applique par-dessus. Le retour à « À faire » vaut même
+        // quand on redemande « En cours » : sans lui, le statut était déjà le
+        // bon et le chronomètre du nouvel assigné ne partait jamais.
         if (body.assigneeId || body.clearAssignee) {
           const nextAssignee = body.clearAssignee ? null : body.assigneeId;
           for (const ticket of tickets) {
@@ -333,9 +336,7 @@ export const POST = adminRoute(
               where: { id: ticket.id },
               data: {
                 assigneeId: nextAssignee,
-                ...(ticket.status === "EN_COURS" && !body.status
-                  ? { status: "A_FAIRE" as TaskStatus }
-                  : {}),
+                ...(ticket.status === "EN_COURS" ? { status: "A_FAIRE" as TaskStatus } : {}),
               },
             });
           }

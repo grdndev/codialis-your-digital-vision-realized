@@ -8,7 +8,10 @@ import {
   updateEpicAction, updateProjectDescriptionAction,
   addClientQuestionAction, markQuestionAskedAction, answerClientQuestionAction,
   updateProjectAction, updateClientAction, updateProjectPhaseAction, updateProjectCoverageAction,
+  bulkUpdateTasksAction,
 } from "../actions";
+import { bulkUpdateTicketsAction } from "../../tickets/actions";
+import { BulkSelection, SelectAll } from "../../bulk-selection";
 import type { ClientQuestionStatus, ProjectGroup, TaskStatus } from "@/lib/types";
 import type { ClientRef } from "@/lib/dto";
 import type {
@@ -242,6 +245,7 @@ export default async function ProjectDetailPage({
           epics={workEpics}
           projectId={project.id}
           team={team}
+          canClose={user.role !== "DEV"}
           tickets={tickets}
           ticketPage={paginate(shownTickets, page, perPage)}
           perPage={perPage}
@@ -673,6 +677,7 @@ function ListView({
   epics,
   projectId,
   team,
+  canClose,
   tickets,
   ticketPage,
   perPage,
@@ -681,6 +686,9 @@ function ListView({
   epics: EpicWithTasks[];
   projectId: string;
   team: { id: string; name: string }[];
+  // Clôturer un ticket revient à la chefferie et à la direction (DEC-007) ; une
+  // tâche, elle, se clôt par qui la mène.
+  canClose: boolean;
   // Tous les tickets du projet, pour le décompte d'en-tête ; `ticketPage` ne
   // porte que la page affichée, filtres appliqués.
   tickets: ProjectTicketRow[];
@@ -780,10 +788,38 @@ function ListView({
                 </form>
               </details>
               <div className="border-t border-border px-5 py-3">
+                {/* Une sélection par lot : le bandeau apparaît au-dessus du
+                    lot où l'on coche, pas en haut d'une page qu'on a quittée. */}
+                {epic.tasks.length > 0 ? (
+                <BulkSelection
+                  action={bulkUpdateTasksAction.bind(null, projectId)}
+                  field="taskIds"
+                  bar={<BulkBar team={team} statuses={TICKET_STATUSES} />}
+                >
                 <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-muted">
+                      <th className="w-8 py-1.5 pr-3 font-medium">
+                        <SelectAll field="taskIds" />
+                      </th>
+                      <th className="py-1.5 pr-4 font-medium">Tâche</th>
+                      <th className="py-1.5 pr-4 font-medium">Statut</th>
+                      <th className="py-1.5 pr-4 font-medium">Assigné</th>
+                      <th className="py-1.5 text-right font-medium">Passé / estimé</th>
+                    </tr>
+                  </thead>
                   <tbody className="divide-y divide-border">
                     {epic.tasks.map((task) => (
                       <tr key={task.id} className="transition hover:bg-panel-2">
+                        <td className="py-2 pr-3">
+                          <input
+                            type="checkbox"
+                            name="taskIds"
+                            value={task.id}
+                            aria-label={`Sélectionner ${task.title}`}
+                            className="accent-mint"
+                          />
+                        </td>
                         <td className="py-2 pr-4">
                           <Link href={`/projects/${projectId}/tasks/${task.id}`} className="text-text hover:text-mint">
                             {task.title}
@@ -802,6 +838,8 @@ function ListView({
                     ))}
                   </tbody>
                 </table>
+                </BulkSelection>
+                ) : null}
                 <NewTaskDisclosure projectId={projectId} epicId={epic.id} team={team} />
               </div>
             </details>
@@ -825,11 +863,50 @@ function ListView({
         ) : ticketPage.total === 0 ? (
           <p className="px-5 py-4 text-sm text-muted">Aucun ticket pour ces filtres.</p>
         ) : (
+          // Même bandeau que l'écran Tickets (CC-358), par la même action : la
+          // clôture réservée et les chronomètres obéissent à une seule règle.
+          // Il porte sur la page affichée, filtres compris.
+          <BulkSelection
+            action={bulkUpdateTicketsAction}
+            field="ticketIds"
+            className="flex flex-col"
+            barClassName="mx-5 mt-3"
+            bar={
+              <BulkBar
+                team={team}
+                statuses={TICKET_STATUSES.filter((s) => canClose || s !== "TERMINE")}
+                note={canClose ? undefined : "la clôture revient à la chefferie de projet"}
+              />
+            }
+          >
+          <input type="hidden" name="projectId" value={projectId} />
           <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-xs text-muted">
+                <th className="w-8 py-2 pl-5 pr-3 font-medium">
+                  <SelectAll field="ticketIds" />
+                </th>
+                <th className="py-2 pr-4 font-medium">Réf.</th>
+                <th className="py-2 pr-4 font-medium">Type</th>
+                <th className="py-2 pr-4 font-medium">Titre</th>
+                <th className="py-2 pr-4 font-medium">Gravité · nature</th>
+                <th className="py-2 pr-4 font-medium">Assigné</th>
+                <th className="py-2 pr-5 text-right font-medium">Statut</th>
+              </tr>
+            </thead>
             <tbody className="divide-y divide-border">
               {ticketPage.rows.map((t) => (
                 <tr key={t.id} className="transition hover:bg-panel-2">
-                  <td className="whitespace-nowrap px-5 py-2">
+                  <td className="py-2 pl-5 pr-3">
+                    <input
+                      type="checkbox"
+                      name="ticketIds"
+                      value={t.id}
+                      aria-label={`Sélectionner ${t.ref}`}
+                      className="accent-mint"
+                    />
+                  </td>
+                  <td className="whitespace-nowrap py-2 pr-4">
                     <Link href={`/tickets/${t.ref}`} className="font-medium text-text hover:text-mint">
                       {t.ref}
                     </Link>
@@ -857,6 +934,7 @@ function ListView({
               ))}
             </tbody>
           </table>
+          </BulkSelection>
         )}
         {ticketPage.total > 0 ? (
           <div className="border-t border-border px-5 py-3">
@@ -871,6 +949,48 @@ function ListView({
         ) : null}
       </div>
     </div>
+  );
+}
+
+// Ce que le bandeau de sélection pose sur toutes les lignes cochées : un statut,
+// un assigné, ou les deux. Les noms de champs sont ceux que relisent les actions
+// de masse des tickets et des tâches.
+function BulkBar({
+  team,
+  statuses,
+  note,
+}: {
+  team: { id: string; name: string }[];
+  statuses: TaskStatus[];
+  note?: string;
+}) {
+  return (
+    <>
+      <select name="bulkStatus" className="input h-8 w-auto py-0 text-xs" aria-label="Statut à poser">
+        <option value="">Statut inchangé</option>
+        {statuses.map((s) => (
+          <option key={s} value={s}>
+            {STATUS_LABEL[s]}
+          </option>
+        ))}
+      </select>
+      <select name="bulkAssignee" className="input h-8 w-auto py-0 text-xs" aria-label="Assigné à poser">
+        <option value="">Assigné inchangé</option>
+        <option value="__aucun__">Retirer l’assigné</option>
+        {team.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name}
+          </option>
+        ))}
+      </select>
+      <button
+        type="submit"
+        className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg transition hover:brightness-110"
+      >
+        Appliquer
+      </button>
+      {note ? <span className="text-muted">{note}</span> : null}
+    </>
   );
 }
 

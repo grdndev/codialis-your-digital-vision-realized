@@ -264,6 +264,35 @@ export async function setTaskStatusAction(taskId: string, projectId: string, sta
   }
 }
 
+// Traitement en masse des tâches d'un lot (CC-358) : même bandeau que celui
+// des tickets, un aller-retour pour toute la sélection. « Retirer l'assigné »
+// est un choix, pas une absence de choix : il part dans son propre drapeau.
+export async function bulkUpdateTasksAction(projectId: string, formData: FormData) {
+  const taskIds = formData.getAll("taskIds").map(String).filter(Boolean);
+  if (!taskIds.length) return;
+
+  const status = String(formData.get("bulkStatus") ?? "");
+  const assignee = String(formData.get("bulkAssignee") ?? "");
+
+  const { notice } = await apiPost<{ notice?: string }>(PROJECTS, {
+    action: "bulk-update-tasks",
+    projectId,
+    taskIds,
+    status: (status || null) as TaskStatus | null,
+    assigneeId: assignee && assignee !== "__aucun__" ? assignee : null,
+    clearAssignee: assignee === "__aucun__",
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/projects");
+  revalidatePath("/dashboard");
+  revalidatePath("/time");
+  revalidatePath("/portal");
+
+  // Démarrer des tâches sans assigné, ou pour quelqu'un d'autre, se dit.
+  if (notice) redirect(`/projects/${projectId}?info=${encodeURIComponent(notice)}`);
+}
+
 export async function updateTaskStatusAction(
   taskId: string,
   projectId: string,

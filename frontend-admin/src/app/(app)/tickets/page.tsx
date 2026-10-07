@@ -14,7 +14,7 @@ import {
 } from "@/lib/format";
 import type { Severity, TaskStatus } from "@/lib/types";
 import { bulkUpdateTicketsAction, setTicketStatusAction } from "./actions";
-import { SelectAllTickets, TicketSelection } from "./selection";
+import { BulkSelection, SelectAll } from "../bulk-selection";
 import { FilterGroup, FilterLink } from "../list-controls";
 import { TicketExportPanel } from "./export-panel";
 import type { TicketsScreen } from "./types";
@@ -245,8 +245,9 @@ export default async function TicketsPage({
       </div>
 
       {view === "table" ? (
-        <TicketSelection
+        <BulkSelection
           action={bulkUpdateTicketsAction}
+          field="ticketIds"
           bar={
             <>
               <select name="bulkStatus" className="input h-8 w-auto py-0 text-xs">
@@ -283,7 +284,7 @@ export default async function TicketsPage({
             <thead>
               <tr className="border-b border-border text-left text-xs text-muted">
                 <th className="w-8 px-4 py-3 font-medium">
-                  <SelectAllTickets />
+                  <SelectAll field="ticketIds" />
                 </th>
                 <th className="px-4 py-3 font-medium">Réf.</th>
                 <th className="px-4 py-3 font-medium">Type</th>
@@ -355,7 +356,7 @@ export default async function TicketsPage({
             </tbody>
           </table>
         </div>
-        </TicketSelection>
+        </BulkSelection>
       ) : (
         <div className="grid grid-cols-4 gap-4">
           {STATUSES.map((s) => {

@@ -81,6 +81,34 @@ async function recomputeProjectProgress(projectId: string) {
   });
 }
 
+// Pose un statut sur une tâche. « En cours » lance le chronomètre au nom de
+// l'ASSIGNÉ, tout autre statut l'arrête : le temps se mesure, il ne se déclare
+// pas. Partagé par le changement unitaire et par le traitement en masse, pour
+// qu'aucun des deux n'oublie le chronomètre (TRAP-041). Rend l'avertissement à
+// afficher, s'il y en a un.
+async function applyTaskStatus(
+  task: { id: string; status: TaskStatus; assigneeId: string | null },
+  nextStatus: TaskStatus,
+  actorId: string,
+): Promise<string | undefined> {
+  if (nextStatus === task.status) return undefined;
+  let notice: string | undefined;
+  await prisma.$transaction(async (tx) => {
+    await tx.task.update({ where: { id: task.id }, data: { status: nextStatus } });
+    if (nextStatus !== "EN_COURS") {
+      await closeSessions(tx, { taskId: task.id });
+      return;
+    }
+    const started = await openSession(tx, { taskId: task.id }, task.assigneeId, actorId);
+    if (!started) notice = "Aucun assigné : le temps ne sera décompté pour personne.";
+    else if (task.assigneeId !== actorId)
+      notice = "Le temps sera décompté pour l'utilisateur assigné.";
+  });
+  return notice;
+}
+
+const taskStatus = z.enum(["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"]);
+
 const bodySchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("create-client"),
@@ -149,7 +177,19 @@ const bodySchema = z.discriminatedUnion("action", [
     taskId: z.string().min(1),
     projectId: z.string().min(1),
     transition: z.enum(["advance", "reopen"]).optional(),
-    status: z.enum(["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"]).optional(),
+    status: taskStatus.optional(),
+  }),
+  // Traitement en masse des tâches d'un projet (CC-358), comme celui des
+  // tickets : `null` sur un champ veut dire « ne pas y toucher », et vider
+  // l'assigné est un choix explicite (`clearAssignee`). La clôture d'une tâche
+  // n'est pas réservée, contrairement à celle d'un ticket.
+  z.object({
+    action: z.literal("bulk-update-tasks"),
+    projectId: z.string().min(1),
+    taskIds: z.array(z.string().min(1)).min(1).max(200),
+    status: taskStatus.nullable(),
+    assigneeId: z.string().nullable(),
+    clearAssignee: z.boolean(),
   }),
   // Import JSON — poser d'un coup les lots, les tâches et les tickets d'un
   // projet. Le contenu est validé par `importSchema` plus bas : ici on ne
@@ -437,22 +477,53 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       // Une tâche déjà terminée n'a pas d'étape suivante.
       if (!nextStatus || nextStatus === task.status) return;
 
-      // « En cours » lance le chronomètre, tout autre statut l'arrête : le
-      // temps se mesure, il ne se déclare pas.
-      let notice: string | undefined;
-      await prisma.$transaction(async (tx) => {
-        await tx.task.update({ where: { id: body.taskId }, data: { status: nextStatus } });
-        if (nextStatus !== "EN_COURS") {
-          await closeSessions(tx, { taskId: task.id });
-          return;
-        }
-        const started = await openSession(tx, { taskId: task.id }, task.assigneeId, user.id);
-        if (!started) notice = "Aucun assigné : le temps ne sera décompté pour personne.";
-        else if (task.assigneeId !== user.id)
-          notice = "Le temps sera décompté pour l'utilisateur assigné.";
-      });
+      const notice = await applyTaskStatus(task, nextStatus, user.id);
       await recomputeProjectProgress(body.projectId);
       return notice ? { ok: true, notice } : undefined;
+    }
+
+    case "bulk-update-tasks": {
+      if (!body.status && !body.assigneeId && !body.clearAssignee) {
+        badRequest("Aucune modification demandée");
+      }
+      // Bornées au projet de l'écran : une sélection ne déborde pas sur un
+      // autre projet, même avec des identifiants retouchés.
+      const where = { id: { in: body.taskIds }, epic: { projectId: body.projectId } };
+      const tasks = await prisma.task.findMany({ where });
+      if (!tasks.length) badRequest("Aucune tâche sélectionnée");
+
+      // L'assigné se pose d'abord : changer de porteur arrête le chronomètre
+      // du précédent et la tâche revient à « À faire », puis le statut demandé
+      // s'applique par-dessus. Le retour à « À faire » vaut même quand on
+      // redemande « En cours » : sans lui, le statut serait déjà le bon et le
+      // chronomètre du nouvel assigné ne partirait jamais.
+      if (body.assigneeId || body.clearAssignee) {
+        const nextAssignee = body.clearAssignee ? null : body.assigneeId;
+        for (const task of tasks) {
+          if (task.assigneeId === nextAssignee) continue;
+          const handover = task.status === "EN_COURS";
+          await prisma.$transaction(async (tx) => {
+            if (handover) await closeSessions(tx, { taskId: task.id });
+            await tx.task.update({
+              where: { id: task.id },
+              data: {
+                assigneeId: nextAssignee,
+                ...(handover ? { status: "A_FAIRE" as TaskStatus } : {}),
+              },
+            });
+          });
+        }
+      }
+
+      const notices = new Set<string>();
+      if (body.status) {
+        for (const task of await prisma.task.findMany({ where })) {
+          const notice = await applyTaskStatus(task, body.status, user.id);
+          if (notice) notices.add(notice);
+        }
+      }
+      await recomputeProjectProgress(body.projectId);
+      return { ok: true, count: tasks.length, notice: [...notices].join(" ") || undefined };
     }
 
     case "import-json": {
