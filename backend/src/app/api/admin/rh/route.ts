@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody, notFound } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { USER_IDENTITY } from "@/lib/user-identity";
 import {
   absenceDetails,
   hoursDetails,
@@ -209,9 +210,7 @@ export const GET = adminRoute(
       };
     }
 
-    const withUser = {
-      user: { select: { id: true, name: true, initials: true, role: true } },
-    } as const;
+    const withUser = { user: USER_IDENTITY } as const;
     // Ce qui touche le mois, même en partie : un déplacement ou un congé
     // commencé le mois précédent compte aussi dans celui-ci. Un déplacement
     // sans date de fin tient sur sa seule journée de départ.

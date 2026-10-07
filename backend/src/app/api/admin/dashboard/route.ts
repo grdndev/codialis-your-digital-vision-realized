@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { USER_IDENTITY } from "@/lib/user-identity";
 import { projectScope } from "@/lib/project-access";
 import { goalsFor } from "@/lib/goals";
 import type { InternalTaskPriority, TaskStatus } from "@prisma/client";
@@ -67,22 +68,23 @@ export const GET = adminRoute(["DIR", "PM", "DEV"], async ({ user }, request) =>
       prisma.client.count(),
       prisma.internalTask.findMany({
         where: { assigneeId: user.id, status: { not: "TERMINE" }, archivedAt: null },
-        include: { assigner: true },
+        include: { assigner: USER_IDENTITY },
       }),
       // Toute l'équipe interne est assignable, soi-même compris.
       prisma.user.findMany({
         where: { role: { in: ["DEV", "PM", "DIR"] } },
+        ...USER_IDENTITY,
         orderBy: { name: "asc" },
       }),
       prisma.internalTask.findMany({
         where: { assignerId: user.id, archivedAt: null },
-        include: { assignee: true },
+        include: { assignee: USER_IDENTITY },
       }),
       // Les archivées de ceux qu'elles concernent, les plus récentes d'abord :
       // c'est là qu'on en désarchive une rangée trop vite.
       prisma.internalTask.findMany({
         where: { archivedAt: { not: null }, OR: [{ assigneeId: user.id }, { assignerId: user.id }] },
-        include: { assignee: true, assigner: true },
+        include: { assignee: USER_IDENTITY, assigner: USER_IDENTITY },
         orderBy: { archivedAt: "desc" },
         take: 50,
       }),
@@ -103,26 +105,15 @@ export const GET = adminRoute(["DIR", "PM", "DEV"], async ({ user }, request) =>
     activeProjects,
     openTickets,
     clientCount,
-    myInternalTasks: byPriorityThenDue(myInternalTasks).map((t) => ({ ...t, assigner: identity(t.assigner) })),
-    team: team.map(identity),
-    givenInternalTasks: byPriorityThenDue(givenInternalTasks).map((t) => ({ ...t, assignee: identity(t.assignee) })),
-    archivedInternalTasks: archivedInternalTasks.map((t) => ({
-      ...t,
-      assignee: identity(t.assignee),
-      assigner: identity(t.assigner),
-    })),
+    myInternalTasks: byPriorityThenDue(myInternalTasks),
+    team,
+    givenInternalTasks: byPriorityThenDue(givenInternalTasks),
+    archivedInternalTasks,
     totalProjects,
     goals,
     goalProjects,
   };
 });
-
-// Les comptes ne sortent qu'en identité d'affichage : pas de hash, pas d'e-mail.
-// Les tâches internes renvoyaient jusqu'ici leur assigné et leur donneur
-// d'ordre en entier, hash du mot de passe compris.
-function identity(u: { id: string; name: string; initials: string; role: string }) {
-  return { id: u.id, name: u.name, initials: u.initials, role: u.role };
-}
 
 const NEXT_STATUS: Record<TaskStatus, TaskStatus | null> = {
   A_FAIRE: "EN_COURS",

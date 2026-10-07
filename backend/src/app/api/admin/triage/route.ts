@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { USER_IDENTITY } from "@/lib/user-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ export const GET = adminRoute(["PM", "DIR"], async (_ctx, request) => {
   const [all, team] = await Promise.all([
     prisma.ticket.findMany({
       where: { clientReported: true },
-      include: { project: { include: { client: true } }, assignee: true },
+      include: { project: { include: { client: true } }, assignee: USER_IDENTITY },
       orderBy: { createdAt: "desc" },
     }),
     prisma.user.findMany({ where: { role: { in: ["DEV", "PM"] } }, orderBy: { name: "asc" } }),
@@ -27,7 +28,7 @@ export const GET = adminRoute(["PM", "DIR"], async (_ctx, request) => {
         where: { id: selected.id },
         include: {
           project: { include: { client: true } },
-          assignee: true,
+          assignee: USER_IDENTITY,
           attachments: true,
           triageReplies: { orderBy: { createdAt: "asc" } },
         },

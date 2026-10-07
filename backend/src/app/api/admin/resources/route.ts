@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { USER_IDENTITY } from "@/lib/user-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,7 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
           kind: "api" as const,
           apis: await prisma.apiCredential.findMany({
             where: { projectId },
-            include: { owner: true },
+            include: { owner: USER_IDENTITY },
             orderBy: { order: "asc" },
           }),
         };

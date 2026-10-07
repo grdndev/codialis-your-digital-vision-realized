@@ -42,6 +42,7 @@ refs=maxSuffix + withUniqueRef (lib/refs.ts), jamais dérivées d'un COUNT
 nombres_saisis=parseNumber (frontend-admin/src/lib/format.ts), jamais parseFloat
 textes_multilignes=parseMultiline (frontend-admin/src/lib/format.ts) à la lecture, `whitespace-pre-wrap` à l'affichage
 libelle_projet=projectLabel(client, projet), jamais `client — projet` en dur
+comptes_cites=toute relation vers User (assignee, author, owner…) passe par USER_IDENTITY (backend/src/lib/user-identity.ts), JAMAIS `include: { user: true }` why=la ligne entière sortait (hash, e-mail, photo, soldes RH), voir DEC-059
 tests=script assertif dans prisma/test-*.ts (calcul pur) ou dans le scratchpad (bout en bout HTTP) ; pas de framework de test dans le repo
 
 ## MAP
@@ -70,6 +71,7 @@ frontend-admin/src/lib/api.ts=apiGet/apiPost, relais du Bearer, réanimation des
 frontend-admin/src/lib/nav.ts=menu et rôles autorisés par écran
 frontend-admin/src/app/(app)/attachments.tsx=bloc « Pièces jointes » partagé par la fiche ticket et la fiche tâche
 frontend-admin/src/app/(app)/measured-time.tsx=bloc « Temps mesuré » partagé par la fiche ticket et la fiche tâche : sessions une à une, corrections (actions dans time/actions.ts)
+backend/src/lib/user-identity.ts=USER_IDENTITY, la sélection d'un compte cité dans une réponse (id, name, initials, role = UserRef)
 backend/src/lib/project-progress.ts=recomputeProjectProgress (avancement stocké d'un projet), partagé par la route Projets et la route Temps
 frontend-admin/src/app/(app)/list-controls.tsx=filtres en pastilles et pagination 15/25/50 partagés (Tickets, fiche projet, Ressources)
 frontend-admin/src/app/(app)/tickets/export/route.ts=export CSV/JSON des tickets (route de frontend-admin, relit GET /api/admin/tickets)
@@ -141,6 +143,7 @@ DEC-055 [2026-10-07] ACTIVE « Saisies de l'équipe » en RH, réservées à DIR
 DEC-056 [2026-10-07] ACTIVE la file « À valider » n'a PAS de borne de mois (`pending.*` de GET /api/admin/rh) why=une saisie hors du mois en cours en sortait sans verdict (heure sup de Gabrielle du 24/09, encore DECLARE au 07/10) alt=file bornée au mois (état initial)
 DEC-057 [2026-10-07] ACTIVE une session de temps mesuré se CORRIGE après coup par son propriétaire (celui dont c'est le temps, direction comprise pour la sienne) ou par la chefferie (PM) — PAS par la direction sur le temps des autres ; par les dates (durée recalculée, hoursOverride effacé), par la durée (WorkSession.hoursOverride, qui remplace la part de CETTE session seulement, les sessions parallèles gardent la leur), ou « Arrêter à » pour une session ouverte (l'élément quitte « En cours » pour le statut choisi ; s'il n'y était plus, seule la session se ferme) ; auteur et date notés (correctedById/correctedAt) why=demande du 07/10, arbitrage Denis alt=propriétaire + direction (comme les saisies manuelles)
 DEC-058 [2026-10-07] ACTIVE les corrections de session ne s'ÉCRIVENT que par /api/admin/time (correct-session-dates, correct-session-hours, stop-session), y compris depuis les fiches ticket et tâche why=une seule règle des droits et du recalcul, comme DEC-052 alt=actions dupliquées dans les routes Tickets et Projets
+DEC-059 [2026-10-07] ACTIVE une réponse de l'API ne cite un compte que par son identité (USER_IDENTITY : id, nom, initiales, rôle) ; le portail client n'en reçoit que id et nom why=les `include: { … : true }` renvoyaient la ligne User entière — hash bcrypt, e-mail, photo, soldes de congés et d'heures — à tout compte interne qui appelait l'API avec son propre jeton (liste des tickets, fiches, Temps, Ressources, Pilotage, CRM, Remontées), et au CLIENT via les rendez-vous ; seuls /me (sa propre session) et l'écran Comptes (DIR/PM) gardent e-mail et photo alt=nettoyer à l'affichage (ne protège rien, l'API reste lisible)
 
 ## TRAP
 TRAP-001 le serveur `next dev` garde l'ANCIEN client Prisma après une migration → le redémarrer, sinon « Cannot read properties of undefined » sur le nouveau modèle
@@ -226,6 +229,7 @@ done=[30/09] CC-356 : écran Objectifs, constat atteint/non atteint avec raison 
 done=[07/10] CC-358 (masse sur la fiche projet), CC-360/361 (tâches internes : priorité, archivage, suppression, migration taches_internes_priorite_archive), CC-362/363 (saisies RH de l'équipe pour DIR, file À valider sans borne), filtres de Tickets un critère par ligne ; 63/63 HTTP + 51/51 Chrome ; calculs work-time, work-calendar, hr-calendar 27/27, billing OK ; types, lint, build OK
 done=[07/10] déployé (7cbf549), migration taches_internes_priorite_archive appliquée ; CC-358, CC-360, CC-361, CC-362, CC-363 passés en EN_REVUE par SQL, chacun avec un commentaire de livraison
 done=[07/10] correction après coup du temps mesuré (DEC-057/058, migration correction_sessions_de_temps) : bloc « Temps mesuré » sur fiche ticket et fiche tâche ; 42/42 HTTP + 18/18 Chrome, non-régression 63/63, calculs OK
+done=[07/10] comptes cités réduits à leur identité dans toutes les réponses (DEC-059) : 31/31 HTTP (la contre-épreuve sur l'ancien code relève 11 fuites, dont le hash de la chefferie envoyé au portail client), 12/12 écrans, non-régression 63/63 et 42/42
 done=[07/10] corrigé en passant : bulk-update des tickets ne relançait pas le chronomètre du nouvel assigné quand on redemandait « En cours » ; les tâches internes renvoyaient les comptes entiers (hash compris) à frontend-admin
 wip=aucun
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
@@ -250,6 +254,5 @@ manual=update-project (formulaire « Modifier le projet ») REDATE la clôture �
 manual=signaler à Luc que « ticket » et « gravité » ne sont pas des filtres de Ressources (DEC-039), et lui demander s'il visait un autre écran
 manual=CC-346 et le point 2 de CC-353 sont le même besoin, livrés ensemble
 manual=le README n'a pas de partie « Fonctionnalités » au format BxFy ; la référence fonctionnelle reste la liste de tickets en production
-manual=GET /api/admin/tickets/detail et /api/admin/projects/task renvoient assignee/creator/author EN ENTIER (hash du mot de passe compris) à frontend-admin — même défaut que celui corrigé sur les tâches internes, à réduire à l'identité
 manual=doublons de tâches internes en prod (« Relancer NCD » ×2 de Jayan, « Relancer bruno mestre » ×2 de Gabrielle) : à supprimer par eux depuis le Dashboard
 manual=l'heure sup de Gabrielle du 24/09 (« déploiement aiva », DECLARE) réapparaît dans la file « À valider » de Jayan depuis DEC-056 : à trancher

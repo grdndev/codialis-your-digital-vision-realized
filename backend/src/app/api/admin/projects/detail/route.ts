@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { USER_IDENTITY } from "@/lib/user-identity";
 import { devCanSeeProject } from "@/lib/project-access";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +36,10 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
       client: true,
       epics: {
         orderBy: { order: "asc" },
-        include: { lead: true, tasks: { orderBy: { order: "asc" }, include: { assignee: true } } },
+        include: {
+          lead: USER_IDENTITY,
+          tasks: { orderBy: { order: "asc" }, include: { assignee: USER_IDENTITY } },
+        },
       },
     },
   });
@@ -52,7 +56,7 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
     // l'écran Tickets, filtrables par projet, donc invisibles depuis la fiche.
     prisma.ticket.findMany({
       where: { projectId: id },
-      include: { assignee: true, epic: true },
+      include: { assignee: USER_IDENTITY, epic: true },
       orderBy: { createdAt: "desc" },
     }),
     // Pour pouvoir rattacher le projet à un autre client depuis sa fiche.

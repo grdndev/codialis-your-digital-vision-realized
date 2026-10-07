@@ -2,6 +2,7 @@ import { z } from "zod";
 import { adminRoute, badRequest } from "@/lib/admin-api";
 import { avecUrlPublique } from "@/lib/files";
 import { prisma } from "@/lib/prisma";
+import { USER_IDENTITY } from "@/lib/user-identity";
 import { sessionsOf } from "@/lib/work-sessions";
 
 export const dynamic = "force-dynamic";
@@ -21,10 +22,10 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
     include: {
       project: { include: { client: true } },
       epic: true,
-      assignee: true,
-      creator: true,
+      assignee: USER_IDENTITY,
+      creator: USER_IDENTITY,
       criteria: { orderBy: { order: "asc" } },
-      comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
+      comments: { include: { author: USER_IDENTITY }, orderBy: { createdAt: "asc" } },
       attachments: true,
     },
   });

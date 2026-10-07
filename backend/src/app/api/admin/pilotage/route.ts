@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { USER_IDENTITY } from "@/lib/user-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -31,11 +32,11 @@ export const GET = adminRoute(["DIR"], async (_ctx, request) => {
   const [cashItems, teamProfit, projects, deals, decisions, setting, paidThisMonth, overdueInvoices] =
     await Promise.all([
       prisma.cashForecastItem.findMany({ orderBy: [{ id: "asc" }] }),
-      prisma.teamProfitSnapshot.findMany({ include: { user: true } }),
+      prisma.teamProfitSnapshot.findMany({ include: { user: USER_IDENTITY } }),
       // Concentration client : seuls les projets avec un montant vendu comptent.
       prisma.project.findMany({ where: { soldAmount: { not: null } }, include: { client: true } }),
       prisma.deal.findMany(),
-      prisma.decision.findMany({ include: { author: true }, orderBy: { date: "desc" } }),
+      prisma.decision.findMany({ include: { author: USER_IDENTITY }, orderBy: { date: "desc" } }),
       prisma.companySetting.findFirst(),
       prisma.invoice.findMany({ where: { status: "PAYEE", paidAt: { gte: monthStart, lt: monthEnd } } }),
       prisma.invoice.findMany({ where: { status: "EN_RETARD" } }),

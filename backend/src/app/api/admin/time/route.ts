@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { USER_IDENTITY } from "@/lib/user-identity";
 import { refreshAfterTimeChange, liveSessionHours } from "@/lib/work-sessions";
 import { recomputeProjectProgress } from "@/lib/project-progress";
 import type { Prisma, Role, TaskStatus } from "@prisma/client";
@@ -18,7 +19,7 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async () => {
   const [entries, activeProjects, allProjects, openTasks, openTickets, sessions] =
     await Promise.all([
     prisma.timeEntry.findMany({
-      include: { user: true, project: { include: { client: true } } },
+      include: { user: USER_IDENTITY, project: { include: { client: true } } },
       orderBy: { date: "asc" },
     }),
     prisma.project.findMany({

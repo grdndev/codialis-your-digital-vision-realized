@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { USER_IDENTITY } from "@/lib/user-identity";
 import type { DealStage } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,7 @@ const DEFAULT_QUARTERLY_TARGET = 130000;
 export const GET = adminRoute(["PM", "DIR"], async () => {
   const [deals, setting] = await Promise.all([
     prisma.deal.findMany({
-      include: { notes: { include: { author: true }, orderBy: { createdAt: "desc" } } },
+      include: { notes: { include: { author: USER_IDENTITY }, orderBy: { createdAt: "desc" } } },
       orderBy: { order: "asc" },
     }),
     prisma.companySetting.findFirst(),

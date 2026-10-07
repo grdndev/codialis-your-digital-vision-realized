@@ -2,6 +2,7 @@ import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { reprendreFichiersJoints } from "@/lib/files";
 import { prisma } from "@/lib/prisma";
+import { USER_IDENTITY } from "@/lib/user-identity";
 import type { Prisma, Role, Severity, TaskStatus, TicketType } from "@prisma/client";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
 import { projectScope } from "@/lib/project-access";
@@ -100,7 +101,7 @@ export const GET = adminRoute(
         include: {
           project: { include: { client: true } },
           epic: true,
-          assignee: true,
+          assignee: USER_IDENTITY,
         },
         orderBy: { createdAt: "desc" },
       }),
