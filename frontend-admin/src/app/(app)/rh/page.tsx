@@ -188,8 +188,8 @@ export default async function RhPage({ searchParams }: { searchParams: Promise<R
       </div>
 
       <div className="grid grid-cols-4 gap-4">
-        <BalanceCard label="Solde de congés" balance={balances.leave} unit="j" />
-        <BalanceCard label="Solde d'heures" balance={balances.hours} unit="h" />
+        <BalanceCard label="Solde de congés" balance={balances.leave} format={(v) => `${v} j`} />
+        <BalanceCard label="Solde d'heures" balance={balances.hours} format={fmtHours} />
         <Kpi label="Heures supp. du mois" value={fmtHours(supTotal)} note={`${myHours.filter((e) => e.kind === "SUP").length} déclaration(s)`} />
         <Kpi label="Récupérations du mois" value={fmtHours(recupTotal)} note={`${myHours.filter((e) => e.kind === "RECUP").length} demande(s)`} />
       </div>
@@ -237,7 +237,7 @@ export default async function RhPage({ searchParams }: { searchParams: Promise<R
                           )}
                         </td>
                         <td className="whitespace-nowrap px-3 py-2 text-muted">
-                          {b ? `${b.hours.available} h` : "—"}
+                          {b ? fmtHours(b.hours.available) : "—"}
                         </td>
                         <td className="whitespace-nowrap px-3 py-2 text-xs text-muted">
                           {u.leaveAnchorDate ? fmtDate(u.leaveAnchorDate) : "jamais"}
@@ -772,13 +772,21 @@ function Verdict({
   );
 }
 
-function BalanceCard({ label, balance, unit }: { label: string; balance: Balance; unit: string }) {
+function BalanceCard({
+  label,
+  balance,
+  format,
+}: {
+  label: string;
+  balance: Balance;
+  format: (value: number) => string;
+}) {
   return (
     <div className="rounded-xl border border-border bg-panel px-5 py-4">
       <p className="text-xs text-muted">{label}</p>
       {balance.defined ? (
         <p className="mt-1.5 text-2xl font-semibold text-text">
-          {balance.available} {unit}
+          {format(balance.available)}
         </p>
       ) : (
         <p className="mt-1.5 text-2xl font-semibold text-amber">—</p>

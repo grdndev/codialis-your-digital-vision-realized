@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { fmtHours } from "@/lib/format";
 import { sendHrNotifEmail, sendInBackground, mailConfigured } from "@/lib/mail";
 import { isoOf } from "@/lib/work-calendar";
 
@@ -15,10 +16,8 @@ function fmt(d: Date): string {
   return DATE.format(d);
 }
 
-function hours(n: number): string {
-  const rounded = Math.round(n * 10) / 10;
-  return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1).replace(".", ",")} h`;
-}
+// « 1 h 30 m » : même écriture que le back-office (src/lib/format.ts).
+const hours = fmtHours;
 
 // Les destinataires d'une demande : la direction, qui doit trancher.
 async function directors(): Promise<{ email: string; name: string }[]> {

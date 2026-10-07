@@ -9,6 +9,7 @@ import {
   resendVerifyAction,
 } from "./actions";
 import { ROLE_OPTIONS, type AccountsScreen } from "./types";
+import { fmtHours } from "@/lib/format";
 
 export default async function EquipePage({
   searchParams,
@@ -102,7 +103,7 @@ export default async function EquipePage({
                       {u.role === "CLIENT"
                         ? "—"
                         : b
-                          ? `${b.leave.defined ? `${b.leave.available} j` : "congés non définis"} · ${b.hours.available} h`
+                          ? `${b.leave.defined ? `${b.leave.available} j` : "congés non définis"} · ${fmtHours(b.hours.available)}`
                           : "—"}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
