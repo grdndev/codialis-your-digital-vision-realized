@@ -69,6 +69,8 @@ frontend-admin/src/app/(client)/portal/=portail client
 frontend-admin/src/lib/api.ts=apiGet/apiPost, relais du Bearer, réanimation des dates ISO
 frontend-admin/src/lib/nav.ts=menu et rôles autorisés par écran
 frontend-admin/src/app/(app)/attachments.tsx=bloc « Pièces jointes » partagé par la fiche ticket et la fiche tâche
+frontend-admin/src/app/(app)/measured-time.tsx=bloc « Temps mesuré » partagé par la fiche ticket et la fiche tâche : sessions une à une, corrections (actions dans time/actions.ts)
+backend/src/lib/project-progress.ts=recomputeProjectProgress (avancement stocké d'un projet), partagé par la route Projets et la route Temps
 frontend-admin/src/app/(app)/list-controls.tsx=filtres en pastilles et pagination 15/25/50 partagés (Tickets, fiche projet, Ressources)
 frontend-admin/src/app/(app)/tickets/export/route.ts=export CSV/JSON des tickets (route de frontend-admin, relit GET /api/admin/tickets)
 frontend-admin/src/lib/theme.ts=couleurs réglables du back-office (jetons = variables CSS de globals.css)
@@ -137,6 +139,8 @@ DEC-053 [2026-10-07] ACTIVE traitement en masse sur la fiche projet : les ticket
 DEC-054 [2026-10-07] ACTIVE tâche interne : priorité NORMALE/HAUTE/URGENTE (pas de « Basse »), posée et changée par qui la confie ou DIR ; archivage (archivedAt) qui la sort des DEUX listes du Dashboard, désarchivable ; suppression après confirmation ; archiver/supprimer = assigné, donneur d'ordre ou DIR why=CC-360/361, arbitrage Denis du 07/10 alt=archivage propre à chacun
 DEC-055 [2026-10-07] ACTIVE « Saisies de l'équipe » en RH, réservées à DIR : toutes les saisies du mois (heures, absences, déplacements, planning hors bureau), tous statuts, motifs compris ; l'écran RH se parcourt par mois (`?mois=AAAA-MM`) why=CC-362/363, arbitrage Denis du 07/10 : pas la chefferie alt=ouvert au PM
 DEC-056 [2026-10-07] ACTIVE la file « À valider » n'a PAS de borne de mois (`pending.*` de GET /api/admin/rh) why=une saisie hors du mois en cours en sortait sans verdict (heure sup de Gabrielle du 24/09, encore DECLARE au 07/10) alt=file bornée au mois (état initial)
+DEC-057 [2026-10-07] ACTIVE une session de temps mesuré se CORRIGE après coup par son propriétaire (celui dont c'est le temps, direction comprise pour la sienne) ou par la chefferie (PM) — PAS par la direction sur le temps des autres ; par les dates (durée recalculée, hoursOverride effacé), par la durée (WorkSession.hoursOverride, qui remplace la part de CETTE session seulement, les sessions parallèles gardent la leur), ou « Arrêter à » pour une session ouverte (l'élément quitte « En cours » pour le statut choisi ; s'il n'y était plus, seule la session se ferme) ; auteur et date notés (correctedById/correctedAt) why=demande du 07/10, arbitrage Denis alt=propriétaire + direction (comme les saisies manuelles)
+DEC-058 [2026-10-07] ACTIVE les corrections de session ne s'ÉCRIVENT que par /api/admin/time (correct-session-dates, correct-session-hours, stop-session), y compris depuis les fiches ticket et tâche why=une seule règle des droits et du recalcul, comme DEC-052 alt=actions dupliquées dans les routes Tickets et Projets
 
 ## TRAP
 TRAP-001 le serveur `next dev` garde l'ANCIEN client Prisma après une migration → le redémarrer, sinon « Cannot read properties of undefined » sur le nouveau modèle
@@ -184,6 +188,8 @@ TRAP-042 un `<select defaultValue>` dans un formulaire d'action réaffiche l'ANC
 TRAP-043 le tableau des tickets est en `min-w-[900px]` et le layout n'a pas de `min-w-0` : sous ~1180 px de fenêtre, toute la colonne principale déborde → préexistant, non corrigé ; un test de largeur sur /tickets doit passer par la vue Kanban
 TRAP-044 le mode auto REFUSE de signer un jeton de session pour agir par l'API de prod au nom de Denis → les statuts se changent par UPDATE SQL direct (autorisé par Denis le 07/10), après avoir vérifié qu'aucune WorkSession n'est ouverte sur le ticket (TRAP-041)
 TRAP-045 `npx next dev` est réécrit par le hook rtk et meurt en « Errors: 1 » sans rien dire → `rtk proxy npx next dev -p …` ; base de test locale : `codialis_test` sur le MariaDB système (root:root@127.0.0.1:3306), le socket /tmp/cdl.sock ne survit pas au redémarrage
+TRAP-046 avec le partage, changer une session déplace aussi la part des sessions PARALLÈLES de la même personne ; refreshAfterTimeChange ne rafraîchissait que le temps passé des éléments visés → corrigé le 07/10 : recomputeUserSessions rend les tâches/tickets dont une session a changé de part, et leurs compteurs suivent
+TRAP-047 `next dev` (Turbopack) a servi un 404 sur la fiche tâche juste après sa modification, sans appeler l'API ni rien journaliser → réenregistrer le fichier ou relancer le serveur avant de chercher un bug de route
 TRAP-032 le conteneur codialis-api NE migre PAS au démarrage (`CMD next start`) → entre `docker compose up -d --build` et `migrate deploy`, tout écran qui lit une nouvelle table plante ; lancer la migration immédiatement après le rebuild (Facturation cassée quelques minutes le 28/09)
 
 ## STATE
@@ -219,6 +225,7 @@ done=[30/09] le recalcul a aligné ADD de 31 h (compteur périmé) à 95 h, dont
 done=[30/09] CC-356 : écran Objectifs, constat atteint/non atteint avec raison (DEC-051/052, migration objectifs_constat) ; 18/18 HTTP + Chrome
 done=[07/10] CC-358 (masse sur la fiche projet), CC-360/361 (tâches internes : priorité, archivage, suppression, migration taches_internes_priorite_archive), CC-362/363 (saisies RH de l'équipe pour DIR, file À valider sans borne), filtres de Tickets un critère par ligne ; 63/63 HTTP + 51/51 Chrome ; calculs work-time, work-calendar, hr-calendar 27/27, billing OK ; types, lint, build OK
 done=[07/10] déployé (7cbf549), migration taches_internes_priorite_archive appliquée ; CC-358, CC-360, CC-361, CC-362, CC-363 passés en EN_REVUE par SQL, chacun avec un commentaire de livraison
+done=[07/10] correction après coup du temps mesuré (DEC-057/058, migration correction_sessions_de_temps) : bloc « Temps mesuré » sur fiche ticket et fiche tâche ; 42/42 HTTP + 18/18 Chrome, non-régression 63/63, calculs OK
 done=[07/10] corrigé en passant : bulk-update des tickets ne relançait pas le chronomètre du nouvel assigné quand on redemandait « En cours » ; les tâches internes renvoyaient les comptes entiers (hash compris) à frontend-admin
 wip=aucun
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
@@ -243,5 +250,6 @@ manual=update-project (formulaire « Modifier le projet ») REDATE la clôture �
 manual=signaler à Luc que « ticket » et « gravité » ne sont pas des filtres de Ressources (DEC-039), et lui demander s'il visait un autre écran
 manual=CC-346 et le point 2 de CC-353 sont le même besoin, livrés ensemble
 manual=le README n'a pas de partie « Fonctionnalités » au format BxFy ; la référence fonctionnelle reste la liste de tickets en production
+manual=GET /api/admin/tickets/detail et /api/admin/projects/task renvoient assignee/creator/author EN ENTIER (hash du mot de passe compris) à frontend-admin — même défaut que celui corrigé sur les tâches internes, à réduire à l'identité
 manual=doublons de tâches internes en prod (« Relancer NCD » ×2 de Jayan, « Relancer bruno mestre » ×2 de Gabrielle) : à supprimer par eux depuis le Dashboard
 manual=l'heure sup de Gabrielle du 24/09 (« déploiement aiva », DECLARE) réapparaît dans la file « À valider » de Jayan depuis DEC-056 : à trancher
