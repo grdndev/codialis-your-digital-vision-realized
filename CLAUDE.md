@@ -39,6 +39,7 @@ routes_admin=adminRoute([roles], async ({ user }, request) => …) ; une mutatio
 erreurs=badRequest(message) lisible par l'utilisateur, jamais un code technique
 dates_bureau=minutes depuis minuit (heure locale de bureau), pas d'instant, pas de fuseau
 refs=maxSuffix + withUniqueRef (lib/refs.ts), jamais dérivées d'un COUNT
+durees=fmtHours (frontend-admin/src/lib/format.ts, copie dans backend/src/lib/format.ts) → « 1 h 30 m », « 8 h », « 45 m » : heures et minutes ENTIÈRES, jamais « 1,5 h » ; jamais `${x} h` écrit à la main ; les SAISIES restent en heures décimales (parseNumber), les exports CSV/JSON aussi
 nombres_saisis=parseNumber (frontend-admin/src/lib/format.ts), jamais parseFloat
 textes_multilignes=parseMultiline (frontend-admin/src/lib/format.ts) à la lecture, `whitespace-pre-wrap` à l'affichage
 libelle_projet=projectLabel(client, projet), jamais `client — projet` en dur
@@ -148,6 +149,7 @@ DEC-058 [2026-10-07] ACTIVE les corrections de session ne s'ÉCRIVENT que par /a
 DEC-059 [2026-10-07] ACTIVE une réponse de l'API ne cite un compte que par son identité (USER_IDENTITY : id, nom, initiales, rôle) ; le portail client n'en reçoit que id et nom why=les `include: { … : true }` renvoyaient la ligne User entière — hash bcrypt, e-mail, photo, soldes de congés et d'heures — à tout compte interne qui appelait l'API avec son propre jeton (liste des tickets, fiches, Temps, Ressources, Pilotage, CRM, Remontées), et au CLIENT via les rendez-vous ; seuls /me (sa propre session) et l'écran Comptes (DIR/PM) gardent e-mail et photo alt=nettoyer à l'affichage (ne protège rien, l'API reste lisible)
 DEC-060 [2026-10-07] ACTIVE fiche ticket : plus de bloc « Pièces jointes » ; la section « Commentaires » (ex « Commentaires internes ») joint par bouton, collage (Ctrl+V d'une capture, renommée capture-AAAA-MM-JJ-HHhMMSS) et glisser-déposer n'importe où sur la section ; le fichier part AUSSITÔT, rattaché au ticket et non au commentaire, et la liste des pièces s'affiche en tête des commentaires ; la fiche tâche garde son bloc why=demande du 07/10 (« dans les tickets ») alt=fichiers envoyés avec le commentaire
 DEC-061 [2026-10-07] ACTIVE codialis.files accepte, en plus des images, pdf, docx, xlsx, pptx, odt, ods, zip, txt, csv — liste blanche, signature vérifiée (%PDF-, PK\x03\x04, pas d'octet nul pour le texte) ; SVG, HTML, JS et tout exécutable restent refusés ; images et PDF s'affichent, le reste est servi en `content-disposition: attachment` why=« joindre un fichier ou une capture », « liste de fichiers et d'images » (07/10) alt=images seules (DEC-030)
+DEC-062 [2026-10-07] ACTIVE une durée s'affiche en heures et minutes entières (« 1 h 30 m »), arrondie à la minute, zéros tus (« 8 h », « 45 m ») — écrans, e-mails RH et brouillons de réponse ; les champs de saisie et les exports gardent des heures décimales why=demande du 07/10 alt=heures décimales « 1,5 h » (état initial)
 
 ## TRAP
 TRAP-001 le serveur `next dev` garde l'ANCIEN client Prisma après une migration → le redémarrer, sinon « Cannot read properties of undefined » sur le nouveau modèle
@@ -236,6 +238,7 @@ done=[07/10] déployé (7cbf549), migration taches_internes_priorite_archive app
 done=[07/10] correction après coup du temps mesuré (DEC-057/058, migration correction_sessions_de_temps) : bloc « Temps mesuré » sur fiche ticket et fiche tâche ; 42/42 HTTP + 18/18 Chrome, non-régression 63/63, calculs OK
 done=[07/10] comptes cités réduits à leur identité dans toutes les réponses (DEC-059) : 31/31 HTTP (la contre-épreuve sur l'ancien code relève 11 fuites, dont le hash de la chefferie envoyé au portail client), 12/12 écrans, non-régression 63/63 et 42/42
 done=[07/10] pièces jointes dans les commentaires des tickets (DEC-060) et documents acceptés par le stockage (DEC-061) : 24/24 HTTP (types, signatures, refus, en-têtes, aucun orphelin), 16/16 Chrome sur build de production, non-régression 63/63, 31/31, 18/18
+done=[07/10] durées en « X h Y m » (DEC-062) : formateur 34/34 cas (arrondi, zéros, négatifs), 13 écrans sans heure décimale sur build de production
 done=[07/10] corrigé en passant : bulk-update des tickets ne relançait pas le chronomètre du nouvel assigné quand on redemandait « En cours » ; les tâches internes renvoyaient les comptes entiers (hash compris) à frontend-admin
 wip=aucun
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
