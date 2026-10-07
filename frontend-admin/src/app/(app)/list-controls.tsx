@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 // Filtres en pastilles et pagination, partagés par les listes du back-office
-// (écran Tickets, tickets d'une fiche projet, Ressources). Tout passe par
+// (écran Tickets, tickets d'une fiche projet, Ressources, saisies RH). Tout passe par
 // l'adresse : un filtre ou une page est un lien, pas un état de composant, ce
 // qui garde les pages en Server Components et rend chaque vue partageable.
 
@@ -42,9 +42,9 @@ export function FilterGroup({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-nowrap items-center gap-2">{children}</div>;
 }
 
-// Un critère par ligne, son nom en tête (écran Tickets). Une ligne trop longue
-// défile sur place plutôt que de se couper : la suivante commence toujours au
-// même endroit.
+// Un critère par ligne, son nom en tête (écran Tickets, saisies de l'équipe en
+// RH). Une ligne trop longue défile sur place plutôt que de se couper : la
+// suivante commence toujours au même endroit.
 export function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3">

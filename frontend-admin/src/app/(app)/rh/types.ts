@@ -88,9 +88,9 @@ export type TeamMemberRow = UserRef & {
 
 export type TeamBalanceRow = { userId: string; hours: Balance; leave: Balance };
 
-// `team`, `teamBalances`, `allHours`, `allAbsences`, `allTravel` et `allRules`
-// arrivent vides pour un rôle autre que DIR : la synthèse d'équipe, les soldes
-// des autres et la file de validation lui sont réservés.
+// `team`, `teamBalances`, `pending` et les `all*` arrivent vides pour un rôle
+// autre que DIR : la synthèse d'équipe, les soldes des autres, la file de
+// validation et le détail des saisies de l'équipe lui sont réservés.
 // Calendrier d'équipe — « qui est là ce mois-ci ». Rangé par date ISO. Le
 // motif n'est renseigné que pour la direction.
 // `CLIENT` vient du planning de la semaine (« chez le client »).
@@ -114,9 +114,21 @@ export type RhScreen = {
   balances: { hours: Balance; leave: Balance };
   team: TeamMemberRow[];
   teamBalances?: TeamBalanceRow[];
+  // La file de validation : tout ce qui attend un verdict, quel qu'en soit le
+  // mois.
+  pending: {
+    hours: (HoursEntryRow & { user: UserRef })[];
+    absences: (AbsenceRow & { user: UserRef })[];
+    travel: (TravelRow & { user: UserRef })[];
+  };
+  // Les saisies de l'équipe sur le mois affiché, tous statuts (CC-362, CC-363).
   allHours: (HoursEntryRow & { user: UserRef })[];
+  // Déplacements et absences qui touchent le mois, même en partie.
   allTravel: (TravelRow & { user: UserRef })[];
-  allAbsences: (AbsenceRow & { user: UserRef })[];
+  // `monthDays` : jours ouvrés pris dans le mois, fériés exclus.
+  allAbsences: (AbsenceRow & { user: UserRef; monthDays: number })[];
+  // Planning de la semaine, hors « bureau ».
+  allShifts: (PlannedShiftRow & { user: UserRef })[];
   allRules: (PresenceRuleRow & { user: UserRef })[];
 };
 
@@ -130,6 +142,13 @@ export const ABSENCE_TYPE_LABEL: Record<AbsenceType, string> = {
   CONGE: "Congé",
   ABSENCE: "Absence",
   FORMATION: "Formation",
+};
+
+export const SHIFT_LABEL: Record<ShiftKind, string> = {
+  BUREAU: "Bureau",
+  TELETRAVAIL: "Télétravail",
+  CLIENT: "Chez le client",
+  ABSENCE: "Absence",
 };
 
 export const STATUS_LABEL: Record<HrEntryStatus, string> = {

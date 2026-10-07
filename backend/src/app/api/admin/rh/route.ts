@@ -194,20 +194,30 @@ export const GET = adminRoute(
       people,
     };
 
-    // La synthèse d'équipe, la file de validation et les soldes des autres sont
-    // réservés à la direction.
+    // La synthèse d'équipe, la file de validation, les soldes des autres et le
+    // détail des saisies de l'équipe sont réservés à la direction.
     if (user.role !== "DIR") {
       return {
         ...mine,
         team: [],
+        pending: { hours: [], absences: [], travel: [] },
         allHours: [],
         allTravel: [],
         allAbsences: [],
+        allShifts: [],
         allRules: [],
       };
     }
 
-    const [team, allHours, allTravel, allAbsences, allRules] =
+    const withUser = {
+      user: { select: { id: true, name: true, initials: true, role: true } },
+    } as const;
+    // Ce qui touche le mois, même en partie : un déplacement ou un congé
+    // commencé le mois précédent compte aussi dans celui-ci. Un déplacement
+    // sans date de fin tient sur sa seule journée de départ.
+    const overlapsMonth = { startDate: { lt: monthEnd }, endDate: { gte: monthStart } };
+
+    const [team, allHours, allTravel, allAbsences, allShifts, allRules, pendingHours, pendingAbsences, pendingTravel] =
       await Promise.all([
         prisma.user.findMany({
           where: { role: { in: ["DEV", "PM"] } },
@@ -233,21 +243,23 @@ export const GET = adminRoute(
           orderBy: { date: "desc" },
         }),
         prisma.travelEntry.findMany({
-          where: { startDate: { gte: monthStart, lt: monthEnd } },
-          include: {
-            user: {
-              select: { id: true, name: true, initials: true, role: true },
-            },
+          where: {
+            OR: [overlapsMonth, { endDate: null, startDate: { gte: monthStart, lt: monthEnd } }],
           },
+          include: withUser,
           orderBy: { startDate: "desc" },
         }),
         prisma.absence.findMany({
-          include: {
-            user: {
-              select: { id: true, name: true, initials: true, role: true },
-            },
-          },
+          where: overlapsMonth,
+          include: withUser,
           orderBy: { startDate: "desc" },
+        }),
+        // Le planning de la semaine de l'équipe (CC-363) : « bureau » est le
+        // cas par défaut, il ne dit rien qu'on ne sache déjà.
+        prisma.plannedShift.findMany({
+          where: { date: { gte: monthStart, lt: monthEnd }, kind: { not: "BUREAU" } },
+          include: withUser,
+          orderBy: { date: "asc" },
         }),
         prisma.presenceRecurrence.findMany({
           include: {
@@ -256,6 +268,25 @@ export const GET = adminRoute(
             },
           },
           orderBy: { createdAt: "desc" },
+        }),
+        // La file de validation n'a pas de mois : une heure sup déclarée le
+        // 30 pour la veille, ou un déplacement posé pour le mois prochain,
+        // disparaissait de la file dès qu'il sortait du mois en cours, sans
+        // avoir été tranché.
+        prisma.hoursEntry.findMany({
+          where: { status: "DECLARE" },
+          include: withUser,
+          orderBy: { date: "asc" },
+        }),
+        prisma.absence.findMany({
+          where: { status: "DECLARE" },
+          include: withUser,
+          orderBy: { startDate: "asc" },
+        }),
+        prisma.travelEntry.findMany({
+          where: { status: "DECLARE" },
+          include: withUser,
+          orderBy: { startDate: "asc" },
         }),
       ]);
 
@@ -282,9 +313,18 @@ export const GET = adminRoute(
         hoursAnchorDate: u.hoursAnchor,
       })),
       teamBalances,
+      pending: { hours: pendingHours, absences: pendingAbsences, travel: pendingTravel },
       allHours,
       allTravel,
-      allAbsences,
+      // Les jours ouvrés que l'absence prend DANS le mois (week-ends et fériés
+      // exclus, demi-journée comptée 0,5), pour les totaux par personne.
+      allAbsences: allAbsences.map((a) => {
+        const lastOfMonth = new Date(monthEnd.getTime() - 86_400_000);
+        const from = a.startDate < monthStart ? monthStart : a.startDate;
+        const to = a.endDate > lastOfMonth ? lastOfMonth : a.endDate;
+        return { ...a, monthDays: leaveDaysInRange(isoOf(from), isoOf(to), a.halfDay !== null, null) };
+      }),
+      allShifts,
       allRules,
     };
   },

@@ -1,6 +1,9 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
-import { fmtHours, fmtDate, currentMonthBounds, currentWeekdays, currentPeriodLabel } from "@/lib/format";
+import { fmtHours, fmtDate, currentMonthBounds, currentWeekdays } from "@/lib/format";
+import { listParam } from "../list-controls";
+import { TeamEntries, type TeamEntriesFilters } from "./team-entries";
 import type { ShiftKind } from "@/lib/types";
 import {
   addHoursAction,
@@ -22,6 +25,7 @@ import {
   EFFECT_LABEL,
   FREQ_LABEL,
   HOURS_KIND_LABEL,
+  SHIFT_LABEL,
   STATUS_CLASS,
   STATUS_LABEL,
   WEEKDAY_LABEL,
@@ -34,12 +38,6 @@ import {
 } from "./types";
 
 const SHIFT_KINDS: ShiftKind[] = ["BUREAU", "TELETRAVAIL", "CLIENT", "ABSENCE"];
-const SHIFT_LABEL: Record<ShiftKind, string> = {
-  BUREAU: "Bureau",
-  TELETRAVAIL: "Télétravail",
-  CLIENT: "Chez le client",
-  ABSENCE: "Absence",
-};
 const SHIFT_CLASS: Record<ShiftKind, string> = {
   BUREAU: "bg-white/5 text-muted",
   TELETRAVAIL: "bg-blue/10 text-blue",
@@ -73,9 +71,32 @@ function ruleSummary(r: PresenceRuleRow): string {
   return `${when}${half} · depuis le ${fmtDate(r.startDate)}${until}`;
 }
 
-export default async function RhPage() {
+const MONTH_LABEL = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" });
+const monthLabel = (d: Date) => {
+  const label = MONTH_LABEL.format(d);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+};
+const monthKey = (d: Date) => d.toISOString().slice(0, 7);
+
+// Le mois affiché vient de l'adresse (`mois=2026-09`), le mois en cours par
+// défaut : la direction relit les saisies d'un mois passé (CC-363). Une valeur
+// illisible retombe sur le mois en cours plutôt que de casser l'écran.
+function monthFromParam(mois: string | undefined): { start: Date; end: Date } {
+  const match = /^(\d{4})-(\d{2})$/.exec(mois ?? "");
+  const month = match ? Number(match[2]) - 1 : -1;
+  if (!match || month < 0 || month > 11) return currentMonthBounds();
+  const year = Number(match[1]);
+  return { start: new Date(Date.UTC(year, month, 1)), end: new Date(Date.UTC(year, month + 1, 1)) };
+}
+
+type RhQuery = { mois?: string } & Partial<Record<keyof TeamEntriesFilters, string>>;
+
+export default async function RhPage({ searchParams }: { searchParams: Promise<RhQuery> }) {
   const user = await requireUser();
-  const { start: monthStart, end: monthEnd } = currentMonthBounds();
+  const sp = await searchParams;
+  const { start: monthStart, end: monthEnd } = monthFromParam(sp.mois);
+  const isCurrentMonth = monthStart.getTime() === currentMonthBounds().start.getTime();
+  const previousMonth = new Date(Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth() - 1, 1));
   const weekdays = currentWeekdays();
   const { start: calendarStart, end: calendarEnd } = fullWeeksAround(monthStart, monthEnd);
 
@@ -99,13 +120,36 @@ export default async function RhPage() {
     balances,
     team,
     teamBalances,
+    pending,
     allHours,
     allTravel,
     allAbsences,
+    allShifts,
     allRules,
     calendar,
     people,
   } = await apiGet<RhScreen>(`/api/admin/rh?${query}`);
+
+  // Les filtres des saisies de l'équipe se croisent et se gardent d'un mois à
+  // l'autre ; l'ancre ramène sur le bloc, pas en haut de l'écran.
+  const teamFilters: TeamEntriesFilters = {
+    qui: listParam(sp.qui),
+    type: listParam(sp.type),
+    statut: listParam(sp.statut),
+  };
+  function rhHref(next: Partial<Record<keyof RhQuery, string | null>>, anchor = "") {
+    const merged: Partial<Record<keyof RhQuery, string | null>> = {
+      mois: isCurrentMonth ? null : monthKey(monthStart),
+      qui: sp.qui ?? null,
+      type: sp.type ?? null,
+      statut: sp.statut ?? null,
+      ...next,
+    };
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(merged)) if (value) params.set(key, value);
+    const qs = params.toString();
+    return `/rh${qs ? `?${qs}` : ""}${anchor}`;
+  }
 
   const isDir = user.role === "DIR";
   const shiftByDay = new Map(myShifts.map((s) => [dateKey(s.date), s]));
@@ -115,11 +159,32 @@ export default async function RhPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold text-text">Ressources humaines</h1>
-        <p className="mt-1 text-sm text-muted">
-          Heures, congés et absences, planning, déplacements · {currentPeriodLabel()}
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-text">Ressources humaines</h1>
+          <p className="mt-1 text-sm text-muted">
+            Heures, congés et absences, planning, déplacements · {monthLabel(monthStart)}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          <Link
+            href={rhHref({ mois: monthKey(previousMonth) })}
+            className="rounded-lg border border-border px-2.5 py-1 text-muted transition hover:border-mint/40 hover:text-mint"
+          >
+            ‹ {monthLabel(previousMonth)}
+          </Link>
+          {isCurrentMonth ? null : (
+            <Link href={rhHref({ mois: null })} className="font-medium text-mint hover:underline">
+              Mois en cours
+            </Link>
+          )}
+          <Link
+            href={rhHref({ mois: monthKey(monthEnd) })}
+            className="rounded-lg border border-border px-2.5 py-1 text-muted transition hover:border-mint/40 hover:text-mint"
+          >
+            {monthLabel(monthEnd)} ›
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
@@ -205,10 +270,14 @@ export default async function RhPage() {
             </div>
           </div>
 
-          <ValidationQueue
-            hours={allHours.filter((e) => e.status === "DECLARE")}
-            absences={allAbsences.filter((a) => a.status === "DECLARE")}
-            travel={allTravel.filter((t) => t.status === "DECLARE")}
+          <ValidationQueue hours={pending.hours} absences={pending.absences} travel={pending.travel} />
+
+          <TeamEntries
+            data={{ allHours, allAbsences, allTravel, allShifts }}
+            people={people}
+            monthLabel={monthLabel(monthStart)}
+            filters={teamFilters}
+            hrefFor={(next) => rhHref(next, "#saisies")}
           />
 
           <div className="rounded-xl border border-border bg-panel p-5">
@@ -598,9 +667,9 @@ function ValidationQueue({
   absences,
   travel,
 }: {
-  hours: RhScreen["allHours"];
-  absences: RhScreen["allAbsences"];
-  travel: RhScreen["allTravel"];
+  hours: RhScreen["pending"]["hours"];
+  absences: RhScreen["pending"]["absences"];
+  travel: RhScreen["pending"]["travel"];
 }) {
   const total = hours.length + absences.length + travel.length;
   return (
