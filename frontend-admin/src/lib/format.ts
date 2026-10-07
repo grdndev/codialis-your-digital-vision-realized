@@ -1,6 +1,7 @@
 import type {
   ProjectGroup, TaskStatus, Severity, DevNature, TicketType,
   TriageState, DealStage, MockupStatus, InvoiceStatus, AutomationMode, DraftStatus,
+  InternalTaskPriority,
 } from "@/lib/types";
 
 export function fmtHours(n: number): string {
@@ -100,6 +101,20 @@ export const SEVERITY_BADGE_CLASS: Record<Severity, string> = {
   BLOQUANT: "bg-red/10 text-red",
   MAJEUR: "bg-amber/10 text-amber",
   MINEUR: "bg-blue/10 text-blue",
+};
+
+// Priorité d'une tâche interne (CC-361). « Normale » ne porte pas de pastille :
+// sur une liste de rappels, seul ce qui presse doit se voir.
+export const PRIORITY_LABEL: Record<InternalTaskPriority, string> = {
+  NORMALE: "Normale",
+  HAUTE: "Haute",
+  URGENTE: "Urgente",
+};
+
+export const PRIORITY_BADGE_CLASS: Record<InternalTaskPriority, string> = {
+  NORMALE: "bg-white/5 text-muted",
+  HAUTE: "bg-amber/10 text-amber",
+  URGENTE: "bg-red/10 text-red",
 };
 
 export const DEV_NATURE_LABEL: Record<DevNature, string> = {

@@ -12,6 +12,8 @@ export type DashboardScreen = {
   // à un collègue.
   team: UserRef[];
   givenInternalTasks: (InternalTaskRow & { assignee: UserRef })[];
+  // Archivées dont on est l'assigné ou le donneur d'ordre, 50 au plus.
+  archivedInternalTasks: (InternalTaskRow & { assignee: UserRef; assigner: UserRef })[];
   totalProjects: number;
   // Objectifs en cours et clos ce mois-ci (voir l'écran Objectifs).
   goals: GoalRow[];

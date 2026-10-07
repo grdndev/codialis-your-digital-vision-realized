@@ -29,6 +29,7 @@ export type AbsenceMode = "OUVERT" | "HORAIRES" | "CONGES";
 export type HrEntryStatus = "DECLARE" | "VALIDE" | "REFUSE";
 export type ShiftKind = "BUREAU" | "TELETRAVAIL" | "CLIENT" | "ABSENCE";
 export type ActionCategory = "URGENT" | "RELANCE" | "DECISION";
+export type InternalTaskPriority = "NORMALE" | "HAUTE" | "URGENTE";
 
 // L'utilisateur connecté, tel que le renvoie GET /api/admin/me. Sous-ensemble
 // volontaire du modèle `User` : ni le hash du mot de passe ni les relations.

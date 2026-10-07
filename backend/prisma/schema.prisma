@@ -772,8 +772,22 @@ model InternalTask {
   assignerId  String
   assigner    User       @relation("InternalTaskAssigner", fields: [assignerId], references: [id], onDelete: Cascade)
   dueAt       DateTime?
+  // Priorité (CC-361), posée par qui confie la tâche : les deux listes du
+  // Dashboard se trient d'abord sur elle, puis sur l'échéance.
+  priority    InternalTaskPriority @default(NORMALE)
+  // Archivage (CC-360) : la tâche sort des deux listes du Dashboard — celle de
+  // qui l'a confiée et celle de l'assigné — sans être détruite. NULL = active.
+  archivedAt  DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+}
+
+// Trois niveaux suffisent (arbitrage du 07/10) : « Basse » n'aurait rien dit de
+// plus que « Normale » sur une liste de rappels.
+enum InternalTaskPriority {
+  NORMALE
+  HAUTE
+  URGENTE
 }
 
 // Singleton row (a single instance is created in prisma/seed.ts) holding

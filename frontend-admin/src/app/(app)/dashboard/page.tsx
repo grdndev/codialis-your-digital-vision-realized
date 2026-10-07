@@ -5,8 +5,19 @@ import type { DashboardScreen } from "./types";
 import type { GoalProject, GoalRow } from "../objectifs/types";
 import { GoalFields, GoalItem } from "../objectifs/goal-parts";
 import { createGoalAction } from "../objectifs/actions";
-import { fmtHours, fmtDate, daysFromNow, currentMonthBounds, currentPeriodLabel, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_LABEL, STATUS_BADGE_CLASS, projectLabel } from "@/lib/format";
-import { assignInternalTaskAction, advanceInternalTaskAction } from "./actions";
+import { fmtHours, fmtDate, daysFromNow, currentMonthBounds, currentPeriodLabel, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_LABEL, STATUS_BADGE_CLASS, PRIORITY_LABEL, PRIORITY_BADGE_CLASS, projectLabel } from "@/lib/format";
+import type { InternalTaskPriority } from "@/lib/types";
+import type { InternalTaskRow } from "@/lib/dto";
+import {
+  assignInternalTaskAction,
+  advanceInternalTaskAction,
+  archiveInternalTaskAction,
+  deleteInternalTaskAction,
+  setInternalTaskPriorityAction,
+} from "./actions";
+import { PrioritySelect } from "./priority-select";
+import { Popover } from "../popover";
+import { SubmitButton } from "../submit-button";
 
 export default async function DashboardPage() {
   // Le menu et l'API ouvrent le Dashboard aux développeurs : la garde les en
@@ -23,6 +34,7 @@ export default async function DashboardPage() {
     myInternalTasks,
     team,
     givenInternalTasks,
+    archivedInternalTasks,
     totalProjects,
     goals,
     goalProjects,
@@ -160,11 +172,15 @@ export default async function DashboardPage() {
               myInternalTasks.map((t) => (
                 <div key={t.id} className="flex items-center justify-between gap-4 px-5 py-3 text-sm">
                   <div className="min-w-0">
-                    <p className="text-text">{t.title}</p>
+                    <p className="text-text">
+                      {t.title}
+                      <PriorityBadge priority={t.priority} />
+                    </p>
                     <p className="mt-0.5 text-xs text-muted">
                       confiée par {t.assigner.name}{t.dueAt ? ` · pour le ${fmtDate(t.dueAt)}` : ""}
                     </p>
                     {t.description ? <p className="mt-0.5 text-xs text-muted">{t.description}</p> : null}
+                    <TaskTools task={t} />
                   </div>
                   <form action={advanceInternalTaskAction.bind(null, t.id)} className="shrink-0">
                     <button type="submit" className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_BADGE_CLASS[t.status]}`}>
@@ -191,14 +207,25 @@ export default async function DashboardPage() {
                 givenInternalTasks.map((t) => (
                   <div key={t.id} className="flex items-center justify-between gap-4 px-5 py-3 text-sm">
                     <div className="min-w-0">
-                      <p className="text-text">{t.title}</p>
+                      <p className="text-text">
+                        {t.title}
+                        <PriorityBadge priority={t.priority} />
+                      </p>
                       <p className="mt-0.5 text-xs text-muted">
                         {t.assignee.name}{t.dueAt ? ` · pour le ${fmtDate(t.dueAt)}` : ""}
                       </p>
+                      <TaskTools task={t} />
                     </div>
-                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_BADGE_CLASS[t.status]}`}>
-                      {STATUS_LABEL[t.status]}
-                    </span>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <PrioritySelect
+                        action={setInternalTaskPriorityAction.bind(null, t.id)}
+                        value={t.priority}
+                        label={`Priorité de « ${t.title} »`}
+                      />
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_BADGE_CLASS[t.status]}`}>
+                        {STATUS_LABEL[t.status]}
+                      </span>
+                    </div>
                   </div>
                 ))
               )}
@@ -220,12 +247,56 @@ export default async function DashboardPage() {
                 </select>
                 <input name="title" placeholder="Titre (ex : faire une formation)" required className="input" />
                 <input name="description" placeholder="Détail (optionnel)" className="input" />
-                <input name="dueAt" type="date" className="input" />
-                <button type="submit" className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg">Créer la tâche</button>
+                <div className="grid grid-cols-2 gap-2">
+                  <input name="dueAt" type="date" className="input" aria-label="Échéance" />
+                  <select name="priority" defaultValue="NORMALE" className="input" aria-label="Priorité">
+                    {(Object.keys(PRIORITY_LABEL) as InternalTaskPriority[]).map((p) => (
+                      <option key={p} value={p}>
+                        Priorité {PRIORITY_LABEL[p].toLowerCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <SubmitButton
+                  pendingLabel="Création…"
+                  className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg"
+                >
+                  Créer la tâche
+                </SubmitButton>
               </form>
             </details>
           </div>
       </div>
+
+      {archivedInternalTasks.length > 0 ? (
+        <details className="rounded-xl border border-border bg-panel">
+          <summary className="cursor-pointer px-5 py-3 text-sm font-medium text-muted">
+            Tâches archivées · {archivedInternalTasks.length}
+          </summary>
+          <div className="flex flex-col divide-y divide-border border-t border-border">
+            {archivedInternalTasks.map((t) => (
+              <div key={t.id} className="flex items-center justify-between gap-4 px-5 py-3 text-sm">
+                <div className="min-w-0">
+                  <p className="text-muted">
+                    {t.title}
+                    <PriorityBadge priority={t.priority} />
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted">
+                    {t.assigner.id === t.assignee.id
+                      ? `${t.assignee.name}, pour soi-même`
+                      : `confiée par ${t.assigner.name} à ${t.assignee.name}`}
+                    {t.archivedAt ? ` · archivée le ${fmtDate(t.archivedAt)}` : ""}
+                  </p>
+                  <TaskTools task={t} />
+                </div>
+                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_BADGE_CLASS[t.status]}`}>
+                  {STATUS_LABEL[t.status]}
+                </span>
+              </div>
+            ))}
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }
@@ -269,6 +340,46 @@ function MonthlyGoals({
           <GoalFields action={createGoalAction} projects={projects} submitLabel="Poser l’objectif" />
         </details>
       ) : null}
+    </div>
+  );
+}
+
+function PriorityBadge({ priority }: { priority: InternalTaskPriority }) {
+  if (priority === "NORMALE") return null;
+  return (
+    <span className={`ml-2 rounded-full px-2 py-0.5 align-middle text-[11px] font-medium ${PRIORITY_BADGE_CLASS[priority]}`}>
+      {PRIORITY_LABEL[priority]}
+    </span>
+  );
+}
+
+// Ranger et supprimer une tâche interne (CC-360). L'archivage la sort des deux
+// listes, celle de l'assigné et celle de qui l'a confiée, et se défait ;
+// la suppression, elle, demande confirmation : elle est définitive.
+function TaskTools({ task }: { task: InternalTaskRow }) {
+  const archived = task.archivedAt !== null;
+  return (
+    <div className="mt-1.5 flex items-center gap-3 text-xs">
+      <form action={archiveInternalTaskAction.bind(null, task.id, !archived)}>
+        <button type="submit" className="text-muted hover:text-text">
+          {archived ? "Désarchiver" : "Archiver"}
+        </button>
+      </form>
+      <Popover summary="Supprimer" summaryClassName="cursor-pointer list-none text-muted hover:text-red">
+        <form
+          action={deleteInternalTaskAction.bind(null, task.id)}
+          className="absolute left-0 z-10 mt-2 flex w-64 flex-col gap-2 rounded-xl border border-border bg-panel p-3 text-xs shadow-2xl"
+        >
+          <p className="text-text">Supprimer « {task.title} » ?</p>
+          <p className="text-muted">
+            Elle disparaît pour tout le monde, c’est définitif.
+            {archived ? "" : " Pour seulement la ranger, archivez-la."}
+          </p>
+          <button type="submit" className="rounded-lg bg-red/90 px-3 py-1.5 font-semibold text-bg hover:bg-red">
+            Confirmer la suppression
+          </button>
+        </form>
+      </Popover>
     </div>
   );
 }

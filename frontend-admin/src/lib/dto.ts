@@ -6,6 +6,7 @@ import type {
   TicketType,
   Severity,
   DevNature,
+  InternalTaskPriority,
   TriageState,
 } from "@/lib/types";
 
@@ -113,6 +114,9 @@ export type InternalTaskRow = {
   assigneeId: string;
   assignerId: string;
   dueAt: Date | null;
+  priority: InternalTaskPriority;
+  // NULL = active ; renseignée, la tâche ne vit plus que dans « Tâches archivées ».
+  archivedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
