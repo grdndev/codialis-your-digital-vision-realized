@@ -1,4 +1,4 @@
-import type { ClientRef, ProjectWithClient, TaskRow, TicketRow, UserRef } from "@/lib/dto";
+import type { ClientRef, ProjectWithClient, TaskRow, TicketRow, UserRef, WorkSessionRow } from "@/lib/dto";
 import type { ClientQuestionStatus } from "@/lib/types";
 
 export type ProjectsScreen = {
@@ -122,4 +122,5 @@ export type TaskDetailResponse = {
   // Pour le formulaire de modification : les lots du projet et l'équipe.
   epics?: { id: string; title: string }[];
   team?: { id: string; name: string }[];
+  sessions?: WorkSessionRow[];
 };

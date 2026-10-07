@@ -6,6 +6,7 @@ import { visibleProjectIds } from "@/lib/project-access";
 import { closeSessions, openSession, refreshProjectSpent } from "@/lib/work-sessions";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
 import { soldHoursFor } from "@/lib/agency-rates";
+import { recomputeProjectProgress } from "@/lib/project-progress";
 import type { TaskStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -61,25 +62,6 @@ const NEXT_STATUS: Record<TaskStatus, TaskStatus | null> = {
   EN_REVUE: "TERMINE",
   TERMINE: null,
 };
-
-// `Project.progressPct` est une colonne stockée, relue directement par le
-// dashboard, la liste des projets et le portail client — pas un calcul fait à
-// chaque lecture. Il faut donc la rafraîchir dès qu'une tâche apparaît ou change
-// d'état. Un projet sans tâche modélisée garde sa valeur : une liste vide n'est
-// pas la preuve d'un avancement nul, seulement de ce qui n'est pas suivi à ce
-// niveau de détail.
-async function recomputeProjectProgress(projectId: string) {
-  const tasks = await prisma.task.findMany({
-    where: { epic: { projectId } },
-    select: { status: true },
-  });
-  if (tasks.length === 0) return;
-  const done = tasks.filter((t) => t.status === "TERMINE").length;
-  await prisma.project.update({
-    where: { id: projectId },
-    data: { progressPct: Math.round((done / tasks.length) * 100) },
-  });
-}
 
 // Pose un statut sur une tâche. « En cours » lance le chronomètre au nom de
 // l'ASSIGNÉ, tout autre statut l'arrête : le temps se mesure, il ne se déclare

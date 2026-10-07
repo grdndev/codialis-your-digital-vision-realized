@@ -130,6 +130,7 @@ model User {
   workSchedule          WorkSchedule?
   workSessions          WorkSession[]        @relation("SessionOwner")
   startedSessions       WorkSession[]        @relation("SessionStarter")
+  correctedSessions     WorkSession[]        @relation("SessionCorrector")
 }
 
 model Client {
@@ -993,6 +994,16 @@ model WorkSession {
   endedAt     DateTime?
   hours       Float     @default(0)
   createdAt   DateTime  @default(now())
+
+  // Correction après coup (fiche tâche, fiche ticket) par le propriétaire du
+  // temps ou la chefferie. Corriger les DATES remet `hoursOverride` à NULL :
+  // la durée se recalcule. Saisir une DURÉE la pose ici : elle remplace la part
+  // calculée de CETTE session, les sessions menées en parallèle gardent la
+  // leur. L'auteur suit DEC-032 : NULL si son compte est supprimé.
+  hoursOverride Float?
+  correctedById String?
+  correctedBy   User?     @relation("SessionCorrector", fields: [correctedById], references: [id], onDelete: SetNull)
+  correctedAt   DateTime?
 
   @@index([userId, startedAt])
   @@index([taskId])

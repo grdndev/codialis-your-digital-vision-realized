@@ -2,6 +2,7 @@ import { z } from "zod";
 import { adminRoute, badRequest } from "@/lib/admin-api";
 import { avecUrlPublique } from "@/lib/files";
 import { prisma } from "@/lib/prisma";
+import { sessionsOf } from "@/lib/work-sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
 
   // De quoi alimenter le formulaire de modification : les lots du projet et
   // l'équipe interne, à qui la tâche peut être réassignée.
-  const [epics, team] = await Promise.all([
+  const [epics, team, sessions] = await Promise.all([
     prisma.epic.findMany({
       where: { projectId },
       orderBy: { order: "asc" },
@@ -46,11 +47,14 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
+    // Le temps mesuré, session par session, corrigeable après coup.
+    sessionsOf(prisma, { taskId }),
   ]);
 
   return {
     task: { ...task, attachments: task.attachments.map(avecUrlPublique) },
     epics,
     team,
+    sessions,
   };
 });

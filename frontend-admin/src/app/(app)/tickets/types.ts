@@ -1,4 +1,4 @@
-import type { ClientRef, ProjectWithClient, TicketRow, UserRef } from "@/lib/dto";
+import type { ClientRef, ProjectWithClient, TicketRow, UserRef, WorkSessionRow } from "@/lib/dto";
 
 export type EpicRef = { id: string; title: string; projectId: string };
 
@@ -67,6 +67,7 @@ export type TicketDetailResponse = {
   team?: { id: string; name: string }[];
   // Pour déplacer le ticket : il n'avait aucun moyen de changer de projet.
   projects?: { id: string; name: string; client: { name: string } }[];
+  sessions?: WorkSessionRow[];
 };
 
 export type NewTicketScreen = {

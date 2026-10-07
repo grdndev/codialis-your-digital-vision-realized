@@ -16,6 +16,7 @@ import {
   removeTicketAttachmentAction,
 } from "../actions";
 import { Attachments } from "../../attachments";
+import { MeasuredTime } from "../../measured-time";
 import type { TicketDetailResponse } from "../types";
 import type { TaskStatus } from "@/lib/types";
 
@@ -48,7 +49,7 @@ export default async function TicketDetailPage({
   const { ref } = await params;
   const { info, error } = await searchParams;
 
-  const { ticket, epics, team, projects } = await apiGet<TicketDetailResponse>(
+  const { ticket, epics, team, projects, sessions = [] } = await apiGet<TicketDetailResponse>(
     `/api/admin/tickets/detail?ref=${encodeURIComponent(ref)}`,
   );
   if (!ticket) notFound();
@@ -211,6 +212,15 @@ export default async function TicketDetailPage({
             pieces={ticket.attachments}
             onAdd={addTicketAttachmentAction.bind(null, ticket.id, ref)}
             onRemove={removeTicketAttachmentAction.bind(null, ref)}
+          />
+
+          <MeasuredTime
+            sessions={sessions}
+            viewer={user}
+            inProgress={ticket.status === "EN_COURS"}
+            canClose={canClose}
+            back={`/tickets/${ticket.ref}`}
+            projectId={ticket.projectId}
           />
 
           <div className="rounded-xl border border-border bg-panel p-5">

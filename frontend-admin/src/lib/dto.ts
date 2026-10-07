@@ -106,6 +106,22 @@ export type ActionItemRow = {
   createdAt: Date;
 };
 
+// Une session de temps mesuré, telle que la fiche d'une tâche ou d'un ticket
+// la montre. `hours` est la durée retenue (corrigée à la main s'il y a lieu),
+// `computedHours` ce que donnent les dates (horaires et partage).
+export type WorkSessionRow = {
+  id: string;
+  userId: string;
+  startedAt: Date;
+  endedAt: Date | null;
+  hours: number;
+  computedHours: number;
+  hoursOverride: number | null;
+  correctedAt: Date | null;
+  user: { id: string; name: string; initials: string };
+  correctedBy: { id: string; name: string } | null;
+};
+
 export type InternalTaskRow = {
   id: string;
   title: string;

@@ -16,6 +16,7 @@ import {
   removeTaskAttachmentAction,
 } from "../../../actions";
 import { Attachments } from "../../../../attachments";
+import { MeasuredTime } from "../../../../measured-time";
 import type { TaskDetailResponse } from "../../../types";
 import type { TaskStatus } from "@/lib/types";
 
@@ -43,13 +44,13 @@ export default async function TaskDetailPage({
   params: Promise<{ id: string; taskId: string }>;
   searchParams: Promise<{ info?: string; error?: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const { id: projectId, taskId } = await params;
   const { info, error } = await searchParams;
 
   // Le backend vérifie que la tâche appartient bien à ce projet, et que le
   // rôle y a accès : dans les deux cas d'échec il renvoie `null`.
-  const { task, epics = [], team = [] } = await apiGet<TaskDetailResponse>(
+  const { task, epics = [], team = [], sessions = [] } = await apiGet<TaskDetailResponse>(
     `/api/admin/projects/task?projectId=${encodeURIComponent(projectId)}&taskId=${encodeURIComponent(taskId)}`,
   );
   if (!task) notFound();
@@ -182,6 +183,17 @@ export default async function TaskDetailPage({
             pieces={task.attachments}
             onAdd={addTaskAttachmentAction.bind(null, taskId, projectId)}
             onRemove={removeTaskAttachmentAction.bind(null, taskId, projectId)}
+          />
+
+          {/* La clôture d'une tâche n'est pas réservée, contrairement à celle
+              d'un ticket. */}
+          <MeasuredTime
+            sessions={sessions}
+            viewer={user}
+            inProgress={task.status === "EN_COURS"}
+            canClose
+            back={`/projects/${projectId}/tasks/${taskId}`}
+            projectId={projectId}
           />
         </div>
 

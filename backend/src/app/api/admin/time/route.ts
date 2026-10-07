@@ -2,7 +2,8 @@ import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { refreshAfterTimeChange, liveSessionHours } from "@/lib/work-sessions";
-import type { Prisma } from "@prisma/client";
+import { recomputeProjectProgress } from "@/lib/project-progress";
+import type { Prisma, Role, TaskStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +90,27 @@ const bodySchema = z.discriminatedUnion("action", [
     billable: z.boolean(),
   }),
   z.object({ action: z.literal("delete-entry"), entryId: z.string().min(1) }),
+  // Correction après coup d'une session de temps mesuré, depuis la fiche d'une
+  // tâche ou d'un ticket. Les dates recalculent la durée ; une durée saisie la
+  // remplace pour cette seule session. Une session encore ouverte s'arrête à
+  // une heure passée, et l'élément quitte « En cours » pour le statut choisi.
+  z.object({
+    action: z.literal("correct-session-dates"),
+    sessionId: z.string().min(1),
+    startedAt: z.string().datetime(),
+    endedAt: z.string().datetime(),
+  }),
+  z.object({
+    action: z.literal("correct-session-hours"),
+    sessionId: z.string().min(1),
+    hours: z.number().min(0).max(1000),
+  }),
+  z.object({
+    action: z.literal("stop-session"),
+    sessionId: z.string().min(1),
+    endedAt: z.string().datetime(),
+    status: z.enum(["A_FAIRE", "EN_REVUE", "TERMINE"]),
+  }),
   z.object({
     action: z.literal("add-entry"),
     projectId: z.string().nullable(),
@@ -127,10 +149,106 @@ async function shiftContract(
   });
 }
 
+type SessionCorrection = Extract<
+  z.infer<typeof bodySchema>,
+  { action: "correct-session-dates" | "correct-session-hours" | "stop-session" }
+>;
+
+// Une minute de marge sur « pas dans le futur » : l'horloge du navigateur et
+// celle du serveur ne sont jamais tout à fait d'accord.
+const CLOCK_SLACK_MS = 60_000;
+
+async function correctSession(user: { id: string; role: Role }, body: SessionCorrection) {
+  const session = await prisma.workSession.findUnique({
+    where: { id: body.sessionId },
+    include: {
+      task: { select: { id: true, status: true, epic: { select: { projectId: true } } } },
+      ticket: { select: { id: true, status: true } },
+    },
+  });
+  if (!session) badRequest("Session introuvable");
+  // Le temps se corrige par la personne à qui il appartient, ou par la
+  // chefferie de projet. Pas par la direction : arbitrage Denis du 07/10.
+  if (session.userId !== user.id && user.role !== "PM") {
+    badRequest("Seuls la personne dont c'est le temps et la chefferie de projet peuvent le corriger");
+  }
+
+  const now = Date.now();
+  const corrected = { correctedById: user.id, correctedAt: new Date() };
+  const refresh = (tx: Prisma.TransactionClient) =>
+    refreshAfterTimeChange(tx, {
+      userId: session.userId,
+      taskIds: session.taskId ? [session.taskId] : [],
+      ticketIds: session.ticketId ? [session.ticketId] : [],
+    });
+
+  if (body.action === "stop-session") {
+    if (session.endedAt) badRequest("Cette session est déjà arrêtée : corrigez plutôt ses dates");
+    const endedAt = new Date(body.endedAt);
+    if (endedAt <= session.startedAt) badRequest("L'arrêt doit être postérieur au démarrage");
+    if (endedAt.getTime() > now + CLOCK_SLACK_MS) badRequest("L'arrêt ne peut pas être dans le futur");
+
+    // L'élément ne quitte « En cours » que s'il y est encore : une session
+    // restée ouverte sur un élément déjà clos (statut changé par un script,
+    // TRAP-041) se ferme sans toucher à son statut.
+    const item = session.task ?? session.ticket;
+    const leavesInProgress = item?.status === "EN_COURS";
+    if (leavesInProgress && session.ticket && body.status === "TERMINE" && user.role === "DEV") {
+      badRequest("La clôture revient à la chefferie de projet ou à la direction.");
+    }
+    const status: TaskStatus = body.status;
+    await prisma.$transaction(async (tx) => {
+      await tx.workSession.update({ where: { id: session.id }, data: { endedAt, ...corrected } });
+      if (leavesInProgress && session.task) await tx.task.update({ where: { id: session.task.id }, data: { status } });
+      if (leavesInProgress && session.ticket) await tx.ticket.update({ where: { id: session.ticket.id }, data: { status } });
+      await refresh(tx);
+    });
+    if (leavesInProgress && session.task) await recomputeProjectProgress(session.task.epic.projectId);
+    return { ok: true };
+  }
+
+  // Une session ouverte n'a pas encore de durée à corriger : elle s'arrête.
+  if (!session.endedAt) badRequest("Cette session est en cours : arrêtez-la d'abord");
+
+  if (body.action === "correct-session-hours") {
+    await prisma.$transaction(async (tx) => {
+      await tx.workSession.update({
+        where: { id: session.id },
+        data: { hoursOverride: body.hours, ...corrected },
+      });
+      await refresh(tx);
+    });
+    return { ok: true };
+  }
+
+  const startedAt = new Date(body.startedAt);
+  const endedAt = new Date(body.endedAt);
+  if (endedAt <= startedAt) badRequest("La fin doit être postérieure au début");
+  if (endedAt.getTime() > now + CLOCK_SLACK_MS) badRequest("La fin ne peut pas être dans le futur");
+  // Corriger les dates, c'est revenir au calcul : une durée saisie auparavant
+  // n'aurait plus rien à voir avec les nouvelles bornes.
+  await prisma.$transaction(async (tx) => {
+    await tx.workSession.update({
+      where: { id: session.id },
+      data: { startedAt, endedAt, hoursOverride: null, ...corrected },
+    });
+    await refresh(tx);
+  });
+  return { ok: true };
+}
+
 export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
   const parsed = bodySchema.safeParse(await jsonBody(request));
   if (!parsed.success) badRequest("Requête invalide");
   const body = parsed.data;
+
+  if (
+    body.action === "correct-session-dates" ||
+    body.action === "correct-session-hours" ||
+    body.action === "stop-session"
+  ) {
+    return correctSession(user, body);
+  }
 
   if (body.action === "update-entry" || body.action === "delete-entry") {
     const entry = await prisma.timeEntry.findUnique({ where: { id: body.entryId } });

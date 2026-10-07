@@ -27,27 +27,64 @@ async function scheduleOf(tx: Tx, userId: string): Promise<Schedule> {
   };
 }
 
-// Recalcule la part de CHAQUE session de la personne. Une session encore
-// ouverte est bornée à maintenant : son temps est provisoire et se réévaluera
-// à la fermeture, mais l'affichage montre déjà ce qui court.
-async function recomputeUserSessions(tx: Tx, userId: string): Promise<void> {
-  const rows = await tx.workSession.findMany({
+// Part de chaque session d'une personne : `computed` d'après ses dates
+// (rognage + partage), `retained` = la durée corrigée à la main si elle existe,
+// sinon le calcul. Une session corrigée en durée garde ses dates dans le
+// partage : les sessions menées en parallèle ne voient pas leur part bouger.
+// Une session encore ouverte est bornée à `now`.
+async function sharesOf(
+  db: Pick<Tx, "workSession" | "workSchedule">,
+  userId: string,
+  now: Date,
+): Promise<Map<string, { computed: number; retained: number }>> {
+  const rows = await db.workSession.findMany({
     where: { userId },
-    select: { id: true, startedAt: true, endedAt: true },
+    select: { id: true, startedAt: true, endedAt: true, hoursOverride: true },
   });
-  if (!rows.length) return;
-
-  const now = new Date();
   const sessions: Session[] = rows.map((r) => ({
     id: r.id,
     startedAt: r.startedAt,
     endedAt: r.endedAt ?? now,
   }));
+  const computed = splitHours(sessions, await scheduleOf(db as Tx, userId));
+  return new Map(
+    rows.map((r) => {
+      const value = computed.get(r.id) ?? 0;
+      return [r.id, { computed: value, retained: r.hoursOverride ?? value }];
+    }),
+  );
+}
 
-  const hours = splitHours(sessions, await scheduleOf(tx, userId));
-  for (const [id, value] of hours) {
-    await tx.workSession.update({ where: { id }, data: { hours: value } });
+// Recalcule la part de CHAQUE session de la personne. Une session encore
+// ouverte est bornée à maintenant : son temps est provisoire et se réévaluera
+// à la fermeture, mais l'affichage montre déjà ce qui court.
+//
+// Rend les tâches et tickets dont une session a changé de part : avec le
+// partage, fermer ou corriger une session déplace aussi le temps des autres
+// éléments menés en parallèle, et leur temps passé doit suivre. Seuls les
+// éléments visés par l'appelant étaient rafraîchis ; ceux d'à côté gardaient
+// un compteur périmé.
+async function recomputeUserSessions(
+  tx: Tx,
+  userId: string,
+): Promise<{ taskIds: string[]; ticketIds: string[] }> {
+  const [rows, shares] = await Promise.all([
+    tx.workSession.findMany({
+      where: { userId },
+      select: { id: true, hours: true, taskId: true, ticketId: true },
+    }),
+    sharesOf(tx, userId, new Date()),
+  ]);
+  const taskIds = new Set<string>();
+  const ticketIds = new Set<string>();
+  for (const row of rows) {
+    const retained = shares.get(row.id)?.retained ?? 0;
+    if (retained === row.hours) continue;
+    await tx.workSession.update({ where: { id: row.id }, data: { hours: retained } });
+    if (row.taskId) taskIds.add(row.taskId);
+    if (row.ticketId) ticketIds.add(row.ticketId);
   }
+  return { taskIds: [...taskIds], ticketIds: [...ticketIds] };
 }
 
 // `spentHours` d'une tâche ou d'un ticket : mesuré + déclaré.
@@ -101,10 +138,12 @@ export async function refreshAfterTimeChange(
   tx: Tx,
   target: { userId?: string | null; taskIds?: string[]; ticketIds?: string[]; projectIds?: string[] },
 ): Promise<void> {
-  if (target.userId) await recomputeUserSessions(tx, target.userId);
+  const shifted = target.userId
+    ? await recomputeUserSessions(tx, target.userId)
+    : { taskIds: [], ticketIds: [] };
 
   const projectIds = new Set(target.projectIds ?? []);
-  for (const taskId of new Set(target.taskIds ?? [])) {
+  for (const taskId of new Set([...(target.taskIds ?? []), ...shifted.taskIds])) {
     await refreshTask(tx, taskId);
     const task = await tx.task.findUnique({
       where: { id: taskId },
@@ -112,7 +151,7 @@ export async function refreshAfterTimeChange(
     });
     if (task) projectIds.add(task.epic.projectId);
   }
-  for (const ticketId of new Set(target.ticketIds ?? [])) {
+  for (const ticketId of new Set([...(target.ticketIds ?? []), ...shifted.ticketIds])) {
     await refreshTicket(tx, ticketId);
     const ticket = await tx.ticket.findUnique({
       where: { id: ticketId },
@@ -181,22 +220,53 @@ export async function liveSessionHours(
   db: Pick<Tx, "workSession" | "workSchedule">,
   shown: { id: string; userId: string }[],
 ): Promise<Map<string, number>> {
-  const result = new Map<string, number>();
-  const userIds = [...new Set(shown.map((s) => s.userId))];
-  const now = new Date();
+  const detail = await liveSessionShares(db, shown);
+  return new Map([...detail].map(([id, share]) => [id, share.retained]));
+}
 
-  for (const userId of userIds) {
-    // Toutes les sessions de la personne, pas seulement celles affichées : une
-    // session hors fenêtre partage quand même le temps de celles qui y sont.
-    const rows = await db.workSession.findMany({
-      where: { userId },
-      select: { id: true, startedAt: true, endedAt: true },
-    });
-    const hours = splitHours(
-      rows.map((r) => ({ id: r.id, startedAt: r.startedAt, endedAt: r.endedAt ?? now })),
-      await scheduleOf(db as Tx, userId),
-    );
-    for (const [id, value] of hours) result.set(id, value);
+// Même lecture, avec aussi la part calculée d'après les dates : la fiche d'une
+// tâche ou d'un ticket montre ce que le calcul aurait donné à côté d'une durée
+// corrigée à la main.
+export async function liveSessionShares(
+  db: Pick<Tx, "workSession" | "workSchedule">,
+  shown: { id: string; userId: string }[],
+): Promise<Map<string, { computed: number; retained: number }>> {
+  const result = new Map<string, { computed: number; retained: number }>();
+  const now = new Date();
+  // Toutes les sessions de la personne, pas seulement celles affichées : une
+  // session hors fenêtre partage quand même le temps de celles qui y sont.
+  for (const userId of new Set(shown.map((s) => s.userId))) {
+    for (const [id, share] of await sharesOf(db, userId, now)) result.set(id, share);
   }
   return result;
+}
+
+// Les sessions d'une tâche ou d'un ticket, pour le bloc « Temps mesuré » de sa
+// fiche : la plus récente d'abord, avec la part retenue et celle que le calcul
+// donnerait d'après les dates. Les comptes ne sortent qu'en identité.
+export async function sessionsOf(
+  db: Pick<Tx, "workSession" | "workSchedule">,
+  target: { taskId: string } | { ticketId: string },
+) {
+  const rows = await db.workSession.findMany({
+    where: target,
+    select: {
+      id: true,
+      userId: true,
+      startedAt: true,
+      endedAt: true,
+      hours: true,
+      hoursOverride: true,
+      correctedAt: true,
+      user: { select: { id: true, name: true, initials: true } },
+      correctedBy: { select: { id: true, name: true } },
+    },
+    orderBy: { startedAt: "desc" },
+  });
+  const shares = await liveSessionShares(db, rows);
+  return rows.map((r) => ({
+    ...r,
+    hours: shares.get(r.id)?.retained ?? r.hours,
+    computedHours: shares.get(r.id)?.computed ?? r.hours,
+  }));
 }

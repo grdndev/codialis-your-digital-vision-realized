@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { parseNumber } from "@/lib/format";
-import { apiPost } from "@/lib/api";
+import { redirect } from "next/navigation";
+import { fromOfficeInput, parseNumber } from "@/lib/format";
+import { ApiError, apiPost } from "@/lib/api";
 
 export async function addTimeEntryAction(formData: FormData) {
   const label = String(formData.get("label") ?? "").trim();
@@ -78,4 +79,69 @@ export async function deleteTimeEntryAction(entryId: string) {
     entryId,
   });
   await repercuter(projectId);
+}
+
+// Correction après coup d'une session de temps mesuré, depuis la fiche d'une
+// tâche ou d'un ticket (`back`). Les heures saisies sont celles du bureau, à
+// La Réunion. Les droits (propriétaire du temps ou chefferie) et les contrôles
+// de dates appartiennent au backend : son refus revient lisible sur la fiche.
+async function correctSession(back: string, projectId: string, body: Record<string, unknown>) {
+  try {
+    await apiPost("/api/admin/time", body);
+  } catch (err) {
+    if (err instanceof ApiError) redirect(`${back}?error=${encodeURIComponent(err.message)}`);
+    throw err;
+  }
+  revalidatePath(back);
+  await repercuter(projectId);
+}
+
+function invalid(back: string, message: string): never {
+  redirect(`${back}?error=${encodeURIComponent(message)}`);
+}
+
+export async function correctSessionDatesAction(
+  sessionId: string,
+  back: string,
+  projectId: string,
+  formData: FormData,
+) {
+  const startedAt = fromOfficeInput(formData.get("startedAt"));
+  const endedAt = fromOfficeInput(formData.get("endedAt"));
+  if (!startedAt || !endedAt) invalid(back, "Date ou heure illisible");
+  await correctSession(back, projectId, {
+    action: "correct-session-dates",
+    sessionId,
+    startedAt: startedAt.toISOString(),
+    endedAt: endedAt.toISOString(),
+  });
+}
+
+export async function correctSessionHoursAction(
+  sessionId: string,
+  back: string,
+  projectId: string,
+  formData: FormData,
+) {
+  // Un champ vide n'est pas « 0 h » : zéro se tape.
+  if (!String(formData.get("hours") ?? "").trim()) invalid(back, "Indiquez une durée");
+  const hours = parseNumber(formData.get("hours"));
+  if (!Number.isFinite(hours) || hours < 0) invalid(back, "Durée illisible");
+  await correctSession(back, projectId, { action: "correct-session-hours", sessionId, hours });
+}
+
+export async function stopSessionAction(
+  sessionId: string,
+  back: string,
+  projectId: string,
+  formData: FormData,
+) {
+  const endedAt = fromOfficeInput(formData.get("endedAt"));
+  if (!endedAt) invalid(back, "Date ou heure illisible");
+  await correctSession(back, projectId, {
+    action: "stop-session",
+    sessionId,
+    endedAt: endedAt.toISOString(),
+    status: String(formData.get("status") ?? "A_FAIRE"),
+  });
 }

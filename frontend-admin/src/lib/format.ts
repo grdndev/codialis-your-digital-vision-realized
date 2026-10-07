@@ -270,6 +270,43 @@ export function fmtEUR(n: number | null | undefined): string {
   return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(n ?? 0) + " €";
 }
 
+// Heure de bureau à La Réunion — UTC+4 toute l'année, sans heure d'été —,
+// celle des horaires de travail et du calcul du temps mesuré (TRAP-040). Le
+// serveur, lui, tourne en UTC : sans fuseau explicite, une session démarrée à
+// 9 h s'afficherait à 5 h.
+const OFFICE_TIME_ZONE = "Indian/Reunion";
+const OFFICE_OFFSET = "+04:00";
+const OFFICE_DATE_TIME = new Intl.DateTimeFormat("fr-FR", {
+  day: "numeric",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: OFFICE_TIME_ZONE,
+});
+
+export function fmtOfficeDateTime(date: Date): string {
+  return OFFICE_DATE_TIME.format(date);
+}
+
+// Valeur d'un `<input type="datetime-local">` (« 2026-10-06T18:00 »), à l'heure
+// de bureau, et retour vers un instant.
+export function toOfficeInput(date: Date): string {
+  return new Date(date.getTime() + 4 * 3_600_000).toISOString().slice(0, 16);
+}
+
+// « Maintenant » au même format : valeur par défaut et borne d'un arrêt. Hors
+// du rendu, comme daysFromNow, pour que l'appel impur n'y figure pas.
+export function nowOfficeInput(): string {
+  return toOfficeInput(new Date());
+}
+
+export function fromOfficeInput(value: FormDataEntryValue | null): Date | null {
+  const raw = String(value ?? "");
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(raw)) return null;
+  const date = new Date(`${raw}:00.000${OFFICE_OFFSET}`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export function fmtDateTime(date: Date | null): string | null {
   if (!date) return null;
   return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(date);
