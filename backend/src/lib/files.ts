@@ -16,7 +16,11 @@ const PUBLIQUE = () => (process.env.FILES_PUBLIC_URL || "https://files.codialis.
 
 // Doit rester aligné sur files/src/stockage.js : c'est le service qui refuse
 // pour de bon, cette liste n'est là que pour répondre avant d'envoyer 20 Mo.
-export const EXTENSIONS_IMAGE = ["png", "jpg", "jpeg", "webp", "gif", "avif"] as const;
+// Images, et depuis le 07/10 les documents qu'on joint à un ticket.
+export const EXTENSIONS_ACCEPTEES = [
+  "png", "jpg", "jpeg", "webp", "gif", "avif",
+  "pdf", "docx", "xlsx", "pptx", "odt", "ods", "zip", "txt", "csv",
+] as const;
 export const TAILLE_MAX_OCTETS = 25 * 1024 * 1024;
 
 export function filesConfigured(): boolean {
@@ -28,14 +32,14 @@ export function urlPublique(fileId: string): string {
 }
 
 // L'extension vient du nom du fichier déposé : le service refuse tout ce qui
-// n'est pas une image, et vérifie en plus la signature binaire du contenu.
+// n'est pas dans sa liste blanche, et vérifie en plus la signature du contenu.
 export function extensionDe(filename: string): string {
   const point = filename.lastIndexOf(".");
   return point === -1 ? "" : filename.slice(point + 1).toLowerCase();
 }
 
 export function extensionAcceptee(extension: string): boolean {
-  return (EXTENSIONS_IMAGE as readonly string[]).includes(extension);
+  return (EXTENSIONS_ACCEPTEES as readonly string[]).includes(extension);
 }
 
 async function appel(chemin: string, init: RequestInit): Promise<Response> {
@@ -49,7 +53,7 @@ async function appel(chemin: string, init: RequestInit): Promise<Response> {
 }
 
 // Rend l'identifiant du fichier, qui est aussi son nom sur disque.
-export async function envoyerImage(extension: string, contenu: ArrayBuffer): Promise<string> {
+export async function envoyerFichier(extension: string, contenu: ArrayBuffer): Promise<string> {
   const res = await appel(`/upload?ext=${encodeURIComponent(extension)}`, {
     method: "POST",
     body: contenu,

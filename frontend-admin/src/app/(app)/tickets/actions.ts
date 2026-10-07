@@ -190,9 +190,17 @@ export async function addTicketCommentAction(formData: FormData) {
 // Pièces jointes. Le fichier arrive du navigateur dans le FormData de l'action,
 // et repart au backend en binaire : frontend-admin ne fait que relayer, il ne
 // connaît ni le port privé du stockage ni son jeton.
-export async function addTicketAttachmentAction(ticketId: string, ref: string, formData: FormData) {
+//
+// Appelée par la section Commentaires (bouton, collage, glisser-déposer), un
+// fichier à la fois : le refus revient en valeur, pour s'afficher à côté du
+// fichier concerné sans recharger la page ni perdre le commentaire en cours.
+export async function uploadTicketAttachmentAction(
+  ticketId: string,
+  ref: string,
+  formData: FormData,
+): Promise<{ error: string | null }> {
   const fichier = formData.get("fichier");
-  if (!(fichier instanceof File) || fichier.size === 0) return;
+  if (!(fichier instanceof File) || fichier.size === 0) return { error: "Le fichier est vide" };
 
   const adresse =
     `/api/admin/attachments?kind=ticket&id=${encodeURIComponent(ticketId)}` +
@@ -201,11 +209,12 @@ export async function addTicketAttachmentAction(ticketId: string, ref: string, f
   try {
     await apiUpload(adresse, await fichier.arrayBuffer());
   } catch (err) {
-    if (err instanceof ApiError) redirect(`/tickets/${ref}?error=${encodeURIComponent(err.message)}`);
+    if (err instanceof ApiError) return { error: err.message };
     throw err;
   }
 
   revalidatePath(`/tickets/${ref}`);
+  return { error: null };
 }
 
 export async function removeTicketAttachmentAction(ref: string, attachmentId: string) {

@@ -3,7 +3,7 @@ import { adminRoute, badRequest, notFound } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import {
   TAILLE_MAX_OCTETS,
-  envoyerImage,
+  envoyerFichier,
   extensionAcceptee,
   extensionDe,
   filesConfigured,
@@ -53,7 +53,9 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
 
   const extension = extensionDe(filename);
   if (!extensionAcceptee(extension)) {
-    badRequest("Seules les images sont acceptées (png, jpg, webp, gif, avif)");
+    badRequest(
+      `Type « ${extension || "sans extension"} » refusé. Acceptés : images (png, jpg, webp, gif, avif), pdf, txt, csv, docx, xlsx, pptx, odt, ods, zip`,
+    );
   }
 
   // La cible est vérifiée AVANT d'envoyer le fichier : sinon un mauvais
@@ -70,7 +72,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
 
   let fileId: string;
   try {
-    fileId = await envoyerImage(extension, contenu);
+    fileId = await envoyerFichier(extension, contenu);
   } catch (err) {
     console.error("Envoi vers codialis.files en échec:", err);
     badRequest(err instanceof Error ? err.message : "Le stockage du fichier a échoué");

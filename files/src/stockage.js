@@ -20,8 +20,13 @@ export class ErreurFichier extends Error {}
 
 export const DOSSIER = process.env.FILES_DIR || "/app/public";
 
-// Images uniquement (arbitrage du 22/09). Le SVG est volontairement ABSENT :
-// c'est du HTML exécutable, donc un XSS stocké déguisé en image.
+// Images, et depuis le 07/10 les documents qu'on joint à un ticket (PDF,
+// bureautique, archive, texte) : la fiche ticket accepte « un fichier ou une
+// capture d'écran ». Liste blanche, chaque type avec sa signature vérifiée.
+//
+// Sont volontairement ABSENTS tous les formats que le navigateur exécute : le
+// SVG (du HTML déguisé en image), le HTML, le JavaScript. Le texte brut est
+// servi en `text/plain` avec `nosniff` : il s'affiche, il ne s'exécute pas.
 const TYPES = {
   png: "image/png",
   jpg: "image/jpeg",
@@ -29,7 +34,24 @@ const TYPES = {
   webp: "image/webp",
   gif: "image/gif",
   avif: "image/avif",
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  odt: "application/vnd.oasis.opendocument.text",
+  ods: "application/vnd.oasis.opendocument.spreadsheet",
+  zip: "application/zip",
+  txt: "text/plain; charset=utf-8",
+  csv: "text/csv; charset=utf-8",
 };
+
+const IMAGES = new Set(["png", "jpg", "jpeg", "webp", "gif", "avif"]);
+
+// Une image ou un PDF s'affiche dans le navigateur ; le reste se télécharge.
+export function sAfficheDansLeNavigateur(id) {
+  const extension = id.slice(id.lastIndexOf(".") + 1);
+  return IMAGES.has(extension) || extension === "pdf";
+}
 
 export const EXTENSIONS = Object.keys(TYPES);
 
@@ -53,7 +75,7 @@ function chemin(id) {
 }
 
 // Le client annonce une extension ; on vérifie que le contenu lui ressemble
-// vraiment. Sans cela « images uniquement » ne serait qu'une politesse : un
+// vraiment. Sans cela la liste blanche ne serait qu'une politesse : un
 // exécutable renommé `.png` serait accepté et servi.
 function signatureCorrespond(extension, contenu) {
   const debutVaut = (position, texte) =>
@@ -72,6 +94,21 @@ function signatureCorrespond(extension, contenu) {
     // Un AVIF est un conteneur ISO-BMFF : la marque de format est en position 4.
     case "avif":
       return contenu.length > 12 && debutVaut(4, "ftyp");
+    case "pdf":
+      return contenu.length > 5 && debutVaut(0, "%PDF-");
+    // Les formats bureautiques modernes SONT des archives zip.
+    case "docx":
+    case "xlsx":
+    case "pptx":
+    case "odt":
+    case "ods":
+    case "zip":
+      return contenu.length > 4 && debutVaut(0, "PK\x03\x04");
+    // Du texte n'a pas de signature : on refuse au moins ce qui est binaire.
+    // Un octet nul n'apparaît dans aucun texte UTF-8.
+    case "txt":
+    case "csv":
+      return !contenu.subarray(0, 64 * 1024).includes(0);
     default:
       return false;
   }
@@ -103,7 +140,7 @@ export async function enregistrer(extensionDemandee, contenu) {
     );
   }
   if (!signatureCorrespond(extension, contenu)) {
-    throw new ErreurFichier(`Le contenu n'est pas une image ${extension}.`);
+    throw new ErreurFichier(`Le contenu ne correspond pas à un fichier ${extension}.`);
   }
 
   const id = `${randomBytes(16).toString("hex")}.${extension}`;

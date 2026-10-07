@@ -23,6 +23,7 @@ import {
   idValide,
   supprimer,
   taille,
+  sAfficheDansLeNavigateur,
   typeMime,
 } from "./stockage.js";
 
@@ -71,6 +72,10 @@ const serveurPublic = createServer(async (requete, reponse) => {
     "x-content-type-options": "nosniff",
     // Les images sont affichées par le back-office, sur une autre origine.
     "access-control-allow-origin": "*",
+    // Un document bureautique, une archive ou un texte se TÉLÉCHARGE : ouvert
+    // dans l'onglet, un .csv s'afficherait brut et un .docx n'aurait rien à
+    // montrer. Images et PDF, eux, s'affichent.
+    ...(sAfficheDansLeNavigateur(id) ? {} : { "content-disposition": "attachment" }),
   });
 
   if (requete.method === "HEAD") return reponse.end();

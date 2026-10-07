@@ -12,10 +12,11 @@ import {
   deleteTicketCriterionAction,
   addTicketCommentAction,
   deleteTicketAction,
-  addTicketAttachmentAction,
+  uploadTicketAttachmentAction,
   removeTicketAttachmentAction,
 } from "../actions";
-import { Attachments } from "../../attachments";
+import { AttachmentList } from "../../attachments";
+import { CommentsPanel } from "./comments-panel";
 import { MeasuredTime } from "../../measured-time";
 import type { TicketDetailResponse } from "../types";
 import type { TaskStatus } from "@/lib/types";
@@ -208,12 +209,6 @@ export default async function TicketDetailPage({
             </div>
           ) : null}
 
-          <Attachments
-            pieces={ticket.attachments}
-            onAdd={addTicketAttachmentAction.bind(null, ticket.id, ref)}
-            onRemove={removeTicketAttachmentAction.bind(null, ref)}
-          />
-
           <MeasuredTime
             sessions={sessions}
             viewer={user}
@@ -278,42 +273,36 @@ export default async function TicketDetailPage({
             </form>
           </div>
 
-          <div className="rounded-xl border border-border bg-panel p-5">
-            <h2 className="text-sm font-semibold text-text">Commentaires internes</h2>
-            <div className="mt-3 flex flex-col gap-3">
-              {ticket.comments.map((c) => (
-                <div key={c.id} className="flex gap-3">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-mint/15 text-xs font-medium text-mint">
-                    {authorInitials(c.author)}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted">
-                      <span className="font-medium text-text">{authorName(c.author)}</span> · {fmtDate(c.createdAt)}
-                    </p>
-                    <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-text">{c.body}</p>
-                  </div>
-                </div>
-              ))}
-              {ticket.comments.length === 0 ? <p className="text-sm text-muted">Aucun commentaire pour l’instant.</p> : null}
-            </div>
-            <form action={addTicketCommentAction} className="mt-4 flex items-end gap-2">
-              <input type="hidden" name="ticketId" value={ticket.id} />
-              <input type="hidden" name="ref" value={ref} />
-              {/* Multiligne : Entrée passe à la ligne, l'envoi se fait au bouton. La
-                  hauteur suit le contenu, `rows` sert de repli aux navigateurs
-                  qui ignorent `field-sizing` (CC-345). */}
-              <textarea
-                name="body"
-                required
-                rows={3}
-                placeholder="Ajouter un commentaire…"
-                className="field-sizing-content min-h-20 max-h-80 flex-1 resize-y rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm text-text"
+          {/* Les pièces jointes vivent dans les commentaires : listées en tête,
+              jointes par le bouton, le collage d'une capture ou le
+              glisser-déposer d'un fichier. */}
+          <CommentsPanel
+            upload={uploadTicketAttachmentAction.bind(null, ticket.id, ref)}
+            comment={addTicketCommentAction}
+            ticketId={ticket.id}
+            ticketRef={ref}
+            files={
+              <AttachmentList
+                pieces={ticket.attachments}
+                onRemove={removeTicketAttachmentAction.bind(null, ref)}
               />
-              <button type="submit" className="rounded-lg bg-mint px-3 py-2 text-xs font-semibold text-bg">
-                Envoyer
-              </button>
-            </form>
-          </div>
+            }
+          >
+            {ticket.comments.map((c) => (
+              <div key={c.id} className="flex gap-3">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-mint/15 text-xs font-medium text-mint">
+                  {authorInitials(c.author)}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted">
+                    <span className="font-medium text-text">{authorName(c.author)}</span> · {fmtDate(c.createdAt)}
+                  </p>
+                  <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-text">{c.body}</p>
+                </div>
+              </div>
+            ))}
+            {ticket.comments.length === 0 ? <p className="text-sm text-muted">Aucun commentaire pour l’instant.</p> : null}
+          </CommentsPanel>
         </div>
 
         <div className="flex flex-col gap-4">
