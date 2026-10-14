@@ -48,9 +48,9 @@ enum DevNature {
 }
 
 // Supprimer un compte ne doit RIEN détruire de ce que la personne a produit.
-// Tout ce qu'elle a écrit (commentaires de tâche et de ticket, notes de
+// Tout ce qu'elle a écrit (commentaires de ticket, notes de
 // prospection, messages, décisions, catégories) la survit sans auteur, ses
-// tâches et ses tickets se désassignent, ses saisies de temps restent
+// tickets se désassignent, ses saisies de temps restent
 // imputées au projet. Ces relations sont donc FACULTATIVES : MySQL passe la
 // colonne à NULL au lieu de refuser la suppression (un `authorId` obligatoire
 // rendait tout compte ayant écrit une seule ligne indestructible).
@@ -102,8 +102,6 @@ model User {
 
   assignments     ProjectAssignment[]
   leadEpics       Epic[]              @relation("EpicLead")
-  assignedTasks   Task[]              @relation("TaskAssignee")
-  taskComments    TaskComment[]
   assignedTickets Ticket[]            @relation("TicketAssignee")
   createdTickets  Ticket[]            @relation("TicketCreator")
   ticketComments  TicketComment[]
@@ -258,76 +256,9 @@ model Epic {
   order     Int       @default(0)
   createdAt DateTime  @default(now())
 
-  tasks   Task[]
   tickets Ticket[]
 
   @@index([projectId])
-}
-
-// OBSOLÈTE (CC-365) — Task, TaskCriterion, TaskComment et TaskAttachment ne
-// sont plus lues ni écrites par aucun écran. Une « tâche » n'existe plus : le
-// travail d'un projet est fait de tickets, rattachés à un épic ou non. La
-// migration `taches_en_tickets` a copié chaque tâche en ticket SOUS LE MÊME
-// IDENTIFIANT, avec ses critères, commentaires et pièces jointes, et rebranché
-// ses sessions et saisies de temps. Les tables restent en base, intactes, le
-// temps de valider la reprise ; une migration suivante les supprimera, avec
-// les colonnes `taskId` de WorkSession et TimeEntry.
-model Task {
-  id          String     @id @default(cuid())
-  epicId      String
-  epic        Epic       @relation(fields: [epicId], references: [id], onDelete: Cascade)
-  title       String
-  description String     @db.Text
-  status      TaskStatus @default(A_FAIRE)
-  estHours    Float
-  spentHours  Float      @default(0)
-  assigneeId  String?
-  assignee    User?      @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  dueAt       DateTime?
-  order       Int        @default(0)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  criteria     TaskCriterion[]
-  comments     TaskComment[]
-  attachments  TaskAttachment[]
-  timeEntries  TimeEntry[]
-  workSessions WorkSession[]
-
-  @@index([epicId])
-}
-
-model TaskCriterion {
-  id     String  @id @default(cuid())
-  taskId String
-  task   Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  label  String
-  done   Boolean @default(false)
-  order  Int     @default(0)
-}
-
-model TaskComment {
-  id        String   @id @default(cuid())
-  taskId    String
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  authorId  String?
-  author    User?    @relation(fields: [authorId], references: [id])
-  body      String   @db.Text
-  createdAt DateTime @default(now())
-}
-
-model TaskAttachment {
-  id        String   @id @default(cuid())
-  taskId    String
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  filename  String
-  // Identifiant dans codialis.files, qui est AUSSI le nom du fichier sur
-  // disque. Distinct de `driveFileId` : les deux stockages cohabitent le
-  // temps que le service maison fasse ses preuves (DEC-027). NULL sur une
-  // pièce jointe qui n'est qu'un libellé, sans fichier à servir.
-  fileId    String?
-  meta      String   @default("")
-  createdAt DateTime @default(now())
 }
 
 model Ticket {
@@ -836,8 +767,6 @@ model TimeEntry {
   user      User?    @relation(fields: [userId], references: [id])
   projectId String?
   project   Project? @relation(fields: [projectId], references: [id])
-  taskId    String?
-  task      Task?    @relation(fields: [taskId], references: [id])
   ticketId  String?
   ticket    Ticket?  @relation(fields: [ticketId], references: [id])
   label     String
@@ -964,7 +893,7 @@ enum ShiftKind {
 // One row per person per day — a lightweight planned-schedule grid, not a
 // full calendar. @@unique makes "set this day's status" an upsert.
 // Horaires de travail d'une personne, en minutes depuis minuit. Ils servent à
-// rogner les chronomètres : une tâche laissée « en cours » le vendredi soir ne
+// rogner les chronomètres : un ticket laissé « en cours » le vendredi soir ne
 // doit pas compter le week-end, ni la nuit, ni la pause déjeuner.
 model WorkSchedule {
   userId           String   @id
@@ -980,8 +909,8 @@ model WorkSchedule {
   updatedAt        DateTime @updatedAt
 }
 
-// Un chronomètre : ouvert quand une tâche ou un ticket passe « En cours »,
-// fermé dès qu'il en sort.
+// Un chronomètre : ouvert quand un ticket passe « En cours », fermé dès qu'il
+// en sort.
 //
 // `userId` est la personne ASSIGNÉE au moment du démarrage, pas celle qui a
 // cliqué — c'est son temps qu'on décompte, et ses horaires qui rognent la
@@ -997,8 +926,6 @@ model WorkSession {
   user        User      @relation("SessionOwner", fields: [userId], references: [id], onDelete: Cascade)
   startedById String?
   startedBy   User?     @relation("SessionStarter", fields: [startedById], references: [id])
-  taskId      String?
-  task        Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   ticketId    String?
   ticket      Ticket?   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   startedAt   DateTime
@@ -1006,7 +933,7 @@ model WorkSession {
   hours       Float     @default(0)
   createdAt   DateTime  @default(now())
 
-  // Correction après coup (fiche tâche, fiche ticket) par le propriétaire du
+  // Correction après coup (fiche ticket) par le propriétaire du
   // temps ou la chefferie. Corriger les DATES remet `hoursOverride` à NULL :
   // la durée se recalcule. Saisir une DURÉE la pose ici : elle remplace la part
   // calculée de CETTE session, les sessions menées en parallèle gardent la
@@ -1017,7 +944,6 @@ model WorkSession {
   correctedAt   DateTime?
 
   @@index([userId, startedAt])
-  @@index([taskId])
   @@index([ticketId])
 }
 

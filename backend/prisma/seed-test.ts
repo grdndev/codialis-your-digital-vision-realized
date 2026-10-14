@@ -23,9 +23,6 @@ async function main() {
   await prisma.ticketCriterion.deleteMany();
   await prisma.ticketComment.deleteMany();
   await prisma.ticket.deleteMany();
-  await prisma.taskCriterion.deleteMany();
-  await prisma.taskComment.deleteMany();
-  await prisma.task.deleteMany();
   await prisma.epic.deleteMany();
   await prisma.projectAssignment.deleteMany();
   await prisma.project.deleteMany();

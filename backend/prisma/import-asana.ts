@@ -259,7 +259,7 @@ async function main() {
     const renamed = RENAME && RENAME !== csvName ? ` (le fichier dit « ${csvName} »)` : "";
     console.log(`\n=== ${file} → projet « ${projectName} »${renamed} ===`);
     console.log(`  ${rows.length} lignes lues · ${skipped} ignorées (documents, hors projet)`);
-    console.log(`  ${epicRows.length} tâches · ${ticketRows.length} tickets`);
+    console.log(`  ${epicRows.length} tickets d'épic · ${ticketRows.length} tickets hors épic`);
 
     if (DRY) {
       const sections = [...new Set(epicRows.map((r) => r.section || "(sans section)"))];
@@ -298,7 +298,13 @@ async function main() {
       });
     }
 
-    // --- Lots et tâches ---
+    // Une seule numérotation pour tout le projet, épics compris.
+    const prefix = `${project.initials}-`;
+    let n = await nextTicketRef(prefix, new Set());
+
+    // --- Épics et leurs tickets ---
+    // Une ligne de section devient un ticket « Développement » de l'épic : il
+    // n'y a plus de « tâche » (CC-365).
     const epicIdByTitle = new Map<string, string>();
     let epicOrder = await prisma.epic.count({ where: { projectId: project.id } });
     for (const row of epicRows) {
@@ -321,23 +327,26 @@ async function main() {
       const assigneeId = userByEmail.get(row.assigneeEmail) ?? null;
       if (row.assigneeEmail && !assigneeId) unknownEmails.add(row.assigneeEmail);
 
-      await prisma.task.create({
+      await prisma.ticket.create({
         data: {
+          ref: `${prefix}${n++}`,
+          projectId: project.id,
           epicId,
+          type: "DEV",
+          status: row.status,
           title: row.name,
           description: [row.notes, row.comment].filter(Boolean).join("\n\n"),
-          status: row.status,
+          steps: "",
           estHours: row.estHours,
           spentHours: row.spentHours,
           assigneeId,
           dueAt: row.dueAt,
-          order: 0,
           ...(row.createdAt ? { createdAt: row.createdAt } : {}),
         },
       });
     }
 
-    // L'estimation d'un lot est la somme de ses tâches : Asana ne la porte pas.
+    // L'estimation d'un épic est la somme de ses tickets : Asana ne la porte pas.
     for (const [title, epicId] of epicIdByTitle) {
       const sum = epicRows
         .filter((r) => (r.section || "Sans lot") === title)
@@ -345,9 +354,7 @@ async function main() {
       await prisma.epic.update({ where: { id: epicId }, data: { estHours: sum } });
     }
 
-    // --- Tickets ---
-    const prefix = `${project.initials}-`;
-    let n = await nextTicketRef(prefix, new Set());
+    // --- Tickets hors épic ---
     for (const row of ticketRows) {
       const assigneeId = userByEmail.get(row.assigneeEmail) ?? null;
       if (row.assigneeEmail && !assigneeId) unknownEmails.add(row.assigneeEmail);
@@ -373,16 +380,17 @@ async function main() {
     }
 
     // L'avancement affiché est une colonne stockée : sans ce recalcul, le
-    // projet importé resterait à 0 % malgré ses tâches terminées.
-    const tasks = await prisma.task.findMany({
-      where: { epic: { projectId: project.id } },
+    // projet importé resterait à 0 % malgré ses tickets terminés. Il compte
+    // tous les tickets du projet (DEC-064).
+    const tickets = await prisma.ticket.findMany({
+      where: { projectId: project.id },
       select: { status: true },
     });
-    if (tasks.length) {
-      const done = tasks.filter((t) => t.status === "TERMINE").length;
+    if (tickets.length) {
+      const done = tickets.filter((t) => t.status === "TERMINE").length;
       await prisma.project.update({
         where: { id: project.id },
-        data: { progressPct: Math.round((done / tasks.length) * 100) },
+        data: { progressPct: Math.round((done / tickets.length) * 100) },
       });
     }
 
@@ -390,7 +398,7 @@ async function main() {
   }
 
   if (unknownEmails.size) {
-    console.log(`\nComptes inconnus (tâches laissées non assignées) : ${[...unknownEmails].join(", ")}`);
+    console.log(`\nComptes inconnus (tickets laissés non assignés) : ${[...unknownEmails].join(", ")}`);
   }
   console.log(DRY ? "\n--dry-run : rien n'a été écrit." : "\nImport terminé.");
 }

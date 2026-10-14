@@ -169,7 +169,16 @@ async function main() {
     await prisma.projectAssignment.create({ data: { projectId: proj.id, userId: karim.id } });
   }
 
-  // ---------- Epics + tasks: Aiva ----------
+  // ---------- Épics et leurs tickets : Aiva ----------
+  // Le travail d'un épic est fait de tickets (CC-365, il n'y a plus de
+  // « tâche »). Ceux-ci sont numérotés à partir de 101 par projet, sous les
+  // références écrites à la main plus bas.
+  const demoRefs = new Map<string, number>();
+  const demoRef = (p: { id: string; initials: string }) => {
+    const n = (demoRefs.get(p.id) ?? 100) + 1;
+    demoRefs.set(p.id, n);
+    return `${p.initials}-${n}`;
+  };
   type TaskDef = { title: string; who: "Karim" | "Léa" | "Marion"; status: TaskStatus; est: number; spent: number; due: string; desc: string };
   const T = (title: string, who: TaskDef["who"], statusFr: string, est: string, spent: string, due: string, desc: string): TaskDef => ({
     title, who,
@@ -222,19 +231,19 @@ async function main() {
       data: { projectId: aiva.id, title: e.title, estHours: e.est, leadId: userByFirst[e.lead].id, order: order++ },
     });
     namedEpics[`Aiva::${e.title}`] = epic;
-    let tOrder = 0;
     for (const t of e.tasks) {
-      await prisma.task.create({
+      await prisma.ticket.create({
         data: {
-          epicId: epic.id, title: t.title, description: t.desc, status: t.status,
+          ref: demoRef(aiva), projectId: aiva.id, epicId: epic.id, type: "DEV", steps: "",
+          title: t.title, description: t.desc, status: t.status,
           estHours: t.est, spentHours: t.spent, assigneeId: userByFirst[t.who].id,
-          dueAt: t.due === "—" ? null : d(t.due), order: tOrder++,
+          dueAt: t.due === "—" ? null : d(t.due),
         },
       });
     }
   }
 
-  // ---------- Epics + tasks: Top Formation ----------
+  // ---------- Épics et leurs tickets : Top Formation ----------
   const tfEpics: { title: string; tasks: { title: string; statusFr: string; changed: string; desc: string }[] }[] = [
     { title: "Comptes et accès", tasks: [
       { title: "Inscription et connexion des apprenants", statusFr: "Terminé", changed: "2026-05-14", desc: "Compte apprenant avec e-mail et mot de passe, mot de passe oublié et vérification de l’adresse." },
@@ -268,13 +277,13 @@ async function main() {
       data: { projectId: topFormation.id, title: e.title, estHours: e.tasks.length * 8, leadId: marion.id, order: order++ },
     });
     namedEpics[`Top Formation::${e.title}`] = epic;
-    let tOrder = 0;
     for (const t of e.tasks) {
-      await prisma.task.create({
+      await prisma.ticket.create({
         data: {
-          epicId: epic.id, title: t.title, description: t.desc, status: statusOf(t.statusFr),
+          ref: demoRef(topFormation), projectId: topFormation.id, epicId: epic.id, type: "DEV", steps: "",
+          title: t.title, description: t.desc, status: statusOf(t.statusFr),
           estHours: 8, spentHours: statusOf(t.statusFr) === "TERMINE" ? 8 : statusOf(t.statusFr) === "A_FAIRE" ? 0 : 5,
-          dueAt: t.changed === "—" ? null : d(t.changed), order: tOrder++,
+          dueAt: t.changed === "—" ? null : d(t.changed),
         },
       });
     }
