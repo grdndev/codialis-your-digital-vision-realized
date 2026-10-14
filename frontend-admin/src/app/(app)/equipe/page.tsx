@@ -7,6 +7,7 @@ import {
   updateAccountAction,
   deleteAccountAction,
   resendVerifyAction,
+  revokeApiTokensAction,
 } from "./actions";
 import { ROLE_OPTIONS, type AccountsScreen } from "./types";
 import { fmtHours } from "@/lib/format";
@@ -20,6 +21,7 @@ export default async function EquipePage({
     saved?: string;
     deleted?: string;
     resent?: string;
+    revoked?: string;
     error?: string;
   }>;
 }) {
@@ -51,6 +53,7 @@ export default async function EquipePage({
       {sp.saved ? <Banner tone="mint">Compte enregistré.</Banner> : null}
       {sp.deleted ? <Banner tone="amber">Compte supprimé.</Banner> : null}
       {sp.resent ? <Banner tone="mint">Lien d’invitation renvoyé.</Banner> : null}
+      {sp.revoked ? <Banner tone="amber">Jetons d’API révoqués.</Banner> : null}
 
       <div className="rounded-xl border border-border bg-panel">
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
@@ -122,6 +125,11 @@ export default async function EquipePage({
                           en attente
                         </span>
                       )}
+                      {u._count.apiTokens > 0 ? (
+                        <span className="ml-1.5 rounded-full bg-blue/10 px-2 py-0.5 text-[11px] font-medium text-blue">
+                          {u._count.apiTokens} jeton{u._count.apiTokens > 1 ? "s" : ""} d’API
+                        </span>
+                      ) : null}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -138,6 +146,16 @@ export default async function EquipePage({
                               className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:text-text"
                             >
                               Renvoyer le lien
+                            </button>
+                          </form>
+                        ) : null}
+                        {u._count.apiTokens > 0 ? (
+                          <form action={revokeApiTokensAction.bind(null, u.id)}>
+                            <button
+                              type="submit"
+                              className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted hover:border-red/50 hover:text-red"
+                            >
+                              Révoquer les jetons
                             </button>
                           </form>
                         ) : null}

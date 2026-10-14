@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { adminRoute, badRequest, notFound } from "@/lib/admin-api";
+import { adminRoute, badRequest, notFound, parseQuery } from "@/lib/admin-api";
+import { TICKET_ID_DESCRIPTION, ticketIdOf } from "@/lib/ticket-ref";
 import { prisma } from "@/lib/prisma";
 import {
   TAILLE_MAX_OCTETS,
@@ -29,9 +30,13 @@ export const dynamic = "force-dynamic";
 // (CC-365). Il reste dans l'adresse pour qu'une autre cible puisse s'ajouter
 // sans changer le contrat.
 const cibleSchema = z.object({
-  kind: z.enum(["ticket"]),
-  id: z.string().min(1),
-  filename: z.string().min(1).max(255),
+  kind: z.enum(["ticket"]).default("ticket"),
+  id: z.string().min(1).describe(TICKET_ID_DESCRIPTION),
+  filename: z
+    .string()
+    .min(1)
+    .max(255)
+    .describe("Nom affiché ; son extension décide du type accepté (images, pdf, txt, csv, docx, xlsx, pptx, odt, ods, zip)"),
 });
 
 // Un octet reste un octet : on affiche des kilo-octets, pas des kibi-octets,
@@ -45,14 +50,8 @@ function libelleTaille(octets: number): string {
 export const POST = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
   if (!filesConfigured()) badRequest("Le stockage de fichiers n'est pas configuré");
 
-  const params = request.nextUrl.searchParams;
-  const parsed = cibleSchema.safeParse({
-    kind: params.get("kind"),
-    id: params.get("id"),
-    filename: params.get("filename"),
-  });
-  if (!parsed.success) badRequest("Destination ou nom de fichier manquant");
-  const { id, filename } = parsed.data;
+  const cible = parseQuery(cibleSchema, request, "Destination ou nom de fichier manquant");
+  const { filename } = cible;
 
   const extension = extensionDe(filename);
   if (!extensionAcceptee(extension)) {
@@ -63,6 +62,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
 
   // La cible est vérifiée AVANT d'envoyer le fichier : sinon un mauvais
   // identifiant laisserait un fichier stocké que plus rien ne référence.
+  const id = await ticketIdOf(cible.id);
   const cibleExiste = await prisma.ticket.findUnique({ where: { id }, select: { id: true } });
   if (!cibleExiste) notFound("Ticket introuvable");
 
@@ -88,16 +88,17 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
     await supprimerFichier(fileId);
     throw err;
   }
+}, {
+  summary:
+    "Joint un fichier à un ticket. Le corps est le FICHIER BRUT (`Content-Type: application/octet-stream`, 25 Mo au plus), la destination et le nom passent dans l'adresse. Renvoie l'identifiant de la pièce et son `url` publique.",
+  query: cibleSchema,
+  rawBody: true,
 });
 
 const suppressionSchema = z.object({ attachmentId: z.string().min(1) });
 
 export const DELETE = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
-  const parsed = suppressionSchema.safeParse({
-    attachmentId: request.nextUrl.searchParams.get("attachmentId"),
-  });
-  if (!parsed.success) badRequest("Pièce jointe non désignée");
-  const { attachmentId } = parsed.data;
+  const { attachmentId } = parseQuery(suppressionSchema, request, "Pièce jointe non désignée");
 
   const piece = await prisma.ticketAttachment.findUnique({ where: { id: attachmentId } });
   if (!piece) notFound("Pièce jointe introuvable");
@@ -108,4 +109,7 @@ export const DELETE = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => 
   if (piece.fileId) await supprimerFichier(piece.fileId);
 
   return;
+}, {
+  summary: "Retire une pièce jointe d'un ticket et efface le fichier stocké.",
+  query: suppressionSchema,
 });

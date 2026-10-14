@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody, notFound } from "@/lib/admin-api";
+import { adminRoute, badRequest, notFound, parseBody, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { getMaxAgeDays, refreshAll } from "@/lib/feeds";
 
@@ -12,14 +12,20 @@ export const dynamic = "force-dynamic";
 const STATUSES = ["NEW", "IGNORED", "LATER", "PUBLISHED"] as const;
 const LIST_LIMIT = 200;
 
+const querySchema = z.object({
+  status: z.string().optional().describe("NEW (défaut), IGNORED, LATER ou PUBLISHED"),
+  category: z.string().optional().describe("Catégorie, ou `all`"),
+  q: z.string().optional().describe("Recherche dans le titre et le résumé"),
+});
+
 export const GET = adminRoute(["PM", "DIR"], async (_ctx, request) => {
-  const params = request.nextUrl.searchParams;
-  const statusParam = params.get("status");
+  const query = parseQuery(querySchema, request);
+  const statusParam = query.status;
   const status = (STATUSES as readonly string[]).includes(statusParam ?? "")
     ? (statusParam as (typeof STATUSES)[number])
     : "NEW";
-  const category = params.get("category");
-  const search = (params.get("q") ?? "").trim();
+  const category = query.category;
+  const search = (query.q ?? "").trim();
 
   // Fenêtre de fraîcheur : on n'affiche que des articles récents. Un article
   // sans date est gardé — il vient d'arriver dans le flux.
@@ -50,26 +56,30 @@ export const GET = adminRoute(["PM", "DIR"], async (_ctx, request) => {
     },
     maxAgeDays: getMaxAgeDays(),
   };
+}, {
+  summary:
+    "Veille : articles récents des flux RSS à trier (200 au plus), compteurs par catégorie, fenêtre de fraîcheur en jours.",
+  query: querySchema,
 });
 
 const bodySchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("refresh") }),
+  z.object({ action: z.literal("refresh") }).describe(
+    "Relit tous les flux RSS ; renvoie le résumé par flux (répondu, en panne).",
+  ),
   z.object({
     action: z.literal("set-status"),
     itemId: z.string().min(1),
     status: z.enum(STATUSES),
-  }),
+  }).describe("Range un article de veille."),
   z.object({
     action: z.literal("set-category"),
     itemId: z.string().min(1),
     category: z.string().min(1).max(64),
-  }),
+  }).describe("Change la catégorie d'un article de veille."),
 ]);
 
 export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await parseBody(bodySchema, request);
 
   if (body.action === "refresh") {
     try {
@@ -94,4 +104,4 @@ export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
   }
 
   await prisma.feedItem.update({ where: { id: body.itemId }, data: { category: body.category } });
-});
+}, { summary: "Tri de la veille (PM, DIR).", body: bodySchema });

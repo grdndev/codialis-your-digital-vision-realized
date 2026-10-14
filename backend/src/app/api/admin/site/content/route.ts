@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
-import { adminRoute, badRequest, jsonBody, notFound } from "@/lib/admin-api";
+import { adminRoute, badRequest, notFound, parseBody, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import {
   isContentType,
@@ -37,9 +37,11 @@ const SCHEMA_BY_TYPE = {
   testimonials: testimonialSchema,
 } as const;
 
+const querySchema = z.object({ type: z.string().describe("blog, portfolio ou testimonials") });
+
 export const GET = adminRoute(["PM", "DIR"], async (_ctx, request) => {
-  const type = request.nextUrl.searchParams.get("type");
-  if (!type || !isContentType(type)) badRequest("Type de contenu inconnu");
+  const { type } = parseQuery(querySchema, request, "Type de contenu inconnu");
+  if (!isContentType(type)) badRequest("Type de contenu inconnu");
 
   const rows = await prisma.content.findMany({
     where: { type },
@@ -50,6 +52,9 @@ export const GET = adminRoute(["PM", "DIR"], async (_ctx, request) => {
   // Même forme aplatie que la route publique : le formulaire d'édition se
   // pré-remplit directement depuis la liste, sans conversion.
   return { items: rows.map(shapeContent) };
+}, {
+  summary: "Contenus éditoriaux du site vitrine d'un type donné, du plus récent au plus ancien, avec leurs vues.",
+  query: querySchema,
 });
 
 // Un seul élément par type peut être « à la une » : mettre un projet en avant
@@ -100,29 +105,32 @@ async function withDerivedFields(
   };
 }
 
+const contentType = z.string().min(1).describe("blog, portfolio ou testimonials");
+const contentData = z.record(z.string(), z.unknown()).describe(
+  "Champs selon `type` — blog : cat (dev, ia, saas, funding, design, cyber, startups, data, mobile, opensource), title, excerpt, content, date, read, image (URL ou data URL), featured, source ; portfolio : sector[] (1 à 6), title, desc, image, tech[], results[{ v, l }] (4 au plus), featured ; testimonials : quote, author, company (initiales et couleur sont calculées). Schémas exacts : backend/src/lib/site-schemas.ts",
+);
+
 const bodySchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("create"),
-    type: z.string().min(1),
-    data: z.record(z.string(), z.unknown()),
-  }),
+    type: contentType,
+    data: contentData,
+  }).describe("Publie un contenu. Renvoie son `id`."),
   z.object({
     action: z.literal("update"),
-    type: z.string().min(1),
+    type: contentType,
     id: z.string().min(1),
-    data: z.record(z.string(), z.unknown()),
-  }),
+    data: contentData,
+  }).describe("Remplace le contenu d'un élément."),
   z.object({
     action: z.literal("delete"),
-    type: z.string().min(1),
+    type: contentType,
     id: z.string().min(1),
-  }),
+  }).describe("Supprime un contenu."),
 ]);
 
 export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await parseBody(bodySchema, request);
 
   if (!isContentType(body.type)) badRequest("Type de contenu inconnu");
   const type = body.type;
@@ -193,4 +201,8 @@ export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
   });
   if (data.featured === true) await unfeatureOthers(type, existing.id);
   return { ok: true, id: existing.id };
+}, {
+  summary:
+    "Crée, modifie ou supprime un contenu du site vitrine (PM, DIR). Un seul contenu « à la une » par type. Publier un article de blog prévient les abonnés à la newsletter.",
+  body: bodySchema,
 });

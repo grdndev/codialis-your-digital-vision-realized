@@ -1,4 +1,4 @@
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, parseBody } from "@/lib/admin-api";
 import { applyGoalAction, goalBodySchema, goalsFor } from "@/lib/goals";
 import { prisma } from "@/lib/prisma";
 
@@ -24,10 +24,15 @@ export const GET = adminRoute(["DIR", "PM", "DEV"], async ({ user }) => {
       : [],
   ]);
   return { goals, projects };
+}, {
+  summary:
+    "Écran Objectifs : tous les objectifs, en cours et clos (constat atteint / non atteint, raison). `projects` (rattachables) n'est rempli que pour DIR.",
 });
 
 export const POST = adminRoute(["DIR", "PM", "DEV"], async ({ user }, request) => {
-  const parsed = goalBodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  await applyGoalAction(user, parsed.data);
+  await applyGoalAction(user, await parseBody(goalBodySchema, request));
+}, {
+  summary:
+    "Seule route qui écrit un objectif. Lecture pour toute l'équipe, écriture réservée à DIR. Clore « non atteint » exige une raison (`note`).",
+  body: goalBodySchema,
 });

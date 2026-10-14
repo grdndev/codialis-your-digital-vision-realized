@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, parseBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { clientProjectId } from "@/lib/client-scope";
 
@@ -32,18 +32,17 @@ export const GET = adminRoute(["CLIENT"], async ({ user }) => {
         }
       : null,
   };
-});
+}, { summary: "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Fil d'échanges entre le client et l'agence." });
 
 const sendSchema = z.object({ action: z.literal("send"), body: z.string().min(1) });
 
 export const POST = adminRoute(["CLIENT"], async ({ user }, request) => {
-  const parsed = sendSchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
+  const { body } = await parseBody(sendSchema, request);
 
   const projectId = await clientProjectId(user.id);
   if (!projectId) badRequest("Aucun projet affecté à ce compte");
 
   await prisma.clientThreadMessage.create({
-    data: { projectId, fromClient: true, authorLabel: user.name, body: parsed.data.body },
+    data: { projectId, fromClient: true, authorLabel: user.name, body },
   });
-});
+}, { summary: "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Envoie un message à l'agence.", body: sendSchema });

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, parseBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { clientProjectId } from "@/lib/client-scope";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
@@ -21,7 +21,7 @@ export const GET = adminRoute(["CLIENT"], async ({ user }) => {
       orderBy: { createdAt: "desc" },
     }),
   };
-});
+}, { summary: "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Signalements remontés par le client sur son projet." });
 
 const createSchema = z.object({
   action: z.literal("create-ticket"),
@@ -32,9 +32,7 @@ const createSchema = z.object({
 });
 
 export const POST = adminRoute(["CLIENT"], async ({ user }, request) => {
-  const parsed = createSchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await parseBody(createSchema, request);
 
   const projectId = await clientProjectId(user.id);
   if (!projectId) badRequest("Aucun projet affecté à ce compte");
@@ -76,4 +74,4 @@ export const POST = adminRoute(["CLIENT"], async ({ user }, request) => {
       },
     }),
   );
-});
+}, { summary: "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Signale un bug ou demande un ajout ; part au triage de l'agence.", body: createSchema });

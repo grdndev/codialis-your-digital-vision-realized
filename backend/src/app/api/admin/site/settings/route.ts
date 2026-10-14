@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, parseBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { SETTING_KEYS, settingsSchemas } from "@/lib/site-schemas";
 
@@ -28,18 +28,23 @@ export const GET = adminRoute(["PM", "DIR"], async () => {
       ]),
     ),
   };
+}, {
+  summary:
+    "Réglages de page du site vitrine, par clé (blog_page, portfolio_page, contact_socials, home_logos) : `data` et date de mise à jour ; `{}` pour un réglage jamais enregistré.",
 });
 
 const bodySchema = z.object({
   action: z.literal("update"),
   key: z.enum(SETTING_KEYS),
-  data: z.record(z.string(), z.unknown()),
+  data: z
+    .record(z.string(), z.unknown())
+    .describe(
+      "Selon `key` — blog_page : { hero: { kicker, accent, sub, lead } } ; portfolio_page : { hero: { title, titleAccent, subtitle, stats[{ v, suffix, l }] } } ; contact_socials : { items[{ icon, href, name }] } ; home_logos : { items[{ image, name, href }] }. Schémas exacts : backend/src/lib/site-schemas.ts",
+    ),
 });
 
 export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const { key, data } = parsed.data;
+  const { key, data } = await parseBody(bodySchema, request);
 
   const validated = settingsSchemas[key].safeParse(data);
   if (!validated.success) {
@@ -66,4 +71,4 @@ export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
   });
 
   return { ok: true, data: merged };
-});
+}, { summary: "Enregistre un réglage de page du site vitrine (PM, DIR).", body: bodySchema });

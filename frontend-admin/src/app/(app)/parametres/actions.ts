@@ -119,3 +119,34 @@ export async function resetThemeColorsAction(): Promise<void> {
   await apiPost(ME, { action: "set-theme-colors", colors: {} });
   revalidatePath("/", "layout");
 }
+
+// Jetons d'API (accès par un script, Claude Code, un client MCP). Le jeton en
+// clair ne revient qu'une fois, dans la réponse de création : il vit dans
+// l'état du formulaire le temps d'être copié, jamais en cookie ni en base.
+export type ApiTokenState = { token?: string; name?: string; error?: string };
+
+export async function createApiTokenAction(
+  _prev: ApiTokenState,
+  formData: FormData,
+): Promise<ApiTokenState> {
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return { error: "Donnez un nom au jeton, pour le reconnaître plus tard." };
+  try {
+    const { token } = await apiPost<{ token: string }>(ME, {
+      action: "create-api-token",
+      name,
+      readOnly: formData.get("access") === "read",
+      duration: String(formData.get("duration") ?? "90"),
+    });
+    revalidatePath("/parametres");
+    return { token, name };
+  } catch (err) {
+    if (err instanceof ApiError) return { error: err.message };
+    throw err;
+  }
+}
+
+export async function revokeApiTokenAction(tokenId: string): Promise<void> {
+  await apiPost(ME, { action: "revoke-api-token", tokenId });
+  revalidatePath("/parametres");
+}

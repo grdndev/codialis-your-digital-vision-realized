@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, parseBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { USER_IDENTITY } from "@/lib/user-identity";
 import { refreshAfterTimeChange, liveSessionHours } from "@/lib/work-sessions";
 import { recomputeProjectProgress } from "@/lib/project-progress";
+import { TICKET_ID_DESCRIPTION, withTicketIds } from "@/lib/ticket-ref";
 import type { Prisma, Role, TaskStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +67,9 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async () => {
     openTickets,
     sessions: sessions.map((s) => ({ ...s, hours: live.get(s.id) ?? s.hours })),
   };
+}, {
+  summary:
+    "Écran Temps : saisies manuelles de toute l'équipe, projets, tickets non clos, sessions de temps mesuré des 14 derniers jours et sessions en cours (part calculée à l'instant).",
 });
 
 const bodySchema = z.discriminatedUnion("action", [
@@ -76,8 +80,10 @@ const bodySchema = z.discriminatedUnion("action", [
     date: z.string().datetime(),
     hours: z.number().positive(),
     billable: z.boolean(),
-  }),
-  z.object({ action: z.literal("delete-entry"), entryId: z.string().min(1) }),
+  }).describe("Corrige une saisie manuelle (la sienne ; DIR celles de l'équipe)."),
+  z.object({ action: z.literal("delete-entry"), entryId: z.string().min(1) }).describe(
+    "Supprime une saisie manuelle.",
+  ),
   // Correction après coup d'une session de temps mesuré, depuis la fiche d'un
   // ticket. Les dates recalculent la durée ; une durée saisie la
   // remplace pour cette seule session. Une session encore ouverte s'arrête à
@@ -87,27 +93,29 @@ const bodySchema = z.discriminatedUnion("action", [
     sessionId: z.string().min(1),
     startedAt: z.string().datetime(),
     endedAt: z.string().datetime(),
-  }),
+  }).describe("Corrige les bornes d'une session close ; sa durée est recalculée."),
   z.object({
     action: z.literal("correct-session-hours"),
     sessionId: z.string().min(1),
     hours: z.number().min(0).max(1000),
-  }),
+  }).describe("Remplace la durée d'une session close (heures décimales), sans toucher aux sessions parallèles."),
   z.object({
     action: z.literal("stop-session"),
     sessionId: z.string().min(1),
     endedAt: z.string().datetime(),
     status: z.enum(["A_FAIRE", "EN_REVUE", "TERMINE"]),
-  }),
+  }).describe(
+    "Arrête une session ouverte à une heure passée ; le ticket quitte EN_COURS pour `status` (TERMINE : PM et DIR).",
+  ),
   z.object({
     action: z.literal("add-entry"),
     projectId: z.string().nullable(),
-    ticketId: z.string().nullable(),
+    ticketId: z.string().nullable().describe(TICKET_ID_DESCRIPTION + " ; son projet l'emporte sur `projectId`"),
     label: z.string().min(1),
     date: z.string().datetime(),
-    hours: z.number().positive(),
+    hours: z.number().positive().describe("Heures décimales"),
     billable: z.boolean(),
-  }),
+  }).describe("Saisie manuelle de temps, à son nom."),
 ]);
 
 // Les heures passées d'un ticket ou d'un projet sont désormais RECALCULÉES
@@ -220,9 +228,7 @@ async function correctSession(user: { id: string; role: Role }, body: SessionCor
 }
 
 export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await withTicketIds(await parseBody(bodySchema, request));
 
   if (
     body.action === "correct-session-dates" ||
@@ -312,4 +318,8 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
     select: { projectId: true },
   });
   return { ok: true, projectId: resolved?.projectId ?? null };
+}, {
+  summary:
+    "Temps passé : saisies manuelles (pour ce qui ne relève d'aucun ticket) et corrections des sessions mesurées. Une session se corrige par la personne dont c'est le temps, ou par PM. Le temps mesuré, lui, naît des changements de statut des tickets (EN_COURS).",
+  body: bodySchema,
 });

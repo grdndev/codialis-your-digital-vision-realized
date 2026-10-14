@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, parseBody, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { USER_IDENTITY } from "@/lib/user-identity";
 import { projectScope } from "@/lib/project-access";
@@ -45,8 +45,15 @@ function byPriorityThenDue<T extends { priority: InternalTaskPriority; dueAt: Da
   );
 }
 
+const querySchema = z.object({
+  monthStart: z
+    .string()
+    .optional()
+    .describe("Début du mois affiché (instant ISO) ; par défaut le 1er du mois en cours, minuit UTC"),
+});
+
 export const GET = adminRoute(["DIR", "PM", "DEV"], async ({ user }, request) => {
-  const requestedStart = new Date(request.nextUrl.searchParams.get("monthStart") ?? "");
+  const requestedStart = new Date(parseQuery(querySchema, request).monthStart ?? "");
   const now = new Date();
   const monthStart = Number.isNaN(requestedStart.getTime())
     ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
@@ -113,6 +120,10 @@ export const GET = adminRoute(["DIR", "PM", "DEV"], async ({ user }, request) =>
     goals,
     goalProjects,
   };
+}, {
+  summary:
+    "Dashboard : projets en développement (cloisonnés pour un DEV), tickets ouverts, tâches internes (les miennes, celles que j'ai confiées, archivées), équipe, objectifs du mois.",
+  query: querySchema,
 });
 
 const NEXT_STATUS: Record<TaskStatus, TaskStatus | null> = {
@@ -132,34 +143,32 @@ const bodySchema = z.discriminatedUnion("action", [
     description: z.string(),
     dueAt: z.string().datetime().nullable(),
     priority: priority.default("NORMALE"),
-  }),
+  }).describe("Pose une tâche interne, à soi-même ou à un collègue."),
   z.object({
     action: z.literal("advance-internal-task"),
     taskId: z.string().min(1),
-  }),
+  }).describe("Fait avancer une tâche interne d'un cran : A_FAIRE → EN_COURS → EN_REVUE → TERMINE."),
   z.object({
     action: z.literal("set-internal-task-priority"),
     taskId: z.string().min(1),
     priority,
-  }),
+  }).describe("Change la priorité : réservé à qui a confié la tâche, ou DIR."),
   // `archived: false` désarchive : la même action range et ressort.
   z.object({
     action: z.literal("archive-internal-task"),
     taskId: z.string().min(1),
     archived: z.boolean(),
-  }),
+  }).describe("Archive (`archived: true`) ou désarchive une tâche interne."),
   z.object({
     action: z.literal("delete-internal-task"),
     taskId: z.string().min(1),
-  }),
+  }).describe("Supprime une tâche interne."),
 ]);
 
 // Poser une tâche interne et faire avancer la sienne appartiennent à toute
 // l'équipe.
 export const POST = adminRoute(["DIR", "PM", "DEV"], async ({ user }, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await parseBody(bodySchema, request);
 
   if (body.action === "assign-internal-task") {
     await prisma.internalTask.create({
@@ -209,4 +218,8 @@ export const POST = adminRoute(["DIR", "PM", "DEV"], async ({ user }, request) =
   const nextStatus = NEXT_STATUS[task.status];
   if (!nextStatus) return;
   await prisma.internalTask.update({ where: { id: body.taskId }, data: { status: nextStatus } });
+}, {
+  summary:
+    "Tâches internes (rappels, relances), ouvertes à toute l'équipe. On agit sur une tâche qu'on porte ou qu'on a confiée ; DIR sur toutes.",
+  body: bodySchema,
 });

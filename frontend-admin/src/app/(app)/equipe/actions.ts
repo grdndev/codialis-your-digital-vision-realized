@@ -80,6 +80,19 @@ export async function deleteAccountAction(userId: string) {
   redirect("/equipe?deleted=1");
 }
 
+// Coupe l'accès par l'API d'une personne (départ, jeton égaré) sans toucher à
+// son compte ni à sa session dans le back-office.
+export async function revokeApiTokensAction(userId: string) {
+  try {
+    await apiPost(ACCOUNTS, { action: "revoke-api-tokens", userId });
+  } catch (err) {
+    if (err instanceof ApiError) fail(err.message);
+    throw err;
+  }
+  revalidatePath("/equipe");
+  redirect("/equipe?revoked=1");
+}
+
 export async function resendVerifyAction(userId: string) {
   try {
     await apiPost(ACCOUNTS, { action: "resend-verify", userId });

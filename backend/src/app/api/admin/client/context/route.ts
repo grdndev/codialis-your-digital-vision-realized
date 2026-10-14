@@ -30,4 +30,4 @@ export const GET = adminRoute(["CLIENT"], async ({ user }) => {
       client: { id: project.client.id, name: project.client.name },
     },
   };
-});
+}, { summary: "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Le projet du client : nom, échéance, avancement." });

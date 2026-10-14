@@ -120,6 +120,7 @@ model User {
   internalTasksAssigned InternalTask[]       @relation("InternalTaskAssignee")
   internalTasksGiven    InternalTask[]       @relation("InternalTaskAssigner")
   tokens                UserToken[]
+  apiTokens             ApiToken[]
   hoursEntries          HoursEntry[]
   absences              Absence[]
   presenceRules         PresenceRecurrence[]
@@ -1219,5 +1220,33 @@ model UserToken {
   createdAt DateTime      @default(now())
 
   @@index([tokenHash])
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Jetons d'API personnels
+// ---------------------------------------------------------------------------
+
+// Accès à l'API sans passer par l'écran : un script, Claude Code, un client
+// MCP. Le jeton agit AU NOM de son propriétaire, avec exactement ses droits
+// (rôle relu en base à chaque appel) ; il ne donne rien de plus que l'écran.
+// Seul le SHA-256 est stocké, comme pour UserToken : le jeton en clair n'est
+// montré qu'une fois, à la création. `prefix` (« cdl_» + 8 caractères) sert à
+// le reconnaître dans la liste sans le révéler. Révoquer = supprimer la ligne.
+// En CASCADE avec le compte : un jeton n'est pas un historique (DEC-032).
+model ApiToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String    @db.VarChar(100)
+  tokenHash  String    @unique @db.VarChar(64)
+  prefix     String    @db.VarChar(16)
+  // Lecture seule : seules les requêtes GET passent.
+  readOnly   Boolean   @default(false)
+  // NULL = sans expiration.
+  expiresAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
   @@index([userId])
 }

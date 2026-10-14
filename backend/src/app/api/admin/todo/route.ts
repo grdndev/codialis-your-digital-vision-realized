@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, parseBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -20,10 +20,12 @@ export const GET = adminRoute(["DIR"], async () => ({
     include: { client: true },
     orderBy: { name: "asc" },
   }),
-}));
+}), { summary: "À traiter (DIR) : actions de la direction, avec le projet lié, et les projets rattachables." });
 
 const bodySchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("toggle"), itemId: z.string().min(1) }),
+  z.object({ action: z.literal("toggle"), itemId: z.string().min(1) }).describe(
+    "Coche ou décoche une action.",
+  ),
   z.object({
     action: z.literal("update"),
     itemId: z.string().min(1),
@@ -34,8 +36,8 @@ const bodySchema = z.discriminatedUnion("action", [
     dueLabel: z.string().max(60),
     amountLabel: z.string().max(60),
     linkedProjectId: z.string().nullable(),
-  }),
-  z.object({ action: z.literal("delete"), itemId: z.string().min(1) }),
+  }).describe("Modifie une action."),
+  z.object({ action: z.literal("delete"), itemId: z.string().min(1) }).describe("Supprime une action."),
   z.object({
     action: z.literal("create"),
     category: z.enum(["URGENT", "RELANCE", "DECISION"]),
@@ -45,13 +47,11 @@ const bodySchema = z.discriminatedUnion("action", [
     dueLabel: z.string().max(60),
     amountLabel: z.string().max(60),
     linkedProjectId: z.string().nullable(),
-  }),
+  }).describe("Crée une action."),
 ]);
 
 export const POST = adminRoute(["DIR"], async (_ctx, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await parseBody(bodySchema, request);
 
   if (body.action === "create") {
     await prisma.actionItem.create({
@@ -104,4 +104,4 @@ export const POST = adminRoute(["DIR"], async (_ctx, request) => {
     where: { id: body.itemId },
     data: { done: !item.done },
   });
-});
+}, { summary: "Actions « À traiter » de la direction (DIR).", body: bodySchema });

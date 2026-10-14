@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody, notFound } from "@/lib/admin-api";
+import { adminRoute, notFound, parseBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -61,22 +61,24 @@ export const GET = adminRoute(["PM", "DIR"], async () => {
       };
     }),
   };
-});
+}, { summary: "Demandes de contact reçues par le site vitrine et abonnés à la newsletter." });
 
 const bodySchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("set-contact-status"),
     id: z.string().min(1),
     status: z.enum(CONTACT_STATUSES),
-  }),
-  z.object({ action: z.literal("delete-contact"), id: z.string().min(1) }),
-  z.object({ action: z.literal("delete-subscriber"), id: z.string().min(1) }),
+  }).describe("Statut d'une demande de contact : nouveau, en_cours, traite."),
+  z.object({ action: z.literal("delete-contact"), id: z.string().min(1) }).describe(
+    "Supprime une demande de contact.",
+  ),
+  z.object({ action: z.literal("delete-subscriber"), id: z.string().min(1) }).describe(
+    "Désinscrit un abonné de la newsletter.",
+  ),
 ]);
 
 export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await parseBody(bodySchema, request);
 
   switch (body.action) {
     case "set-contact-status": {
@@ -100,4 +102,4 @@ export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
       return;
     }
   }
-});
+}, { summary: "Traitement des demandes de contact et des abonnés (PM, DIR).", body: bodySchema });

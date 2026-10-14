@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, parseBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { visibleProjectIds } from "@/lib/project-access";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
@@ -43,6 +43,9 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }) => {
     }),
   ]);
   return { allProjects, clients };
+}, {
+  summary:
+    "Écran Projets : `allProjects` (avec client) et `clients`. Un DEV ne voit que les projets où un ticket lui est assigné.",
 });
 
 // Le sigle affiché dans les pastilles du back-office. Déduit du nom plutôt que
@@ -61,7 +64,7 @@ const bodySchema = z.discriminatedUnion("action", [
     contactName: z.string().nullable(),
     contactEmail: z.string().nullable(),
     contactPhone: z.string().nullable(),
-  }),
+  }).describe("Crée un client. Renvoie son `id`. Réservé à PM et DIR."),
   z.object({
     action: z.literal("create-project"),
     clientId: z.string().min(1),
@@ -69,9 +72,9 @@ const bodySchema = z.discriminatedUnion("action", [
     group: z.enum(["DEV", "FIN", "WAR", "MAI", "CLO"]),
     phaseLabel: z.string().max(200),
     hoursSold: z.number().min(0),
-    soldAmount: z.number().min(0).nullable(),
+    soldAmount: z.number().min(0).nullable().describe("Montant vendu en euros ; s'il est donné, les heures vendues en découlent"),
     deadlineAt: z.string().datetime().nullable(),
-  }),
+  }).describe("Crée un projet ; son sigle (préfixe des références de tickets) est déduit du nom. Réservé à PM et DIR."),
   z.object({
     action: z.literal("create-epic"),
     projectId: z.string().min(1),
@@ -79,7 +82,7 @@ const bodySchema = z.discriminatedUnion("action", [
     estHours: z.number().min(0),
     leadId: z.string().nullable(),
     dueAt: z.string().datetime().nullable(),
-  }),
+  }).describe("Crée un épic dans un projet."),
   z.object({
     action: z.literal("update-epic"),
     epicId: z.string().min(1),
@@ -88,27 +91,35 @@ const bodySchema = z.discriminatedUnion("action", [
     estHours: z.number().min(0),
     leadId: z.string().nullable(),
     dueAt: z.string().datetime().nullable(),
-  }),
-  z.object({ action: z.literal("delete-epic"), epicId: z.string().min(1) }),
+  }).describe("Modifie un épic."),
+  z.object({ action: z.literal("delete-epic"), epicId: z.string().min(1) }).describe(
+    "Supprime un épic ; ses tickets restent au projet, hors épic.",
+  ),
   // Import JSON — poser d'un coup les épics et les tickets d'un projet. Le contenu est validé par `importSchema` plus bas : ici on ne
   // reçoit que le texte brut, pour pouvoir répondre une erreur lisible plutôt
   // qu'un « requête invalide » qui ne dit pas où ça coince.
   z.object({
     action: z.literal("import-json"),
     projectId: z.string().min(1),
-    payload: z.string().min(1).max(500_000),
+    payload: z
+      .string()
+      .min(1)
+      .max(500_000)
+      .describe(
+        "Le JSON, en TEXTE : { epics?: [{ title, objective?, estHours?, tasks?: [{ title, description?, estHours? }] }], tickets?: [{ type: BUG|DEV, title, description?, steps?, severity?, devNature?, estHours?, epic?: titre d'un épic }] }",
+      ),
     // À qui confier d'emblée les tickets créés (CC-354), y compris ceux qui
     // arrivent sous `epics[].tasks`. `null` : personne, ils attendent d'être
     // distribués — c'était le seul comportement possible.
     ticketAssigneeId: z.string().min(1).nullable().default(null),
-  }),
+  }).describe("Pose d'un coup les épics et tickets d'un projet. Réservé à PM et DIR."),
   z.object({
     action: z.literal("update-client-contact"),
     clientId: z.string().min(1),
     contactName: z.string().nullable(),
     contactEmail: z.string().nullable(),
     contactPhone: z.string().nullable(),
-  }),
+  }).describe("Contact d'un client."),
   // Tout ce qui décrit un projet se corrige : une phase avance, une échéance
   // se décale, un chiffrage se révise. Restent dehors `initials` (préfixe des
   // références de tickets, deux préfixes sur un même projet n'auraient pas de
@@ -128,7 +139,7 @@ const bodySchema = z.discriminatedUnion("action", [
     deadlineAt: z.string().datetime().nullable(),
     deadlineNote: z.string().max(200).nullable(),
     openedAt: z.string().datetime(),
-  }),
+  }).describe("Modifie la fiche complète d'un projet. Réservé à PM et DIR."),
   // La phase se change seule, depuis l'en-tête du projet : c'est le geste le
   // plus courant de la chefferie, et il n'a pas à passer par le formulaire
   // complet, où il était replié dans l'onglet Fiche.
@@ -137,42 +148,42 @@ const bodySchema = z.discriminatedUnion("action", [
     projectId: z.string().min(1),
     group: z.enum(["DEV", "FIN", "WAR", "MAI", "CLO"]),
     phaseLabel: z.string().max(200),
-  }),
+  }).describe("Change la phase d'un projet (DEV, FIN, WAR garantie, MAI maintenance, CLO clos). Réservé à PM et DIR."),
   // Garantie et maintenance (CC-351) : le dernier jour couvert de chacune,
   // indépendamment de la phase. `null` retire la couverture.
   z.object({
     action: z.literal("update-project-coverage"),
     projectId: z.string().min(1),
-    warrantyEndsAt: z.string().datetime().nullable(),
-    maintenanceEndsAt: z.string().datetime().nullable(),
-  }),
+    warrantyEndsAt: z.string().datetime().nullable().describe("Dernier jour couvert (minuit UTC) ; null = aucune"),
+    maintenanceEndsAt: z.string().datetime().nullable().describe("Dernier jour couvert (minuit UTC) ; null = aucune"),
+  }).describe("Fin de garantie et fin de maintenance d'un projet. Réservé à PM et DIR."),
   z.object({
     action: z.literal("update-client"),
     clientId: z.string().min(1),
     name: z.string().min(1).max(200),
-  }),
+  }).describe("Renomme un client. Réservé à PM et DIR."),
   z.object({
     action: z.literal("update-project-description"),
     projectId: z.string().min(1),
     description: z.string(),
-  }),
+  }).describe("Description d'un projet."),
   z.object({
     action: z.literal("add-client-question"),
     projectId: z.string().min(1),
     question: z.string().min(1),
-  }),
-  z.object({ action: z.literal("mark-question-asked"), questionId: z.string().min(1) }),
+  }).describe("Ajoute une question à poser au client."),
+  z.object({ action: z.literal("mark-question-asked"), questionId: z.string().min(1) }).describe(
+    "Marque une question comme posée au client.",
+  ),
   z.object({
     action: z.literal("answer-client-question"),
     questionId: z.string().min(1),
     answer: z.string().min(1),
-  }),
+  }).describe("Enregistre la réponse du client."),
 ]);
 
 export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await parseBody(bodySchema, request);
 
   // Ouvrir un client ou un projet engage la structure du suivi : c'est à la
   // direction et à la chefferie de projet, pas au développement. Le contrôle est
@@ -510,6 +521,10 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       });
       return;
   }
+}, {
+  summary:
+    "Clients, projets, épics, import JSON et questions au client. Création et modification d'un client ou d'un projet, phase, couverture et import JSON sont réservés à PM et DIR ; le travail d'un projet (tickets) s'écrit par /api/admin/tickets.",
+  body: bodySchema,
 });
 
 // Forme attendue du JSON d'import. Tout est facultatif sauf les titres : un

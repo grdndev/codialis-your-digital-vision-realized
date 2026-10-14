@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, parseBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -23,18 +23,25 @@ export const GET = adminRoute(["PM", "DIR"], async () => {
   ]);
 
   return { autoRules, drafts, signals, sentCount, ignoredCount, paidInvoices };
+}, {
+  summary:
+    "Écran Automatisations & IA : règles (`autoRules`), relances en attente (`drafts`), signaux, compteurs de relances envoyées et ignorées, factures payées (délais de paiement).",
 });
 
 const bodySchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("toggle-rule-mode"), ruleId: z.string().min(1) }),
-  z.object({ action: z.literal("send-draft"), draftId: z.string().min(1) }),
-  z.object({ action: z.literal("ignore-draft"), draftId: z.string().min(1) }),
+  z.object({ action: z.literal("toggle-rule-mode"), ruleId: z.string().min(1) }).describe(
+    "Bascule une règle entre envoi automatique (AUTO) et validation préalable (TO_VALIDATE).",
+  ),
+  z.object({ action: z.literal("send-draft"), draftId: z.string().min(1) }).describe(
+    "Marque une relance en attente comme envoyée.",
+  ),
+  z.object({ action: z.literal("ignore-draft"), draftId: z.string().min(1) }).describe(
+    "Écarte une relance en attente.",
+  ),
 ]);
 
 export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await parseBody(bodySchema, request);
 
   switch (body.action) {
     case "toggle-rule-mode": {
@@ -61,4 +68,4 @@ export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
       });
       return;
   }
-});
+}, { summary: "Règles et relances automatiques (PM, DIR).", body: bodySchema });

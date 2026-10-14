@@ -16,6 +16,9 @@ export type AccountRow = {
   createdAt: Date;
   clientId: string | null;
   client: { id: string; name: string } | null;
+  // Jetons d'API en service (scripts, Claude Code) : la chefferie et la
+  // direction peuvent couper cet accès sans supprimer le compte.
+  _count: { apiTokens: number };
 };
 
 export type AccountsScreen = {

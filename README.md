@@ -61,6 +61,11 @@ l'URL de l'API n'est jamais exposée au navigateur. Le backend signe le JWT à l
 connexion et le renvoie dans le corps de la réponse ; `frontend-admin` le range
 en cookie httpOnly sur son propre domaine.
 
+**Scripts et agents → API.** Un développeur, un script ou Claude Code appelle
+la même API directement, avec un jeton d'API personnel créé dans Paramètres
+(`cdl_…`, mêmes droits que son propriétaire). Un serveur MCP (`/api/mcp`) la
+met à disposition des agents. Mode d'emploi : [`API.md`](API.md).
+
 **Les droits sont appliqués par l'API.** Les gardes de `frontend-admin` évitent
 d'afficher un écran interdit ; elles ne protègent pas les données. Chaque route
 revérifie le rôle, et deux cloisonnements vont plus loin : un développeur ne

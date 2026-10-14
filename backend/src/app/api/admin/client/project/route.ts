@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest } from "@/lib/admin-api";
+import { adminRoute, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { clientProjectId, portalEpics } from "@/lib/client-scope";
 
@@ -10,12 +10,10 @@ export const dynamic = "force-dynamic";
 // Comme sur l'écran Ressources, seul l'onglet demandé est chargé : les trois
 // volets (devis, fonctionnalités, cahier des charges) n'ont rien en commun.
 
-const querySchema = z.object({ tab: z.enum(["devis", "features", "cdc"]) });
+const querySchema = z.object({ tab: z.enum(["devis", "features", "cdc"]).default("devis") });
 
 export const GET = adminRoute(["CLIENT"], async ({ user }, request) => {
-  const parsed = querySchema.safeParse({ tab: request.nextUrl.searchParams.get("tab") ?? "devis" });
-  if (!parsed.success) badRequest("Onglet inconnu");
-  const { tab } = parsed.data;
+  const { tab } = parseQuery(querySchema, request, "Onglet inconnu");
 
   const projectId = await clientProjectId(user.id);
   if (!projectId) return { tab, quote: null, epics: [], docs: [] };
@@ -47,4 +45,4 @@ export const GET = adminRoute(["CLIENT"], async ({ user }, request) => {
     epics: [],
     docs: await prisma.cdcDocument.findMany({ where: { projectId }, orderBy: { order: "asc" } }),
   };
-});
+}, { summary: "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Mon projet, un onglet à la fois : devis, fonctionnalités ou cahier des charges.", query: querySchema });

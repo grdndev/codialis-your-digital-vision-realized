@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, notFound } from "@/lib/admin-api";
+import { adminRoute, notFound, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { generateAutomationDraft } from "@/lib/gemini";
 
@@ -17,12 +17,15 @@ export const dynamic = "force-dynamic";
 const querySchema = z.object({ draftId: z.string().min(1) });
 
 export const GET = adminRoute(["PM", "DIR"], async (_ctx, request) => {
-  const parsed = querySchema.safeParse({ draftId: request.nextUrl.searchParams.get("draftId") });
-  if (!parsed.success) badRequest("Requête invalide");
+  const { draftId } = parseQuery(querySchema, request);
 
-  const draft = await prisma.automationDraft.findUnique({ where: { id: parsed.data.draftId } });
+  const draft = await prisma.automationDraft.findUnique({ where: { id: draftId } });
   if (!draft) notFound("Relance introuvable");
 
   // Retombe sur le texte enregistré si la clé manque ou si l'appel échoue.
   return generateAutomationDraft(draft.kind, draft.toWho, draft.text);
+}, {
+  summary:
+    "Réécrit une relance en attente avec Gemini (quota gratuit limité à 20 appels par jour) ; retombe sur le texte enregistré si l'IA est indisponible.",
+  query: querySchema,
 });

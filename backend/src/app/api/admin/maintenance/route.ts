@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, parseBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -39,19 +39,20 @@ export const GET = adminRoute(["PM", "DIR"], async () => {
     contracts,
     maintained: [...maintained].sort((a, b) => maintenanceEnd(a) - maintenanceEnd(b)),
   };
+}, {
+  summary:
+    "Maintenance & garantie : projets sous garantie (`warranty`, échéance la plus proche d'abord), contrats de maintenance, projets maintenus sans contrat.",
 });
 
 const startSchema = z.object({
   action: z.literal("start-contract"),
   projectId: z.string().min(1),
-  monthlyPrice: z.number().positive(),
-  includedHours: z.number().min(0),
+  monthlyPrice: z.number().positive().describe("Prix mensuel en euros"),
+  includedHours: z.number().min(0).describe("Heures comprises par mois"),
 });
 
 export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
-  const parsed = startSchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const { projectId, monthlyPrice, includedHours } = parsed.data;
+  const { projectId, monthlyPrice, includedHours } = await parseBody(startSchema, request);
 
   // Démarrer un contrat fait sortir le projet de la garantie : les deux
   // écritures vont ensemble ou pas du tout, sinon le projet se retrouverait
@@ -71,4 +72,7 @@ export const POST = adminRoute(["PM", "DIR"], async (_ctx, request) => {
       },
     }),
   ]);
+}, {
+  summary: "Démarre un contrat de maintenance : le projet passe en phase MAI.",
+  body: startSchema,
 });

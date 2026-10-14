@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, notFound } from "@/lib/admin-api";
+import { adminRoute, notFound, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { clean, enrich, htmlToText, toBlogCategory } from "@/lib/feeds";
 
@@ -22,10 +22,9 @@ const DATE_FORMATTER = new Intl.DateTimeFormat("fr-FR", {
 const querySchema = z.object({ itemId: z.string().min(1) });
 
 export const GET = adminRoute(["PM", "DIR"], async (_ctx, request) => {
-  const parsed = querySchema.safeParse({ itemId: request.nextUrl.searchParams.get("itemId") });
-  if (!parsed.success) badRequest("Requête invalide");
+  const { itemId } = parseQuery(querySchema, request);
 
-  const item = await prisma.feedItem.findUnique({ where: { id: parsed.data.itemId } });
+  const item = await prisma.feedItem.findUnique({ where: { id: itemId } });
   if (!item) notFound("Article introuvable");
 
   const { image, content } = await enrich(item);
@@ -55,4 +54,8 @@ export const GET = adminRoute(["PM", "DIR"], async (_ctx, request) => {
       featured: false,
     },
   };
+}, {
+  summary:
+    "Brouillon d'article de blog tiré d'un article de veille (image et corps cherchés sur la page source si besoin), dans la forme du formulaire du blog.",
+  query: querySchema,
 });

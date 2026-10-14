@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest } from "@/lib/admin-api";
+import { adminRoute, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { USER_IDENTITY } from "@/lib/user-identity";
 import { devCanSeeProject } from "@/lib/project-access";
@@ -20,16 +20,15 @@ export const dynamic = "force-dynamic";
 // pas seulement sur la liste : sans lui, l'adresse d'un projet masqué suffirait
 // à le lire en entier.
 
-const querySchema = z.object({ id: z.string().min(1), fiche: z.boolean() });
+const querySchema = z.object({
+  id: z.string().min(1).describe("Identifiant du projet"),
+  fiche: z.string().optional().describe("`1` = charger aussi l'onglet Fiche (accès techniques, questions au client)"),
+});
 
 export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
-  const params = request.nextUrl.searchParams;
-  const parsed = querySchema.safeParse({
-    id: params.get("id"),
-    fiche: params.get("fiche") === "1",
-  });
-  if (!parsed.success) badRequest("Requête invalide");
-  const { id, fiche } = parsed.data;
+  const query = parseQuery(querySchema, request);
+  const id = query.id;
+  const fiche = query.fiche === "1";
 
   const project = await prisma.project.findUnique({
     where: { id },
@@ -70,4 +69,8 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
     tickets,
     clients,
   };
+}, {
+  summary:
+    "Fiche projet : `project` (client, épics), tous ses `tickets`, équipe assignable, clients. `access` vaut `not-found`, `forbidden` (DEV sans ticket assigné sur ce projet) ou `ok`. Avec `fiche=1` : accès techniques (`apis`) et questions au client.",
+  query: querySchema,
 });

@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody, notFound } from "@/lib/admin-api";
+import { adminRoute, badRequest, notFound, parseBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { createToken } from "@/lib/tokens";
 import { sendVerifyEmail } from "@/lib/mail";
@@ -44,6 +44,9 @@ export const GET = adminRoute(["DIR", "PM"], async () => {
       createdAt: true,
       clientId: true,
       client: { select: { id: true, name: true } },
+      // Jetons d'API en service : la chefferie et la direction peuvent couper
+      // l'accès par l'API d'une personne sans supprimer son compte.
+      _count: { select: { apiTokens: true } },
     },
   });
 
@@ -64,6 +67,9 @@ export const GET = adminRoute(["DIR", "PM"], async () => {
   );
 
   return { users, clients, balances };
+}, {
+  summary:
+    "Écran Comptes : tous les comptes (avec nombre de jetons d'API dans `_count.apiTokens`), les clients auxquels rattacher un compte client, et les soldes d'heures et de congés de l'équipe interne.",
 });
 
 const bodySchema = z.discriminatedUnion("action", [
@@ -73,8 +79,10 @@ const bodySchema = z.discriminatedUnion("action", [
     email: z.string().min(1).max(320),
     role: z.enum(ROLES),
     jobTitle: z.string().nullable(),
-    clientId: z.string().nullable(),
-  }),
+    clientId: z.string().nullable().describe("Obligatoire pour un compte CLIENT"),
+  }).describe(
+    "Crée un compte non confirmé et envoie le lien d'invitation par e-mail ; sans e-mail parti, le compte n'est pas créé.",
+  ),
   z.object({
     action: z.literal("update"),
     userId: z.string().min(1),
@@ -82,11 +90,18 @@ const bodySchema = z.discriminatedUnion("action", [
     email: z.string().min(1).max(320),
     role: z.enum(ROLES),
     jobTitle: z.string().nullable(),
-    photo: z.string().nullable(),
+    photo: z.string().nullable().describe("Data URL base64"),
     clientId: z.string().nullable(),
-  }),
-  z.object({ action: z.literal("delete"), userId: z.string().min(1) }),
-  z.object({ action: z.literal("resend-verify"), userId: z.string().min(1) }),
+  }).describe("Modifie un compte, rôle compris. La dernière direction ne peut pas être rétrogradée."),
+  z.object({ action: z.literal("delete"), userId: z.string().min(1) }).describe(
+    "Supprime un compte : ce qu'il a écrit lui survit sans auteur, ses tickets se désassignent.",
+  ),
+  z.object({ action: z.literal("resend-verify"), userId: z.string().min(1) }).describe(
+    "Renvoie le lien d'invitation, tant que la personne n'a pas choisi son mot de passe.",
+  ),
+  z.object({ action: z.literal("revoke-api-tokens"), userId: z.string().min(1) }).describe(
+    "Révoque tous les jetons d'API d'un compte.",
+  ),
 ]);
 
 // La dernière direction ne doit pas pouvoir se supprimer ni se rétrograder :
@@ -99,9 +114,12 @@ async function assertNotLastDirector(userId: string) {
 }
 
 export const POST = adminRoute(["DIR", "PM"], async ({ user }, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await parseBody(bodySchema, request);
+
+  if (body.action === "revoke-api-tokens") {
+    const { count } = await prisma.apiToken.deleteMany({ where: { userId: body.userId } });
+    return { ok: true, count };
+  }
 
   if (body.action === "delete") {
     if (body.userId === user.id) badRequest("Vous ne pouvez pas supprimer votre propre compte");
@@ -213,4 +231,7 @@ export const POST = adminRoute(["DIR", "PM"], async ({ user }, request) => {
   }
 
   return { ok: true, id: created.id, pending: true };
+}, {
+  summary: "Gestion des comptes (DIR et PM).",
+  body: bodySchema,
 });

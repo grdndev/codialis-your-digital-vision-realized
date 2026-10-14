@@ -9,4 +9,4 @@ export const GET = adminRoute(["CLIENT"], async ({ user }) => {
   if (!projectId) return { epics: [] };
 
   return { epics: await portalEpics(projectId) };
-});
+}, { summary: "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Avancement : épics et leurs tickets, sans assigné ni temps." });

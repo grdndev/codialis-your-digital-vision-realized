@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody, notFound } from "@/lib/admin-api";
+import { adminRoute, badRequest, notFound, parseBody, parseQuery, repeated } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { USER_IDENTITY } from "@/lib/user-identity";
 import {
@@ -34,9 +34,11 @@ export const dynamic = "force-dynamic";
 const isoDateTime = z.string().datetime();
 
 const querySchema = z.object({
-  monthStart: isoDateTime,
-  monthEnd: isoDateTime,
-  weekdays: z.array(isoDateTime).min(1).max(7),
+  monthStart: isoDateTime.describe("Début du mois (instant ISO, inclus)"),
+  monthEnd: isoDateTime.describe("Fin du mois (instant ISO, EXCLUE : le dernier jour est la veille)"),
+  weekday: repeated(z.array(isoDateTime).min(1).max(7)).describe(
+    "Jours de la semaine affichée au planning, paramètre RÉPÉTÉ (`weekday=…&weekday=…`), à l'instant exact des créneaux",
+  ),
   // Bornes de la grille « Qui est là » (CC-355), semaines complètes : le mois
   // commence et finit rarement un lundi et un dimanche, et la semaine en cours
   // déborde souvent sur le mois voisin. Absentes, la grille reste le mois.
@@ -60,19 +62,11 @@ function targetUserId(
 export const GET = adminRoute(
   ["DEV", "PM", "DIR"],
   async ({ user }, request) => {
-    const params = request.nextUrl.searchParams;
-    const parsed = querySchema.safeParse({
-      monthStart: params.get("monthStart"),
-      monthEnd: params.get("monthEnd"),
-      weekdays: params.getAll("weekday"),
-      calendarStart: params.get("calendarStart") ?? undefined,
-      calendarEnd: params.get("calendarEnd") ?? undefined,
-    });
-    if (!parsed.success) badRequest("Période invalide");
+    const period = parseQuery(querySchema, request, "Période invalide");
 
-    const monthStart = new Date(parsed.data.monthStart);
-    const monthEnd = new Date(parsed.data.monthEnd);
-    const weekdays = parsed.data.weekdays.map((d) => new Date(d));
+    const monthStart = new Date(period.monthStart);
+    const monthEnd = new Date(period.monthEnd);
+    const weekdays = period.weekday.map((d) => new Date(d));
 
     const [
       myHours,
@@ -112,8 +106,8 @@ export const GET = adminRoute(
     // l'équipe : savoir qui est absent est le minimum pour s'organiser. Le
     // MOTIF, lui, reste à la direction ; le reste de l'écran RH ne change pas.
     // Les bornes de fin sont exclusives, le dernier jour affiché est la veille.
-    const calStart = parsed.data.calendarStart ? new Date(parsed.data.calendarStart) : monthStart;
-    const calEnd = parsed.data.calendarEnd ? new Date(parsed.data.calendarEnd) : monthEnd;
+    const calStart = period.calendarStart ? new Date(period.calendarStart) : monthStart;
+    const calEnd = period.calendarEnd ? new Date(period.calendarEnd) : monthEnd;
     const lastDay = new Date(calEnd);
     lastDay.setUTCDate(lastDay.getUTCDate() - 1);
 
@@ -327,6 +321,11 @@ export const GET = adminRoute(
       allRules,
     };
   },
+  {
+    summary:
+      "Écran RH sur une période : mes heures, planning, déplacements, absences, règles et soldes ; calendrier « Qui est là » de l'équipe (motifs visibles par DIR seule). Pour DIR en plus : soldes et saisies de toute l'équipe sur la période, file `pending` des demandes à valider (sans borne de mois).",
+    query: querySchema,
+  },
 );
 
 const absenceType = z.enum(["TELETRAVAIL", "CONGE", "ABSENCE", "FORMATION"]);
@@ -340,16 +339,18 @@ const bodySchema = z.discriminatedUnion("action", [
     date: isoDateTime,
     hours: z.number().positive(),
     reason: z.string(),
-    userId: z.string().nullable(),
-  }),
+    userId: z.string().nullable().describe("null = pour soi ; un autre compte : DIR seule"),
+  }).describe("Déclare des heures supplémentaires (SUP) ou de récupération (RECUP), en heures décimales."),
   z.object({
     action: z.literal("decide-hours"),
     entryId: z.string().min(1),
     status: verdict,
     // Ne concerne qu'une heure sup : payée (paie) ou mise en récup.
     paid: z.boolean(),
-  }),
-  z.object({ action: z.literal("delete-hours"), entryId: z.string().min(1) }),
+  }).describe("Valide ou refuse une saisie d'heures (DIR)."),
+  z.object({ action: z.literal("delete-hours"), entryId: z.string().min(1) }).describe(
+    "Supprime une saisie d'heures.",
+  ),
 
   z.object({
     action: z.literal("add-absence"),
@@ -359,8 +360,8 @@ const bodySchema = z.discriminatedUnion("action", [
     halfDay,
     motif: z.string(),
     paid: z.boolean(),
-    userId: z.string().nullable(),
-  }),
+    userId: z.string().nullable().describe("null = pour soi ; un autre compte : DIR seule"),
+  }).describe("Demande d'absence (télétravail, congé, absence, formation)."),
   z.object({
     action: z.literal("update-absence"),
     absenceId: z.string().min(1),
@@ -370,24 +371,24 @@ const bodySchema = z.discriminatedUnion("action", [
     halfDay,
     motif: z.string(),
     paid: z.boolean(),
-  }),
+  }).describe("Modifie une demande d'absence."),
   z.object({
     action: z.literal("decide-absence"),
     absenceId: z.string().min(1),
     status: verdict,
     paid: z.boolean(),
-  }),
+  }).describe("Valide ou refuse une absence (DIR)."),
   z.object({
     action: z.literal("delete-absence"),
     absenceId: z.string().min(1),
-  }),
+  }).describe("Annule une demande d'absence."),
 
   z.object({
     action: z.literal("set-shift"),
     date: isoDateTime,
     kind: z.enum(["BUREAU", "TELETRAVAIL", "CLIENT", "ABSENCE"]),
     note: z.string(),
-  }),
+  }).describe("Pose son planning d'un jour de la semaine."),
 
   z.object({
     action: z.literal("add-travel"),
@@ -395,12 +396,12 @@ const bodySchema = z.discriminatedUnion("action", [
     endDate: isoDateTime.nullable(),
     destination: z.string().min(1),
     motif: z.string(),
-  }),
+  }).describe("Déclare un déplacement."),
   z.object({
     action: z.literal("decide-travel"),
     entryId: z.string().min(1),
     status: verdict,
-  }),
+  }).describe("Valide ou refuse un déplacement (DIR)."),
 
   z.object({
     action: z.literal("add-rule"),
@@ -415,8 +416,10 @@ const bodySchema = z.discriminatedUnion("action", [
     endDate: isoDateTime.nullable(),
     motif: z.string(),
     paid: z.boolean(),
-  }),
-  z.object({ action: z.literal("delete-rule"), ruleId: z.string().min(1) }),
+  }).describe("Règle de présence récurrente (DIR) ; `userId: \"all\"` la pose pour toute l'équipe."),
+  z.object({ action: z.literal("delete-rule"), ruleId: z.string().min(1) }).describe(
+    "Supprime une règle de présence (DIR).",
+  ),
 
   z.object({
     action: z.literal("set-balances"),
@@ -424,7 +427,7 @@ const bodySchema = z.discriminatedUnion("action", [
     // Chaque solde est optionnel : la direction peut ne corriger que l'un des deux.
     leave: z.number().min(-999).max(9999).nullable(),
     hours: z.number().min(-999).max(9999).nullable(),
-  }),
+  }).describe("Fixe les soldes de congés (jours) et d'heures d'un membre à la date du jour (DIR)."),
 ]);
 
 function requireDir(role: string, what: string) {
@@ -434,9 +437,7 @@ function requireDir(role: string, what: string) {
 export const POST = adminRoute(
   ["DEV", "PM", "DIR"],
   async ({ user }, request) => {
-    const parsed = bodySchema.safeParse(await jsonBody(request));
-    if (!parsed.success) badRequest("Requête invalide");
-    const body = parsed.data;
+    const body = await parseBody(bodySchema, request);
     const isDir = user.role === "DIR";
 
     switch (body.action) {
@@ -822,5 +823,10 @@ export const POST = adminRoute(
         return;
       }
     }
+  },
+  {
+    summary:
+      "Saisies RH. Chacun saisit pour soi ; DIR peut saisir pour un autre (`userId`), et seule DIR valide (decide-*), pose les règles de présence et les soldes. Une saisie de DIR est validée d'office, celle d'un autre part en DECLARE.",
+    body: bodySchema,
   },
 );

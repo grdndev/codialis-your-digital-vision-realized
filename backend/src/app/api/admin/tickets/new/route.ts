@@ -22,4 +22,7 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async () => {
     })),
     team: team.map((t) => ({ id: t.id, name: t.name })),
   };
+}, {
+  summary:
+    "Listes du formulaire de création de ticket : projets (libellé « client — projet » et leurs épics) et comptes assignables.",
 });

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody, notFound } from "@/lib/admin-api";
+import { adminRoute, badRequest, notFound, parseBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
 import { PLAN_PRESETS, isValidPlan, milestoneName, nextMilestone, parsePlan } from "@/lib/billing";
@@ -70,6 +70,9 @@ export const GET = adminRoute(["PM", "DIR"], async () => {
     };
   });
   return { invoices, activeProjects, projects, billing, planPresets: PLAN_PRESETS, rates: await agencyRates() };
+}, {
+  summary:
+    "Facturation & rentabilité : factures (avec commentaires), projets actifs chiffrés, échéancier de chaque projet ouvert (`billing`, échéance suivante calculée), échéanciers proposés, taux de l'agence.",
 });
 
 const bodySchema = z.discriminatedUnion("action", [
@@ -79,34 +82,34 @@ const bodySchema = z.discriminatedUnion("action", [
     label: z.string().min(1),
     amount: z.number().positive(),
     dueAt: z.string().datetime().nullable(),
-  }),
+  }).describe("Facture libre, hors échéancier (référence F-xxxx attribuée)."),
   // La facture de l'échéance suivante du projet (CC-350) : ni libellé ni
   // montant dans la requête, c'est l'échéancier qui les donne.
   z.object({
     action: z.literal("create-milestone-invoice"),
     projectId: z.string().min(1),
     dueAt: z.string().datetime().nullable(),
-  }),
+  }).describe("Facture l'échéance suivante du projet : libellé et montant viennent de l'échéancier."),
   // Prix total et échéancier d'un projet. Le prix est le `soldAmount` déjà
   // saisi dans la fiche projet : un seul chiffre, lu par la rentabilité comme
   // par la facturation.
   z.object({
     action: z.literal("update-project-billing"),
     projectId: z.string().min(1),
-    total: z.number().positive().nullable(),
-    plan: z.string().max(20),
-  }),
+    total: z.number().positive().nullable().describe("Prix total en euros (montant vendu)"),
+    plan: z.string().max(20).describe("Pourcentages séparés par des virgules, 2 à 4 entiers qui font 100 (ex. « 30,40,30 »)"),
+  }).describe("Prix total et échéancier d'un projet ; les heures vendues en découlent."),
   // Taux de l'agence (CC-357) : les heures vendues d'un projet s'en déduisent.
   // Une journée tient dans 24 h ; un taux nul rendrait toute heure infinie.
   z.object({
     action: z.literal("update-rates"),
     hourlyRate: z.number().positive().max(10_000),
     workdayHours: z.number().positive().max(24),
-  }),
+  }).describe("Taux horaire de l'agence et durée d'une journée."),
   z.object({
     action: z.literal("mark-paid"),
     invoiceId: z.string().min(1),
-  }),
+  }).describe("Marque une facture payée (datée du jour)."),
   // « En retard » se pose à la main : c'est la personne qui relance le client
   // qui sait si l'échéance dépassée est un retard ou un délai convenu (CC-348).
   // « Payée » garde son action, qui date aussi le règlement.
@@ -114,7 +117,7 @@ const bodySchema = z.discriminatedUnion("action", [
     action: z.literal("set-invoice-status"),
     invoiceId: z.string().min(1),
     status: z.enum(["EN_ATTENTE", "EN_RETARD"]),
-  }),
+  }).describe("Pose ou retire « En retard » sur une facture non payée."),
   // Une facture se corrige TANT QU'ELLE N'EST PAS PAYÉE. Une fois réglée, c'est
   // une pièce comptable : on la rectifie par un avoir, pas en réécrivant le
   // montant. La référence, elle, ne bouge jamais — c'est par elle que le client
@@ -125,8 +128,10 @@ const bodySchema = z.discriminatedUnion("action", [
     label: z.string().min(1).max(200),
     amount: z.number().positive(),
     dueAt: z.string().datetime().nullable(),
-  }),
-  z.object({ action: z.literal("delete-invoice"), invoiceId: z.string().min(1) }),
+  }).describe("Corrige une facture non payée ; sa référence ne change jamais."),
+  z.object({ action: z.literal("delete-invoice"), invoiceId: z.string().min(1) }).describe(
+    "Supprime une facture, même payée (elle sort alors de l'encaissé).",
+  ),
   // Rattacher une facture à une échéance du projet, ou l'en détacher (CC-350).
   // Permis sur une facture payée : ni le montant ni le libellé ne bougent, on
   // dit seulement quelle part du prix elle a réglée. C'est ce qui permet de
@@ -134,21 +139,19 @@ const bodySchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("set-invoice-milestone"),
     invoiceId: z.string().min(1),
-    milestone: z.number().int().min(0).nullable(),
-  }),
+    milestone: z.number().int().min(0).nullable().describe("Rang de l'échéance (0 = la première) ; null = facture libre"),
+  }).describe("Rattache une facture, même payée, à une échéance de l'échéancier."),
   // L'historique reste ouvert sur une facture payée : c'est souvent là qu'on
   // note comment et quand elle a été réglée.
   z.object({
     action: z.literal("add-invoice-comment"),
     invoiceId: z.string().min(1),
     body: z.string().trim().min(1),
-  }),
+  }).describe("Ajoute un commentaire à l'historique d'une facture."),
 ]);
 
 export const POST = adminRoute(["PM", "DIR"], async ({ user }, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await parseBody(bodySchema, request);
 
   if (body.action === "update-rates") {
     // Ligne unique de paramètres d'entreprise, créée si besoin. Les projets
@@ -309,4 +312,8 @@ export const POST = adminRoute(["PM", "DIR"], async ({ user }, request) => {
     where: { id: body.invoiceId },
     data: { status: "PAYEE", paidAt: new Date() },
   });
+}, {
+  summary:
+    "Factures, échéanciers et taux de l'agence (PM, DIR). Une facture payée ne change plus de montant ni de statut, mais se supprime et se commente.",
+  body: bodySchema,
 });

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, parseBody, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { USER_IDENTITY } from "@/lib/user-identity";
 
@@ -14,8 +14,16 @@ export const dynamic = "force-dynamic";
 
 const BASE_TABS = ["api", "url", "acc", "mock", "doc"];
 
+const querySchema = z.object({
+  project: z.string().optional().describe("Identifiant du projet ; par défaut le premier non clos"),
+  tab: z
+    .string()
+    .optional()
+    .describe("Onglet : api, url, acc, mock, doc ou custom:<id de catégorie> ; par défaut api"),
+});
+
 export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
-  const params = request.nextUrl.searchParams;
+  const query = parseQuery(querySchema, request);
 
   // Toute l'équipe interne voit les projets non clôturés.
   const projects = await prisma.project.findMany({
@@ -24,7 +32,7 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
     orderBy: { name: "asc" },
   });
 
-  const requestedProject = params.get("project");
+  const requestedProject = query.project;
   const activeProjectId =
     requestedProject && projects.some((p) => p.id === requestedProject)
       ? requestedProject
@@ -41,7 +49,7 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
   });
 
   const validTabs = [...BASE_TABS, ...customCategories.map((c) => `custom:${c.id}`)];
-  const requestedTab = params.get("tab");
+  const requestedTab = query.tab;
   const activeTab = requestedTab && validTabs.includes(requestedTab) ? requestedTab : "api";
 
   const team = await prisma.user.findMany({
@@ -103,6 +111,10 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
     team: team.map((t) => ({ id: t.id, name: t.name })),
     panel,
   };
+}, {
+  summary:
+    "Ressources d'un projet non clos, un onglet à la fois : `panel` porte les données de l'onglet retenu (api = accès techniques, url, acc = comptes, mock = maquettes, doc = cahier des charges et docs techniques, custom:<id> = catégorie libre). Renvoie aussi les projets, les catégories libres et l'équipe.",
+  query: querySchema,
 });
 
 const bodySchema = z.discriminatedUnion("action", [
@@ -252,9 +264,7 @@ const bodySchema = z.discriminatedUnion("action", [
 ]);
 
 export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await parseBody(bodySchema, request);
 
   switch (body.action) {
     case "add-api":
@@ -466,4 +476,8 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       await prisma.customCategoryRow.delete({ where: { id: body.rowId } });
       return;
   }
+}, {
+  summary:
+    "Ressources d'un projet : accès techniques (api), URL, comptes, maquettes, documents de cahier des charges et techniques, catégories libres et leurs lignes. Une action add-*, update-*, delete-* par famille.",
+  body: bodySchema,
 });

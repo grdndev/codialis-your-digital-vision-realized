@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { adminRoute, badRequest, notFound } from "@/lib/admin-api";
+import { adminRoute, notFound, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { draftReply, draftBasis, type DraftTicket, type Tone } from "@/lib/ai-draft";
 import { generateDraftReply } from "@/lib/gemini";
+import { TICKET_ID_DESCRIPTION, ticketIdOf } from "@/lib/ticket-ref";
 
 export const dynamic = "force-dynamic";
 
@@ -18,23 +19,18 @@ export const dynamic = "force-dynamic";
 // déterministe, qui ne coûte rien.
 
 const querySchema = z.object({
-  ticketId: z.string().min(1),
-  tone: z.enum(["Neutre", "Rassurant", "Ferme"]),
-  ai: z.boolean(),
+  ticketId: z.string().min(1).describe(TICKET_ID_DESCRIPTION),
+  tone: z.enum(["Neutre", "Rassurant", "Ferme"]).default("Neutre"),
+  ai: z.string().optional().describe("`1` = rédiger avec Gemini"),
 });
 
 export const GET = adminRoute(["PM", "DIR"], async (_ctx, request) => {
-  const params = request.nextUrl.searchParams;
-  const parsed = querySchema.safeParse({
-    ticketId: params.get("ticketId"),
-    tone: params.get("tone") ?? "Neutre",
-    ai: params.get("ai") === "1",
-  });
-  if (!parsed.success) badRequest("Requête invalide");
-  const { ticketId, tone, ai } = parsed.data;
+  const query = parseQuery(querySchema, request);
+  const { tone } = query;
+  const ai = query.ai === "1";
 
   const ticket = await prisma.ticket.findUnique({
-    where: { id: ticketId },
+    where: { id: await ticketIdOf(query.ticketId) },
     include: { project: { include: { client: true } } },
   });
   if (!ticket) notFound("Ticket introuvable");
@@ -58,4 +54,8 @@ export const GET = adminRoute(["PM", "DIR"], async (_ctx, request) => {
   // l'appel échoue (quota inclus) : l'écran affiche toujours quelque chose.
   const draft = await generateDraftReply(draftTicket, tone as Tone);
   return { text: draft.text, source: draft.source, basis };
+}, {
+  summary:
+    "Brouillon de réponse au client pour un ticket : gabarit (`source: template`) ou Gemini avec `ai=1` (quota de 20 appels par jour, repli sur le gabarit).",
+  query: querySchema,
 });

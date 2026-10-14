@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, commaList, parseBody, parseQuery } from "@/lib/admin-api";
 import { reprendreFichiersJoints } from "@/lib/files";
 import { prisma } from "@/lib/prisma";
 import { USER_IDENTITY } from "@/lib/user-identity";
@@ -8,6 +8,7 @@ import { maxSuffix, withUniqueRef } from "@/lib/refs";
 import { projectScope } from "@/lib/project-access";
 import { recomputeProjectProgress } from "@/lib/project-progress";
 import { closeSessions, openSession, refreshProjectSpent } from "@/lib/work-sessions";
+import { TICKET_ID_DESCRIPTION, withTicketIds } from "@/lib/ticket-ref";
 
 export const dynamic = "force-dynamic";
 
@@ -25,26 +26,38 @@ export const dynamic = "force-dynamic";
 const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
 const SEVERITIES: Severity[] = ["BLOQUANT", "MAJEUR", "MINEUR"];
 
+// Chaque filtre accepte PLUSIEURS valeurs, séparées par des virgules : « les
+// bloquants et les majeurs », « ces deux projets ». Une seule valeur par
+// critère obligeait à repasser la liste autant de fois qu'on voulait de cas.
+// Une valeur inconnue est ignorée plutôt que refusée, comme à l'écran.
+const querySchema = z.object({
+  project: commaList("Identifiants de projets"),
+  type: commaList("BUG, DEV"),
+  status: commaList("A_FAIRE, EN_COURS, EN_REVUE, TERMINE"),
+  severity: commaList("BLOQUANT, MAJEUR, MINEUR"),
+  assignee: z
+    .string()
+    .optional()
+    .describe(
+      "`me` (mes tickets), `none` (sans assigné), `all` ou absent (tous), ou une liste d'identifiants de comptes séparés par des virgules (`none` y ajoute les tickets sans assigné)",
+    ),
+  q: z
+    .string()
+    .optional()
+    .describe("Recherche dans la référence, le titre, la description et les étapes"),
+});
+
 export const GET = adminRoute(
   ["DEV", "PM", "DIR"],
   async ({ user }, request) => {
-    // Chaque filtre accepte PLUSIEURS valeurs, séparées par des virgules :
-    // « les bloquants et les majeurs », « ces deux projets ». Une seule valeur
-    // par critère obligeait à repasser la liste autant de fois qu'on voulait
-    // de cas.
-    const params = request.nextUrl.searchParams;
-    const listOf = (key: string) =>
-      (params.get(key) ?? "")
-        .split(",")
-        .map((v) => v.trim())
-        .filter(Boolean);
+    const query = parseQuery(querySchema, request);
 
-    const projectFilter = listOf("project");
-    const typeFilter = listOf("type").filter((t) => t === "BUG" || t === "DEV") as TicketType[];
-    const statusFilter = listOf("status").filter((s) =>
+    const projectFilter = query.project;
+    const typeFilter = query.type.filter((t) => t === "BUG" || t === "DEV") as TicketType[];
+    const statusFilter = query.status.filter((s) =>
       STATUSES.includes(s as TaskStatus),
     ) as TaskStatus[];
-    const severityFilter = listOf("severity").filter((s) =>
+    const severityFilter = query.severity.filter((s) =>
       SEVERITIES.includes(s as Severity),
     ) as Severity[];
 
@@ -53,15 +66,20 @@ export const GET = adminRoute(
     // a à faire — et c'est pour cela que l'écran l'applique par défaut.
     // L'export, lui, désigne des PERSONNES : une liste d'identifiants de
     // comptes, où `none` ajoute les tickets sans assigné.
-    const assigneeFilter = params.get("assignee");
+    const assigneeFilter = query.assignee ?? null;
     const assigneeIds =
-      assigneeFilter && !["me", "none", "all"].includes(assigneeFilter) ? listOf("assignee") : [];
+      assigneeFilter && !["me", "none", "all"].includes(assigneeFilter)
+        ? assigneeFilter
+            .split(",")
+            .map((v) => v.trim())
+            .filter(Boolean)
+        : [];
 
     // Recherche libre. Elle porte sur la référence, le titre, la description et
     // les étapes de reproduction : on cherche un ticket soit par son numéro,
     // soit par un mot dont on se souvient. Elle se CROISE avec les filtres, elle
     // ne les remplace pas.
-    const recherche = (params.get("q") ?? "").trim();
+    const recherche = (query.q ?? "").trim();
 
     const where: Prisma.TicketWhereInput = {};
     if (assigneeFilter === "me") where.assigneeId = user.id;
@@ -130,8 +148,17 @@ export const GET = adminRoute(
 
     return { projects, tickets: ranked, team };
   },
+  {
+    summary:
+      "Liste des tickets (écran Tickets), triée par gravité puis du plus récent au plus ancien. Renvoie `tickets` (avec projet, épic et assigné), `projects` (filtres de projet) et `team` (comptes à qui assigner). Sans filtre, TOUS les tickets de l'agence, clos compris : préciser `assignee` et `status`.",
+    query: querySchema,
+  },
 );
 
+
+const ticketId = z.string().min(1).describe(TICKET_ID_DESCRIPTION);
+const STATUS = z.enum(["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"]);
+const DUE_AT = z.string().datetime().nullable();
 
 const bodySchema = z.discriminatedUnion("action", [
   z.object({
@@ -147,65 +174,82 @@ const bodySchema = z.discriminatedUnion("action", [
     epicId: z.string().nullable(),
     severity: z.enum(["BLOQUANT", "MAJEUR", "MINEUR"]).nullable(),
     devNature: z.enum(["FRONT", "BACK", "API", "DESIGN"]).nullable(),
-    estHours: z.number().min(0),
-    assigneeId: z.string().nullable(),
-    dueAt: z.string().datetime().nullable().default(null),
-  }),
+    estHours: z.number().min(0).describe("Estimation, en heures décimales"),
+    assigneeId: z
+      .string()
+      .nullable()
+      .describe("Compte assigné ; null = la personne qui crée, si elle est développeuse, sinon personne"),
+    dueAt: DUE_AT.default(null).describe("Échéance (instant ISO, 09:00Z pour un jour)"),
+  }).describe(
+    "Crée un ticket. Renvoie sa référence (`ref`). `severity` ne vaut que pour un BUG, `devNature` que pour un DEV. Trois critères d'acceptation par défaut sont posés.",
+  ),
   // Le kanban déplace une carte vers une colonne précise : l'enchaînement pas
   // à pas d'`update-status` ne sait pas exprimer ce geste.
   z.object({
     action: z.literal("set-status"),
-    ticketId: z.string().min(1),
-    status: z.enum(["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"]),
-  }),
+    ticketId,
+    status: STATUS,
+  }).describe(
+    "Change le statut. EN_COURS lance le chronomètre de l'assigné, tout autre statut l'arrête. TERMINE est réservé à PM et DIR : un développeur s'arrête à EN_REVUE.",
+  ),
   // Traitement en masse : trier vingt tickets un par un pour leur poser le
   // même statut ou le même assigné coûte vingt allers-retours. `null` sur un
   // champ signifie « ne pas y toucher », et non « vider ».
   z.object({
     action: z.literal("bulk-update"),
-    ticketIds: z.array(z.string().min(1)).min(1).max(200),
-    status: z.enum(["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"]).nullable(),
-    assigneeId: z.string().nullable(),
-    clearAssignee: z.boolean(),
-  }),
+    ticketIds: z.array(z.string().min(1)).min(1).max(200).describe("Identifiants ou références"),
+    status: STATUS.nullable().describe("null = statut inchangé"),
+    assigneeId: z.string().nullable().describe("null = assigné inchangé"),
+    clearAssignee: z.boolean().describe("true = retirer l'assigné"),
+  }).describe("Même statut et/ou même assigné pour plusieurs tickets (200 au plus)."),
+  // Tous les champs sauf `ticketId` sont facultatifs : un champ ABSENT reste
+  // tel quel, `null` le vide. L'écran envoie toujours tout ; un script ou un
+  // agent qui ne veut changer que le titre n'a pas à relire puis renvoyer le
+  // reste du ticket.
   z.object({
     action: z.literal("update"),
-    ticketId: z.string().min(1),
-    projectId: z.string().min(1),
-    type: z.enum(["BUG", "DEV"]),
-    title: z.string().min(1).max(300),
-    description: z.string(),
-    steps: z.string(),
-    severity: z.enum(["BLOQUANT", "MAJEUR", "MINEUR"]).nullable(),
-    devNature: z.enum(["FRONT", "BACK", "API", "DESIGN"]).nullable(),
-    estHours: z.number().min(0),
-    assigneeId: z.string().nullable(),
-    epicId: z.string().nullable(),
-    dueAt: z.string().datetime().nullable().default(null),
-  }),
+    ticketId,
+    projectId: z.string().min(1).optional().describe("Changer de projet change la référence du ticket"),
+    type: z.enum(["BUG", "DEV"]).optional(),
+    title: z.string().min(1).max(300).optional(),
+    description: z.string().optional(),
+    steps: z.string().optional(),
+    severity: z.enum(["BLOQUANT", "MAJEUR", "MINEUR"]).nullable().optional(),
+    devNature: z.enum(["FRONT", "BACK", "API", "DESIGN"]).nullable().optional(),
+    estHours: z.number().min(0).optional(),
+    assigneeId: z.string().nullable().optional(),
+    epicId: z.string().nullable().optional(),
+    dueAt: DUE_AT.optional(),
+  }).describe(
+    "Modifie un ticket : seuls les champs présents changent, `null` vide un champ. Renvoie `ref` (nouvelle si le projet change) et `previousRef`. Changer l'assigné d'un ticket EN_COURS arrête son chronomètre et le repasse à A_FAIRE.",
+  ),
   z.object({
     action: z.literal("toggle-criterion"),
     criterionId: z.string().min(1),
-  }),
+  }).describe("Coche ou décoche un critère d'acceptation."),
   // Les critères ne savaient que se cocher : la liste posée à la création était
   // définitive, alors que c'est justement ce qu'on affine en cours de route.
   z.object({
     action: z.literal("add-criterion"),
-    ticketId: z.string().min(1),
+    ticketId,
     label: z.string().min(1).max(300),
-  }),
+  }).describe("Ajoute un critère d'acceptation."),
   z.object({
     action: z.literal("update-criterion"),
     criterionId: z.string().min(1),
     label: z.string().min(1).max(300),
-  }),
-  z.object({ action: z.literal("delete-criterion"), criterionId: z.string().min(1) }),
-  z.object({ action: z.literal("delete"), ticketId: z.string().min(1) }),
+  }).describe("Renomme un critère d'acceptation."),
+  z.object({ action: z.literal("delete-criterion"), criterionId: z.string().min(1) }).describe(
+    "Supprime un critère d'acceptation.",
+  ),
+  z.object({ action: z.literal("delete"), ticketId }).describe(
+    "Supprime un ticket, ses critères, commentaires et pièces jointes ; ses saisies de temps restent au projet.",
+  ),
   z.object({
     action: z.literal("add-comment"),
-    ticketId: z.string().min(1),
-    body: z.string().min(1),
-  }),
+    ticketId,
+    body: z.string().min(1).describe("Texte brut, retours à la ligne conservés"),
+  }).describe("Ajoute un commentaire au nom du compte appelant."),
 ]);
 
 // Un épic appartient à un projet : un ticket ne se range que dans un épic de
@@ -251,9 +295,7 @@ async function applyTicketStatus(
 export const POST = adminRoute(
   ["DEV", "PM", "DIR"],
   async ({ user }, request) => {
-    const parsed = bodySchema.safeParse(await jsonBody(request));
-    if (!parsed.success) badRequest("Requête invalide");
-    const body = parsed.data;
+    const body = await withTicketIds(await parseBody(bodySchema, request));
 
     switch (body.action) {
       case "create": {
@@ -384,15 +426,46 @@ export const POST = adminRoute(
       case "update": {
         const ticket = await prisma.ticket.findUnique({
           where: { id: body.ticketId },
-          select: { ref: true, projectId: true, status: true, assigneeId: true },
+          select: {
+            ref: true,
+            projectId: true,
+            status: true,
+            assigneeId: true,
+            type: true,
+            title: true,
+            description: true,
+            steps: true,
+            severity: true,
+            devNature: true,
+            estHours: true,
+            epicId: true,
+            dueAt: true,
+          },
         });
         if (!ticket) badRequest("Ticket introuvable");
 
-        const movedProject = body.projectId !== ticket.projectId;
+        // Un champ absent garde sa valeur : on part du ticket tel qu'il est.
+        const keep = <K extends keyof typeof ticket>(key: K, value: (typeof ticket)[K] | undefined) =>
+          value === undefined ? ticket[key] : value;
+        const next = {
+          projectId: keep("projectId", body.projectId),
+          type: keep("type", body.type),
+          title: keep("title", body.title),
+          description: keep("description", body.description),
+          steps: keep("steps", body.steps),
+          severity: keep("severity", body.severity),
+          devNature: keep("devNature", body.devNature),
+          estHours: keep("estHours", body.estHours),
+          assigneeId: keep("assigneeId", body.assigneeId),
+          epicId: keep("epicId", body.epicId),
+          dueAt: body.dueAt === undefined ? ticket.dueAt : body.dueAt ? new Date(body.dueAt) : null,
+        };
+
+        const movedProject = next.projectId !== ticket.projectId;
         // Passer la main pendant que le chronomètre tourne l'arrête pour le
         // précédent assigné, et le ticket revient à « À faire » : au suivant de
         // le démarrer.
-        const handover = ticket.status === "EN_COURS" && ticket.assigneeId !== body.assigneeId;
+        const handover = ticket.status === "EN_COURS" && ticket.assigneeId !== next.assigneeId;
         // Déplacer un ticket lui donne une nouvelle référence, au préfixe du
         // projet d'accueil : une référence porte le projet, en garder une qui
         // désigne l'ancien induirait en erreur à chaque lecture. Le numéro
@@ -400,7 +473,7 @@ export const POST = adminRoute(
         let nextRef = ticket.ref;
         if (movedProject) {
           const target = await prisma.project.findUnique({
-            where: { id: body.projectId },
+            where: { id: next.projectId },
             select: { id: true, initials: true },
           });
           if (!target) badRequest("Projet introuvable");
@@ -413,39 +486,39 @@ export const POST = adminRoute(
           nextRef = `${prefix}${(maxSuffix(refs.map((r) => r.ref), prefix) ?? 300) + 1}`;
         }
 
-        if (!movedProject) await checkEpic(body.epicId, ticket.projectId);
+        if (!movedProject) await checkEpic(next.epicId, ticket.projectId);
         if (handover) await prisma.$transaction((tx) => closeSessions(tx, { ticketId: body.ticketId }));
         await prisma.ticket.update({
           where: { id: body.ticketId },
           data: {
             ...(handover ? { status: "A_FAIRE" as TaskStatus } : {}),
             ref: nextRef,
-            projectId: body.projectId,
+            projectId: next.projectId,
             // Un lot appartient à un projet : le changer de projet rend le
             // rattachement caduc.
-            epicId: movedProject ? null : body.epicId,
-            type: body.type,
-            title: body.title,
-            description: body.description,
-            steps: body.steps,
+            epicId: movedProject ? null : next.epicId,
+            type: next.type,
+            title: next.title,
+            description: next.description,
+            steps: next.steps,
             // La gravité ne concerne qu'un bug, la nature qu'un développement :
             // on efface celle qui ne correspond plus au type retenu.
-            severity: body.type === "BUG" ? body.severity : null,
-            devNature: body.type === "DEV" ? body.devNature : null,
-            estHours: body.estHours,
-            assigneeId: body.assigneeId,
-            dueAt: body.dueAt ? new Date(body.dueAt) : null,
+            severity: next.type === "BUG" ? next.severity : null,
+            devNature: next.type === "DEV" ? next.devNature : null,
+            estHours: next.estHours,
+            assigneeId: next.assigneeId,
+            dueAt: next.dueAt,
           },
         });
         // Changer de projet emporte le ticket — et son temps passé — d'un
         // projet à l'autre : les deux avancements et les deux compteurs
         // d'heures suivent.
-        await recomputeProjectProgress(body.projectId);
+        await recomputeProjectProgress(next.projectId);
         if (movedProject) {
           await recomputeProjectProgress(ticket.projectId);
           await prisma.$transaction(async (tx) => {
             await refreshProjectSpent(tx, ticket.projectId);
-            await refreshProjectSpent(tx, body.projectId);
+            await refreshProjectSpent(tx, next.projectId);
           });
         }
         // La référence renvoyée est la NOUVELLE : le frontend s'en sert pour
@@ -542,5 +615,10 @@ export const POST = adminRoute(
         });
         return;
     }
+  },
+  {
+    summary:
+      "Toutes les écritures sur un ticket, d'où qu'elles viennent (écran Tickets, fiche ticket, fiche projet). Un ticket se désigne par son identifiant ou par sa référence.",
+    body: bodySchema,
   },
 );

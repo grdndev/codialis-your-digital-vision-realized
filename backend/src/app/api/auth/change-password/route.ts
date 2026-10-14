@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, parseBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { validatePassword } from "@/lib/password";
 import { signSessionToken } from "@/lib/auth";
@@ -20,9 +20,11 @@ const bodySchema = z.object({
 // volontaire. Le mot de passe actuel est exigé dans les deux cas : une session
 // volée ne doit pas suffire à verrouiller le compte de son propriétaire.
 export const POST = adminRoute([], async ({ user }, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Mot de passe actuel et nouveau requis");
-  const { currentPassword, newPassword } = parsed.data;
+  const { currentPassword, newPassword } = await parseBody(
+    bodySchema,
+    request,
+    "Mot de passe actuel et nouveau requis",
+  );
 
   const problem = validatePassword(newPassword);
   if (problem) badRequest(problem);
@@ -42,4 +44,8 @@ export const POST = adminRoute([], async ({ user }, request) => {
   // Un jeton frais : celui en cours porte peut-être encore l'obligation de
   // changer de mot de passe, et le frontend le remplace par celui-ci.
   return { ok: true, token: await signSessionToken(user.id, user.role) };
+}, {
+  summary:
+    "Change son mot de passe (le mot de passe actuel est exigé). Renvoie un nouveau jeton de session.",
+  body: bodySchema,
 });

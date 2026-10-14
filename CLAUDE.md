@@ -3,6 +3,7 @@ format=llm-compact | un fait par ligne | DEC+TRAP append-only | STATE réécrit
 
 ## REF
 readme=README.md  role=architecture des trois applications et démarrage local
+api_doc=API.md  role=utiliser l'API hors écran : jetons d'API, serveur MCP pour Claude Code, curl, ajouter une route
 readme_fonctionnalites=ABSENT  why=le découpage BxFy n'a jamais été rédigé, à faire valider avant de le créer
 cdc=liste de tickets en production, projet « Codialis CRM », références CC-3xx  cdc_lecture=admin.codialis.com → Tickets
 cdc_date=continu  sync=2026-09-17
@@ -22,6 +23,7 @@ typecheck=npx tsc --noEmit  scope=backend et frontend-admin séparément
 lint=./node_modules/.bin/eslint src  why=`npx eslint` échoue hors du dossier de l'app
 build=npx next build
 test_calcul=npx tsx prisma/test-work-time.ts | npx tsx prisma/test-work-calendar.ts | npx tsx prisma/test-hr-calendar.ts | npx tsx prisma/test-billing.ts
+test_api=npx tsx prisma/test-api-catalog.ts  why=parité écran/API : chaque route au catalogue, chaque action envoyée par frontend-admin connue, OpenAPI constructible ; sans base
 seed_test=DATABASE_URL=… npx tsx prisma/seed-test.ts  DANGER=local uniquement, vide la base avant de semer
 migrate_local=DATABASE_URL=… npx prisma migrate dev --name … --skip-seed
 migrate_prod=docker compose exec codialis.backend npx prisma migrate deploy
@@ -36,6 +38,8 @@ langue=français pour tout : code, commentaires, messages d'erreur, libellés, m
 commentaires=denses et explicatifs, ils disent POURQUOI ; s'aligner sur l'existant plutôt que sur la règle « aucun commentaire »
 mutations_api=une seule route POST par écran, zod `discriminatedUnion("action", …)`
 routes_admin=adminRoute([roles], async ({ user }, request) => …) ; une mutation sans retour répond `{ ok: true }`
+routes_doc=adminRoute(roles, handler, { summary, query, body }) : 3e argument OBLIGATOIRE, avec les MÊMES schémas zod que la validation (parseQuery/parseBody, jamais searchParams.get à la main) ; `.describe()` sur chaque action (rôle restreint, effet non évident) ; toute nouvelle route → backend/src/lib/api-catalog.ts, puis test_api why=la doc OpenAPI et le MCP en sont tirés (DEC-075)
+auth_api=une route qui doit refuser les jetons d'API teste `auth.via === "session"` (AdminContext) ; une écriture n'est JAMAIS un GET (le jeton en lecture seule ne laisse passer que GET)
 erreurs=badRequest(message) lisible par l'utilisateur, jamais un code technique
 dates_bureau=minutes depuis minuit (heure locale de bureau), pas d'instant, pas de fuseau
 refs=maxSuffix + withUniqueRef (lib/refs.ts), jamais dérivées d'un COUNT
@@ -75,6 +79,15 @@ frontend-admin/src/app/(app)/tickets/[ref]/comments-panel.tsx=section « Comment
 frontend-admin/src/lib/attachments.ts=extensions acceptées en pièce jointe côté écran (alignées sur files/src/stockage.js et backend/src/lib/files.ts)
 frontend-admin/src/app/(app)/measured-time.tsx=bloc « Temps mesuré » de la fiche ticket : sessions une à une, corrections (actions dans time/actions.ts)
 backend/src/lib/user-identity.ts=USER_IDENTITY, la sélection d'un compte cité dans une réponse (id, name, initials, role = UserRef)
+backend/src/lib/api-catalog.ts=catalogue des routes authentifiées (chemin → module) ; OpenAPI, JSON Schema des actions, callRoute (appel d'une route DANS le process, pour le MCP)
+backend/src/lib/api-tokens.ts=jetons d'API personnels : génération (cdl_ + 32 octets), SHA-256, durées
+backend/src/lib/auth.ts=authenticateRequest : jeton de session (JWT) OU jeton d'API, renvoie { user, auth }
+backend/src/lib/ticket-ref.ts=ticketIdOf / withTicketIds : un ticket désigné par sa référence (CC-365) ou son identifiant
+backend/src/lib/mcp-tools.ts=outils du serveur MCP (lister_tickets, lire_ticket, changer_statut_ticket, commenter_ticket, catalogue, appel_api)
+backend/src/app/api/mcp/route.ts=serveur MCP Streamable HTTP sans état (JSON-RPC à la main), même jeton que l'API
+backend/src/app/api/admin/openapi.json/route.ts=GET de la description OpenAPI 3.1 (comptes internes)
+backend/prisma/test-api-catalog.ts=contrôle de parité écran/API (lecture des sources, sans base)
+frontend-admin/src/app/(app)/parametres/api-token-form.tsx=création d'un jeton d'API, affiché une fois avec la commande Claude Code et un exemple curl
 backend/src/lib/project-progress.ts=recomputeProjectProgress (avancement stocké = tickets TERMINE / TOUS les tickets du projet, DEC-064), appelé par la route Tickets (création, statut, masse, déplacement, suppression), l'import JSON et stop-session
 backend/src/lib/client-scope.ts=clientProjectId (périmètre d'un compte client) + portalEpics (épics et leurs tickets pour le portail, sans assigné ni temps)
 frontend-admin/src/app/(app)/projects/[id]/tasks/[taskId]/page.tsx=ancienne adresse d'une tâche → redirige vers /tickets/<ref> (même identifiant, GET /api/admin/tickets/detail?id=)
@@ -162,6 +175,11 @@ DEC-069 [2026-10-14] ACTIVE un ticket se range dans un épic de SON projet (chec
 DEC-070 [2026-10-14] ACTIVE portail client : « Avancement » et « Fonctionnalités » listent les tickets des épics (bugs compris), sans assigné, temps ni estimation why=arbitrage Denis du 14/10 ; aucun compte client en prod alt=développements seuls
 DEC-071 [2026-10-14] ACTIVE les tables Task, TaskCriterion, TaskComment, TaskAttachment et les colonnes taskId de WorkSession/TimeEntry sont SUPPRIMÉES (migration suppression_taches), retour-taches-en-tickets.sql retiré avec elles ; un garde-fou arrête la migration avant toute suppression s'il reste du temps rattaché à une tâche why=feu vert Denis du 14/10 ; contrôlé avant : 407 tâches toutes copiées, aucune annexe, aucun temps rattaché alt=garder les tables plus longtemps
 DEC-072 [2026-10-14] ACTIVE les lignes de filtres (FilterRow : Tickets, saisies de l'équipe en RH) reviennent à la ligne SOUS leurs pastilles au lieu de défiler sur place ; la colonne principale du layout prend `min-w-0`, un contenu plus large (tableau des tickets) défile dans son cadre why=demande du 14/10, les projets hors champ passaient inaperçus ; lève TRAP-043 alt=défilement horizontal de la ligne (état initial)
+DEC-073 [2026-10-14] ACTIVE jetons d'API PERSONNELS (ApiToken, migration jetons_api) : chaîne opaque `cdl_` + 32 octets, seul le SHA-256 en base, montré une fois ; agit au nom du propriétaire avec SES droits (rôle relu à chaque appel, CLIENT refusé) ; lecture seule = GET seulement ; validité 30/90 (défaut)/365 jours ou sans expiration ; 20 par compte ; révoquer = supprimer la ligne ; DIR/PM révoquent ceux d'une personne depuis Comptes ; créés dans Paramètres why=demande du 14/10 : Claude Code et les devs doivent utiliser l'API sans passer par docker ni SQL alt=JWT de session longue durée (non révocable), clé d'agence partagée
+DEC-074 [2026-10-14] ACTIVE un jeton d'API ne crée ni ne révoque de jeton : session seulement (`auth.via`) why=un jeton volé ne doit pas pouvoir s'en fabriquer un sans expiration qui survivrait à sa révocation alt=gestion ouverte aux jetons
+DEC-075 [2026-10-14] ACTIVE la doc de l'API est TIRÉE des schémas zod qui valident : adminRoute prend { summary, query, body } (attaché à la fonction exportée, `GET.meta`), lib/api-catalog.ts rassemble les routes, GET /api/admin/openapi.json (OpenAPI 3.1, comptes internes) ; erreurs 400 avec `details: [{ champ, message }]` (l'écran lit toujours `error`) ; messages zod en français (z.config dans admin-api.ts) why=doc et code ne peuvent pas diverger ; un appelant hors écran recevait « Requête invalide » sans savoir quel champ alt=doc écrite à la main, un schema.ts par route (plus de fichiers, même résultat)
+DEC-076 [2026-10-14] ACTIVE serveur MCP POST /api/mcp : Streamable HTTP SANS ÉTAT, JSON-RPC écrit à la main (initialize, ping, tools/list, tools/call) ; 4 outils tickets + `catalogue` + `appel_api` ; chaque outil appelle une route du catalogue DANS le process avec le jeton de l'appelant (mêmes droits, aucune requête réseau, aucune adresse arbitraire) ; en-tête Origin refusé, CLIENT refusé ; pas d'envoi de fichier (curl) why=demande du 14/10 (« utilisable avec Claude Code ou autre »), feu vert de Denis « si ça ne crée pas de faille » alt=SDK officiel (dépendance), un outil par action (135, noie l'agent), relais HTTP vers l'API (SSRF par l'en-tête Host)
+DEC-077 [2026-10-14] ACTIVE partout où l'API attend un ticket (ticketId, ticketIds, attachments `id`, time add-entry, triage, triage/draft), la RÉFÉRENCE est acceptée en plus de l'identifiant ; `update` d'un ticket est PARTIEL (champ absent = inchangé, null = vidé), l'écran envoie toujours tout why=un développeur ou un agent pense en « CC-365 », et changer un titre ne doit pas exiger de relire puis renvoyer tout le ticket alt=identifiants seuls, mise à jour complète
 
 ## TRAP
 TRAP-001 le serveur `next dev` garde l'ANCIEN client Prisma après une migration → le redémarrer, sinon « Cannot read properties of undefined » sur le nouveau modèle
@@ -218,6 +236,10 @@ TRAP-050 `NOW()` de MariaDB local est en heure de La Réunion, Prisma stocke en 
 TRAP-051 la FK Task→Epic est encore en CASCADE : supprimer un épic efface aussi les tâches d'origine de la copie de sécurité (les tickets, eux, restent) → le retour arrière ne peut plus les rendre
 TRAP-052 `Project.hoursSpent` est STOCKÉ : celui d'Oxy vaut 0 h alors que ses tâches importées portent 21 h (jamais rafraîchi) → le premier changement de temps sur Oxy le fera passer à 21 h ; ce n'est pas la reprise qui l'ajoute
 TRAP-053 une contrainte CHECK posée sur une colonne qui porte une clé étrangère avec action (CASCADE, SET NULL) est REFUSÉE (MySQL 8 comme MariaDB) → pour faire échouer une migration sous condition, insérer un COUNT(*) dans une table temporaire dont la CHECK exige 0 (voir suppression_taches)
+TRAP-054 les modules du backend importent `server-only`, qui REFUSE de se charger hors d'un serveur React → un script tsx qui importe une route ou lib/api-catalog.ts plante (« Cannot find module 'server-only' ») ; test-api-catalog.ts le redirige vers next/dist/compiled/server-only/empty.js (Module._resolveFilename) avant un `require`, un `import` serait remonté avant le détour
+TRAP-055 un route.ts ne peut exporter que GET/POST/… et `dynamic` (validation des routes de Next) → la description d'une route voyage SUR la fonction exportée (`POST.meta`, posée par adminRoute), pas dans un export à côté
+TRAP-056 le jeton en lecture seule laisse passer toute requête GET → une route qui écrirait en GET (ex. un brouillon IA qui enregistrerait) deviendrait inscriptible en lecture seule ; les brouillons Gemini actuels (triage/draft, automations/draft, veille/prefill) ne font que lire
+TRAP-057 depuis DEC-073, TRAP-044 a une issue propre : agir sur la prod au nom de Denis = un jeton d'API qu'il crée dans Paramètres et fournit (lecture seule s'il ne s'agit que de lire), plutôt qu'un UPDATE SQL direct
 
 ## STATE
 branch=main
@@ -264,6 +286,7 @@ wip=aucun
 done=[14/10] tables de tâches supprimées (DEC-071, migration suppression_taches) : seed.ts (démo) et import-asana.ts créent des tickets ; répétée sur une nouvelle copie de la prod (799 tickets, 99 sessions, 159,36 h, heures et avancement des projets inchangés), garde-fou testé dans les deux sens ; HTTP 63/63, Chrome 25/25
 done=[14/10] déployé (35eb714), suppression_taches appliquée en prod : tickets, commentaires, critères, pièces jointes, sessions et heures des projets identiques avant/après ; sauvegarde ~/backups/taches-en-tickets/avant-suppression-20261014-140213.sql ; commentaire ajouté sur CC-365 (toujours EN_REVUE)
 done=[14/10] filtres en retour à la ligne (DEC-072) : 20/20 dans Chrome à 1440 et 1100 px (Tickets en tableau et Kanban, saisies RH), page sans débordement horizontal ; types, lint, build OK ; déployé (bd0430f)
+done=[14/10] API utilisable hors écran (DEC-073 à DEC-077, migration jetons_api) : jetons d'API (Paramètres, Comptes), doc tirée des schémas (34 routes, 58 opérations, 135 actions, OpenAPI), erreurs détaillées, références de tickets, update partiel, serveur MCP ; API.md ; HTTP 117/117 + non-régression 63/63, Chrome 59/59 sur builds de production, client MCP officiel (SDK 1.32, protocole 2025-11-25) OK, test-api-catalog 371/371, calculs OK ; types, lint, build des deux applications OK
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — débloqué par DEC-027 (codialis.files) ; le socle Drive reste committé et inutilisé, on le retire quand le service maison aura fait ses preuves
 blocked=DEC-009 — confirmer que le calendrier RH peut rester visible par toute l'équipe

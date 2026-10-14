@@ -10,6 +10,7 @@ Deux surfaces, deux publics :
 |---|---|---|
 | `/api/{content,settings,accounts/team,newsletter,contact,health}` | `../frontend-public` — le site vitrine statique | aucune (routes publiques) + CORS |
 | `/api/auth/login` et `/api/admin/**` | `../frontend-admin` — le back-office | `Authorization: Bearer <JWT>` |
+| `/api/admin/**`, `/api/mcp` | scripts, Claude Code et autres agents (voir `../API.md`) | `Authorization: Bearer cdl_…` (jeton d'API personnel) |
 
 Le modèle de données, les règles métier et l'historique des décisions produit
 documentés plus bas vivent ici : ce sont eux que l'API expose. Les écrans qui
@@ -76,7 +77,7 @@ qui vient du commercial.
 
 ## Stack notes
 
-- **Auth**: custom credentials + JWT signé (`src/lib/auth.ts`), **sans cookie** — le jeton est renvoyé dans le corps de `POST /api/auth/login` et vérifié ensuite dans l'en-tête `Authorization: Bearer`. Pas NextAuth — v5 is still beta and this app targets bleeding-edge Next.js 16, so a minimal `jose`-based session was safer than chasing compatibility.
+- **Auth**: custom credentials + JWT signé (`src/lib/auth.ts`), **sans cookie** — le jeton est renvoyé dans le corps de `POST /api/auth/login` et vérifié ensuite dans l'en-tête `Authorization: Bearer`. Le même en-tête accepte un jeton d'API personnel (`cdl_…`, `src/lib/api-tokens.ts`), créé dans Paramètres, révocable, en lecture seule ou non ; un jeton ne gère pas les jetons. Pas NextAuth — v5 is still beta and this app targets bleeding-edge Next.js 16, so a minimal `jose`-based session was safer than chasing compatibility.
 - **Data**: Prisma + SQLite (`prisma/schema.prisma`, `prisma/seed.ts`). Seed data is ported directly from the prototype's data constants (`ALL_PROJECTS`, `PROJECT_EPICS`, `DEVQ`, `TRIAGE`, `PIPE`, `THREADS`, `WEEK_LOG`, `CASH_IN`, `TEAM_PROFIT`, invoices, resources, automations, `QUOTE`, `SPEC_DOC`, etc.).
 - **Routing**: route handlers only (`src/app/api/**`). ~~Two route groups `(app)`/`(client)`, gated by `src/proxy.ts`.~~ Les écrans, les route groups et le proxy vivent désormais dans `../frontend-admin`.
 - **Mutations**: ~~Server Actions, no separate REST/API layer.~~ Chaque écran a une route `POST /api/admin/<écran>` qui distribue sur un champ `action`, validé par une union discriminée zod. Les Server Actions existent toujours côté frontend-admin, mais ne font plus que traduire un `FormData` en appel HTTP — voir « API admin » ci-dessous.

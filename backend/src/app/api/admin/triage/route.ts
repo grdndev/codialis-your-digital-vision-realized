@@ -1,14 +1,19 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, parseBody, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { USER_IDENTITY } from "@/lib/user-identity";
+import { TICKET_ID_DESCRIPTION, withTicketIds } from "@/lib/ticket-ref";
 
 export const dynamic = "force-dynamic";
 
 // Écran « Remontées client » — le triage des signalements remontés par un client.
 
+const querySchema = z.object({
+  ref: z.string().optional().describe("Référence du ticket dont charger le dossier"),
+});
+
 export const GET = adminRoute(["PM", "DIR"], async (_ctx, request) => {
-  const ref = request.nextUrl.searchParams.get("ref");
+  const { ref } = parseQuery(querySchema, request);
 
   const [all, team] = await Promise.all([
     prisma.ticket.findMany({
@@ -40,30 +45,37 @@ export const GET = adminRoute(["PM", "DIR"], async (_ctx, request) => {
     team: team.map((u) => ({ id: u.id, name: u.name, initials: u.initials, role: u.role })),
     detail,
   };
+}, {
+  summary:
+    "Remontées client : tickets signalés par un client, équipe, et le dossier complet (`detail`) du ticket choisi par `ref` (le premier par défaut).",
+  query: querySchema,
 });
 
 const bodySchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("qualify"),
-    ticketId: z.string().min(1),
+    ticketId: z.string().min(1).describe(TICKET_ID_DESCRIPTION),
     module: z.string().nullable(),
     severity: z.enum(["BLOQUANT", "MAJEUR", "MINEUR"]).nullable(),
     assigneeId: z.string().nullable(),
     estHours: z.number().min(0),
-    nextState: z.enum(["A_QUALIFIER", "A_CHIFFRER", "TRANSMIS", "DEVIS_ENVOYE", "CLOS"]).nullable(),
-  }),
-  z.object({ action: z.literal("reopen"), ticketId: z.string().min(1) }),
+    nextState: z
+      .enum(["A_QUALIFIER", "A_CHIFFRER", "TRANSMIS", "DEVIS_ENVOYE", "CLOS"])
+      .nullable()
+      .describe("null = état du triage inchangé"),
+  }).describe("Qualifie une remontée : module, gravité, assigné, estimation, état du triage."),
+  z.object({ action: z.literal("reopen"), ticketId: z.string().min(1).describe(TICKET_ID_DESCRIPTION) }).describe(
+    "Remet une remontée à qualifier.",
+  ),
   z.object({
     action: z.literal("add-reply"),
-    ticketId: z.string().min(1),
+    ticketId: z.string().min(1).describe(TICKET_ID_DESCRIPTION),
     body: z.string().min(1),
-  }),
+  }).describe("Ajoute une réponse au fil du triage, au nom du compte appelant."),
 ]);
 
 export const POST = adminRoute(["PM", "DIR"], async ({ user }, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await withTicketIds(await parseBody(bodySchema, request));
 
   switch (body.action) {
     case "qualify":
@@ -101,4 +113,4 @@ export const POST = adminRoute(["PM", "DIR"], async ({ user }, request) => {
       });
       return;
   }
-});
+}, { summary: "Triage des remontées client (PM, DIR).", body: bodySchema });

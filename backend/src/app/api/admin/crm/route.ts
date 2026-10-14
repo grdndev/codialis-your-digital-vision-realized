@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, parseBody } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { USER_IDENTITY } from "@/lib/user-identity";
 import type { DealStage } from "@prisma/client";
@@ -47,12 +47,17 @@ export const GET = adminRoute(["PM", "DIR"], async () => {
     clients,
     quarterlyTarget: setting?.quarterlyTargetEUR ?? DEFAULT_QUARTERLY_TARGET,
   };
+}, {
+  summary:
+    "Écran Prospection : affaires (`deals`, avec leurs notes), clients existants, objectif trimestriel en euros.",
 });
 
 const stageEnum = z.enum(["CONTACT", "QUALIFIE", "DEVIS", "NEGOCIATION", "SIGNE", "REFUSE"]);
 
 const bodySchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("move"), dealId: z.string().min(1), stage: stageEnum }),
+  z.object({ action: z.literal("move"), dealId: z.string().min(1), stage: stageEnum }).describe(
+    "Change l'étape d'une affaire ; probabilité et prochaine action suivent le barème de l'étape.",
+  ),
   z.object({
     action: z.literal("update"),
     dealId: z.string().min(1),
@@ -67,23 +72,29 @@ const bodySchema = z.discriminatedUnion("action", [
     description: z.string(),
     devHours: z.number().nullable(),
     hourlyRate: z.number().nullable(),
-  }),
+  }).describe("Modifie une affaire (montant en k€)."),
   z.object({
     action: z.literal("set-loss-reason"),
     dealId: z.string().min(1),
     lossReason: z.string().nullable(),
     lossDetail: z.string().nullable(),
-  }),
-  z.object({ action: z.literal("add-note"), dealId: z.string().min(1), body: z.string().min(1) }),
-  z.object({ action: z.literal("update-quarterly-target"), value: z.number().positive() }),
+  }).describe("Motif de perte d'une affaire refusée."),
+  z.object({ action: z.literal("add-note"), dealId: z.string().min(1), body: z.string().min(1) }).describe(
+    "Ajoute une note à une affaire.",
+  ),
+  z.object({ action: z.literal("update-quarterly-target"), value: z.number().positive() }).describe(
+    "Objectif de chiffre d'affaires du trimestre, en euros.",
+  ),
   z.object({
     action: z.literal("create"),
     name: z.string().min(1),
     // Le formulaire saisit des k€ ; le stockage est en euros.
     amountK: z.number(),
     note: z.string(),
-  }),
-  z.object({ action: z.literal("import-csv"), csv: z.string() }),
+  }).describe("Nouvelle affaire, à l'étape CONTACT."),
+  z.object({ action: z.literal("import-csv"), csv: z.string() }).describe(
+    "Importe des prospects. En-tête attendu (ordre libre) : nom, montant, note, email, telephone, source ; seul « nom » est obligatoire.",
+  ),
   z.object({
     action: z.literal("convert-to-project"),
     dealId: z.string().min(1),
@@ -91,7 +102,9 @@ const bodySchema = z.discriminatedUnion("action", [
     clientId: z.string().nullable(),
     clientName: z.string().max(200),
     projectName: z.string().min(1).max(200),
-  }),
+  }).describe(
+    "Ouvre le projet d'une affaire SIGNE, rattaché à un client existant (`clientId`) ou créé au nom de `clientName`.",
+  ),
 ]);
 
 // Même règle que sur l'écran Projets : le sigle se déduit du nom.
@@ -133,9 +146,7 @@ function parseCsvLine(line: string): string[] {
 }
 
 export const POST = adminRoute(["PM", "DIR"], async ({ user }, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await parseBody(bodySchema, request);
 
   switch (body.action) {
     case "move":
@@ -320,4 +331,4 @@ export const POST = adminRoute(["PM", "DIR"], async ({ user }, request) => {
       return { imported, skipped };
     }
   }
-});
+}, { summary: "Pipeline commercial (PM, DIR). Montants saisis en k€, stockés en euros.", body: bodySchema });

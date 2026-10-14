@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
+import { adminRoute, parseBody, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
 import { USER_IDENTITY } from "@/lib/user-identity";
 
@@ -15,19 +15,14 @@ const DEFAULT_MONTHLY_CHARGES = 21400;
 const DEFAULT_MONTHLY_REVENUE_TARGET = 45000;
 
 const querySchema = z.object({
-  monthStart: z.string().datetime(),
-  monthEnd: z.string().datetime(),
+  monthStart: z.string().datetime().describe("Début de la période (instant ISO, inclus)"),
+  monthEnd: z.string().datetime().describe("Fin de la période (instant ISO, exclue)"),
 });
 
 export const GET = adminRoute(["DIR"], async (_ctx, request) => {
-  const params = request.nextUrl.searchParams;
-  const parsed = querySchema.safeParse({
-    monthStart: params.get("monthStart"),
-    monthEnd: params.get("monthEnd"),
-  });
-  if (!parsed.success) badRequest("Période invalide");
-  const monthStart = new Date(parsed.data.monthStart);
-  const monthEnd = new Date(parsed.data.monthEnd);
+  const period = parseQuery(querySchema, request, "Période invalide");
+  const monthStart = new Date(period.monthStart);
+  const monthEnd = new Date(period.monthEnd);
 
   const [cashItems, teamProfit, projects, deals, decisions, setting, paidThisMonth, overdueInvoices] =
     await Promise.all([
@@ -53,24 +48,30 @@ export const GET = adminRoute(["DIR"], async (_ctx, request) => {
     paidThisMonth,
     overdueInvoices,
   };
+}, {
+  summary:
+    "Pilotage (DIR) : trésorerie prévisionnelle, rentabilité par personne, projets chiffrés, affaires, décisions, charges et objectif mensuels, factures payées sur la période, factures en retard.",
+  query: querySchema,
 });
 
 const bodySchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("update-monthly-charges"), value: z.number().min(0) }),
-  z.object({ action: z.literal("update-monthly-revenue-target"), value: z.number().positive() }),
+  z.object({ action: z.literal("update-monthly-charges"), value: z.number().min(0) }).describe(
+    "Charges mensuelles de l'agence, en euros.",
+  ),
+  z.object({ action: z.literal("update-monthly-revenue-target"), value: z.number().positive() }).describe(
+    "Objectif de chiffre d'affaires mensuel, en euros.",
+  ),
   z.object({
     action: z.literal("add-decision"),
     title: z.string().min(1),
     detail: z.string(),
     impact: z.string(),
     tag: z.string(),
-  }),
+  }).describe("Ajoute une décision au journal, datée du jour."),
 ]);
 
 export const POST = adminRoute(["DIR"], async ({ user }, request) => {
-  const parsed = bodySchema.safeParse(await jsonBody(request));
-  if (!parsed.success) badRequest("Requête invalide");
-  const body = parsed.data;
+  const body = await parseBody(bodySchema, request);
 
   if (body.action === "add-decision") {
     // L'auteur de la décision est la session.
@@ -99,4 +100,4 @@ export const POST = adminRoute(["DIR"], async ({ user }, request) => {
   } else {
     await prisma.companySetting.create({ data: { [field]: body.value } });
   }
-});
+}, { summary: "Charges et objectif mensuels, journal des décisions (DIR).", body: bodySchema });

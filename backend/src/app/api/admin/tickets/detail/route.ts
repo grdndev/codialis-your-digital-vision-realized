@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminRoute, badRequest } from "@/lib/admin-api";
+import { adminRoute, parseQuery } from "@/lib/admin-api";
 import { avecUrlPublique } from "@/lib/files";
 import { prisma } from "@/lib/prisma";
 import { USER_IDENTITY } from "@/lib/user-identity";
@@ -14,20 +14,18 @@ export const dynamic = "force-dynamic";
 // Renvoie `{ ticket: null }` sur une référence inconnue : c'est l'écran qui
 // décide d'afficher un 404, l'API ne fait que constater l'absence.
 
-const querySchema = z.union([
-  z.object({ ref: z.string().min(1) }),
-  z.object({ id: z.string().min(1) }),
-]);
+const querySchema = z
+  .object({
+    ref: z.string().min(1).optional().describe("Référence du ticket (ex. « CC-365 »)"),
+    id: z.string().min(1).optional().describe("Identifiant du ticket"),
+  })
+  .refine((q) => q.ref || q.id, { message: "Référence ou identifiant requis" });
 
 export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
-  const params = request.nextUrl.searchParams;
-  const parsed = querySchema.safeParse(
-    params.get("ref") ? { ref: params.get("ref") } : { id: params.get("id") },
-  );
-  if (!parsed.success) badRequest("Référence invalide");
+  const query = parseQuery(querySchema, request, "Référence invalide");
 
   const ticket = await prisma.ticket.findUnique({
-    where: "ref" in parsed.data ? { ref: parsed.data.ref } : { id: parsed.data.id },
+    where: query.ref ? { ref: query.ref } : { id: query.id },
     include: {
       project: { include: { client: true } },
       epic: true,
@@ -70,4 +68,8 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
     projects,
     sessions,
   };
+}, {
+  summary:
+    "Un ticket et tout son dossier : description, étapes, critères, commentaires, pièces jointes (avec leur `url` publique), sessions de temps mesuré. `ticket` vaut null si la référence est inconnue. `epics`, `team` et `projects` alimentent le formulaire de modification.",
+  query: querySchema,
 });
