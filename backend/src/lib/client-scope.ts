@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { refNumber } from "@/lib/refs";
 
 // Le projet auquel un compte client est affecté.
 //
@@ -14,4 +15,25 @@ export async function clientProjectId(userId: string): Promise<string | null> {
     select: { projectId: true },
   });
   return assignment?.projectId ?? null;
+}
+
+// Les épics du projet et leurs tickets, pour les écrans « Avancement » et
+// « Fonctionnalités » du portail. Le client ne voit d'un ticket que son
+// intitulé, sa description et son état : ni assigné, ni temps, ni estimation.
+// Les tickets suivent l'ordre de leur numérotation, celui des anciennes
+// tâches (CC-365).
+export async function portalEpics(projectId: string) {
+  const epics = await prisma.epic.findMany({
+    where: { projectId },
+    orderBy: { order: "asc" },
+    include: {
+      tickets: {
+        select: { id: true, ref: true, title: true, description: true, status: true, updatedAt: true },
+      },
+    },
+  });
+  return epics.map((e) => ({
+    ...e,
+    tickets: [...e.tickets].sort((a, b) => refNumber(a.ref) - refNumber(b.ref)),
+  }));
 }

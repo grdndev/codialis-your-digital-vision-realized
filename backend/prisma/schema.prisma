@@ -264,6 +264,14 @@ model Epic {
   @@index([projectId])
 }
 
+// OBSOLÈTE (CC-365) — Task, TaskCriterion, TaskComment et TaskAttachment ne
+// sont plus lues ni écrites par aucun écran. Une « tâche » n'existe plus : le
+// travail d'un projet est fait de tickets, rattachés à un épic ou non. La
+// migration `taches_en_tickets` a copié chaque tâche en ticket SOUS LE MÊME
+// IDENTIFIANT, avec ses critères, commentaires et pièces jointes, et rebranché
+// ses sessions et saisies de temps. Les tables restent en base, intactes, le
+// temps de valider la reprise ; une migration suivante les supprimera, avec
+// les colonnes `taskId` de WorkSession et TimeEntry.
 model Task {
   id          String     @id @default(cuid())
   epicId      String
@@ -345,6 +353,9 @@ model Ticket {
   creator        User?       @relation("TicketCreator", fields: [creatorId], references: [id])
   clientReported Boolean     @default(false)
   triageState    TriageState @default(A_QUALIFIER)
+  // Échéance : un jour, sans heure qui compte. Reprise des anciennes tâches
+  // (CC-365), qui la portaient : 53 en avaient une en production.
+  dueAt          DateTime?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 

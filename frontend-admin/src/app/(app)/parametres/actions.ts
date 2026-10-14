@@ -74,7 +74,7 @@ export async function changePasswordAction(
   return { done: true };
 }
 
-// Les horaires bornent le temps mesuré : une tâche laissée « en cours » le soir
+// Les horaires bornent le temps mesuré : un ticket laissé « en cours » le soir
 // ne compte ni la nuit, ni le week-end, ni la pause. Les champs `time` du
 // formulaire arrivent en « HH:MM », l'API compte en minutes depuis minuit —
 // c'est une heure de bureau, pas un instant, aucun fuseau n'entre en jeu.

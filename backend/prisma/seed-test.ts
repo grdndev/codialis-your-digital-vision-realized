@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 // Jeu d'essai pour la vérification locale : un compte par rôle, un client, deux
-// projets, des lots, des tâches et des tickets. Rien de tout cela ne part en
+// projets, des épics et des tickets, dans un épic ou hors épic. Rien de tout cela ne part en
 // production — le script vise une base de test jetable, qu'il vide d'abord.
 //
 //   DATABASE_URL=... npx tsx prisma/seed-test.ts
@@ -90,22 +90,27 @@ async function main() {
     const epic = await prisma.epic.create({
       data: { projectId: project.id, title: `Lot ${project.initials}`, estHours: 12, order: 0 },
     });
+    // Trois tickets dans l'épic (ce qu'étaient les « tâches »), deux hors épic.
     for (let i = 1; i <= 3; i++) {
-      await prisma.task.create({
+      await prisma.ticket.create({
         data: {
+          ref: `${project.initials}-${300 + i}`,
+          projectId: project.id,
           epicId: epic.id,
-          title: `${project.initials} — tâche ${i}`,
+          type: "DEV",
+          title: `${project.initials} — développement ${i}`,
           description: "Description de test",
+          steps: "",
           estHours: 4,
           assigneeId: i === 1 ? worker.id : null,
-          order: i,
+          creatorId: pm.id,
         },
       });
     }
     for (let i = 1; i <= 2; i++) {
       await prisma.ticket.create({
         data: {
-          ref: `${project.initials}-${300 + i}`,
+          ref: `${project.initials}-${303 + i}`,
           projectId: project.id,
           type: i === 1 ? "BUG" : "DEV",
           severity: i === 1 ? "MAJEUR" : null,

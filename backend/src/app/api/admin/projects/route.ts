@@ -1,22 +1,20 @@
 import { z } from "zod";
 import { adminRoute, badRequest, jsonBody } from "@/lib/admin-api";
-import { reprendreFichiersJoints } from "@/lib/files";
 import { prisma } from "@/lib/prisma";
 import { visibleProjectIds } from "@/lib/project-access";
-import { closeSessions, openSession, refreshProjectSpent } from "@/lib/work-sessions";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
 import { soldHoursFor } from "@/lib/agency-rates";
 import { recomputeProjectProgress } from "@/lib/project-progress";
-import type { TaskStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-// Écran « Projets » — liste, plus toutes les mutations des écrans projet
-// (liste, détail, fiche, détail de tâche), regroupées ici parce qu'elles
-// touchent le même agrégat.
+// Écran « Projets » — liste, plus les mutations des écrans projet (liste,
+// détail, fiche), regroupées ici parce qu'elles touchent le même agrégat. Le
+// travail d'un projet, lui, est fait de TICKETS, dans un épic ou non : il
+// s'écrit par la route Tickets (CC-365, il n'y a plus de « tâche »).
 
 // Lecture ouverte aux développeurs, mais bornée : un développeur ne voit que
-// les projets où il a une tâche ou un ticket assigné (voir project-access.ts).
+// les projets où il a un ticket assigné (voir project-access.ts).
 // Le tri des projets se fait donc ici et non à l'affichage — la requête ne doit
 // jamais rapporter les autres. La création d'un client ou d'un projet reste à la
 // direction et à la chefferie, contrôlée plus bas dans le POST.
@@ -56,41 +54,6 @@ function initialsOf(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-const NEXT_STATUS: Record<TaskStatus, TaskStatus | null> = {
-  A_FAIRE: "EN_COURS",
-  EN_COURS: "EN_REVUE",
-  EN_REVUE: "TERMINE",
-  TERMINE: null,
-};
-
-// Pose un statut sur une tâche. « En cours » lance le chronomètre au nom de
-// l'ASSIGNÉ, tout autre statut l'arrête : le temps se mesure, il ne se déclare
-// pas. Partagé par le changement unitaire et par le traitement en masse, pour
-// qu'aucun des deux n'oublie le chronomètre (TRAP-041). Rend l'avertissement à
-// afficher, s'il y en a un.
-async function applyTaskStatus(
-  task: { id: string; status: TaskStatus; assigneeId: string | null },
-  nextStatus: TaskStatus,
-  actorId: string,
-): Promise<string | undefined> {
-  if (nextStatus === task.status) return undefined;
-  let notice: string | undefined;
-  await prisma.$transaction(async (tx) => {
-    await tx.task.update({ where: { id: task.id }, data: { status: nextStatus } });
-    if (nextStatus !== "EN_COURS") {
-      await closeSessions(tx, { taskId: task.id });
-      return;
-    }
-    const started = await openSession(tx, { taskId: task.id }, task.assigneeId, actorId);
-    if (!started) notice = "Aucun assigné : le temps ne sera décompté pour personne.";
-    else if (task.assigneeId !== actorId)
-      notice = "Le temps sera décompté pour l'utilisateur assigné.";
-  });
-  return notice;
-}
-
-const taskStatus = z.enum(["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"]);
-
 const bodySchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("create-client"),
@@ -118,14 +81,6 @@ const bodySchema = z.discriminatedUnion("action", [
     dueAt: z.string().datetime().nullable(),
   }),
   z.object({
-    action: z.literal("create-task"),
-    epicId: z.string().min(1),
-    projectId: z.string().min(1),
-    title: z.string().min(1),
-    estHours: z.number().min(0),
-    assigneeId: z.string().nullable(),
-  }),
-  z.object({
     action: z.literal("update-epic"),
     epicId: z.string().min(1),
     title: z.string().min(1).max(200),
@@ -135,72 +90,17 @@ const bodySchema = z.discriminatedUnion("action", [
     dueAt: z.string().datetime().nullable(),
   }),
   z.object({ action: z.literal("delete-epic"), epicId: z.string().min(1) }),
-  z.object({
-    action: z.literal("update-task"),
-    taskId: z.string().min(1),
-    projectId: z.string().min(1),
-    epicId: z.string().min(1),
-    title: z.string().min(1).max(300),
-    description: z.string(),
-    estHours: z.number().min(0),
-    assigneeId: z.string().nullable(),
-    dueAt: z.string().datetime().nullable(),
-  }),
-  z.object({
-    action: z.literal("delete-task"),
-    taskId: z.string().min(1),
-    projectId: z.string().min(1),
-  }),
-  // `transition` fait avancer d'un cran, `status` vise une colonne précise —
-  // y compris en arrière : on doit pouvoir arrêter une tâche sans être forcé
-  // de la déclarer livrée.
-  z.object({
-    action: z.literal("update-task-status"),
-    taskId: z.string().min(1),
-    projectId: z.string().min(1),
-    transition: z.enum(["advance", "reopen"]).optional(),
-    status: taskStatus.optional(),
-  }),
-  // Traitement en masse des tâches d'un projet (CC-358), comme celui des
-  // tickets : `null` sur un champ veut dire « ne pas y toucher », et vider
-  // l'assigné est un choix explicite (`clearAssignee`). La clôture d'une tâche
-  // n'est pas réservée, contrairement à celle d'un ticket.
-  z.object({
-    action: z.literal("bulk-update-tasks"),
-    projectId: z.string().min(1),
-    taskIds: z.array(z.string().min(1)).min(1).max(200),
-    status: taskStatus.nullable(),
-    assigneeId: z.string().nullable(),
-    clearAssignee: z.boolean(),
-  }),
-  // Import JSON — poser d'un coup les lots, les tâches et les tickets d'un
-  // projet. Le contenu est validé par `importSchema` plus bas : ici on ne
+  // Import JSON — poser d'un coup les épics et les tickets d'un projet. Le contenu est validé par `importSchema` plus bas : ici on ne
   // reçoit que le texte brut, pour pouvoir répondre une erreur lisible plutôt
   // qu'un « requête invalide » qui ne dit pas où ça coince.
   z.object({
     action: z.literal("import-json"),
     projectId: z.string().min(1),
     payload: z.string().min(1).max(500_000),
-    // À qui confier d'emblée les tickets créés (CC-354). `null` : personne,
-    // ils attendent d'être distribués — c'était le seul comportement possible.
+    // À qui confier d'emblée les tickets créés (CC-354), y compris ceux qui
+    // arrivent sous `epics[].tasks`. `null` : personne, ils attendent d'être
+    // distribués — c'était le seul comportement possible.
     ticketAssigneeId: z.string().min(1).nullable().default(null),
-  }),
-  z.object({ action: z.literal("toggle-task-criterion"), criterionId: z.string().min(1) }),
-  z.object({
-    action: z.literal("add-task-criterion"),
-    taskId: z.string().min(1),
-    label: z.string().min(1).max(300),
-  }),
-  z.object({
-    action: z.literal("update-task-criterion"),
-    criterionId: z.string().min(1),
-    label: z.string().min(1).max(300),
-  }),
-  z.object({ action: z.literal("delete-task-criterion"), criterionId: z.string().min(1) }),
-  z.object({
-    action: z.literal("add-task-comment"),
-    taskId: z.string().min(1),
-    body: z.string().min(1),
   }),
   z.object({
     action: z.literal("update-client-contact"),
@@ -213,7 +113,7 @@ const bodySchema = z.discriminatedUnion("action", [
   // se décale, un chiffrage se révise. Restent dehors `initials` (préfixe des
   // références de tickets, deux préfixes sur un même projet n'auraient pas de
   // sens) et les colonnes calculées — avancement et heures passées reflètent
-  // les tâches et les saisies de temps, ce ne sont pas des saisies.
+  // les tickets et les saisies de temps, ce ne sont pas des saisies.
   z.object({
     action: z.literal("update-project"),
     projectId: z.string().min(1),
@@ -361,22 +261,6 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       return;
     }
 
-    case "create-task": {
-      const count = await prisma.task.count({ where: { epicId: body.epicId } });
-      await prisma.task.create({
-        data: {
-          epicId: body.epicId,
-          title: body.title,
-          estHours: body.estHours,
-          assigneeId: body.assigneeId,
-          order: count,
-          description: ""
-        },
-      });
-      await recomputeProjectProgress(body.projectId);
-      return;
-    }
-
     case "update-epic": {
       await prisma.epic.update({
         where: { id: body.epicId },
@@ -391,122 +275,11 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       return;
     }
 
-    case "delete-epic": {
-      // Les tâches du lot tombent avec lui (cascade au schéma) : supprimer un
-      // lot rempli n'est pas un geste anodin, on le refuse plutôt que de
-      // l'exécuter silencieusement.
-      const tasks = await prisma.task.count({ where: { epicId: body.epicId } });
-      if (tasks > 0) badRequest(`Ce lot porte ${tasks} tâche(s) : videz-le d'abord`);
+    case "delete-epic":
+      // Ses tickets ne tombent pas avec lui : la base les détache (SET NULL),
+      // ils restent au projet, hors épic. Rien du travail ne se perd.
       await prisma.epic.delete({ where: { id: body.epicId } });
       return;
-    }
-
-    case "update-task": {
-      const before = await prisma.task.findUnique({
-        where: { id: body.taskId },
-        select: { status: true, assigneeId: true },
-      });
-      if (!before) badRequest("Tâche introuvable");
-
-      // Passer la main pendant que le chronomètre tourne l'arrête pour le
-      // précédent assigné : les heures déjà comptées lui restent, et la tâche
-      // revient à « À faire » pour que le suivant la démarre lui-même.
-      const handover = before.status === "EN_COURS" && before.assigneeId !== body.assigneeId;
-
-      await prisma.$transaction(async (tx) => {
-        if (handover) await closeSessions(tx, { taskId: body.taskId });
-        await tx.task.update({
-          where: { id: body.taskId },
-          data: {
-            epicId: body.epicId,
-            title: body.title.trim(),
-            description: body.description,
-            estHours: body.estHours,
-            assigneeId: body.assigneeId,
-            dueAt: body.dueAt ? new Date(body.dueAt) : null,
-            ...(handover ? { status: "A_FAIRE" as TaskStatus } : {}),
-          },
-        });
-      });
-      await recomputeProjectProgress(body.projectId);
-      return handover
-        ? {
-            ok: true,
-            notice:
-              "Le temps en cours a été arrêté pour l'assigné précédent, la tâche est repassée à « À faire ».",
-          }
-        : undefined;
-    }
-
-    case "delete-task": {
-      const pieces = await prisma.taskAttachment.findMany({
-        where: { taskId: body.taskId },
-        select: { fileId: true },
-      });
-      await prisma.task.delete({ where: { id: body.taskId } });
-      await reprendreFichiersJoints(pieces.map((p) => p.fileId));
-      await recomputeProjectProgress(body.projectId);
-      await prisma.$transaction((tx) => refreshProjectSpent(tx, body.projectId));
-      return;
-    }
-
-    case "update-task-status": {
-      const task = await prisma.task.findUnique({ where: { id: body.taskId } });
-      if (!task) badRequest("Tâche introuvable");
-
-      const nextStatus: TaskStatus | null =
-        body.status ?? (body.transition === "reopen" ? "A_FAIRE" : NEXT_STATUS[task.status]);
-      // Une tâche déjà terminée n'a pas d'étape suivante.
-      if (!nextStatus || nextStatus === task.status) return;
-
-      const notice = await applyTaskStatus(task, nextStatus, user.id);
-      await recomputeProjectProgress(body.projectId);
-      return notice ? { ok: true, notice } : undefined;
-    }
-
-    case "bulk-update-tasks": {
-      if (!body.status && !body.assigneeId && !body.clearAssignee) {
-        badRequest("Aucune modification demandée");
-      }
-      // Bornées au projet de l'écran : une sélection ne déborde pas sur un
-      // autre projet, même avec des identifiants retouchés.
-      const where = { id: { in: body.taskIds }, epic: { projectId: body.projectId } };
-      const tasks = await prisma.task.findMany({ where });
-      if (!tasks.length) badRequest("Aucune tâche sélectionnée");
-
-      // L'assigné se pose d'abord : changer de porteur arrête le chronomètre
-      // du précédent et la tâche revient à « À faire », puis le statut demandé
-      // s'applique par-dessus. Le retour à « À faire » vaut même quand on
-      // redemande « En cours » : sans lui, le statut serait déjà le bon et le
-      // chronomètre du nouvel assigné ne partirait jamais.
-      if (body.assigneeId || body.clearAssignee) {
-        const nextAssignee = body.clearAssignee ? null : body.assigneeId;
-        for (const task of tasks) {
-          if (task.assigneeId === nextAssignee) continue;
-          const handover = task.status === "EN_COURS";
-          await prisma.$transaction(async (tx) => {
-            if (handover) await closeSessions(tx, { taskId: task.id });
-            await tx.task.update({
-              where: { id: task.id },
-              data: {
-                assigneeId: nextAssignee,
-                ...(handover ? { status: "A_FAIRE" as TaskStatus } : {}),
-              },
-            });
-          });
-        }
-      }
-
-      const notices = new Set<string>();
-      if (body.status) {
-        for (const task of await prisma.task.findMany({ where })) {
-          const notice = await applyTaskStatus(task, body.status, user.id);
-          if (notice) notices.add(notice);
-        }
-      }
-      await recomputeProjectProgress(body.projectId);
-      return { ok: true, count: tasks.length, notice: [...notices].join(" ") || undefined };
-    }
 
     case "import-json": {
       const project = await prisma.project.findUnique({ where: { id: body.projectId } });
@@ -547,7 +320,51 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       const epicByTitle = new Map(existingEpics.map((e) => [e.title.toLowerCase(), e.id]));
       let order = existingEpics.length;
       let createdEpics = 0;
-      let createdTasks = 0;
+
+      // `epics[].tasks` et `tickets` donnent la même chose, un ticket : les
+      // fichiers rédigés quand les épics portaient des « tâches » s'importent
+      // toujours (CC-365).
+      const prefix = `${project.initials}-`;
+      let createdTickets = 0;
+      const createTicket = async (data: {
+        epicId: string | null;
+        type: "BUG" | "DEV";
+        severity?: "BLOQUANT" | "MAJEUR" | "MINEUR";
+        devNature?: "FRONT" | "BACK" | "API" | "DESIGN";
+        title: string;
+        description?: string;
+        steps?: string;
+        estHours?: number;
+      }) => {
+        await withUniqueRef(
+          async () => {
+            const refs = await prisma.ticket.findMany({
+              where: { ref: { startsWith: prefix } },
+              select: { ref: true },
+            });
+            return `${prefix}${(maxSuffix(refs.map((r) => r.ref), prefix) ?? 300) + 1}`;
+          },
+          (ref) =>
+            prisma.ticket.create({
+              data: {
+                ref,
+                projectId: project.id,
+                epicId: data.epicId,
+                type: data.type,
+                // La gravité ne concerne qu'un bug, la nature qu'un développement.
+                severity: data.type === "BUG" ? (data.severity ?? "MINEUR") : null,
+                devNature: data.type === "DEV" ? (data.devNature ?? null) : null,
+                title: data.title,
+                description: data.description ?? "",
+                steps: data.steps ?? "",
+                estHours: data.estHours ?? 0,
+                assigneeId: body.ticketAssigneeId,
+                creatorId: user.id,
+              },
+            }),
+        );
+        createdTickets++;
+      };
 
       for (const epic of epics) {
         let epicId = epicByTitle.get(epic.title.toLowerCase());
@@ -565,96 +382,19 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
           epicByTitle.set(epic.title.toLowerCase(), epicId);
           createdEpics++;
         }
-        let taskOrder = await prisma.task.count({ where: { epicId } });
         for (const task of epic.tasks) {
-          await prisma.task.create({
-            data: {
-              epicId,
-              title: task.title,
-              description: task.description ?? "",
-              estHours: task.estHours ?? 0,
-              order: taskOrder++,
-            },
-          });
-          createdTasks++;
+          await createTicket({ epicId, type: "DEV", ...task });
         }
       }
 
-      const prefix = `${project.initials}-`;
-      let createdTickets = 0;
       for (const ticket of tickets) {
         const epicId = ticket.epic ? (epicByTitle.get(ticket.epic.toLowerCase()) ?? null) : null;
-        await withUniqueRef(
-          async () => {
-            const refs = await prisma.ticket.findMany({
-              where: { ref: { startsWith: prefix } },
-              select: { ref: true },
-            });
-            return `${prefix}${(maxSuffix(refs.map((r) => r.ref), prefix) ?? 300) + 1}`;
-          },
-          (ref) =>
-            prisma.ticket.create({
-              data: {
-                ref,
-                projectId: project.id,
-                epicId,
-                type: ticket.type,
-                // La gravité ne concerne qu'un bug, la nature qu'un développement.
-                severity: ticket.type === "BUG" ? (ticket.severity ?? "MINEUR") : null,
-                devNature: ticket.type === "DEV" ? (ticket.devNature ?? null) : null,
-                title: ticket.title,
-                description: ticket.description ?? "",
-                steps: ticket.steps ?? "",
-                estHours: ticket.estHours ?? 0,
-                assigneeId: body.ticketAssigneeId,
-                creatorId: user.id,
-              },
-            }),
-        );
-        createdTickets++;
+        await createTicket({ ...ticket, epicId });
       }
 
       await recomputeProjectProgress(project.id);
-      return { ok: true, createdEpics, createdTasks, createdTickets };
+      return { ok: true, createdEpics, createdTickets };
     }
-
-    case "toggle-task-criterion": {
-      const criterion = await prisma.taskCriterion.findUnique({
-        where: { id: body.criterionId },
-      });
-      if (!criterion) badRequest("Critère introuvable");
-      await prisma.taskCriterion.update({
-        where: { id: body.criterionId },
-        data: { done: !criterion.done },
-      });
-      return;
-    }
-
-    case "add-task-criterion": {
-      const count = await prisma.taskCriterion.count({ where: { taskId: body.taskId } });
-      await prisma.taskCriterion.create({
-        data: { taskId: body.taskId, label: body.label.trim(), order: count },
-      });
-      return;
-    }
-
-    case "update-task-criterion":
-      await prisma.taskCriterion.update({
-        where: { id: body.criterionId },
-        data: { label: body.label.trim() },
-      });
-      return;
-
-    case "delete-task-criterion":
-      await prisma.taskCriterion.delete({ where: { id: body.criterionId } });
-      return;
-
-    case "add-task-comment":
-      // L'auteur est la session.
-      await prisma.taskComment.create({
-        data: { taskId: body.taskId, authorId: user.id, body: body.body },
-      });
-      return;
 
     case "update-client-contact":
       await prisma.client.update({
@@ -774,6 +514,8 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
 
 // Forme attendue du JSON d'import. Tout est facultatif sauf les titres : un
 // fichier rédigé à la main ne doit pas être refusé pour une estimation absente.
+// `epics[].tasks` reste accepté pour les fichiers déjà rédigés : chaque entrée
+// devient un ticket « Développement » de l'épic.
 const importSchema = z.object({
   epics: z
     .array(

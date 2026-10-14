@@ -7,8 +7,8 @@ import type { Role } from "@prisma/client";
 // par l'écran Projets et les filtres de l'écran Tickets.
 //
 // Un développeur ne voit que les projets où il a du travail : il est assigné à
-// au moins une TÂCHE ou un TICKET du projet. La chefferie et la direction
-// voient tout : ce sont elles qui répartissent.
+// au moins un TICKET du projet, dans un épic ou non. La chefferie et la
+// direction voient tout : ce sont elles qui répartissent.
 //
 // L'affectation par projet (`ProjectAssignment`) n'est PAS utilisée : aucun
 // écran ne l'a jamais remplie, la table est vide en production, et s'y fier
@@ -24,22 +24,12 @@ export async function visibleProjectIds(user: {
 }): Promise<string[] | null> {
   if (user.role !== "DEV") return null;
 
-  const [tickets, tasks] = await Promise.all([
-    prisma.ticket.findMany({
-      where: { assigneeId: user.id },
-      select: { projectId: true },
-      distinct: ["projectId"],
-    }),
-    // Une tâche ne porte pas le projet : il est sur son lot.
-    prisma.task.findMany({
-      where: { assigneeId: user.id },
-      select: { epic: { select: { projectId: true } } },
-    }),
-  ]);
-
-  const ids = new Set(tickets.map((t) => t.projectId));
-  for (const t of tasks) ids.add(t.epic.projectId);
-  return [...ids];
+  const tickets = await prisma.ticket.findMany({
+    where: { assigneeId: user.id },
+    select: { projectId: true },
+    distinct: ["projectId"],
+  });
+  return tickets.map((t) => t.projectId);
 }
 
 // Version prête à poser dans un `where` Prisma : rien pour les rôles non

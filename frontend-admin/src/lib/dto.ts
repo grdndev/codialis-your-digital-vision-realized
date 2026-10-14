@@ -72,21 +72,7 @@ export type TicketRow = {
   creatorId: string | null;
   clientReported: boolean;
   triageState: TriageState;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type TaskRow = {
-  id: string;
-  epicId: string;
-  title: string;
-  description: string;
-  status: TaskStatus;
-  estHours: number;
-  spentHours: number;
-  assigneeId: string | null;
   dueAt: Date | null;
-  order: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -106,8 +92,7 @@ export type ActionItemRow = {
   createdAt: Date;
 };
 
-// Une session de temps mesuré, telle que la fiche d'une tâche ou d'un ticket
-// la montre. `hours` est la durée retenue (corrigée à la main s'il y a lieu),
+// Une session de temps mesuré, telle que la fiche d'un ticket la montre. `hours` est la durée retenue (corrigée à la main s'il y a lieu),
 // `computedHours` ce que donnent les dates (horaires et partage).
 export type WorkSessionRow = {
   id: string;

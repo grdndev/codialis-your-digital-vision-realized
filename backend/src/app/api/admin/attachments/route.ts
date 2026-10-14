@@ -13,7 +13,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-// Pièces jointes des tickets et des tâches.
+// Pièces jointes des tickets.
 //
 // Route à part des mutations d'écran (CONV `mutations_api`) parce qu'elle ne
 // transporte pas du JSON : le corps est le FICHIER lui-même, brut. Le nom et la
@@ -25,8 +25,11 @@ export const dynamic = "force-dynamic";
 // Le fichier part vers codialis.files, dont seul le backend connaît le port
 // privé et le jeton ; la base ne garde que l'identifiant rendu.
 
+// `kind` ne vaut plus que `ticket` : les tâches sont devenues des tickets
+// (CC-365). Il reste dans l'adresse pour qu'une autre cible puisse s'ajouter
+// sans changer le contrat.
 const cibleSchema = z.object({
-  kind: z.enum(["ticket", "task"]),
+  kind: z.enum(["ticket"]),
   id: z.string().min(1),
   filename: z.string().min(1).max(255),
 });
@@ -49,7 +52,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
     filename: params.get("filename"),
   });
   if (!parsed.success) badRequest("Destination ou nom de fichier manquant");
-  const { kind, id, filename } = parsed.data;
+  const { id, filename } = parsed.data;
 
   const extension = extensionDe(filename);
   if (!extensionAcceptee(extension)) {
@@ -60,11 +63,8 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
 
   // La cible est vérifiée AVANT d'envoyer le fichier : sinon un mauvais
   // identifiant laisserait un fichier stocké que plus rien ne référence.
-  const cibleExiste =
-    kind === "ticket"
-      ? await prisma.ticket.findUnique({ where: { id }, select: { id: true } })
-      : await prisma.task.findUnique({ where: { id }, select: { id: true } });
-  if (!cibleExiste) notFound(kind === "ticket" ? "Ticket introuvable" : "Tâche introuvable");
+  const cibleExiste = await prisma.ticket.findUnique({ where: { id }, select: { id: true } });
+  if (!cibleExiste) notFound("Ticket introuvable");
 
   const contenu = await request.arrayBuffer();
   if (contenu.byteLength === 0) badRequest("Le fichier est vide");
@@ -80,10 +80,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
 
   const donnees = { filename, fileId, meta: libelleTaille(contenu.byteLength) };
   try {
-    const cree =
-      kind === "ticket"
-        ? await prisma.ticketAttachment.create({ data: { ticketId: id, ...donnees } })
-        : await prisma.taskAttachment.create({ data: { taskId: id, ...donnees } });
+    const cree = await prisma.ticketAttachment.create({ data: { ticketId: id, ...donnees } });
     return { id: cree.id, fileId, filename, meta: donnees.meta, url: urlPublique(fileId) };
   } catch (err) {
     // La ligne n'a pas pu être écrite : on reprend le fichier, sinon il reste
@@ -102,16 +99,9 @@ export const DELETE = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => 
   if (!parsed.success) badRequest("Pièce jointe non désignée");
   const { attachmentId } = parsed.data;
 
-  // On ne sait pas de quel côté elle vit : on cherche des deux.
-  const surTicket = await prisma.ticketAttachment.findUnique({ where: { id: attachmentId } });
-  const surTache = surTicket
-    ? null
-    : await prisma.taskAttachment.findUnique({ where: { id: attachmentId } });
-  const piece = surTicket ?? surTache;
+  const piece = await prisma.ticketAttachment.findUnique({ where: { id: attachmentId } });
   if (!piece) notFound("Pièce jointe introuvable");
-
-  if (surTicket) await prisma.ticketAttachment.delete({ where: { id: attachmentId } });
-  else await prisma.taskAttachment.delete({ where: { id: attachmentId } });
+  await prisma.ticketAttachment.delete({ where: { id: attachmentId } });
 
   // Après la base, jamais avant : un fichier effacé alors que la ligne reste
   // laisserait une pièce jointe morte à l'écran.

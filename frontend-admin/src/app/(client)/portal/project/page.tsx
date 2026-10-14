@@ -106,7 +106,7 @@ function DevisTab({ quote }: { quote: QuoteRow | null }) {
 }
 
 function FeaturesTab({ epics }: { epics: PortalEpic[] }) {
-  const featureEpics = epics.filter((e) => e.tasks.length > 0);
+  const featureEpics = epics.filter((e) => e.tickets.length > 0);
   if (featureEpics.length === 0) return <EmptyState text="Le détail des fonctionnalités n’est pas encore disponible." />;
 
   return (
@@ -115,7 +115,7 @@ function FeaturesTab({ epics }: { epics: PortalEpic[] }) {
         <div key={epic.id} className="rounded-xl border border-border bg-panel p-5">
           <h3 className="text-sm font-semibold text-text">{epic.title}</h3>
           <div className="mt-3 grid grid-cols-2 gap-2">
-            {epic.tasks.map((t) => (
+            {epic.tickets.map((t) => (
               <div key={t.id} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm">
                 <span className="truncate text-text">{t.title}</span>
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${CLIENT_STATE_BADGE_CLASS[t.status]}`}>

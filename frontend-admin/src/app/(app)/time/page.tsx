@@ -15,12 +15,12 @@ function dayLabel(key: string) {
 export default async function TimePage() {
   const user = await requireUser();
 
-  const { entries, activeProjects, allProjects, openTasks, openTickets, sessions } =
+  const { entries, activeProjects, allProjects, openTickets, sessions } =
     await apiGet<TimeScreen>("/api/admin/time");
 
   // Le temps se mesure : « En cours » démarre un chronomètre, le changement de
   // statut suivant l'arrête. La saisie manuelle reste en complément, pour ce
-  // qui ne relève d'aucune tâche — réunions, avant-vente, astreinte.
+  // qui ne relève d'aucun ticket — réunions, avant-vente, astreinte.
   const running = sessions.filter((s) => s.endedAt === null);
   const measuredByPerson = new Map<string, number>();
   for (const s of sessions) {
@@ -77,8 +77,8 @@ export default async function TimePage() {
           <div>
             <h2 className="text-sm font-semibold text-text">Temps mesuré</h2>
             <p className="mt-1 text-xs text-muted">
-              Une tâche passée à « En cours » démarre un chronomètre ; le changement de
-              statut suivant l’arrête. Deux tâches menées en même temps se partagent le
+              Un ticket passé à « En cours » démarre un chronomètre ; le changement de
+              statut suivant l’arrête. Deux tickets menés en même temps se partagent le
               temps écoulé, et seules vos heures de travail sont comptées.
             </p>
           </div>
@@ -90,11 +90,9 @@ export default async function TimePage() {
         {running.length > 0 ? (
           <div className="mt-4 flex flex-col gap-2">
             {running.map((s) => {
-              const what = s.task
-                ? { label: s.task.title, project: s.task.epic.project.client.name }
-                : s.ticket
-                  ? { label: `${s.ticket.ref} — ${s.ticket.title}`, project: s.ticket.project.client.name }
-                  : { label: "Sans rattachement", project: "—" };
+              const what = s.ticket
+                ? { label: `${s.ticket.ref} — ${s.ticket.title}`, project: s.ticket.project.client.name }
+                : { label: "Sans rattachement", project: "—" };
               return (
                 <div
                   key={s.id}
@@ -118,7 +116,7 @@ export default async function TimePage() {
             })}
           </div>
         ) : (
-          <p className="mt-4 text-sm text-muted">Aucune tâche en cours pour le moment.</p>
+          <p className="mt-4 text-sm text-muted">Aucun ticket en cours pour le moment.</p>
         )}
 
         {measuredByPerson.size > 0 ? (
@@ -177,7 +175,7 @@ export default async function TimePage() {
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[600px] border-collapse text-sm">
             <thead><tr className="border-b border-border text-left text-xs text-muted">
-              <th className="px-3 py-2 font-medium">Tâche</th><th className="px-3 py-2 font-medium">Projet</th>
+              <th className="px-3 py-2 font-medium">Activité</th><th className="px-3 py-2 font-medium">Projet</th>
               {days.map((day) => <th key={day} className="px-3 py-2 text-right font-medium">{dayLabel(day)}</th>)}
               <th className="px-3 py-2 text-right font-medium">Total</th>
             </tr></thead>
@@ -199,7 +197,7 @@ export default async function TimePage() {
             </tbody>
           </table>
         </div>
-        {/* Le tableau ci-dessus agrège par tâche : impossible d'y reprendre une
+        {/* Le tableau ci-dessus agrège par activité : impossible d'y reprendre une
             saisie précise. Le détail ci-dessous liste chaque écriture, avec de
             quoi la corriger ou la retirer. Le rattachement, lui, ne se change
             pas — il fait autorité sur les compteurs. */}
@@ -219,7 +217,7 @@ export default async function TimePage() {
                 >
                   <input type="hidden" name="entryId" value={e.id} />
                   <label className="flex flex-col gap-1 text-xs text-muted">
-                    Tâche
+                    Activité
                     <input name="label" defaultValue={e.label} required className="input w-56" />
                   </label>
                   <label className="flex flex-col gap-1 text-xs text-muted">
@@ -262,7 +260,7 @@ export default async function TimePage() {
         </details>
 
         <form action={addTimeEntryAction} className="mt-4 flex flex-wrap items-end gap-2">
-          <label className="flex flex-col gap-1 text-xs text-muted">Tâche<input name="label" required className="input w-48" /></label>
+          <label className="flex flex-col gap-1 text-xs text-muted">Activité<input name="label" required className="input w-48" /></label>
           <label className="flex flex-col gap-1 text-xs text-muted">Projet
             <select name="projectId" className="input w-44">
               <option value="">Interne / autre</option>
@@ -272,14 +270,9 @@ export default async function TimePage() {
           <label className="flex flex-col gap-1 text-xs text-muted">Rattaché à (optionnel)
             <select name="linkedTo" className="input w-56">
               <option value="">Aucun · projet seul</option>
-              <optgroup label="Tâches">
-                {openTasks.map((t) => (
-                  <option key={t.id} value={`task:${t.id}`}>{projectLabel(t.epic.project.client.name, t.title)}</option>
-                ))}
-              </optgroup>
               <optgroup label="Tickets">
                 {openTickets.map((t) => (
-                  <option key={t.id} value={`ticket:${t.id}`}>{projectLabel(t.project.client.name, t.title)}</option>
+                  <option key={t.id} value={`ticket:${t.id}`}>{projectLabel(t.project.client.name, `${t.ref} ${t.title}`)}</option>
                 ))}
               </optgroup>
             </select>
@@ -296,7 +289,7 @@ export default async function TimePage() {
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[750px] border-collapse text-sm">
             <thead><tr className="border-b border-border text-left text-xs text-muted">
-              <th className="px-3 py-2 font-medium">Qui</th><th className="px-3 py-2 font-medium">Tâche</th><th className="px-3 py-2 font-medium">Projet</th>
+              <th className="px-3 py-2 font-medium">Qui</th><th className="px-3 py-2 font-medium">Activité</th><th className="px-3 py-2 font-medium">Projet</th>
               <th className="px-3 py-2 font-medium">Facturable</th><th className="px-3 py-2 font-medium">Source</th>
               {days.map((day) => <th key={day} className="px-3 py-2 text-right font-medium">{dayLabel(day)}</th>)}
             </tr></thead>

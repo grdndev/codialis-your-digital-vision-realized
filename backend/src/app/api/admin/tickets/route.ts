@@ -6,11 +6,15 @@ import { USER_IDENTITY } from "@/lib/user-identity";
 import type { Prisma, Role, Severity, TaskStatus, TicketType } from "@prisma/client";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
 import { projectScope } from "@/lib/project-access";
-import { closeSessions, openSession } from "@/lib/work-sessions";
+import { recomputeProjectProgress } from "@/lib/project-progress";
+import { closeSessions, openSession, refreshProjectSpent } from "@/lib/work-sessions";
 
 export const dynamic = "force-dynamic";
 
-// Écran « Tickets » — liste filtrable.
+// Écran « Tickets » — liste filtrable, et toutes les écritures sur un ticket,
+// d'où qu'elles viennent (écran Tickets, fiche ticket, fiche projet). Un ticket
+// est l'unique unité de travail d'un projet, rattachée à un épic ou non : il
+// n'y a plus de « tâche » (CC-365).
 //
 // La liste des tickets n'est pas cloisonnée : toute l'équipe interne les voit.
 // Ce qui l'est, c'est la LISTE DES PROJETS servant de filtres, et seulement
@@ -145,6 +149,7 @@ const bodySchema = z.discriminatedUnion("action", [
     devNature: z.enum(["FRONT", "BACK", "API", "DESIGN"]).nullable(),
     estHours: z.number().min(0),
     assigneeId: z.string().nullable(),
+    dueAt: z.string().datetime().nullable().default(null),
   }),
   // Le kanban déplace une carte vers une colonne précise : l'enchaînement pas
   // à pas d'`update-status` ne sait pas exprimer ce geste.
@@ -176,6 +181,7 @@ const bodySchema = z.discriminatedUnion("action", [
     estHours: z.number().min(0),
     assigneeId: z.string().nullable(),
     epicId: z.string().nullable(),
+    dueAt: z.string().datetime().nullable().default(null),
   }),
   z.object({
     action: z.literal("toggle-criterion"),
@@ -201,6 +207,14 @@ const bodySchema = z.discriminatedUnion("action", [
     body: z.string().min(1),
   }),
 ]);
+
+// Un épic appartient à un projet : un ticket ne se range que dans un épic de
+// SON projet, sans quoi il apparaîtrait sous un épic d'ailleurs.
+async function checkEpic(epicId: string | null, projectId: string) {
+  if (!epicId) return;
+  const epic = await prisma.epic.findUnique({ where: { id: epicId }, select: { projectId: true } });
+  if (!epic || epic.projectId !== projectId) badRequest("Cet épic n'appartient pas au projet");
+}
 
 // « En cours » lance le chronomètre au nom de l'assigné, tout autre statut
 // l'arrête. Le temps se mesure à partir des changements de statut : personne
@@ -246,7 +260,9 @@ export const POST = adminRoute(
         const project = await prisma.project.findUnique({
           where: { id: body.projectId },
         });
-        const prefix = `${project?.initials ?? "TIX"}-`;
+        if (!project) badRequest("Projet introuvable");
+        await checkEpic(body.epicId, project.id);
+        const prefix = `${project.initials}-`;
         // Les références sont numérotées par projet, à la suite de la plus
         // haute déjà attribuée sur ce préfixe.
         const nextRef = async () => {
@@ -276,6 +292,7 @@ export const POST = adminRoute(
               title: body.title,
               description: body.description,
               estHours: body.estHours,
+              dueAt: body.dueAt ? new Date(body.dueAt) : null,
               // Un développeur qui crée un ticket sans désigner personne se
               // l'attribue : c'est le cas courant.
               assigneeId:
@@ -304,6 +321,9 @@ export const POST = adminRoute(
             },
           }),
         );
+        // L'avancement du projet se lit sur tous ses tickets : un de plus le
+        // fait bouger.
+        await recomputeProjectProgress(project.id);
         // La référence sert au frontend pour rediriger vers le ticket créé.
         return { ok: true, ref: ticket.ref };
       }
@@ -311,7 +331,9 @@ export const POST = adminRoute(
       case "set-status": {
         const ticket = await prisma.ticket.findUnique({ where: { id: body.ticketId } });
         if (!ticket) badRequest("Ticket introuvable");
-        return applyTicketStatus(ticket, body.status, user);
+        const result = await applyTicketStatus(ticket, body.status, user);
+        await recomputeProjectProgress(ticket.projectId);
+        return result;
       }
 
       case "bulk-update": {
@@ -343,13 +365,20 @@ export const POST = adminRoute(
           }
         }
 
+        // Les avertissements (temps compté pour un autre, ticket sans assigné)
+        // remontent une fois chacun, pour toute la sélection.
+        const notices = new Set<string>();
         if (body.status) {
           const fresh = await prisma.ticket.findMany({ where: { id: { in: body.ticketIds } } });
           for (const ticket of fresh) {
-            await applyTicketStatus(ticket, body.status, user);
+            const { notice } = await applyTicketStatus(ticket, body.status, user);
+            if (notice) notices.add(notice);
           }
         }
-        return { ok: true, count: tickets.length };
+        for (const projectId of new Set(tickets.map((t) => t.projectId))) {
+          await recomputeProjectProgress(projectId);
+        }
+        return { ok: true, count: tickets.length, notice: [...notices].join(" ") || undefined };
       }
 
       case "update": {
@@ -384,6 +413,7 @@ export const POST = adminRoute(
           nextRef = `${prefix}${(maxSuffix(refs.map((r) => r.ref), prefix) ?? 300) + 1}`;
         }
 
+        if (!movedProject) await checkEpic(body.epicId, ticket.projectId);
         if (handover) await prisma.$transaction((tx) => closeSessions(tx, { ticketId: body.ticketId }));
         await prisma.ticket.update({
           where: { id: body.ticketId },
@@ -404,8 +434,20 @@ export const POST = adminRoute(
             devNature: body.type === "DEV" ? body.devNature : null,
             estHours: body.estHours,
             assigneeId: body.assigneeId,
+            dueAt: body.dueAt ? new Date(body.dueAt) : null,
           },
         });
+        // Changer de projet emporte le ticket — et son temps passé — d'un
+        // projet à l'autre : les deux avancements et les deux compteurs
+        // d'heures suivent.
+        await recomputeProjectProgress(body.projectId);
+        if (movedProject) {
+          await recomputeProjectProgress(ticket.projectId);
+          await prisma.$transaction(async (tx) => {
+            await refreshProjectSpent(tx, ticket.projectId);
+            await refreshProjectSpent(tx, body.projectId);
+          });
+        }
         // La référence renvoyée est la NOUVELLE : le frontend s'en sert pour
         // revalider et rediriger, l'ancienne adresse n'existe plus.
         return {
@@ -439,7 +481,7 @@ export const POST = adminRoute(
         // — le travail a bien eu lieu.
         const ticket = await prisma.ticket.findUnique({
           where: { id: body.ticketId },
-          select: { ref: true },
+          select: { ref: true, projectId: true },
         });
         if (!ticket) badRequest("Ticket introuvable");
         await prisma.timeEntry.updateMany({
@@ -454,6 +496,10 @@ export const POST = adminRoute(
         // Après la base : la cascade a emporté les lignes, à nous de reprendre
         // les fichiers qu'elles désignaient.
         await reprendreFichiersJoints(pieces.map((p) => p.fileId));
+        // Ses sessions sont parties avec lui : le projet perd ce temps mesuré
+        // et ce ticket de son avancement.
+        await recomputeProjectProgress(ticket.projectId);
+        await prisma.$transaction((tx) => refreshProjectSpent(tx, ticket.projectId));
         return { ok: true, ref: ticket.ref };
       }
 

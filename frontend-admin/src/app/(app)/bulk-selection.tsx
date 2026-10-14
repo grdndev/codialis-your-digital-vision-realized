@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 // Sélection de lignes pour le traitement en masse : tickets de l'écran Tickets
-// et de la fiche projet, tâches d'un lot (CC-358).
+// et de la fiche projet, ceux d'un épic comme ceux hors épic (CC-358).
 //
 // Le comptage se fait en lisant les cases du formulaire plutôt qu'en tenant un
 // état par ligne : les lignes sont rendues par le serveur, elles n'ont pas
@@ -12,10 +12,9 @@ import type { ReactNode } from "react";
 // formulaire suffit, les évènements des cases y remontent.
 
 // Le nom des cases cochées, tel que l'action serveur le relit, et de quoi
-// accorder le bandeau : un ticket sélectionné, une tâche sélectionnée.
+// accorder le bandeau : un ticket sélectionné, deux tickets sélectionnés.
 const NOUNS = {
   ticketIds: ["ticket", "tickets", "sélectionné", "sélectionnés"],
-  taskIds: ["tâche", "tâches", "sélectionnée", "sélectionnées"],
 } as const;
 type Field = keyof typeof NOUNS;
 

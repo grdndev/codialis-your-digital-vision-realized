@@ -97,10 +97,10 @@ export default async function ParametresPage() {
         <div className="rounded-xl border border-border bg-panel p-5">
           <h2 className="text-sm font-semibold text-text">Mes horaires de travail</h2>
           <p className="mt-1 max-w-xl text-xs text-muted">
-            Le temps passé est mesuré : une tâche passée à « En cours » démarre un
+            Le temps passé est mesuré : un ticket passé à « En cours » démarre un
             chronomètre, un changement de statut l’arrête. Ces horaires le bornent — rien
             n’est compté la nuit, le week-end, les jours fériés ni pendant la pause. Et
-            deux tâches menées en même temps se partagent le temps écoulé.
+            deux tickets menés en même temps se partagent le temps écoulé.
             {settings.schedule.isDefault ? " Horaires par défaut de l’agence, à ajuster." : ""}
             {" "}Une soirée ou un week-end travaillés se déclarent dans l’écran RH, en
             heures supplémentaires.

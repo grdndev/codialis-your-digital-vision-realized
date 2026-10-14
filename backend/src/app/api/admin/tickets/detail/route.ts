@@ -8,17 +8,26 @@ import { sessionsOf } from "@/lib/work-sessions";
 export const dynamic = "force-dynamic";
 
 // GET /api/admin/tickets/detail?ref=  — un ticket et tout son dossier.
+// GET /api/admin/tickets/detail?id=   — le même, par son identifiant : c'est
+// ce que portent les adresses des anciennes tâches (/projects/…/tasks/<id>),
+// devenues des tickets sous le même identifiant (CC-365).
 // Renvoie `{ ticket: null }` sur une référence inconnue : c'est l'écran qui
 // décide d'afficher un 404, l'API ne fait que constater l'absence.
 
-const querySchema = z.object({ ref: z.string().min(1) });
+const querySchema = z.union([
+  z.object({ ref: z.string().min(1) }),
+  z.object({ id: z.string().min(1) }),
+]);
 
 export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
-  const parsed = querySchema.safeParse({ ref: request.nextUrl.searchParams.get("ref") });
+  const params = request.nextUrl.searchParams;
+  const parsed = querySchema.safeParse(
+    params.get("ref") ? { ref: params.get("ref") } : { id: params.get("id") },
+  );
   if (!parsed.success) badRequest("Référence invalide");
 
   const ticket = await prisma.ticket.findUnique({
-    where: { ref: parsed.data.ref },
+    where: "ref" in parsed.data ? { ref: parsed.data.ref } : { id: parsed.data.id },
     include: {
       project: { include: { client: true } },
       epic: true,

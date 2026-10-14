@@ -4,18 +4,17 @@ import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { fmtHours, fmtEUR, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel, coverageStatus } from "@/lib/format";
 import {
-  createEpicAction, createTaskAction, deleteEpicAction, importProjectJsonAction, updateClientContactAction,
+  createEpicAction, createEpicTicketAction, deleteEpicAction, importProjectJsonAction, updateClientContactAction,
   updateEpicAction, updateProjectDescriptionAction,
   addClientQuestionAction, markQuestionAskedAction, answerClientQuestionAction,
   updateProjectAction, updateClientAction, updateProjectPhaseAction, updateProjectCoverageAction,
-  bulkUpdateTasksAction,
 } from "../actions";
 import { bulkUpdateTicketsAction } from "../../tickets/actions";
 import { BulkSelection, SelectAll } from "../../bulk-selection";
 import type { ClientQuestionStatus, ProjectGroup, TaskStatus } from "@/lib/types";
 import type { ClientRef } from "@/lib/dto";
 import type {
-  ApiCredentialRow, ClientQuestionRow, ProjectDetail, ProjectDetailResponse, ProjectTicketRow,
+  ApiCredentialRow, ClientQuestionRow, ProjectDetail, ProjectDetailResponse, ProjectEpic, ProjectTicketRow,
 } from "../types";
 import {
   FilterGroup, FilterLink, Pagination, listParam, paginate, parsePaging, toggleValue,
@@ -82,7 +81,7 @@ export default async function ProjectDetailPage({
   if (result.access === "forbidden") {
     redirect(
       `/projects?liste=1&error=${encodeURIComponent(
-        "Ce projet ne vous est pas ouvert : aucune tâche ni aucun ticket ne vous y est assigné.",
+        "Ce projet ne vous est pas ouvert : aucun ticket ne vous y est assigné.",
       )}`,
     );
   }
@@ -90,12 +89,11 @@ export default async function ProjectDetailPage({
   // Un développeur consulte, il ne reconfigure pas le projet ni le client.
   const canEdit = user.role === "DIR" || user.role === "PM";
 
-  const workEpics = project.epics.filter((e) => e.tasks.length > 0 || e.estHours > 0);
-  const allTasks = project.epics.flatMap((e) => e.tasks.map((t) => ({ ...t, epicTitle: e.title })));
-
   const statusFilter = listParam(sp.status);
   const assigneeFilter = listParam(sp.assignee);
   const shownTickets = filterProjectTickets(tickets, statusFilter, assigneeFilter);
+  // La pagination ne porte que sur les tickets hors épic : ceux d'un épic
+  // s'affichent tous sous leur épic.
   const { page, perPage } = parsePaging(sp.page, sp.per);
 
   // Toute adresse de l'écran reconduit la vue, les filtres et la page en
@@ -242,17 +240,18 @@ export default async function ProjectDetailPage({
 
       {activeView === "list" ? (
         <ListView
-          epics={workEpics}
+          epics={project.epics}
           projectId={project.id}
           team={team}
           canClose={user.role !== "DEV"}
           tickets={tickets}
-          ticketPage={paginate(shownTickets, page, perPage)}
+          shownTickets={shownTickets}
+          loosePage={paginate(shownTickets.filter((t) => !t.epicId), page, perPage)}
           perPage={perPage}
           pageHref={(p, per) => projectHref({ page: p > 1 ? String(p) : null, per: String(per) })}
         />
       ) : activeView === "kanban" ? (
-        <KanbanView tasks={allTasks} projectId={project.id} tickets={shownTickets} />
+        <KanbanView tickets={shownTickets} epicTitle={new Map(project.epics.map((e) => [e.id, e.title]))} />
       ) : (
         <FicheView project={project} deadline={deadline} apis={apis} questions={questions} clients={clients} canEdit={canEdit} />
       )}
@@ -260,8 +259,8 @@ export default async function ProjectDetailPage({
   );
 }
 
-// Les filtres s'appliquent aux tickets des vues Liste et Kanban, pas aux
-// tâches des lots : c'est dans la liste des tickets qu'on se perdait.
+// Les filtres s'appliquent à tous les tickets des vues Liste et Kanban, ceux
+// des épics comme ceux qui n'en ont pas.
 function TicketFilters({
   statusFilter,
   assigneeFilter,
@@ -431,7 +430,7 @@ function FicheView({
                   </PField>
                 </div>
                 <p className="text-xs text-muted">
-                  L’avancement et les heures passées ne se saisissent pas : ils suivent les tâches et
+                  L’avancement et les heures passées ne se saisissent pas : ils suivent les tickets et
                   les saisies de temps. Les heures vendues se déduisent du montant vendu, au taux
                   réglé dans « Rentabilité &amp; temps ». Passer la phase en « Clôturé » horodate la
                   clôture.
@@ -660,18 +659,15 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-type EpicWithTasks = {
-  id: string;
-  title: string;
-  estHours: number;
-  // Les trois champs suivants n'étaient pas repris ici tant que le lot ne se
-  // modifiait pas ; le formulaire de reprise en a besoin.
-  objective: string | null;
-  leadId: string | null;
-  dueAt: Date | null;
-  lead: { name: string } | null;
-  tasks: { id: string; title: string; status: TaskStatus; estHours: number; spentHours: number; assignee: { name: string } | null }[];
-};
+// Le numéro d'une référence (406 pour AD-406). Dans un épic, les tickets se
+// suivent dans l'ordre de leur numérotation : les anciennes tâches ont été
+// numérotées dans leur ordre d'affichage (CC-365), ce classement le leur
+// conserve, et un ticket ajouté vient à la suite. Un tri sur le texte mettrait
+// AD-1000 avant AD-301.
+function refNumber(ref: string): number {
+  const n = Number.parseInt(ref.slice(ref.lastIndexOf("-") + 1), 10);
+  return Number.isFinite(n) ? n : 0;
+}
 
 function ListView({
   epics,
@@ -679,23 +675,36 @@ function ListView({
   team,
   canClose,
   tickets,
-  ticketPage,
+  shownTickets,
+  loosePage,
   perPage,
   pageHref,
 }: {
-  epics: EpicWithTasks[];
+  epics: ProjectEpic[];
   projectId: string;
   team: { id: string; name: string }[];
-  // Clôturer un ticket revient à la chefferie et à la direction (DEC-007) ; une
-  // tâche, elle, se clôt par qui la mène.
+  // Clôturer un ticket revient à la chefferie et à la direction (DEC-007),
+  // qu'il soit rangé dans un épic ou non.
   canClose: boolean;
-  // Tous les tickets du projet, pour le décompte d'en-tête ; `ticketPage` ne
-  // porte que la page affichée, filtres appliqués.
+  // Tous les tickets du projet, pour les décomptes et l'avancement des épics ;
+  // `shownTickets` est la même liste filtrée, `loosePage` la page affichée des
+  // tickets hors épic, filtres appliqués.
   tickets: ProjectTicketRow[];
-  ticketPage: { rows: ProjectTicketRow[]; page: number; pageCount: number; total: number };
+  shownTickets: ProjectTicketRow[];
+  loosePage: { rows: ProjectTicketRow[]; page: number; pageCount: number; total: number };
   perPage: number;
   pageHref: (page: number, perPage: number) => string;
 }) {
+  const bulkBar = (
+    <BulkBar
+      team={team}
+      statuses={TICKET_STATUSES.filter((s) => canClose || s !== "TERMINE")}
+      note={canClose ? undefined : "la clôture revient à la chefferie de projet"}
+    />
+  );
+  const loose = tickets.filter((t) => !t.epicId);
+  const looseOpen = loose.filter((t) => t.status !== "TERMINE").length;
+
   return (
     <div className="flex flex-col gap-3">
       {epics.length === 0 ? (
@@ -704,10 +713,16 @@ function ListView({
         </p>
       ) : (
         epics.map((epic) => {
-          const spent = epic.tasks.reduce((s, t) => s + t.spentHours, 0);
-          const est = epic.estHours || epic.tasks.reduce((s, t) => s + t.estHours, 0);
-          const done = epic.tasks.filter((t) => t.status === "TERMINE").length;
-          const pct = epic.tasks.length ? Math.round((done / epic.tasks.length) * 100) : 0;
+          // L'avancement et les heures de l'épic portent sur TOUS ses tickets ;
+          // les filtres ne réduisent que la liste affichée.
+          const all = tickets.filter((t) => t.epicId === epic.id);
+          const rows = shownTickets
+            .filter((t) => t.epicId === epic.id)
+            .sort((a, b) => refNumber(a.ref) - refNumber(b.ref));
+          const spent = all.reduce((s, t) => s + t.spentHours, 0);
+          const est = epic.estHours || all.reduce((s, t) => s + t.estHours, 0);
+          const done = all.filter((t) => t.status === "TERMINE").length;
+          const pct = all.length ? Math.round((done / all.length) * 100) : 0;
           return (
             <details key={epic.id} className="group rounded-xl border border-border bg-panel open:pb-2">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-3">
@@ -717,7 +732,9 @@ function ListView({
                 </div>
                 <div className="flex shrink-0 items-center gap-6 text-xs text-muted">
                   <span>{epic.lead?.name ?? "Non assigné"}</span>
-                  <span>{epic.tasks.length} tâches</span>
+                  <span>
+                    {all.length} ticket{all.length > 1 ? "s" : ""}
+                  </span>
                   <span>
                     {fmtHours(spent)} / {fmtHours(est)}
                   </span>
@@ -729,10 +746,10 @@ function ListView({
                   </div>
                 </div>
               </summary>
-              {/* Un lot mal nommé, une estimation à refaire, un responsable
+              {/* Un épic mal nommé, une estimation à refaire, un responsable
                   qui change : l'API l'acceptait déjà, rien ne l'appelait. */}
               <details className="border-t border-border px-5 py-2">
-                <summary className="cursor-pointer text-xs font-medium text-mint">Modifier le lot</summary>
+                <summary className="cursor-pointer text-xs font-medium text-mint">Modifier l’épic</summary>
                 <form action={updateEpicAction} className="mt-2 flex flex-wrap items-end gap-2">
                   <input type="hidden" name="projectId" value={projectId} />
                   <input type="hidden" name="epicId" value={epic.id} />
@@ -776,173 +793,78 @@ function ListView({
                     Enregistrer
                   </button>
                 </form>
-                {/* Un lot qui porte encore des tâches n'est pas supprimable :
-                    l'API refuse et le dit. */}
-                <form action={deleteEpicAction.bind(null, epic.id, projectId)} className="mt-2">
+                {/* Supprimer un épic ne supprime aucun ticket : ils restent au
+                    projet, hors épic. */}
+                <form action={deleteEpicAction.bind(null, epic.id, projectId)} className="mt-2 flex items-center gap-3">
                   <button
                     type="submit"
                     className="rounded-lg border border-red/40 px-3 py-1.5 text-xs font-medium text-red transition hover:bg-red/10"
                   >
-                    Supprimer le lot
+                    Supprimer l’épic
                   </button>
+                  {all.length > 0 ? (
+                    <span className="text-xs text-muted">
+                      Ses {all.length} ticket{all.length > 1 ? "s" : ""} resteront au projet, hors épic.
+                    </span>
+                  ) : null}
                 </form>
               </details>
               <div className="border-t border-border px-5 py-3">
-                {/* Une sélection par lot : le bandeau apparaît au-dessus du
-                    lot où l'on coche, pas en haut d'une page qu'on a quittée. */}
-                {epic.tasks.length > 0 ? (
-                <BulkSelection
-                  action={bulkUpdateTasksAction.bind(null, projectId)}
-                  field="taskIds"
-                  bar={<BulkBar team={team} statuses={TICKET_STATUSES} />}
-                >
-                <table className="w-full border-collapse text-sm">
-                  <thead>
-                    <tr className="text-left text-xs text-muted">
-                      <th className="w-8 py-1.5 pr-3 font-medium">
-                        <SelectAll field="taskIds" />
-                      </th>
-                      <th className="py-1.5 pr-4 font-medium">Tâche</th>
-                      <th className="py-1.5 pr-4 font-medium">Statut</th>
-                      <th className="py-1.5 pr-4 font-medium">Assigné</th>
-                      <th className="py-1.5 text-right font-medium">Passé / estimé</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {epic.tasks.map((task) => (
-                      <tr key={task.id} className="transition hover:bg-panel-2">
-                        <td className="py-2 pr-3">
-                          <input
-                            type="checkbox"
-                            name="taskIds"
-                            value={task.id}
-                            aria-label={`Sélectionner ${task.title}`}
-                            className="accent-mint"
-                          />
-                        </td>
-                        <td className="py-2 pr-4">
-                          <Link href={`/projects/${projectId}/tasks/${task.id}`} className="text-text hover:text-mint">
-                            {task.title}
-                          </Link>
-                        </td>
-                        <td className="whitespace-nowrap py-2 pr-4">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[task.status]}`}>
-                            {STATUS_LABEL[task.status]}
-                          </span>
-                        </td>
-                        <td className="whitespace-nowrap py-2 pr-4 text-muted">{task.assignee?.name ?? "Non assigné"}</td>
-                        <td className="whitespace-nowrap py-2 text-right text-muted">
-                          {fmtHours(task.spentHours)} / {fmtHours(task.estHours)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                </BulkSelection>
-                ) : null}
-                <NewTaskDisclosure projectId={projectId} epicId={epic.id} team={team} />
+                {/* Une sélection par épic : le bandeau apparaît au-dessus de
+                    l'épic où l'on coche, pas en haut d'une page qu'on a
+                    quittée. Même action que l'écran Tickets (CC-358). */}
+                {rows.length > 0 ? (
+                  <BulkSelection action={bulkUpdateTicketsAction} field="ticketIds" bar={bulkBar}>
+                    <input type="hidden" name="projectId" value={projectId} />
+                    <TicketTable rows={rows} />
+                  </BulkSelection>
+                ) : (
+                  <p className="py-1 text-sm text-muted">
+                    {all.length ? "Aucun ticket de cet épic pour ces filtres." : "Aucun ticket dans cet épic."}
+                  </p>
+                )}
+                <NewEpicTicketDisclosure projectId={projectId} epicId={epic.id} team={team} />
               </div>
             </details>
           );
         })
       )}
 
-      {/* Les tickets ne sont rattachés qu'au projet, pas forcément à un lot :
-          ils forment donc leur propre bloc plutôt que de se glisser dans un
-          épic auquel la plupart n'appartiennent pas. */}
+      {/* Les tickets qui ne relèvent d'aucun épic : bugs remontés en cours de
+          route, demandes ponctuelles. Ils forment leur propre bloc, paginé. */}
       <div className="rounded-xl border border-border bg-panel">
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <h2 className="text-sm font-semibold text-text">Tickets du projet</h2>
+          <h2 className="text-sm font-semibold text-text">Tickets hors épic</h2>
           <span className="text-xs text-muted">
-            {tickets.filter((t) => t.status !== "TERMINE").length} ouvert
-            {tickets.filter((t) => t.status !== "TERMINE").length > 1 ? "s" : ""} sur {tickets.length}
+            {looseOpen} ouvert{looseOpen > 1 ? "s" : ""} sur {loose.length}
           </span>
         </div>
-        {tickets.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-muted">Aucun ticket sur ce projet.</p>
-        ) : ticketPage.total === 0 ? (
-          <p className="px-5 py-4 text-sm text-muted">Aucun ticket pour ces filtres.</p>
+        {loose.length === 0 ? (
+          <p className="px-5 py-4 text-sm text-muted">Aucun ticket hors épic sur ce projet.</p>
+        ) : loosePage.total === 0 ? (
+          <p className="px-5 py-4 text-sm text-muted">Aucun ticket hors épic pour ces filtres.</p>
         ) : (
-          // Même bandeau que l'écran Tickets (CC-358), par la même action : la
-          // clôture réservée et les chronomètres obéissent à une seule règle.
           // Il porte sur la page affichée, filtres compris.
           <BulkSelection
             action={bulkUpdateTicketsAction}
             field="ticketIds"
             className="flex flex-col"
             barClassName="mx-5 mt-3"
-            bar={
-              <BulkBar
-                team={team}
-                statuses={TICKET_STATUSES.filter((s) => canClose || s !== "TERMINE")}
-                note={canClose ? undefined : "la clôture revient à la chefferie de projet"}
-              />
-            }
+            bar={bulkBar}
           >
-          <input type="hidden" name="projectId" value={projectId} />
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-xs text-muted">
-                <th className="w-8 py-2 pl-5 pr-3 font-medium">
-                  <SelectAll field="ticketIds" />
-                </th>
-                <th className="py-2 pr-4 font-medium">Réf.</th>
-                <th className="py-2 pr-4 font-medium">Type</th>
-                <th className="py-2 pr-4 font-medium">Titre</th>
-                <th className="py-2 pr-4 font-medium">Gravité · nature</th>
-                <th className="py-2 pr-4 font-medium">Assigné</th>
-                <th className="py-2 pr-5 text-right font-medium">Statut</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {ticketPage.rows.map((t) => (
-                <tr key={t.id} className="transition hover:bg-panel-2">
-                  <td className="py-2 pl-5 pr-3">
-                    <input
-                      type="checkbox"
-                      name="ticketIds"
-                      value={t.id}
-                      aria-label={`Sélectionner ${t.ref}`}
-                      className="accent-mint"
-                    />
-                  </td>
-                  <td className="whitespace-nowrap py-2 pr-4">
-                    <Link href={`/tickets/${t.ref}`} className="font-medium text-text hover:text-mint">
-                      {t.ref}
-                    </Link>
-                  </td>
-                  <td className="whitespace-nowrap py-2 pr-4">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${TICKET_TYPE_BADGE_CLASS[t.type]}`}>
-                      {TICKET_TYPE_LABEL[t.type]}
-                    </span>
-                  </td>
-                  <td className="py-2 pr-4">
-                    <Link href={`/tickets/${t.ref}`} className="text-text hover:text-mint">
-                      {t.title}
-                    </Link>
-                  </td>
-                  <td className="whitespace-nowrap py-2 pr-4 text-xs text-muted">
-                    {t.severity ? SEVERITY_LABEL[t.severity] : t.devNature ? DEV_NATURE_LABEL[t.devNature] : "—"}
-                  </td>
-                  <td className="whitespace-nowrap py-2 pr-4 text-muted">{t.assignee?.name ?? "Non assigné"}</td>
-                  <td className="whitespace-nowrap py-2 pr-5 text-right">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[t.status]}`}>
-                      {STATUS_LABEL[t.status]}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            <input type="hidden" name="projectId" value={projectId} />
+            <div className="px-5">
+              <TicketTable rows={loosePage.rows} />
+            </div>
           </BulkSelection>
         )}
-        {ticketPage.total > 0 ? (
+        {loosePage.total > 0 ? (
           <div className="border-t border-border px-5 py-3">
             <Pagination
-              page={ticketPage.page}
-              pageCount={ticketPage.pageCount}
+              page={loosePage.page}
+              pageCount={loosePage.pageCount}
               perPage={perPage}
-              total={ticketPage.total}
+              total={loosePage.total}
               hrefFor={pageHref}
             />
           </div>
@@ -952,9 +874,74 @@ function ListView({
   );
 }
 
+// Une ligne par ticket, avec sa case de sélection : la même table sert aux
+// épics et au bloc « hors épic ».
+function TicketTable({ rows }: { rows: ProjectTicketRow[] }) {
+  return (
+    <table className="w-full border-collapse text-sm">
+      <thead>
+        <tr className="border-b border-border text-left text-xs text-muted">
+          <th className="w-8 py-1.5 pr-3 font-medium">
+            <SelectAll field="ticketIds" />
+          </th>
+          <th className="py-1.5 pr-4 font-medium">Réf.</th>
+          <th className="py-1.5 pr-4 font-medium">Type</th>
+          <th className="py-1.5 pr-4 font-medium">Titre</th>
+          <th className="py-1.5 pr-4 font-medium">Gravité · nature</th>
+          <th className="py-1.5 pr-4 font-medium">Assigné</th>
+          <th className="py-1.5 pr-4 text-right font-medium">Temps</th>
+          <th className="py-1.5 text-right font-medium">Statut</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-border">
+        {rows.map((t) => (
+          <tr key={t.id} className="transition hover:bg-panel-2">
+            <td className="py-2 pr-3">
+              <input
+                type="checkbox"
+                name="ticketIds"
+                value={t.id}
+                aria-label={`Sélectionner ${t.ref}`}
+                className="accent-mint"
+              />
+            </td>
+            <td className="whitespace-nowrap py-2 pr-4">
+              <Link href={`/tickets/${t.ref}`} className="font-medium text-text hover:text-mint">
+                {t.ref}
+              </Link>
+            </td>
+            <td className="whitespace-nowrap py-2 pr-4">
+              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${TICKET_TYPE_BADGE_CLASS[t.type]}`}>
+                {TICKET_TYPE_LABEL[t.type]}
+              </span>
+            </td>
+            <td className="py-2 pr-4">
+              <Link href={`/tickets/${t.ref}`} className="text-text hover:text-mint">
+                {t.title}
+              </Link>
+            </td>
+            <td className="whitespace-nowrap py-2 pr-4 text-xs text-muted">
+              {t.severity ? SEVERITY_LABEL[t.severity] : t.devNature ? DEV_NATURE_LABEL[t.devNature] : "—"}
+            </td>
+            <td className="whitespace-nowrap py-2 pr-4 text-muted">{t.assignee?.name ?? "Non assigné"}</td>
+            <td className="whitespace-nowrap py-2 pr-4 text-right text-muted">
+              {fmtHours(t.spentHours)} / {fmtHours(t.estHours)}
+            </td>
+            <td className="whitespace-nowrap py-2 text-right">
+              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[t.status]}`}>
+                {STATUS_LABEL[t.status]}
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 // Ce que le bandeau de sélection pose sur toutes les lignes cochées : un statut,
-// un assigné, ou les deux. Les noms de champs sont ceux que relisent les actions
-// de masse des tickets et des tâches.
+// un assigné, ou les deux. Les noms de champs sont ceux que relit l'action de
+// masse des tickets.
 function BulkBar({
   team,
   statuses,
@@ -1001,44 +988,19 @@ const KANBAN_COLUMNS: { status: TaskStatus; label: string }[] = [
   { status: "TERMINE", label: "Terminé" },
 ];
 
-function KanbanView({
-  tasks,
-  projectId,
-  tickets,
-}: {
-  tasks: { id: string; title: string; status: TaskStatus; estHours: number; assignee: { name: string } | null; epicTitle: string }[];
-  projectId: string;
-  tickets: ProjectTicketRow[];
-}) {
+function KanbanView({ tickets, epicTitle }: { tickets: ProjectTicketRow[]; epicTitle: Map<string, string> }) {
   return (
     <div className="grid grid-cols-4 gap-4">
       {KANBAN_COLUMNS.map((col) => {
-        const items = tasks.filter((t) => t.status === col.status);
-        // Tâches et tickets partagent les mêmes états : ils tombent dans les
-        // mêmes colonnes. La pastille de type distingue les seconds.
-        const ticketItems = tickets.filter((t) => t.status === col.status);
+        const items = tickets.filter((t) => t.status === col.status);
         return (
           <div key={col.status} className="rounded-xl border border-border bg-panel">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <span className="text-sm font-medium text-text">{col.label}</span>
-              <span className="text-xs text-muted">{items.length + ticketItems.length}</span>
+              <span className="text-xs text-muted">{items.length}</span>
             </div>
             <div className="flex flex-col gap-2 p-3">
               {items.map((t) => (
-                <Link
-                  key={t.id}
-                  href={`/projects/${projectId}/tasks/${t.id}`}
-                  className="rounded-lg border border-border bg-panel-2 p-3 text-sm transition hover:border-mint/40"
-                >
-                  <p className="text-text">{t.title}</p>
-                  <p className="mt-1 text-xs text-muted">{t.epicTitle}</p>
-                  <div className="mt-2 flex items-center justify-between text-xs text-muted">
-                    <span>{t.assignee?.name ?? "Non assigné"}</span>
-                    <span>{fmtHours(t.estHours)}</span>
-                  </div>
-                </Link>
-              ))}
-              {ticketItems.map((t) => (
                 <Link
                   key={t.id}
                   href={`/tickets/${t.ref}`}
@@ -1051,15 +1013,14 @@ function KanbanView({
                     </span>
                   </div>
                   <p className="mt-1 text-text">{t.title}</p>
+                  {t.epicId ? <p className="mt-1 text-xs text-muted">{epicTitle.get(t.epicId)}</p> : null}
                   <div className="mt-2 flex items-center justify-between text-xs text-muted">
                     <span>{t.assignee?.name ?? "Non assigné"}</span>
                     <span>{fmtHours(t.estHours)}</span>
                   </div>
                 </Link>
               ))}
-              {items.length + ticketItems.length === 0 ? (
-                <p className="px-1 py-2 text-xs text-muted">—</p>
-              ) : null}
+              {items.length === 0 ? <p className="px-1 py-2 text-xs text-muted">—</p> : null}
             </div>
           </div>
         );
@@ -1072,13 +1033,16 @@ const IMPORT_EXAMPLE = `{
   "epics": [
     {
       "title": "Lot 1 — Cadrage",
-      "estHours": 20,
-      "tasks": [
-        { "title": "Atelier de lancement", "estHours": 4 }
-      ]
+      "estHours": 20
     }
   ],
   "tickets": [
+    {
+      "type": "DEV",
+      "title": "Atelier de lancement",
+      "estHours": 4,
+      "epic": "Lot 1 — Cadrage"
+    },
     {
       "type": "BUG",
       "title": "Le formulaire ne s’envoie pas",
@@ -1090,7 +1054,7 @@ const IMPORT_EXAMPLE = `{
   ]
 }`;
 
-// Import en masse. Un lot dont le titre existe déjà est réutilisé et non
+// Import en masse. Un épic dont le titre existe déjà est réutilisé et non
 // dupliqué : réimporter un fichier corrigé ne crée pas un second « Lot 1 ».
 function ImportJsonDisclosure({ projectId, team }: { projectId: string; team: { id: string; name: string }[] }) {
   return (
@@ -1104,9 +1068,10 @@ function ImportJsonDisclosure({ projectId, team }: { projectId: string; team: { 
       >
         <input type="hidden" name="projectId" value={projectId} />
         <p className="text-xs text-muted">
-          Lots, tâches et tickets d’un coup. Seuls les titres sont obligatoires ; un lot
+          Épics et tickets d’un coup. Seuls les titres sont obligatoires ; un épic
           déjà présent est réutilisé, et les tickets reçoivent leur référence
-          automatiquement.
+          automatiquement. Les entrées « tasks » d’un épic deviennent des tickets
+          « Développement » de cet épic.
         </p>
         <textarea
           name="payload"
@@ -1180,7 +1145,10 @@ function NewEpicDisclosure({ projectId, team }: { projectId: string; team: { id:
   );
 }
 
-function NewTaskDisclosure({
+// Ajouter un ticket à un épic sans quitter la fiche : titre, type, estimation,
+// assigné. Le reste (description, gravité, échéance…) se complète sur la fiche
+// du ticket. Il reçoit les critères d'acceptation de départ, comme tout ticket.
+function NewEpicTicketDisclosure({
   projectId,
   epicId,
   team,
@@ -1191,13 +1159,20 @@ function NewTaskDisclosure({
 }) {
   return (
     <details className="mt-2">
-      <summary className="cursor-pointer list-none text-xs font-medium text-mint">+ Tâche dans cet épic</summary>
-      <form action={createTaskAction} className="mt-2 flex flex-wrap items-end gap-2">
+      <summary className="cursor-pointer list-none text-xs font-medium text-mint">+ Ticket dans cet épic</summary>
+      <form action={createEpicTicketAction} className="mt-2 flex flex-wrap items-end gap-2">
         <input type="hidden" name="projectId" value={projectId} />
         <input type="hidden" name="epicId" value={epicId} />
         <label className="text-xs text-muted">
           Titre
-          <input name="title" required className="mt-1 block w-48 rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-sm text-text" />
+          <input name="title" required className="mt-1 block w-56 rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-sm text-text" />
+        </label>
+        <label className="text-xs text-muted">
+          Type
+          <select name="type" defaultValue="DEV" className="mt-1 block w-36 rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-sm text-text">
+            <option value="DEV">{TICKET_TYPE_LABEL.DEV}</option>
+            <option value="BUG">{TICKET_TYPE_LABEL.BUG}</option>
+          </select>
         </label>
         <label className="text-xs text-muted">
           Estimé (h)

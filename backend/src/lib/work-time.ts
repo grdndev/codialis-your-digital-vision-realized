@@ -1,16 +1,16 @@
 import { isHoliday, isoOf } from "@/lib/work-calendar";
 
-// Temps mesuré : répartition du temps écoulé entre les tâches menées en
+// Temps mesuré : répartition du temps écoulé entre les tickets menés en
 // parallèle par une même personne.
 //
 // Ce module ne touche ni la base ni la session : c'est du calcul pur, donc
 // testable seul (voir prisma/test-work-time.ts). Les deux règles qu'il applique :
 //
 //   1. ROGNAGE — une session ne compte que pendant les horaires de la personne.
-//      Une tâche laissée « en cours » un vendredi soir ne doit pas compter la
+//      Un ticket laissé « en cours » un vendredi soir ne doit pas compter la
 //      nuit, le week-end, la pause déjeuner ni les jours fériés.
 //   2. PARTAGE — sur chaque instant, le temps se divise par le nombre de
-//      sessions ouvertes. Deux tâches menées de front une heure donnent une
+//      sessions ouvertes. Deux tickets menés de front une heure donnent une
 //      demi-heure chacune.
 //
 // Le découpage se fait par segments et non par simple division du total : cela

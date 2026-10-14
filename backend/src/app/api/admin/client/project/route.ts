@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { adminRoute, badRequest } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
-import { clientProjectId } from "@/lib/client-scope";
+import { clientProjectId, portalEpics } from "@/lib/client-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -36,11 +36,7 @@ export const GET = adminRoute(["CLIENT"], async ({ user }, request) => {
     return {
       tab,
       quote: null,
-      epics: await prisma.epic.findMany({
-        where: { projectId },
-        orderBy: { order: "asc" },
-        include: { tasks: { orderBy: { order: "asc" } } },
-      }),
+      epics: await portalEpics(projectId),
       docs: [],
     };
   }

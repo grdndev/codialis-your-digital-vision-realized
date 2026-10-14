@@ -4,8 +4,8 @@ import type { Role } from "@/lib/types";
 import { Popover } from "./popover";
 import { correctSessionDatesAction, correctSessionHoursAction, stopSessionAction } from "./time/actions";
 
-// Bloc « Temps mesuré », partagé par la fiche ticket et la fiche tâche : les
-// sessions une à une, et leur correction après coup.
+// Bloc « Temps mesuré » de la fiche ticket : les sessions une à une, et leur
+// correction après coup.
 //
 // Une session s'ouvre au passage « En cours », au nom de l'assigné, et se ferme
 // au statut suivant ; le temps passé en découle. Un chronomètre oublié, un
@@ -25,7 +25,7 @@ export function MeasuredTime({
 }: {
   sessions: WorkSessionRow[];
   viewer: { id: string; role: Role };
-  // L'élément est-il encore « En cours » ? Arrêter sa session l'en fait sortir.
+  // Le ticket est-il encore « En cours » ? Arrêter sa session l'en fait sortir.
   inProgress: boolean;
   // Clôturer un ticket revient à la chefferie et à la direction (DEC-007).
   canClose: boolean;
@@ -224,7 +224,7 @@ function StopSession({
           </label>
         ) : (
           <p className="text-amber">
-            L’élément n’est plus « En cours » : seule cette session restée ouverte se ferme.
+            Le ticket n’est plus « En cours » : seule cette session restée ouverte se ferme.
           </p>
         )}
         <button type="submit" className="self-start rounded-lg bg-mint px-3 py-1.5 font-semibold text-bg">

@@ -1,6 +1,5 @@
-// Pièces jointes, partagées par la fiche ticket (en tête des commentaires) et
-// la fiche tâche (bloc « Pièces jointes ») : les deux écrans affichent
-// exactement la même liste, et la moindre divergence se verrait tout de suite.
+// Pièces jointes de la fiche ticket, listées en tête des commentaires. La fiche
+// tâche, qui avait son propre bloc, n'existe plus (CC-365).
 //
 // Les fichiers sont servis par codialis.files sur son propre domaine, donc
 // directement par le navigateur : ils ne transitent pas par ce serveur. Une
@@ -8,7 +7,7 @@
 // fiche ; un document s'ouvre (PDF) ou se télécharge (le reste) depuis le
 // stockage.
 
-import { ACCEPT_ATTRIBUTE, extensionOf, isImageUrl } from "@/lib/attachments";
+import { extensionOf, isImageUrl } from "@/lib/attachments";
 import { Lightbox, LightboxTrigger } from "./lightbox";
 
 type Piece = {
@@ -114,45 +113,5 @@ function RemoveButton({
         {children}
       </button>
     </form>
-  );
-}
-
-// Bloc complet de la fiche tâche : la liste et le formulaire d'envoi.
-export function Attachments({
-  pieces,
-  onAdd,
-  onRemove,
-}: {
-  pieces: Piece[];
-  onAdd: (formData: FormData) => Promise<void>;
-  onRemove: RemoveAction;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-panel p-5">
-      <h2 className="text-sm font-semibold text-text">Pièces jointes</h2>
-
-      <div className="mt-3">
-        {pieces.length > 0 ? (
-          <AttachmentList pieces={pieces} onRemove={onRemove} />
-        ) : (
-          <p className="text-sm text-muted">Aucune pièce jointe.</p>
-        )}
-      </div>
-
-      <form action={onAdd} className="mt-4 flex items-center gap-2">
-        {/* Le stockage vérifie en plus que le contenu est bien celui
-            qu'annonce l'extension. */}
-        <input
-          type="file"
-          name="fichier"
-          required
-          accept={ACCEPT_ATTRIBUTE}
-          className="flex-1 text-xs text-muted file:mr-3 file:rounded-lg file:border file:border-border file:bg-panel-2 file:px-3 file:py-1.5 file:text-xs file:text-text"
-        />
-        <button type="submit" className="rounded-lg bg-mint px-3 py-2 text-xs font-semibold text-bg">
-          Joindre
-        </button>
-      </form>
-    </div>
   );
 }

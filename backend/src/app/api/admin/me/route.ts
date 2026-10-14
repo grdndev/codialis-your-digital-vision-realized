@@ -53,7 +53,7 @@ export const GET = adminRoute([], async ({ user }) => {
         })
       : null;
 
-  // Les horaires de travail bornent le temps mesuré : une tâche laissée « en
+  // Les horaires de travail bornent le temps mesuré : un ticket laissé « en
   // cours » le soir ne compte pas la nuit. Sans réglage personnel, l'horaire
   // par défaut de l'agence s'applique — chacun peut le corriger.
   const schedule =

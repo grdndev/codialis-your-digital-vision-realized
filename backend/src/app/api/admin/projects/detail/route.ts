@@ -8,13 +8,14 @@ export const dynamic = "force-dynamic";
 
 // GET /api/admin/projects/detail?id=[&fiche=1]
 //
-// Renvoie le projet, ses épiques et leurs tâches, plus l'équipe assignable.
+// Renvoie le projet, ses épics et ses tickets — rangés dans un épic ou non,
+// c'est l'écran qui les regroupe —, plus l'équipe assignable.
 // Les données de l'onglet « Fiche » (accès techniques, questions client) ne
 // sont chargées que si l'onglet est ouvert : c'est deux requêtes de moins sur
 // les vues Liste et Kanban, qui sont les plus consultées.
 //
 // `access` distingue les deux raisons d'un écran vide : le projet n'existe pas,
-// ou le développeur n'y a aucune tâche ni aucun ticket assigné — l'écran renvoie
+// ou le développeur n'y a aucun ticket assigné — l'écran renvoie
 // à la liste avec un message différent dans chaque cas. Le contrôle est ici et
 // pas seulement sur la liste : sans lui, l'adresse d'un projet masqué suffirait
 // à le lire en entier.
@@ -36,10 +37,7 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
       client: true,
       epics: {
         orderBy: { order: "asc" },
-        include: {
-          lead: USER_IDENTITY,
-          tasks: { orderBy: { order: "asc" }, include: { assignee: USER_IDENTITY } },
-        },
+        include: { lead: USER_IDENTITY },
       },
     },
   });
@@ -52,8 +50,8 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
     fiche
       ? prisma.clientQuestion.findMany({ where: { projectId: id }, orderBy: { createdAt: "desc" } })
       : [],
-    // Les bugs et développements du projet : ils vivaient uniquement sur
-    // l'écran Tickets, filtrables par projet, donc invisibles depuis la fiche.
+    // Tout le travail du projet : bugs et développements, dans un épic ou non
+    // (les anciennes tâches en sont, CC-365).
     prisma.ticket.findMany({
       where: { projectId: id },
       include: { assignee: USER_IDENTITY, epic: true },

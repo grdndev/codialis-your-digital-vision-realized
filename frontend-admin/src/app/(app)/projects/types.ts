@@ -1,4 +1,4 @@
-import type { ClientRef, ProjectWithClient, TaskRow, TicketRow, UserRef, WorkSessionRow } from "@/lib/dto";
+import type { ClientRef, ProjectWithClient, TicketRow, UserRef } from "@/lib/dto";
 import type { ClientQuestionStatus } from "@/lib/types";
 
 export type ProjectsScreen = {
@@ -6,9 +6,9 @@ export type ProjectsScreen = {
   clients: ClientRef[];
 };
 
-export type TaskWithAssignee = TaskRow & { assignee: UserRef | null };
-
-export type EpicWithTasks = {
+// Un épic du projet. Ses tickets ne sont pas imbriqués : ils arrivent avec ceux
+// du projet (`tickets`), et l'écran les range sous leur épic.
+export type ProjectEpic = {
   id: string;
   projectId: string;
   title: string;
@@ -19,7 +19,6 @@ export type EpicWithTasks = {
   order: number;
   createdAt: Date;
   lead: UserRef | null;
-  tasks: TaskWithAssignee[];
 };
 
 type DetailClient = ClientRef & {
@@ -30,7 +29,7 @@ type DetailClient = ClientRef & {
 
 export type ProjectDetail = Omit<ProjectWithClient, "client"> & {
   client: DetailClient;
-  epics: EpicWithTasks[];
+  epics: ProjectEpic[];
 };
 
 export type ApiCredentialRow = {
@@ -59,9 +58,8 @@ export type ClientQuestionRow = {
 };
 
 // `access` distingue deux écrans vides : le projet n'existe pas, ou il n'est pas
-// ouvert au développeur qui l'appelle — aucune tâche ni ticket ne lui y est
-// assigné. `apis` et `questions` n'arrivent remplis que si l'onglet Fiche est
-// demandé.
+// ouvert au développeur qui l'appelle — aucun ticket ne lui y est assigné.
+// `apis` et `questions` n'arrivent remplis que si l'onglet Fiche est demandé.
 export type ProjectDetailResponse =
   | { access: "not-found" }
   | { access: "forbidden" }
@@ -71,7 +69,7 @@ export type ProjectDetailResponse =
       team: { id: string; name: string }[];
       apis: ApiCredentialRow[];
       questions: ClientQuestionRow[];
-      // Les bugs et développements rattachés au projet, toutes vues confondues.
+      // Tout le travail du projet, dans un épic ou non, toutes vues confondues.
       tickets: ProjectTicketRow[];
       clients: ClientRef[];
     };
@@ -79,48 +77,4 @@ export type ProjectDetailResponse =
 export type ProjectTicketRow = TicketRow & {
   assignee: UserRef | null;
   epic: { id: string; title: string } | null;
-};
-
-export type TaskCriterionRow = {
-  id: string;
-  taskId: string;
-  label: string;
-  done: boolean;
-  order: number;
-};
-
-export type TaskCommentRow = {
-  id: string;
-  taskId: string;
-  authorId: string | null;
-  body: string;
-  createdAt: Date;
-  author: UserRef | null;
-};
-
-export type TaskAttachmentRow = {
-  id: string;
-  taskId: string;
-  filename: string;
-  // `null` quand la pièce jointe n'est qu'un libellé, sans fichier à servir.
-  fileId: string | null;
-  url: string | null;
-  meta: string;
-  createdAt: Date;
-};
-
-export type TaskDetail = TaskRow & {
-  epic: { id: string; title: string; projectId: string; project: ProjectWithClient };
-  assignee: UserRef | null;
-  criteria: TaskCriterionRow[];
-  comments: TaskCommentRow[];
-  attachments: TaskAttachmentRow[];
-};
-
-export type TaskDetailResponse = {
-  task: TaskDetail | null;
-  // Pour le formulaire de modification : les lots du projet et l'équipe.
-  epics?: { id: string; title: string }[];
-  team?: { id: string; name: string }[];
-  sessions?: WorkSessionRow[];
 };

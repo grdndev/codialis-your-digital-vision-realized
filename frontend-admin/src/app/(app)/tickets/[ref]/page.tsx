@@ -163,6 +163,14 @@ export default async function TicketDetailPage({
                   <EditField label="Estimé (h)">
                     <input name="estHours" defaultValue={ticket.estHours} className="input" />
                   </EditField>
+                  <EditField label="Échéance">
+                    <input
+                      name="dueAt"
+                      type="date"
+                      defaultValue={ticket.dueAt ? new Date(ticket.dueAt).toISOString().slice(0, 10) : ""}
+                      className="input"
+                    />
+                  </EditField>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <EditField label="Assigné">
@@ -315,6 +323,7 @@ export default async function TicketDetailPage({
               {ticket.devNature ? <Row label="Nature" value={DEV_NATURE_LABEL[ticket.devNature]} /> : null}
               <Row label="Assigné" value={ticket.assignee?.name ?? "Non assigné"} />
               <Row label="Créé par" value={ticket.creator?.name ?? "—"} />
+              <Row label="Échéance" value={fmtDate(ticket.dueAt) ?? "—"} />
               <Row label="Estimé" value={fmtHours(ticket.estHours)} />
               <Row label="Passé" value={fmtHours(ticket.spentHours)} />
               <Row label="Créé le" value={fmtDate(ticket.createdAt) ?? "—"} />
@@ -347,7 +356,7 @@ export default async function TicketDetailPage({
             </div>
             <p className="text-xs text-muted">
               {ticket.status === "EN_COURS"
-                ? "Le chronomètre tourne : le temps est compté pour l’assigné, dans ses horaires, et partagé avec ses autres tâches en cours."
+                ? "Le chronomètre tourne : le temps est compté pour l’assigné, dans ses horaires, et partagé avec ses autres tickets en cours."
                 : "Passer le ticket à « En cours » démarre le chronomètre."}
             </p>
             {/* Supprimer emporte critères, commentaires et pièces jointes. Les

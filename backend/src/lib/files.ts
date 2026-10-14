@@ -83,7 +83,7 @@ export function avecUrlPublique<T extends { fileId: string | null }>(piece: T): 
   return { ...piece, url: piece.fileId ? urlPublique(piece.fileId) : null };
 }
 
-// Supprimer un ticket ou une tâche efface ses pièces jointes EN CASCADE, côté
+// Supprimer un ticket efface ses pièces jointes EN CASCADE, côté
 // base : la route de retrait n'est pas appelée, et les fichiers resteraient
 // dans le volume sans que plus rien ne pointe dessus. On les reprend donc
 // avant, pendant que les lignes existent encore.

@@ -1,4 +1,5 @@
-import type { ClientRef, TaskRow, TicketRow, UserRef } from "@/lib/dto";
+import type { ClientRef, TicketRow, UserRef } from "@/lib/dto";
+import type { FeatureTicket } from "@/lib/features";
 import type { AbsenceMode } from "@/lib/types";
 
 export type PortalEpic = {
@@ -11,7 +12,8 @@ export type PortalEpic = {
   dueAt: Date | null;
   order: number;
   createdAt: Date;
-  tasks: TaskRow[];
+  // Les tickets de l'épic, dans l'ordre de leur numérotation (CC-365).
+  tickets: FeatureTicket[];
 };
 
 export type PortalProgressScreen = { epics: PortalEpic[] };

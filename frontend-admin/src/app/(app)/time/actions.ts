@@ -11,7 +11,7 @@ export async function addTimeEntryAction(formData: FormData) {
   const hours = parseNumber(formData.get("hours"));
   if (!label || !dateRaw || hours <= 0) return;
 
-  // Le select « Rattaché à » encode sa cible en `task:<id>` / `ticket:<id>`.
+  // Le select « Rattaché à » encode sa cible en `ticket:<id>`.
   const [linkKind, linkId] = String(formData.get("linkedTo") ?? "").split(":");
 
   // Les heures sont saisies à la journée : 09:00 UTC est la convention de
@@ -19,7 +19,6 @@ export async function addTimeEntryAction(formData: FormData) {
   const { projectId } = await apiPost<{ projectId: string | null }>("/api/admin/time", {
     action: "add-entry",
     projectId: String(formData.get("projectId") ?? "") || null,
-    taskId: linkKind === "task" ? linkId : null,
     ticketId: linkKind === "ticket" ? linkId : null,
     label,
     date: new Date(`${dateRaw}T09:00:00.000Z`).toISOString(),
@@ -34,14 +33,13 @@ export async function addTimeEntryAction(formData: FormData) {
   revalidatePath("/finance");
   revalidatePath("/maintenance");
   revalidatePath("/tickets");
-  // Le projet imputé est celui que le backend a retenu (une tâche ou un ticket
-  // rattaché l'emporte sur le select), pas celui posté.
+  // Le projet imputé est celui que le backend a retenu (un ticket rattaché
+  // l'emporte sur le select), pas celui posté.
   if (projectId) revalidatePath(`/projects/${projectId}`);
-  if (linkKind === "task" && projectId) revalidatePath(`/projects/${projectId}/tasks/${linkId}`);
   if (linkKind === "ticket") revalidatePath(`/tickets/${linkId}`);
 }
 
-// Corriger ou retirer une saisie. Le rattachement (projet, tâche, ticket) ne
+// Corriger ou retirer une saisie. Le rattachement (projet, ticket) ne
 // bouge pas : il fait autorité sur les compteurs, le changer reviendrait à
 // déplacer des heures d'un projet à l'autre en douce. Pour cela, on supprime
 // et on ressaisit.
@@ -81,8 +79,8 @@ export async function deleteTimeEntryAction(entryId: string) {
   await repercuter(projectId);
 }
 
-// Correction après coup d'une session de temps mesuré, depuis la fiche d'une
-// tâche ou d'un ticket (`back`). Les heures saisies sont celles du bureau, à
+// Correction après coup d'une session de temps mesuré, depuis la fiche d'un
+// ticket (`back`). Les heures saisies sont celles du bureau, à
 // La Réunion. Les droits (propriétaire du temps ou chefferie) et les contrôles
 // de dates appartiennent au backend : son refus revient lisible sur la fiche.
 async function correctSession(back: string, projectId: string, body: Record<string, unknown>) {

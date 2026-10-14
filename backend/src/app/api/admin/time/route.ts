@@ -16,7 +16,7 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async () => {
   // dernières semaines pour donner du contexte à la répartition.
   const since = new Date(Date.now() - 14 * 24 * 3_600_000);
 
-  const [entries, activeProjects, allProjects, openTasks, openTickets, sessions] =
+  const [entries, activeProjects, allProjects, openTickets, sessions] =
     await Promise.all([
     prisma.timeEntry.findMany({
       include: { user: USER_IDENTITY, project: { include: { client: true } } },
@@ -32,11 +32,6 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async () => {
       include: { client: true },
       orderBy: { name: "asc" },
     }),
-    prisma.task.findMany({
-      where: { status: { not: "TERMINE" }, epic: { project: { group: { not: "CLO" } } } },
-      include: { epic: { include: { project: { include: { client: true } } } } },
-      orderBy: { title: "asc" },
-    }),
     prisma.ticket.findMany({
       where: { status: { not: "TERMINE" } },
       include: { project: { include: { client: true } } },
@@ -46,13 +41,6 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async () => {
       where: { OR: [{ endedAt: null }, { startedAt: { gte: since } }] },
       include: {
         user: { select: { id: true, name: true, initials: true } },
-        task: {
-          select: {
-            id: true,
-            title: true,
-            epic: { select: { project: { select: { name: true, client: { select: { name: true } } } } } },
-          },
-        },
         ticket: {
           select: {
             id: true,
@@ -67,7 +55,7 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async () => {
   ]);
 
   // La part d'une session encore ouverte bouge à chaque seconde et dépend des
-  // autres tâches menées en parallèle : on la calcule à la lecture plutôt que
+  // autres tickets menés en parallèle : on la calcule à la lecture plutôt que
   // d'écrire en base à chaque affichage.
   const live = await liveSessionHours(prisma, sessions);
 
@@ -75,7 +63,6 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async () => {
     entries,
     activeProjects,
     allProjects,
-    openTasks,
     openTickets,
     sessions: sessions.map((s) => ({ ...s, hours: live.get(s.id) ?? s.hours })),
   };
@@ -91,8 +78,8 @@ const bodySchema = z.discriminatedUnion("action", [
     billable: z.boolean(),
   }),
   z.object({ action: z.literal("delete-entry"), entryId: z.string().min(1) }),
-  // Correction après coup d'une session de temps mesuré, depuis la fiche d'une
-  // tâche ou d'un ticket. Les dates recalculent la durée ; une durée saisie la
+  // Correction après coup d'une session de temps mesuré, depuis la fiche d'un
+  // ticket. Les dates recalculent la durée ; une durée saisie la
   // remplace pour cette seule session. Une session encore ouverte s'arrête à
   // une heure passée, et l'élément quitte « En cours » pour le statut choisi.
   z.object({
@@ -115,7 +102,6 @@ const bodySchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("add-entry"),
     projectId: z.string().nullable(),
-    taskId: z.string().nullable(),
     ticketId: z.string().nullable(),
     label: z.string().min(1),
     date: z.string().datetime(),
@@ -124,9 +110,9 @@ const bodySchema = z.discriminatedUnion("action", [
   }),
 ]);
 
-// Les heures passées d'une tâche, d'un ticket ou d'un projet sont désormais
-// RECALCULÉES (voir `work-sessions`) : elles additionnent le mesuré et le
-// déclaré, et une part mesurée dépend des autres tâches menées en parallèle.
+// Les heures passées d'un ticket ou d'un projet sont désormais RECALCULÉES
+// (voir `work-sessions`) : elles additionnent le mesuré et le déclaré, et une
+// part mesurée dépend des autres tickets menés en parallèle.
 // Seul le quota mensuel d'un contrat de maintenance reste incrémental — il
 // compte le facturable du mois, pas le temps passé.
 async function shiftContract(
@@ -162,10 +148,7 @@ const CLOCK_SLACK_MS = 60_000;
 async function correctSession(user: { id: string; role: Role }, body: SessionCorrection) {
   const session = await prisma.workSession.findUnique({
     where: { id: body.sessionId },
-    include: {
-      task: { select: { id: true, status: true, epic: { select: { projectId: true } } } },
-      ticket: { select: { id: true, status: true } },
-    },
+    include: { ticket: { select: { id: true, status: true, projectId: true } } },
   });
   if (!session) badRequest("Session introuvable");
   // Le temps se corrige par la personne à qui il appartient, ou par la
@@ -179,7 +162,6 @@ async function correctSession(user: { id: string; role: Role }, body: SessionCor
   const refresh = (tx: Prisma.TransactionClient) =>
     refreshAfterTimeChange(tx, {
       userId: session.userId,
-      taskIds: session.taskId ? [session.taskId] : [],
       ticketIds: session.ticketId ? [session.ticketId] : [],
     });
 
@@ -189,22 +171,21 @@ async function correctSession(user: { id: string; role: Role }, body: SessionCor
     if (endedAt <= session.startedAt) badRequest("L'arrêt doit être postérieur au démarrage");
     if (endedAt.getTime() > now + CLOCK_SLACK_MS) badRequest("L'arrêt ne peut pas être dans le futur");
 
-    // L'élément ne quitte « En cours » que s'il y est encore : une session
-    // restée ouverte sur un élément déjà clos (statut changé par un script,
+    // Le ticket ne quitte « En cours » que s'il y est encore : une session
+    // restée ouverte sur un ticket déjà clos (statut changé par un script,
     // TRAP-041) se ferme sans toucher à son statut.
-    const item = session.task ?? session.ticket;
-    const leavesInProgress = item?.status === "EN_COURS";
-    if (leavesInProgress && session.ticket && body.status === "TERMINE" && user.role === "DEV") {
+    const ticket = session.ticket;
+    const leavesInProgress = ticket?.status === "EN_COURS";
+    if (leavesInProgress && body.status === "TERMINE" && user.role === "DEV") {
       badRequest("La clôture revient à la chefferie de projet ou à la direction.");
     }
     const status: TaskStatus = body.status;
     await prisma.$transaction(async (tx) => {
       await tx.workSession.update({ where: { id: session.id }, data: { endedAt, ...corrected } });
-      if (leavesInProgress && session.task) await tx.task.update({ where: { id: session.task.id }, data: { status } });
-      if (leavesInProgress && session.ticket) await tx.ticket.update({ where: { id: session.ticket.id }, data: { status } });
+      if (leavesInProgress) await tx.ticket.update({ where: { id: ticket.id }, data: { status } });
       await refresh(tx);
     });
-    if (leavesInProgress && session.task) await recomputeProjectProgress(session.task.epic.projectId);
+    if (leavesInProgress) await recomputeProjectProgress(ticket.projectId);
     return { ok: true };
   }
 
@@ -255,7 +236,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
     const entry = await prisma.timeEntry.findUnique({ where: { id: body.entryId } });
     if (!entry) badRequest("Saisie introuvable");
     // Chacun corrige ses propres heures ; la direction peut reprendre celles de
-    // l'équipe. Le rattachement (projet, tâche, ticket) ne bouge pas : il fait
+    // l'équipe. Le rattachement (projet, ticket) ne bouge pas : il fait
     // autorité sur les compteurs, le changer reviendrait à déplacer des heures
     // d'un projet à l'autre en douce.
     if (entry.userId !== user.id && user.role !== "DIR") {
@@ -279,7 +260,6 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
         });
       }
       await refreshAfterTimeChange(tx, {
-        taskIds: entry.taskId ? [entry.taskId] : [],
         ticketIds: entry.ticketId ? [entry.ticketId] : [],
         projectIds: entry.projectId ? [entry.projectId] : [],
       });
@@ -289,7 +269,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
   }
 
   const date = new Date(body.date);
-  const { taskId, ticketId, hours } = body;
+  const { ticketId, hours } = body;
 
   // L'entrée est toujours saisie pour soi : l'auteur vient de la session, jamais
   // du corps de la requête.
@@ -298,12 +278,9 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
   await prisma.$transaction(async (tx) => {
     let projectId = body.projectId;
 
-    // Une tâche ou un ticket rattaché fait autorité sur le projet imputé : il
-    // ne peut pas contredire le projet choisi séparément dans le formulaire.
-    if (taskId) {
-      const task = await tx.task.findUnique({ where: { id: taskId }, include: { epic: true } });
-      if (task) projectId = task.epic.projectId;
-    } else if (ticketId) {
+    // Un ticket rattaché fait autorité sur le projet imputé : il ne peut pas
+    // contredire le projet choisi séparément dans le formulaire.
+    if (ticketId) {
       const ticket = await tx.ticket.findUnique({ where: { id: ticketId } });
       if (ticket) projectId = ticket.projectId;
     }
@@ -312,7 +289,6 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       data: {
         userId,
         projectId,
-        taskId,
         ticketId,
         label: body.label,
         date,
@@ -324,7 +300,6 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
 
     await shiftContract(tx, { projectId, date }, hours);
     await refreshAfterTimeChange(tx, {
-      taskIds: taskId ? [taskId] : [],
       ticketIds: ticketId ? [ticketId] : [],
       projectIds: projectId ? [projectId] : [],
     });

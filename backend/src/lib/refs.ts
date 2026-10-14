@@ -51,3 +51,13 @@ export async function withUniqueRef<T>(
   // Inatteignable : la dernière tentative relance toujours.
   throw new Error("Attribution de référence impossible");
 }
+
+// Le numéro d'une référence (406 pour AD-406), pour classer des tickets dans
+// l'ordre de leur numérotation : c'est l'ordre des tickets dans un épic. Les
+// anciennes tâches ont été numérotées dans leur ordre d'affichage (CC-365), ce
+// classement le leur conserve. Un tri sur le texte mettrait AD-1000 avant
+// AD-301.
+export function refNumber(ref: string): number {
+  const n = Number.parseInt(ref.slice(ref.lastIndexOf("-") + 1), 10);
+  return Number.isFinite(n) ? n : 0;
+}

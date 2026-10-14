@@ -14,13 +14,14 @@ export const CLIENT_STATE_BADGE_CLASS: Record<TaskStatus, string> = {
   A_FAIRE: "bg-white/5 text-muted",
 };
 
-export type FeatureTask = { id: string; title: string; description: string; status: TaskStatus; updatedAt: Date };
-export type FeatureGroup = { id: string; title: string; tasks: FeatureTask[] };
+// Ce que le portail montre d'un ticket rangé dans un épic : ni assigné, ni
+// temps, ni estimation (voir `portalEpics` côté backend).
+export type FeatureTicket = { id: string; ref: string; title: string; description: string; status: TaskStatus; updatedAt: Date };
 
-export function movedThisWeek(tasks: FeatureTask[], days = 7) {
+export function movedThisWeek(tickets: FeatureTicket[], days = 7) {
   const cutoff = Date.now() - days * 86400000;
-  const delivered = tasks.filter((t) => t.status === "TERMINE" && t.updatedAt.getTime() >= cutoff);
-  const testing = tasks.filter((t) => t.status === "EN_REVUE" && t.updatedAt.getTime() >= cutoff);
-  const started = tasks.filter((t) => t.status === "EN_COURS" && t.updatedAt.getTime() >= cutoff);
+  const delivered = tickets.filter((t) => t.status === "TERMINE" && t.updatedAt.getTime() >= cutoff);
+  const testing = tickets.filter((t) => t.status === "EN_REVUE" && t.updatedAt.getTime() >= cutoff);
+  const started = tickets.filter((t) => t.status === "EN_COURS" && t.updatedAt.getTime() >= cutoff);
   return { delivered, testing, started };
 }

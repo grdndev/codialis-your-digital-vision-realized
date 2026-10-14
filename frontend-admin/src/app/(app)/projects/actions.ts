@@ -1,10 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { parseMultiline, parseNumber } from "@/lib/format";
+import { parseNumber } from "@/lib/format";
 import { redirect } from "next/navigation";
-import { ApiError, apiDelete, apiPost, apiUpload } from "@/lib/api";
-import type { TaskStatus } from "@/lib/types";
+import { ApiError, apiPost } from "@/lib/api";
+import type { TicketType } from "@/lib/types";
 
 const PROJECTS = "/api/admin/projects";
 
@@ -66,7 +66,7 @@ export async function createProjectAction(formData: FormData) {
 
   revalidatePath("/projects");
   // On enchaîne sur la fiche : après avoir ouvert un projet, la suite est d'y
-  // poser ses lots et ses tâches.
+  // poser ses épics et ses tickets.
   redirect(`/projects/${id}`);
 }
 
@@ -188,8 +188,7 @@ export async function createEpicAction(formData: FormData) {
   revalidatePath(`/projects/${projectId}`);
 }
 
-// Import JSON — poser d'un coup les lots, leurs tâches et les tickets d'un
-// projet. Les erreurs de forme remontent telles quelles de l'API : « il manque
+// Import JSON — poser d'un coup les épics et les tickets d'un projet. Les erreurs de forme remontent telles quelles de l'API : « il manque
 // un titre à la troisième entrée » est exploitable, « requête invalide » non.
 export async function importProjectJsonAction(formData: FormData): Promise<void> {
   const projectId = String(formData.get("projectId") ?? "");
@@ -199,12 +198,13 @@ export async function importProjectJsonAction(formData: FormData): Promise<void>
 
   let message: string;
   try {
-    const result = await apiPost<{
-      createdEpics: number;
-      createdTasks: number;
-      createdTickets: number;
-    }>(PROJECTS, { action: "import-json", projectId, payload, ticketAssigneeId });
-    message = `Import terminé : ${result.createdEpics} lot(s), ${result.createdTasks} tâche(s), ${result.createdTickets} ticket(s).`;
+    const result = await apiPost<{ createdEpics: number; createdTickets: number }>(PROJECTS, {
+      action: "import-json",
+      projectId,
+      payload,
+      ticketAssigneeId,
+    });
+    message = `Import terminé : ${result.createdEpics} épic(s), ${result.createdTickets} ticket(s).`;
   } catch (err) {
     if (!(err instanceof ApiError)) throw err;
     message = err.message;
@@ -216,115 +216,39 @@ export async function importProjectJsonAction(formData: FormData): Promise<void>
   redirect(`/projects/${projectId}?info=${encodeURIComponent(message)}`);
 }
 
-export async function createTaskAction(formData: FormData) {
-  const epicId = String(formData.get("epicId") ?? "");
+// Un ticket ajouté à un épic depuis la fiche projet. Il passe par la création
+// de ticket ordinaire (référence, critères de départ, assigné par défaut) ; on
+// reste sur la fiche, où l'on ajoute souvent plusieurs tickets d'affilée.
+export async function createEpicTicketAction(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "");
+  const epicId = String(formData.get("epicId") ?? "");
   const title = String(formData.get("title") ?? "").trim();
-  if (!epicId || !title) return;
+  if (!projectId || !epicId || !title) return;
 
-  await apiPost(PROJECTS, {
-    action: "create-task",
-    epicId,
-    projectId,
-    title,
-    estHours: parseNumber(formData.get("estHours")),
-    assigneeId: String(formData.get("assigneeId") ?? "") || null,
-  });
+  try {
+    await apiPost("/api/admin/tickets", {
+      action: "create",
+      type: (String(formData.get("type") ?? "DEV") || "DEV") as TicketType,
+      title,
+      description: "",
+      steps: "",
+      projectId,
+      epicId,
+      severity: null,
+      devNature: null,
+      estHours: parseNumber(formData.get("estHours")),
+      assigneeId: String(formData.get("assigneeId") ?? "") || null,
+    });
+  } catch (err) {
+    if (!(err instanceof ApiError)) throw err;
+    redirect(`/projects/${projectId}?info=${encodeURIComponent(err.message)}`);
+  }
 
   // L'avancement du projet est recalculé côté API : il s'affiche sur trois écrans.
   revalidatePath(`/projects/${projectId}`);
   revalidatePath("/projects");
+  revalidatePath("/tickets");
   revalidatePath("/dashboard");
-}
-
-// Un statut visé, pas seulement l'étape suivante : on doit pouvoir reculer,
-// ne serait-ce que pour arrêter une tâche sans la déclarer livrée. L'API
-// renvoie parfois un message — le temps compté pour quelqu'un d'autre, une
-// tâche sans assigné : il repart en query pour être affiché après le
-// rechargement, les formulaires de cet écran étant rendus côté serveur.
-export async function setTaskStatusAction(taskId: string, projectId: string, status: TaskStatus) {
-  const { notice } = await apiPost<{ notice?: string }>(PROJECTS, {
-    action: "update-task-status",
-    taskId,
-    projectId,
-    status,
-  });
-
-  revalidatePath(`/projects/${projectId}/tasks/${taskId}`);
-  revalidatePath(`/projects/${projectId}`);
-  revalidatePath("/projects");
-  revalidatePath("/dashboard");
-  revalidatePath("/time");
-  revalidatePath("/portal");
-
-  if (notice) {
-    redirect(
-      `/projects/${projectId}/tasks/${taskId}?info=${encodeURIComponent(notice)}`,
-    );
-  }
-}
-
-// Traitement en masse des tâches d'un lot (CC-358) : même bandeau que celui
-// des tickets, un aller-retour pour toute la sélection. « Retirer l'assigné »
-// est un choix, pas une absence de choix : il part dans son propre drapeau.
-export async function bulkUpdateTasksAction(projectId: string, formData: FormData) {
-  const taskIds = formData.getAll("taskIds").map(String).filter(Boolean);
-  if (!taskIds.length) return;
-
-  const status = String(formData.get("bulkStatus") ?? "");
-  const assignee = String(formData.get("bulkAssignee") ?? "");
-
-  const { notice } = await apiPost<{ notice?: string }>(PROJECTS, {
-    action: "bulk-update-tasks",
-    projectId,
-    taskIds,
-    status: (status || null) as TaskStatus | null,
-    assigneeId: assignee && assignee !== "__aucun__" ? assignee : null,
-    clearAssignee: assignee === "__aucun__",
-  });
-
-  revalidatePath(`/projects/${projectId}`);
-  revalidatePath("/projects");
-  revalidatePath("/dashboard");
-  revalidatePath("/time");
-  revalidatePath("/portal");
-
-  // Démarrer des tâches sans assigné, ou pour quelqu'un d'autre, se dit.
-  if (notice) redirect(`/projects/${projectId}?info=${encodeURIComponent(notice)}`);
-}
-
-export async function updateTaskStatusAction(
-  taskId: string,
-  projectId: string,
-  transition: "advance" | "reopen",
-) {
-  await apiPost(PROJECTS, { action: "update-task-status", taskId, projectId, transition });
-
-  revalidatePath(`/projects/${projectId}/tasks/${taskId}`);
-  revalidatePath(`/projects/${projectId}`);
-  revalidatePath("/projects");
-  revalidatePath("/dashboard");
-  // Le client suit cet avancement depuis son portail.
-  revalidatePath("/portal");
-}
-
-export async function toggleTaskCriterionAction(
-  criterionId: string,
-  projectId: string,
-  taskId: string,
-) {
-  await apiPost(PROJECTS, { action: "toggle-task-criterion", criterionId });
-  revalidatePath(`/projects/${projectId}/tasks/${taskId}`);
-}
-
-export async function addTaskCommentAction(formData: FormData) {
-  const taskId = String(formData.get("taskId") ?? "");
-  const projectId = String(formData.get("projectId") ?? "");
-  const body = parseMultiline(formData.get("body"));
-  if (!taskId || !body) return;
-
-  await apiPost(PROJECTS, { action: "add-task-comment", taskId, body });
-  revalidatePath(`/projects/${projectId}/tasks/${taskId}`);
 }
 
 export async function updateClientContactAction(formData: FormData) {
@@ -382,9 +306,8 @@ export async function answerClientQuestionAction(formData: FormData) {
 
 // --- Reprendre ce qui a été saisi (CC-343) ---------------------------------
 //
-// L'API acceptait déjà ces corrections, aucun écran ne les appelait : un lot
-// mal nommé, une estimation à refaire ou une tâche créée en double restaient
-// définitifs.
+// L'API acceptait déjà ces corrections, aucun écran ne les appelait : un épic
+// mal nommé ou une estimation à refaire restaient définitifs.
 
 function revaliderProjet(projectId: string) {
   revalidatePath(`/projects/${projectId}`);
@@ -413,8 +336,8 @@ export async function updateEpicAction(formData: FormData) {
   revaliderProjet(projectId);
 }
 
-// Un lot qui porte encore des tâches n'est pas supprimable : l'API refuse, et
-// le message remonte tel quel plutôt que de faire disparaître le travail.
+// Supprimer un épic laisse ses tickets au projet, hors épic. Une erreur de
+// l'API remonte telle quelle en bandeau.
 export async function deleteEpicAction(epicId: string, projectId: string): Promise<void> {
   try {
     await apiPost(PROJECTS, { action: "delete-epic", epicId, projectId });
@@ -423,114 +346,5 @@ export async function deleteEpicAction(epicId: string, projectId: string): Promi
     redirect(`/projects/${projectId}?info=${encodeURIComponent(err.message)}`);
   }
   revaliderProjet(projectId);
-}
-
-export async function updateTaskCriterionAction(formData: FormData) {
-  const criterionId = String(formData.get("criterionId") ?? "");
-  const label = String(formData.get("label") ?? "").trim();
-  const projectId = String(formData.get("projectId") ?? "");
-  const taskId = String(formData.get("taskId") ?? "");
-  if (!criterionId || !label) return;
-
-  await apiPost(PROJECTS, { action: "update-task-criterion", criterionId, label });
-  revalidatePath(`/projects/${projectId}/tasks/${taskId}`);
-}
-
-export async function deleteTaskCriterionAction(
-  criterionId: string,
-  projectId: string,
-  taskId: string,
-) {
-  await apiPost(PROJECTS, { action: "delete-task-criterion", criterionId });
-  revalidatePath(`/projects/${projectId}/tasks/${taskId}`);
-}
-
-export async function addTaskCriterionAction(formData: FormData) {
-  const taskId = String(formData.get("taskId") ?? "");
-  const projectId = String(formData.get("projectId") ?? "");
-  const label = String(formData.get("label") ?? "").trim();
-  if (!taskId || !label) return;
-
-  await apiPost(PROJECTS, { action: "add-task-criterion", taskId, label });
-  revalidatePath(`/projects/${projectId}/tasks/${taskId}`);
-}
-
-// Supprimer une tâche emporte ses critères, ses commentaires et ses
-// chronomètres (cascade du schéma). Les heures déjà saisies à la main, elles,
-// restent au projet : le travail a bien eu lieu.
-export async function deleteTaskAction(taskId: string, projectId: string): Promise<void> {
-  await apiPost(PROJECTS, { action: "delete-task", taskId, projectId });
-  revaliderProjet(projectId);
-  redirect(`/projects/${projectId}`);
-}
-
-// Modifier une tâche. Changer d'assigné pendant qu'elle est « en cours »
-// arrête le chronomètre du précédent et la ramène à « À faire » : l'API le
-// fait et le dit, on relaie son message.
-export async function updateTaskAction(formData: FormData): Promise<void> {
-  const taskId = String(formData.get("taskId") ?? "");
-  const projectId = String(formData.get("projectId") ?? "");
-  const title = String(formData.get("title") ?? "").trim();
-  if (!taskId || !projectId || !title) return;
-
-  const { notice } = await apiPost<{ notice?: string }>(PROJECTS, {
-    action: "update-task",
-    taskId,
-    projectId,
-    epicId: String(formData.get("epicId") ?? ""),
-    title,
-    description: String(formData.get("description") ?? "").trim(),
-    estHours: parseNumber(formData.get("estHours")),
-    assigneeId: String(formData.get("assigneeId") ?? "") || null,
-    dueAt: String(formData.get("dueAt") ?? "")
-      ? new Date(`${String(formData.get("dueAt"))}T09:00:00.000Z`).toISOString()
-      : null,
-  });
-
-  revaliderProjet(projectId);
-  revalidatePath(`/projects/${projectId}/tasks/${taskId}`);
-  revalidatePath("/time");
-  if (notice) {
-    redirect(`/projects/${projectId}/tasks/${taskId}?info=${encodeURIComponent(notice)}`);
-  }
-}
-
-// Pièces jointes d'une tâche — même relais que pour un ticket : le fichier
-// traverse frontend-admin en binaire, seul le backend parle au stockage.
-export async function addTaskAttachmentAction(
-  taskId: string,
-  projectId: string,
-  formData: FormData,
-) {
-  const fichier = formData.get("fichier");
-  if (!(fichier instanceof File) || fichier.size === 0) return;
-
-  const retour = `/projects/${projectId}/tasks/${taskId}`;
-  const adresse =
-    `/api/admin/attachments?kind=task&id=${encodeURIComponent(taskId)}` +
-    `&filename=${encodeURIComponent(fichier.name)}`;
-
-  try {
-    await apiUpload(adresse, await fichier.arrayBuffer());
-  } catch (err) {
-    if (err instanceof ApiError) redirect(`${retour}?error=${encodeURIComponent(err.message)}`);
-    throw err;
-  }
-
-  revalidatePath(retour);
-}
-
-export async function removeTaskAttachmentAction(
-  taskId: string,
-  projectId: string,
-  attachmentId: string,
-) {
-  const retour = `/projects/${projectId}/tasks/${taskId}`;
-  try {
-    await apiDelete(`/api/admin/attachments?attachmentId=${encodeURIComponent(attachmentId)}`);
-  } catch (err) {
-    if (err instanceof ApiError) redirect(`${retour}?error=${encodeURIComponent(err.message)}`);
-    throw err;
-  }
-  revalidatePath(retour);
+  revalidatePath("/tickets");
 }

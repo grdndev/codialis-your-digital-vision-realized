@@ -80,7 +80,7 @@ export async function bulkUpdateTicketsAction(formData: FormData) {
   const status = String(formData.get("bulkStatus") ?? "");
   const assignee = String(formData.get("bulkAssignee") ?? "");
 
-  await apiPost(TICKETS, {
+  const { notice } = await apiPost<{ notice?: string }>(TICKETS, {
     action: "bulk-update",
     ticketIds,
     status: (status || null) as TaskStatus | null,
@@ -98,6 +98,11 @@ export async function bulkUpdateTicketsAction(formData: FormData) {
   if (projectId) {
     revalidatePath(`/projects/${projectId}`);
     revalidatePath("/projects");
+    revalidatePath("/dashboard");
+    revalidatePath("/portal");
+    // Démarrer des tickets sans assigné, ou pour quelqu'un d'autre, se dit :
+    // la fiche projet affiche le message en bandeau.
+    if (notice) redirect(`/projects/${projectId}?info=${encodeURIComponent(notice)}`);
   }
 }
 
@@ -119,6 +124,10 @@ export async function updateTicketAction(formData: FormData) {
     estHours: parseNumber(formData.get("estHours")),
     assigneeId: String(formData.get("assigneeId") ?? "") || null,
     epicId: String(formData.get("epicId") ?? "") || null,
+    // Un jour : 09:00 UTC, convention des dates-sans-heure de l'app.
+    dueAt: String(formData.get("dueAt") ?? "")
+      ? new Date(`${String(formData.get("dueAt"))}T09:00:00.000Z`).toISOString()
+      : null,
   });
 
   revalidatePath(`/tickets/${ref}`);

@@ -201,7 +201,7 @@ export default async function ProjectsPage({
           ) : (
             <p className="mt-1 text-xs text-muted">
               Les heures consommées et l’avancement démarrent à zéro, et se remplissent
-              au fil des tâches et des saisies de temps.
+              au fil des tickets et des saisies de temps.
             </p>
           )}
           <form action={createProjectAction} className="mt-4 flex flex-col gap-3">
