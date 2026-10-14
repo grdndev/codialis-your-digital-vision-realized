@@ -261,6 +261,7 @@ done=[14/10] vérifications : HTTP 63/63 (jeu d'essai), Chrome 25/25 sur la copi
 done=[14/10] déployé (e8d6225), migration taches_en_tickets appliquée juste après le rebuild ; contrôles en prod identiques à la répétition (407/407, 0 écart, 16 sessions, heures par projet inchangées) ; sauvegarde ~/backups/taches-en-tickets/avant-20261014-124714.sql sur le serveur ; CC-365 passé en EN_REVUE par SQL avec commentaire de livraison ; copie locale de la prod supprimée
 wip=aucun
 done=[14/10] tables de tâches supprimées (DEC-071, migration suppression_taches) : seed.ts (démo) et import-asana.ts créent des tickets ; répétée sur une nouvelle copie de la prod (799 tickets, 99 sessions, 159,36 h, heures et avancement des projets inchangés), garde-fou testé dans les deux sens ; HTTP 63/63, Chrome 25/25
+done=[14/10] déployé (35eb714), suppression_taches appliquée en prod : tickets, commentaires, critères, pièces jointes, sessions et heures des projets identiques avant/après ; sauvegarde ~/backups/taches-en-tickets/avant-suppression-20261014-140213.sql ; commentaire ajouté sur CC-365 (toujours EN_REVUE)
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — débloqué par DEC-027 (codialis.files) ; le socle Drive reste committé et inutilisé, on le retire quand le service maison aura fait ses preuves
 blocked=DEC-009 — confirmer que le calendrier RH peut rester visible par toute l'équipe
