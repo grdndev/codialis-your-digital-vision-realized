@@ -77,7 +77,6 @@ frontend-admin/src/app/(app)/measured-time.tsx=bloc « Temps mesuré » de la fi
 backend/src/lib/user-identity.ts=USER_IDENTITY, la sélection d'un compte cité dans une réponse (id, name, initials, role = UserRef)
 backend/src/lib/project-progress.ts=recomputeProjectProgress (avancement stocké = tickets TERMINE / TOUS les tickets du projet, DEC-064), appelé par la route Tickets (création, statut, masse, déplacement, suppression), l'import JSON et stop-session
 backend/src/lib/client-scope.ts=clientProjectId (périmètre d'un compte client) + portalEpics (épics et leurs tickets pour le portail, sans assigné ni temps)
-backend/prisma/retour-taches-en-tickets.sql=RETOUR ARRIÈRE de la migration taches_en_tickets, tant que les tables Task* existent (rend aux tâches l'état de leurs tickets, rebranche le temps, supprime ces tickets)
 frontend-admin/src/app/(app)/projects/[id]/tasks/[taskId]/page.tsx=ancienne adresse d'une tâche → redirige vers /tickets/<ref> (même identifiant, GET /api/admin/tickets/detail?id=)
 frontend-admin/src/app/(app)/list-controls.tsx=filtres en pastilles et pagination 15/25/50 partagés (Tickets, fiche projet, Ressources)
 frontend-admin/src/app/(app)/tickets/export/route.ts=export CSV/JSON des tickets (route de frontend-admin, relit GET /api/admin/tickets)
@@ -161,6 +160,7 @@ DEC-067 [2026-10-14] ACTIVE import JSON : `epics[].tasks` reste accepté (ancien
 DEC-068 [2026-10-14] ACTIVE dans un épic, les tickets se suivent par NUMÉRO de référence (refNumber, tri numérique) ; pas de colonne d'ordre why=les ex-tâches ont été numérotées dans leur ordre d'affichage, un ticket ajouté vient à la suite alt=colonne `order` sur Ticket
 DEC-069 [2026-10-14] ACTIVE un ticket se range dans un épic de SON projet (checkEpic sur create/update) ; « + Ticket dans cet épic » sur la fiche projet passe par la création de ticket ordinaire et reste sur la fiche why=un épic d'un autre projet afficherait le ticket sous le mauvais projet alt=aucun contrôle (état initial)
 DEC-070 [2026-10-14] ACTIVE portail client : « Avancement » et « Fonctionnalités » listent les tickets des épics (bugs compris), sans assigné, temps ni estimation why=arbitrage Denis du 14/10 ; aucun compte client en prod alt=développements seuls
+DEC-071 [2026-10-14] ACTIVE les tables Task, TaskCriterion, TaskComment, TaskAttachment et les colonnes taskId de WorkSession/TimeEntry sont SUPPRIMÉES (migration suppression_taches), retour-taches-en-tickets.sql retiré avec elles ; un garde-fou arrête la migration avant toute suppression s'il reste du temps rattaché à une tâche why=feu vert Denis du 14/10 ; contrôlé avant : 407 tâches toutes copiées, aucune annexe, aucun temps rattaché alt=garder les tables plus longtemps
 
 ## TRAP
 TRAP-001 le serveur `next dev` garde l'ANCIEN client Prisma après une migration → le redémarrer, sinon « Cannot read properties of undefined » sur le nouveau modèle
@@ -216,6 +216,7 @@ TRAP-049 `.next/dev/types/validator.ts` (laissé par un `next dev`) garde la tra
 TRAP-050 `NOW()` de MariaDB local est en heure de La Réunion, Prisma stocke en UTC → dans un test SQL, `UTC_TIMESTAMP(3)`, sinon une date « il y a dix minutes » tombe dans le futur
 TRAP-051 la FK Task→Epic est encore en CASCADE : supprimer un épic efface aussi les tâches d'origine de la copie de sécurité (les tickets, eux, restent) → le retour arrière ne peut plus les rendre
 TRAP-052 `Project.hoursSpent` est STOCKÉ : celui d'Oxy vaut 0 h alors que ses tâches importées portent 21 h (jamais rafraîchi) → le premier changement de temps sur Oxy le fera passer à 21 h ; ce n'est pas la reprise qui l'ajoute
+TRAP-053 une contrainte CHECK posée sur une colonne qui porte une clé étrangère avec action (CASCADE, SET NULL) est REFUSÉE (MySQL 8 comme MariaDB) → pour faire échouer une migration sous condition, insérer un COUNT(*) dans une table temporaire dont la CHECK exige 0 (voir suppression_taches)
 
 ## STATE
 branch=main
@@ -259,7 +260,7 @@ done=[14/10] CC-365 (créé en prod, EN_COURS) : tâches → tickets (DEC-063 à
 done=[14/10] vérifications : HTTP 63/63 (jeu d'essai), Chrome 25/25 sur la copie de prod (build de production), calculs work-time, work-calendar, hr-calendar 27/27, billing OK ; types, lint, build des deux applications OK
 done=[14/10] déployé (e8d6225), migration taches_en_tickets appliquée juste après le rebuild ; contrôles en prod identiques à la répétition (407/407, 0 écart, 16 sessions, heures par projet inchangées) ; sauvegarde ~/backups/taches-en-tickets/avant-20261014-124714.sql sur le serveur ; CC-365 passé en EN_REVUE par SQL avec commentaire de livraison ; copie locale de la prod supprimée
 wip=aucun
-next=APRÈS validation de CC-365 : migration qui supprime Task, TaskCriterion, TaskComment, TaskAttachment et les colonnes taskId de WorkSession/TimeEntry, avec le retrait des modèles du schéma ; adapter alors seed.ts (démo) et import-asana.ts, qui créent encore des `prisma.task` ; retour-taches-en-tickets.sql devient caduc
+done=[14/10] tables de tâches supprimées (DEC-071, migration suppression_taches) : seed.ts (démo) et import-asana.ts créent des tickets ; répétée sur une nouvelle copie de la prod (799 tickets, 99 sessions, 159,36 h, heures et avancement des projets inchangés), garde-fou testé dans les deux sens ; HTTP 63/63, Chrome 25/25
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — débloqué par DEC-027 (codialis.files) ; le socle Drive reste committé et inutilisé, on le retire quand le service maison aura fait ses preuves
 blocked=DEC-009 — confirmer que le calendrier RH peut rester visible par toute l'équipe
