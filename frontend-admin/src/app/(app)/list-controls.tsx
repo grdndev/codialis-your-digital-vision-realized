@@ -43,15 +43,16 @@ export function FilterGroup({ children }: { children: React.ReactNode }) {
 }
 
 // Un critère par ligne, son nom en tête (écran Tickets, saisies de l'équipe en
-// RH). Une ligne trop longue défile sur place plutôt que de se couper : la
-// suivante commence toujours au même endroit.
+// RH). Une ligne trop longue (les projets, nombreux et aux noms longs) revient
+// à la ligne SOUS ses propres pastilles, jamais sous le nom du critère : le
+// critère suivant commence toujours au même endroit. Elle défilait sur place
+// avant le 14/10, et les pastilles hors champ passaient inaperçues.
+// `items-baseline` aligne le nom sur la PREMIÈRE ligne de pastilles.
 export function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-baseline gap-3">
       <span className="w-20 shrink-0 text-muted">{label}</span>
-      <div className="-mx-1 flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-x-auto px-1 py-0.5">
-        {children}
-      </div>
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{children}</div>
     </div>
   );
 }

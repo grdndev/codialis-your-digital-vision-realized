@@ -165,7 +165,7 @@ export default async function TicketsPage({
       {/* Un critère par ligne, son nom en tête : les groupes posés côte à côte
           se décalaient d'une ligne à l'autre selon la largeur, et l'œil devait
           chercher où commençait le suivant. Une ligne trop longue (les projets,
-          nombreux et aux noms longs) défile sur place plutôt que de se couper. */}
+          nombreux et aux noms longs) revient à la ligne sous ses pastilles. */}
       <div className="flex flex-col gap-2 text-xs">
         <FilterRow label="Projet">
           <FilterLink href={clearHref("project")} active={!selected("project").length}>

@@ -161,6 +161,7 @@ DEC-068 [2026-10-14] ACTIVE dans un épic, les tickets se suivent par NUMÉRO de
 DEC-069 [2026-10-14] ACTIVE un ticket se range dans un épic de SON projet (checkEpic sur create/update) ; « + Ticket dans cet épic » sur la fiche projet passe par la création de ticket ordinaire et reste sur la fiche why=un épic d'un autre projet afficherait le ticket sous le mauvais projet alt=aucun contrôle (état initial)
 DEC-070 [2026-10-14] ACTIVE portail client : « Avancement » et « Fonctionnalités » listent les tickets des épics (bugs compris), sans assigné, temps ni estimation why=arbitrage Denis du 14/10 ; aucun compte client en prod alt=développements seuls
 DEC-071 [2026-10-14] ACTIVE les tables Task, TaskCriterion, TaskComment, TaskAttachment et les colonnes taskId de WorkSession/TimeEntry sont SUPPRIMÉES (migration suppression_taches), retour-taches-en-tickets.sql retiré avec elles ; un garde-fou arrête la migration avant toute suppression s'il reste du temps rattaché à une tâche why=feu vert Denis du 14/10 ; contrôlé avant : 407 tâches toutes copiées, aucune annexe, aucun temps rattaché alt=garder les tables plus longtemps
+DEC-072 [2026-10-14] ACTIVE les lignes de filtres (FilterRow : Tickets, saisies de l'équipe en RH) reviennent à la ligne SOUS leurs pastilles au lieu de défiler sur place ; la colonne principale du layout prend `min-w-0`, un contenu plus large (tableau des tickets) défile dans son cadre why=demande du 14/10, les projets hors champ passaient inaperçus ; lève TRAP-043 alt=défilement horizontal de la ligne (état initial)
 
 ## TRAP
 TRAP-001 le serveur `next dev` garde l'ANCIEN client Prisma après une migration → le redémarrer, sinon « Cannot read properties of undefined » sur le nouveau modèle
@@ -262,6 +263,7 @@ done=[14/10] déployé (e8d6225), migration taches_en_tickets appliquée juste a
 wip=aucun
 done=[14/10] tables de tâches supprimées (DEC-071, migration suppression_taches) : seed.ts (démo) et import-asana.ts créent des tickets ; répétée sur une nouvelle copie de la prod (799 tickets, 99 sessions, 159,36 h, heures et avancement des projets inchangés), garde-fou testé dans les deux sens ; HTTP 63/63, Chrome 25/25
 done=[14/10] déployé (35eb714), suppression_taches appliquée en prod : tickets, commentaires, critères, pièces jointes, sessions et heures des projets identiques avant/après ; sauvegarde ~/backups/taches-en-tickets/avant-suppression-20261014-140213.sql ; commentaire ajouté sur CC-365 (toujours EN_REVUE)
+done=[14/10] filtres en retour à la ligne (DEC-072) : 20/20 dans Chrome à 1440 et 1100 px (Tickets en tableau et Kanban, saisies RH), page sans débordement horizontal ; types, lint, build OK
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 blocked=CC-302 pièces jointes — débloqué par DEC-027 (codialis.files) ; le socle Drive reste committé et inutilisé, on le retire quand le service maison aura fait ses preuves
 blocked=DEC-009 — confirmer que le calendrier RH peut rester visible par toute l'équipe

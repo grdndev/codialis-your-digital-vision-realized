@@ -15,7 +15,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen w-full">
       {css ? <style>{css}</style> : null}
       <Sidebar items={items} />
-      <div className="flex min-h-screen flex-1 flex-col">
+      {/* `min-w-0` : sans lui, la colonne prend la largeur de son contenu le
+          plus large (tableau des tickets en 900 px), déborde de la fenêtre, et
+          les filtres qui reviennent à la ligne le font à cette largeur-là. */}
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <Topbar user={user} />
         <main className="flex-1 overflow-y-auto px-6 py-6">{children}</main>
       </div>
