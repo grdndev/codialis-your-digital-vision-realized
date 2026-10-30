@@ -22,7 +22,7 @@ prod_services=codialis.db(codialis-db) codialis.backend(codialis-api) codialis.a
 typecheck=npx tsc --noEmit  scope=backend et frontend-admin séparément
 lint=./node_modules/.bin/eslint src  why=`npx eslint` échoue hors du dossier de l'app
 build=npx next build
-test_calcul=npx tsx prisma/test-work-time.ts | npx tsx prisma/test-work-calendar.ts | npx tsx prisma/test-hr-calendar.ts | npx tsx prisma/test-billing.ts
+test_calcul=npx tsx prisma/test-work-time.ts | npx tsx prisma/test-work-calendar.ts | npx tsx prisma/test-hr-calendar.ts | npx tsx prisma/test-billing.ts | npx tsx prisma/test-notifications.ts
 test_api=npx tsx prisma/test-api-catalog.ts  why=parité écran/API : chaque route au catalogue, chaque action envoyée par frontend-admin connue, OpenAPI constructible ; sans base
 seed_test=DATABASE_URL=… npx tsx prisma/seed-test.ts  DANGER=local uniquement, vide la base avant de semer
 migrate_local=DATABASE_URL=… npx prisma migrate dev --name … --skip-seed
@@ -100,6 +100,9 @@ files/src/serveur.js=deux serveurs HTTP dans un process : 3003 lecture publique,
 files/bin/upload.js=dépôt en ligne de commande depuis le serveur
 files/public/=volume des fichiers déposés, vide dans le dépôt
 frontend-public/=site vitrine statique, déployé à la main sur Hostinger
+backend/src/lib/notifications.ts=règle de la cloche (CC-366) : quels tickets datés notifier, à qui, dans quel ordre ; calcul pur, jour de bureau à La Réunion
+backend/src/app/api/admin/notifications/route.ts=GET de la cloche, hors « une route par écran » (la cloche est sur tous les écrans)
+frontend-admin/src/components/shell/notification-bell.tsx=cloche de la barre du haut, relue à chaque changement d'adresse et à chaque ouverture, via le relais GET /notifications (frontend-admin/src/app/(app)/notifications/route.ts)
 entry=backend/src/app/api/admin/*/route.ts et frontend-admin/src/app/(app)/*/page.tsx
 
 ## DEC
@@ -186,6 +189,9 @@ DEC-079 [2026-10-30] ACTIVE la liste de l'écran Projets s'ouvre sur « En déve
 DEC-080 [2026-10-30] ACTIVE les sélecteurs de projet des tickets (création, « Modifier le ticket → Projet ») écartent les projets CLÔTURÉS ; restent proposés le projet d'où l'on vient (`?project=` de GET /api/admin/tickets/new, la fiche d'un projet clôturé garde « + Nouveau ticket ») et le projet actuel du ticket ; l'API accepte toujours un ticket sur un projet clôturé why=CC-369 ; garder le projet actuel évite qu'un enregistrement déplace le ticket à l'insu de qui ne corrigeait que son titre alt=filtre strict (formulaire ouvert sur un autre projet), refus côté API
 DEC-081 [2026-10-30] ACTIVE une catégorie libre de Ressources peut être COMMUNE à tous les projets (CustomCategory.projectId NULL, migration categories_communes) : affichée sur chaque projet après celles du projet, marquée « tous projets » ; la portée se choisit à la création (« Ce projet seulement : … » / « Tous les projets ») et se change dans « Modifier » (menu Projet, qui sert aussi à DÉPLACER une catégorie, l'écran la suit) ; les 5 familles fixes (APIs, URLs, comptes, maquettes, cahier des charges) restent par projet ; choisir un projet dans la liste l'ouvre sans « Filtrer » why=CC-368 : les identifiants Brevo/Cloudflare/Openrouter de Top formation et ceux d'Alma ont atterri dans ADD, premier projet de la liste, le projet choisi n'étant appliqué qu'au clic sur « Filtrer » alt=catégories par projet seulement (état initial)
 DEC-082 [2026-10-30] ACTIVE visibilité des catégories libres : PM et DIR les voient toutes ; un DEV ne voit que celles des projets où un ticket lui est assigné (règle de DEC-023, via visibleProjectIds), les communes avec elles (s'il a au moins un projet), JAMAIS les « Chef de projet seul » ; mêmes règles en écriture (lignes comprises), une catégorie hors de portée répond « Catégorie introuvable » ; un DEV ne crée pas de « Chef de projet seul » ; les familles fixes de Ressources restent ouvertes à toute l'équipe why=arbitrage Denis du 30/10 ; PM_ONLY n'était appliqué nulle part, un DEV recevait ces catégories de l'API alt=PM_ONLY seul, cloisonnement de tout l'écran Ressources
+DEC-083 [2026-10-30] ACTIVE notifications d'échéance = une CLOCHE dans la barre du haut, CALCULÉE à chaque lecture, rien de stocké (ni notification, ni « vu ») et aucun e-mail ; seuls les tickets avec échéance dépassée ou dans les 7 jours ; l'assigné tant que À faire/En cours, PM et DIR en plus tous les En revue de l'agence jusqu'à Terminé ; dépassées d'abord (la plus ancienne en tête) puis proches (la plus proche en tête), à égalité le plus vieux ticket ; clic = ouvre le ticket ; l'échéance se pose dès la création why=CC-366, arbitrage Denis du 30/10 alt=e-mails Brevo à J-1 ouvré et au lendemain avec colonnes notifiedAt (plan initial, refusé)
+DEC-084 [2026-10-30] ACTIVE la cloche se relit par une ROUTE de frontend-admin (GET /notifications), pas par une action serveur why=Next exécute les actions serveur une à la fois : un formulaire envoyé pendant le rafraîchissement de la cloche attendrait derrière lui alt=action serveur appelée par le composant
+DEC-085 [2026-10-30] ACTIVE un Popover se ferme aussi quand on suit un lien qu'il contient, et accepte `onOpen` why=la navigation côté client garde la barre du haut montée, la liste de la cloche restait ouverte par-dessus le ticket ouvert alt=fermeture propre à la cloche
 
 ## TRAP
 TRAP-001 le serveur `next dev` garde l'ANCIEN client Prisma après une migration → le redémarrer, sinon « Cannot read properties of undefined » sur le nouveau modèle
@@ -250,6 +256,7 @@ TRAP-057 depuis DEC-073, TRAP-044 a une issue propre : agir sur la prod au nom d
 TRAP-058 le compte de Denis est DEV en prod : son jeton d'API ne liste que les projets où il a du travail assigné (DEC-023), 9 sur 16 au 30/10 → un inventaire de prod fait par l'API est INCOMPLET, compter en SQL ; aiva et Mister couteau, invisibles, ont suivi cookstra en garantie sans arbitrage
 TRAP-059 backend/.env local ne contient que DATABASE_URL : sans AUTH_SECRET, `next start` démarre mais toute connexion répond 500 (« AUTH_SECRET is not set » dans le journal) → passer la MÊME valeur AUTH_SECRET=… aux deux applications sur la ligne de commande ; jeu d'essai codialis_test : dir@ pm@ dev@ dev2@t.fr, mot de passe Test1234!, Dora (dev@) a des tickets sur Alpha, Denis Développeur (dev2@) sur Beta
 TRAP-060 depuis DEC-082, le jeton de Denis (DEV en prod, TRAP-058) ne reçoit plus les catégories de Ressources des projets où il n'a pas de ticket, ni aucune « Chef de projet seul » → un relevé des catégories de prod par l'API est incomplet
+TRAP-061 la cloche (DEC-083) ne montre que les tickets ASSIGNÉS ou En revue : un ticket daté SANS assigné, en retard, n'apparaît chez personne → c'est la règle validée, mais un oubli reste possible là
 
 ## STATE
 branch=main
@@ -303,6 +310,7 @@ done=[30/10] déployé (f116c56), retrait_phase_terminee appliquée juste après
 done=[30/10] CC-367 : liste des projets ouverte sur les projets en cours (DEC-079) ; 21/21 dans Chrome sur build de production (PM et DEV) ; types, lint, build OK ; déployé (59c0dbb, codialis.admin seul), CC-367 passé en EN_REVUE avec commentaire de livraison
 done=[30/10] CC-369 : projets clôturés retirés des sélecteurs de projet des tickets (DEC-080), libellé par projectLabel ; 27/27 HTTP + Chrome sur builds de production, test-api-catalog 371/371 ; types, lint, build OK ; déployé (a421036, codialis.backend + codialis.admin) : 13 projets proposés sur 16 en prod ; CC-369 passé en EN_REVUE avec commentaire de livraison
 done=[30/10] CC-368 : catégories de Ressources communes à tous les projets, déplaçables, projet ouvert dès qu'on le choisit (DEC-081) ; visibilité des catégories par rôle (DEC-082) ; 65/65 HTTP + Chrome sur builds de production, test-api-catalog 371/371 ; types, lint, build OK ; déployé (bdd3b78), categories_communes appliquée juste après le rebuild ; CC-368 passé en EN_REVUE avec commentaire de livraison
+done=[30/10] CC-366 : cloche des échéances (DEC-083 à DEC-085), échéance dès la création ; notifications 17/17, HTTP 23/23, Chrome 25/25 + Exporter 4/4 sur builds de production, test-api-catalog 375/375, calculs OK ; types, lint, build OK ; déployé (085a2cb, codialis.backend + codialis.admin), sans migration ; contrôles en prod : santé 200, notifications 401 sans jeton, 200 avec celui de Denis ; CC-366 passé en EN_REVUE avec commentaire de livraison
 manual=les catégories « Top Formation » (Cloudflare, Brevo, Openrouter) et « Alma » (AWS, cPanel) sont toujours dans ADD : à déplacer par Gabrielle (Modifier → Projet), ou par l'API avec l'accord de Denis
 manual=les catégories de Ressources contiennent des mots de passe EN CLAIR (AWS, cPanel, Brevo…), lisibles par toute l'équipe et tout jeton d'API qui les voit
 manual=aiva et Mister couteau étaient aussi en « Terminé » et sont passés en garantie avec cookstra : à confirmer par Denis, sinon changer leur phase depuis l'en-tête du projet
