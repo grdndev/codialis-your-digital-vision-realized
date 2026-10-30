@@ -128,7 +128,7 @@ export default async function ProjectDetailPage({
         {/* `liste=1` demande explicitement la liste : « Projets » dans le menu
             rouvre le dernier projet consulté, ce lien-ci fait le contraire. */}
         <Link href="/projects?liste=1" className="text-sm text-muted hover:text-text">
-          ← Tous les projets
+          ← Projets
         </Link>
         {info ? (
           <p className="mt-2 rounded-lg border border-amber/30 bg-amber/5 px-4 py-2.5 text-sm text-text">

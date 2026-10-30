@@ -182,6 +182,7 @@ DEC-076 [2026-10-14] ACTIVE serveur MCP POST /api/mcp : Streamable HTTP SANS ÉT
 DEC-077 [2026-10-14] ACTIVE partout où l'API attend un ticket (ticketId, ticketIds, attachments `id`, time add-entry, triage, triage/draft), la RÉFÉRENCE est acceptée en plus de l'identifiant ; `update` d'un ticket est PARTIEL (champ absent = inchangé, null = vidé), l'écran envoie toujours tout why=un développeur ou un agent pense en « CC-365 », et changer un titre ne doit pas exiger de relire puis renvoyer tout le ticket alt=identifiants seuls, mise à jour complète
 
 DEC-078 [2026-10-30] ACTIVE la phase de projet « Terminé » (FIN) est SUPPRIMÉE : restent DEV, WAR, MAI, CLO ; les projets en FIN passent SOUS GARANTIE (migration retrait_phase_terminee : aiva, cookstra et Mister couteau en prod ; sauvegarde ~/backups/phase-terminee/avant-20261030-051906.sql) why=CC-364, doublon avec « Clôturé » ; arbitrage Denis du 30/10, rendu sur cookstra seul (TRAP-058) alt=FIN → DEV, FIN → CLO
+DEC-079 [2026-10-30] ACTIVE la liste de l'écran Projets s'ouvre sur « En développement » (titre « Projets en cours ») ; « Tous les projets » est un filtre explicite (`?phase=all`), une phase inconnue retombe sur DEV ; le titre suit le filtre why=CC-367, on vient y chercher les projets en cours ; le Dashboard n'affichait déjà que les DEV alt=tout afficher par défaut (état initial)
 
 ## TRAP
 TRAP-001 le serveur `next dev` garde l'ANCIEN client Prisma après une migration → le redémarrer, sinon « Cannot read properties of undefined » sur le nouveau modèle
@@ -294,6 +295,7 @@ done=[14/10] API utilisable hors écran (DEC-073 à DEC-077, migration jetons_ap
 done=[14/10] déployé (35e0baf), migration jetons_api appliquée juste après le rebuild ; contrôles en prod sans jeton : santé 200, openapi.json 401, MCP 401 + WWW-Authenticate, Origin 403, jeton inventé 401, back-office 200
 done=[30/10] CC-364 : phase « Terminé » retirée (DEC-078, migration retrait_phase_terminee) ; migration rejouée en local sur un projet en FIN, 20/20 HTTP + Chrome sur builds de production, test-api-catalog 371/371 ; types, lint, build OK
 done=[30/10] déployé (f116c56), retrait_phase_terminee appliquée juste après le rebuild : DEV 9, WAR 4, CLO 3, plus aucun FIN ; CC-364 passé en EN_REVUE
+done=[30/10] CC-367 : liste des projets ouverte sur les projets en cours (DEC-079) ; 21/21 dans Chrome sur build de production (PM et DEV) ; types, lint, build OK
 manual=aiva et Mister couteau étaient aussi en « Terminé » et sont passés en garantie avec cookstra : à confirmer par Denis, sinon changer leur phase depuis l'en-tête du projet
 next=attendre le retour de Jayan et Gabrielle sur les tickets en EN_REVUE ; ils décident du passage à TERMINE
 next=Denis crée son jeton (Paramètres → Jetons d'API) et lance la commande `claude mcp add` affichée ; premier essai complet en prod avec ce jeton (lister, lire, EN_COURS, commenter, EN_REVUE)

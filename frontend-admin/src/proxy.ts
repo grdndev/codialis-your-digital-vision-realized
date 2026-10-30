@@ -19,7 +19,8 @@ const PUBLIC_PATHS = new Set(["/login", "/reset", "/verify"]);
 //   menu : sans lui, vider les filtres serait immédiatement défait par la
 //   mémoire.
 // - « Projets » retient le dernier projet ouvert et y retourne directement.
-//   `?liste=1` demande explicitement la liste complète.
+//   `?liste=1` demande explicitement la liste (ouverte sur les projets en
+//   développement, CC-367).
 const FILTER_MEMORY_PATHS = new Set(["/tickets"]);
 const FILTER_COOKIE_PREFIX = "codialis_filtres";
 const LAST_PROJECT_COOKIE = "codialis_dernier_projet";

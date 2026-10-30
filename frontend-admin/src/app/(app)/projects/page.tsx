@@ -14,6 +14,16 @@ const PHASES: { id: "all" | ProjectGroup; label: string }[] = [
   { id: "CLO", label: "Clôturés" },
 ];
 
+// Le titre suit le filtre : la liste ne s'ouvre plus sur tous les projets
+// (CC-367), « Tous les projets » en tête d'une liste réduite serait faux.
+const TITLES: Record<"all" | ProjectGroup, string> = {
+  all: "Tous les projets",
+  DEV: "Projets en cours",
+  WAR: "Projets sous garantie",
+  MAI: "Projets en maintenance",
+  CLO: "Projets clôturés",
+};
+
 function deadlineDisplay(p: {
   group: ProjectGroup;
   closedAt: Date | null;
@@ -54,7 +64,12 @@ export default async function ProjectsPage({
   const user = await requireUser();
   const canCreate = user.role === "DIR" || user.role === "PM";
   const sp = await searchParams;
-  const active: ProjectGroup | "all" = (sp.phase as ProjectGroup | undefined) ?? "all";
+  // CC-367 : sans filtre, la liste s'ouvre sur les projets en développement —
+  // c'est eux qu'on vient chercher, pas les clôturés. « Tous » devient donc un
+  // filtre explicite (`phase=all`), et une valeur inconnue retombe sur le défaut.
+  const active: ProjectGroup | "all" = PHASES.some((ph) => ph.id === sp.phase)
+    ? (sp.phase as ProjectGroup | "all")
+    : "DEV";
 
   const { allProjects, clients } = await apiGet<ProjectsScreen>("/api/admin/projects");
   const clientCount = clients.length;
@@ -70,7 +85,7 @@ export default async function ProjectsPage({
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-text">Tous les projets</h1>
+          <h1 className="text-xl font-semibold text-text">{TITLES[active]}</h1>
           <p className="mt-1 text-sm text-muted">
             {allProjects.length} projets · {clientCount} clients
           </p>
@@ -92,7 +107,7 @@ export default async function ProjectsPage({
         {PHASES.map((ph) => (
           <Link
             key={ph.id}
-            href={ph.id === "all" ? "/projects?liste=1" : `/projects?phase=${ph.id}`}
+            href={`/projects?phase=${ph.id}`}
             className={`rounded-xl border px-4 py-3 text-sm transition ${
               active === ph.id
                 ? "border-mint/40 bg-mint/10 text-text"
@@ -118,6 +133,13 @@ export default async function ProjectsPage({
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-5 py-4 text-muted">
+                  Aucun projet dans cette phase.
+                </td>
+              </tr>
+            ) : null}
             {filtered.map((p) => {
               const dl = deadlineDisplay(p);
               return (
