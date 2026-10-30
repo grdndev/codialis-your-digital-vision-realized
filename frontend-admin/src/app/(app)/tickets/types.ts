@@ -71,6 +71,7 @@ export type TicketDetailResponse = {
 };
 
 export type NewTicketScreen = {
-  projects: { id: string; label: string; epics: { id: string; title: string }[] }[];
+  // Sans les projets clôturés, sauf celui demandé par `?project=` (CC-369).
+  projects: { id: string; name: string; client: { name: string }; epics: { id: string; title: string }[] }[];
   team: { id: string; name: string }[];
 };

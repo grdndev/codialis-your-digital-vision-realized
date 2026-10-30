@@ -52,8 +52,12 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
       select: { id: true, name: true },
     }),
     // Pour pouvoir déplacer le ticket : un ticket déposé sur le mauvais projet
-    // n'avait aucun moyen d'en changer.
+    // n'avait aucun moyen d'en changer. Pas vers un projet clôturé, comme à la
+    // création (CC-369) ; le sien reste proposé, même clôturé, sans quoi le
+    // sélecteur s'ouvrirait sur un autre projet et l'enregistrement déplacerait
+    // le ticket à l'insu de celui qui ne corrigeait que son titre.
     prisma.project.findMany({
+      where: { OR: [{ group: { not: "CLO" } }, { id: ticket.projectId }] },
       orderBy: { name: "asc" },
       select: { id: true, name: true, client: { select: { name: true } } },
     }),

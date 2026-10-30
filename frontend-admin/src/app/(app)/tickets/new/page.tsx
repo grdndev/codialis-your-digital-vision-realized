@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
+import { projectLabel } from "@/lib/format";
 import { NewTicketForm } from "./new-ticket-form";
 import type { NewTicketScreen } from "../types";
 
@@ -10,10 +11,18 @@ export default async function NewTicketPage({
   searchParams: Promise<{ project?: string; cree?: string }>;
 }) {
   const user = await requireUser();
-  // Les listes arrivent déjà mises en forme pour les sélecteurs.
-  const { projects, team } = await apiGet<NewTicketScreen>("/api/admin/tickets/new");
   // Venu de la fiche d'un projet, le sélecteur s'ouvre déjà sur celui-ci.
   const { project, cree } = await searchParams;
+  // L'API écarte les projets clôturés ; on lui nomme celui d'où l'on vient
+  // pour qu'elle le garde même clôturé (sa fiche propose « + Nouveau ticket »).
+  const query = new URLSearchParams(project ? { project } : {});
+  const screen = await apiGet<NewTicketScreen>(`/api/admin/tickets/new?${query}`);
+  const projects = screen.projects.map((p) => ({
+    id: p.id,
+    label: projectLabel(p.client.name, p.name),
+    epics: p.epics,
+  }));
+  const { team } = screen;
   // Le projet d'où l'on vient : il sert à revenir ici après la création, pour
   // enchaîner les signalements sans repasser par la fiche projet.
   const projetSource = projects.find((p) => p.id === project);
