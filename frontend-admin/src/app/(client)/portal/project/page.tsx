@@ -1,23 +1,24 @@
 import { apiGet } from "@/lib/api";
-import { requireClientProject } from "@/lib/client-project";
-import { fmtHours, fmtEUR, fmtDate } from "@/lib/format";
+import { portalQuery, requireClientProject } from "@/lib/client-project";
 import { CLIENT_STATE_LABEL, CLIENT_STATE_BADGE_CLASS } from "@/lib/features";
-import type { PortalCdcDocRow, PortalEpic, PortalProjectScreen, QuoteRow } from "../types";
+import type { PortalCdcDocRow, PortalEpic, PortalProjectScreen } from "../types";
 
+// « Devis » est retiré (CC-374) : aucun écran de l'agence ne remplit les devis,
+// l'onglet affichait toujours « Aucun devis ». Une ancienne adresse
+// `?tab=devis` retombe sur les fonctionnalités.
 const TABS = [
-  { id: "devis", label: "Devis" },
   { id: "features", label: "Fonctionnalités prévues" },
   { id: "cdc", label: "Cahier des charges" },
 ];
 
 export default async function PortalProjectPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
-  await requireClientProject();
+  const { project } = await requireClientProject();
   const sp = await searchParams;
-  const tab = TABS.some((t) => t.id === sp.tab) ? sp.tab! : "devis";
+  const tab = TABS.some((t) => t.id === sp.tab) ? sp.tab! : "features";
 
-  // Un seul volet est chargé : les trois n'ont aucune donnée en commun.
-  const { quote, epics, docs } = await apiGet<PortalProjectScreen>(
-    `/api/admin/client/project?tab=${tab}`,
+  // Un seul volet est chargé : les deux n'ont aucune donnée en commun.
+  const { epics, docs } = await apiGet<PortalProjectScreen>(
+    `/api/admin/client/project?tab=${tab}&${portalQuery(project)}`,
     "/portal",
   );
 
@@ -25,7 +26,7 @@ export default async function PortalProjectPage({ searchParams }: { searchParams
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-xl font-semibold text-text">Mon projet</h1>
-        <p className="mt-1 text-sm text-muted">Devis, fonctionnalités et cahier des charges</p>
+        <p className="mt-1 text-sm text-muted">{project.name} · fonctionnalités et cahier des charges</p>
       </div>
 
       <div className="flex gap-1 rounded-lg border border-border bg-panel p-1 text-sm">
@@ -36,71 +37,8 @@ export default async function PortalProjectPage({ searchParams }: { searchParams
         ))}
       </div>
 
-      {tab === "devis" ? <DevisTab quote={quote} /> : null}
       {tab === "features" ? <FeaturesTab epics={epics} /> : null}
       {tab === "cdc" ? <CdcTab docs={docs} /> : null}
-    </div>
-  );
-}
-
-function DevisTab({ quote }: { quote: QuoteRow | null }) {
-  if (!quote) return <EmptyState text="Aucun devis renseigné pour l’instant." />;
-
-  const baseLines = quote.lines.filter((l) => !l.ref);
-  const extras = quote.lines.filter((l) => l.ref);
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="rounded-xl border border-border bg-panel p-5">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-text">Devis {quote.ref}</h2>
-          <span className="text-xs text-muted">{quote.signedAt ? `signé le ${fmtDate(quote.signedAt)}` : "non signé"}</span>
-        </div>
-        <div className="mt-3 flex flex-col divide-y divide-border">
-          {baseLines.map((l) => (
-            <div key={l.id} className="flex items-center justify-between gap-4 py-2 text-sm">
-              <div className="min-w-0">
-                <p className="text-text">{l.label}</p>
-                <p className="text-xs text-muted">{l.detail}</p>
-              </div>
-              <div className="shrink-0 text-right text-muted">{fmtHours(l.hours)} · {fmtEUR(l.amount)}</div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 flex items-center justify-between border-t border-border pt-3 text-sm">
-          <span className="text-muted">Total</span>
-          <span className="font-semibold text-text">{fmtEUR(quote.totalAmount)} ({fmtEUR(quote.totalHt)} HT) · {fmtHours(quote.hoursSold)}</span>
-        </div>
-      </div>
-
-      {extras.length > 0 ? (
-        <div className="rounded-xl border border-border bg-panel p-5">
-          <h2 className="text-sm font-semibold text-text">Avenants</h2>
-          <div className="mt-3 flex flex-col gap-2">
-            {extras.map((e) => (
-              <div key={e.id} className="flex items-center justify-between rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm">
-                <div>
-                  <p className="text-text">{e.ref} · {e.label}</p>
-                  <p className="text-xs text-muted">{fmtHours(e.hours)} · {fmtEUR(e.amount)}</p>
-                </div>
-                <span className={`text-xs ${e.status.includes("attente") ? "text-amber" : "text-mint"}`}>{e.status}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      <div className="rounded-xl border border-border bg-panel p-5">
-        <h2 className="text-sm font-semibold text-text">Échéancier de règlement</h2>
-        <div className="mt-3 flex flex-col gap-2">
-          {quote.schedule.map((s) => (
-            <div key={s.id} className="flex items-center justify-between text-sm">
-              <span className="text-text">{s.label} · {s.whenLabel}</span>
-              <span className={s.paid ? "text-mint" : "text-muted"}>{fmtEUR(s.amount)} {s.paid ? "· payé" : ""}</span>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

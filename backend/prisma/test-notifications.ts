@@ -3,7 +3,14 @@
 //   npx tsx prisma/test-notifications.ts
 //
 // Module pur : le test tourne sans base ni application.
-import { dueHorizon, dueNotifications, officeTodayIso, type NotifiableTicket } from "@/lib/notifications";
+import {
+  dueHorizon,
+  dueNotifications,
+  officeTodayIso,
+  waitingClientThreads,
+  type NotifiableTicket,
+  type ThreadMessage,
+} from "@/lib/notifications";
 
 let failures = 0;
 
@@ -107,6 +114,41 @@ check(
   "dépassées (plus ancienne d'abord) puis proches (plus proche d'abord), à égalité le plus vieux ticket",
   refs(dueNotifications(order, dev, now)),
   ["MEME-JOUR-VIEUX", "RETARD-VIEUX", "MEME-JOUR-RECENT", "RETARD-RECENT", "BIENTOT-PROCHE", "BIENTOT-LOIN"],
+);
+
+console.log("Messages du portail client sans réponse (CC-374)");
+const at = (hhmm: string, day = "2026-10-30") => new Date(`${day}T${hhmm}:00.000Z`);
+const msg = (projectId: string, fromClient: boolean, createdAt: Date, auto = false): ThreadMessage => ({
+  projectId,
+  fromClient,
+  auto,
+  createdAt,
+});
+const waiting = (list: ThreadMessage[]) =>
+  waitingClientThreads(list).map((w) => [w.projectId, w.since.toISOString().slice(0, 16), w.count]);
+check("aucun message", waiting([]), []);
+check("message du client seul", waiting([msg("A", true, at("08:00"))]), [["A", "2026-10-30T08:00", 1]]);
+check("répondu", waiting([msg("A", true, at("08:00")), msg("A", false, at("09:00"))]), []);
+check(
+  "deux messages après la réponse : attend depuis le premier",
+  waiting([msg("A", true, at("07:00")), msg("A", false, at("08:00")), msg("A", true, at("09:00")), msg("A", true, at("10:00"))]),
+  [["A", "2026-10-30T09:00", 2]],
+);
+check(
+  "ordre d'arrivée indifférent",
+  waiting([msg("A", true, at("10:00")), msg("A", true, at("09:00")), msg("A", false, at("08:00"))]),
+  [["A", "2026-10-30T09:00", 2]],
+);
+check(
+  "une réponse automatique ne répond pas",
+  waiting([msg("A", true, at("08:00")), msg("A", false, at("08:01"), true)]),
+  [["A", "2026-10-30T08:00", 1]],
+);
+check("l'agence a écrit la dernière, sans question", waiting([msg("A", false, at("08:00"))]), []);
+check(
+  "le client qui attend depuis le plus longtemps en tête",
+  waiting([msg("B", true, at("09:00")), msg("A", true, at("10:00")), msg("C", true, at("08:00", "2026-10-29")), msg("D", false, at("07:00"))]),
+  [["C", "2026-10-29T08:00", 1], ["B", "2026-10-30T09:00", 1], ["A", "2026-10-30T10:00", 1]],
 );
 
 console.log(failures ? `\n${failures} échec(s)` : "\nTout est bon");

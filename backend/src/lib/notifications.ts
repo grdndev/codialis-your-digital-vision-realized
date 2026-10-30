@@ -13,8 +13,10 @@ import { OFFICE_UTC_OFFSET_MINUTES } from "@/lib/work-time";
 //     l'agence : c'est à elles de constater et de clôturer (DEC-007).
 //
 // Ne comptent que les tickets qui ont une échéance, dépassée ou dans les
-// DUE_SOON_DAYS prochains jours. Ce module ne touche pas la base : il est
-// testable seul (prisma/test-notifications.ts).
+// DUE_SOON_DAYS prochains jours. La chefferie et la direction y voient aussi
+// les messages du portail client sans réponse (CC-374, en fin de fichier). Ce
+// module ne touche pas la base : il est testable seul
+// (prisma/test-notifications.ts).
 
 export const DUE_SOON_DAYS = 7;
 
@@ -90,4 +92,40 @@ export function dueNotifications<T extends NotifiableTicket>(
       a.ticket.dueAt!.getTime() - b.ticket.dueAt!.getTime() ||
       a.ticket.createdAt.getTime() - b.ticket.createdAt.getTime(),
   );
+}
+
+// Messages du portail client restés sans réponse (CC-374), pour la chefferie
+// et la direction. Même parti pris que les échéances : rien n'est stocké, ni
+// « lu » ni « traité ». Un fil attend tant que ses derniers messages viennent
+// du client ; la première réponse de l'agence l'en sort. Une réponse
+// automatique (absence) ne compte pas : le client attend toujours quelqu'un.
+export type ThreadMessage = { projectId: string; fromClient: boolean; auto: boolean; createdAt: Date };
+
+export type WaitingThread = {
+  projectId: string;
+  // Le premier message resté sans réponse : depuis quand le client attend.
+  since: Date;
+  // Messages du client écrits depuis la dernière réponse.
+  count: number;
+};
+
+// Le client qui attend depuis le plus longtemps en tête.
+export function waitingClientThreads(messages: ThreadMessage[]): WaitingThread[] {
+  const byProject = new Map<string, ThreadMessage[]>();
+  for (const m of messages) {
+    if (m.auto) continue;
+    const list = byProject.get(m.projectId) ?? [];
+    list.push(m);
+    byProject.set(m.projectId, list);
+  }
+
+  const out: WaitingThread[] = [];
+  for (const [projectId, list] of byProject) {
+    list.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    let first = list.length;
+    while (first > 0 && list[first - 1].fromClient) first--;
+    const waiting = list.slice(first);
+    if (waiting.length) out.push({ projectId, since: waiting[0].createdAt, count: waiting.length });
+  }
+  return out.sort((a, b) => a.since.getTime() - b.since.getTime());
 }

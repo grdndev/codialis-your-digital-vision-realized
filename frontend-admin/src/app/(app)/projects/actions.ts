@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { parseNumber } from "@/lib/format";
+import { parseMultiline, parseNumber } from "@/lib/format";
 import { redirect } from "next/navigation";
 import { ApiError, apiPost } from "@/lib/api";
 import type { TicketType } from "@/lib/types";
@@ -302,6 +302,19 @@ export async function answerClientQuestionAction(formData: FormData) {
 
   await apiPost(PROJECTS, { action: "answer-client-question", questionId, answer });
   revalidatePath(`/projects/${projectId}`);
+}
+
+// Réponse de l'agence dans le fil « Échanges » du portail client (CC-374). Le
+// message part au nom de la personne connectée ; la cloche de la chefferie
+// cesse de signaler le fil dès qu'il est répondu.
+export async function replyClientMessageAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const body = parseMultiline(formData.get("body"));
+  if (!projectId || !body) return;
+
+  await apiPost(PROJECTS, { action: "reply-client-message", projectId, body });
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/portal/messages");
 }
 
 // --- Reprendre ce qui a été saisi (CC-343) ---------------------------------

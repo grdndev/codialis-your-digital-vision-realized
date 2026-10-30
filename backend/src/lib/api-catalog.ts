@@ -12,7 +12,6 @@ import * as clientContext from "@/app/api/admin/client/context/route";
 import * as clientMessages from "@/app/api/admin/client/messages/route";
 import * as clientProgress from "@/app/api/admin/client/progress/route";
 import * as clientProject from "@/app/api/admin/client/project/route";
-import * as clientRdv from "@/app/api/admin/client/rdv/route";
 import * as crm from "@/app/api/admin/crm/route";
 import * as dashboard from "@/app/api/admin/dashboard/route";
 import * as finance from "@/app/api/admin/finance/route";
@@ -89,7 +88,6 @@ export const API_ROUTES: { path: string; module: RouteModule }[] = [
   { path: "/api/admin/client/progress", module: clientProgress },
   { path: "/api/admin/client/bugs", module: clientBugs },
   { path: "/api/admin/client/project", module: clientProject },
-  { path: "/api/admin/client/rdv", module: clientRdv },
   { path: "/api/admin/client/messages", module: clientMessages },
   { path: "/api/auth/change-password", module: changePassword },
 ];

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { apiGet } from "@/lib/api";
-import { requireClientProject } from "@/lib/client-project";
+import { portalQuery, requireClientProject } from "@/lib/client-project";
 import { fmtHours, SEVERITY_LABEL, TICKET_TYPE_CLIENT_LABEL } from "@/lib/format";
 import { TRIAGE_STATE_LABEL, TRIAGE_STATE_BADGE_CLASS } from "@/lib/format";
 import { createClientTicketAction } from "../actions";
@@ -19,7 +19,7 @@ export default async function PortalBugsPage({ searchParams }: { searchParams: P
   const sp = await searchParams;
   const filter = sp.filter ?? "all";
 
-  const { tickets } = await apiGet<PortalBugsScreen>("/api/admin/client/bugs", "/portal");
+  const { tickets } = await apiGet<PortalBugsScreen>(`/api/admin/client/bugs?${portalQuery(project)}`, "/portal");
   const filtered = tickets.filter((t) => {
     if (filter === "BUG") return t.type === "BUG";
     if (filter === "DEV") return t.type === "DEV";
@@ -77,15 +77,16 @@ export default async function PortalBugsPage({ searchParams }: { searchParams: P
 
       <div className="rounded-xl border border-border bg-panel p-5">
         <h2 className="text-sm font-semibold text-text">Nouveau signalement</h2>
-        <ClientTicketForm />
+        <ClientTicketForm projectId={project.id} />
       </div>
     </div>
   );
 }
 
-function ClientTicketForm() {
+function ClientTicketForm({ projectId }: { projectId: string }) {
   return (
     <form action={createClientTicketAction} className="mt-3 flex flex-col gap-3">
+      <input type="hidden" name="projectId" value={projectId} />
       <div className="flex gap-2">
         <label className="flex-1 cursor-pointer rounded-lg border border-border px-3 py-2 text-center text-sm has-[:checked]:border-mint/40 has-[:checked]:bg-mint/10 has-[:checked]:text-text text-muted">
           <input type="radio" name="type" value="BUG" defaultChecked className="sr-only" /> Bug

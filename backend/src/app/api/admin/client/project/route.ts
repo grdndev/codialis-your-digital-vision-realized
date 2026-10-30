@@ -1,48 +1,35 @@
 import { z } from "zod";
 import { adminRoute, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
-import { clientProjectId, portalEpics } from "@/lib/client-scope";
+import { clientProjectId, portalEpics, portalProjectParam } from "@/lib/client-scope";
 
 export const dynamic = "force-dynamic";
 
 // Portail client — écran « Mon projet ».
 //
-// Comme sur l'écran Ressources, seul l'onglet demandé est chargé : les trois
-// volets (devis, fonctionnalités, cahier des charges) n'ont rien en commun.
+// Comme sur l'écran Ressources, seul l'onglet demandé est chargé : les deux
+// volets (fonctionnalités, cahier des charges) n'ont rien en commun. L'onglet
+// « Devis » est retiré (CC-374) : aucun écran de l'agence ne remplit les devis,
+// il ne montrait donc jamais rien.
 
-const querySchema = z.object({ tab: z.enum(["devis", "features", "cdc"]).default("devis") });
+const querySchema = z.object({
+  tab: z.enum(["features", "cdc"]).default("features"),
+  project: portalProjectParam,
+});
 
 export const GET = adminRoute(["CLIENT"], async ({ user }, request) => {
-  const { tab } = parseQuery(querySchema, request, "Onglet inconnu");
+  const { tab, project } = parseQuery(querySchema, request, "Onglet inconnu");
 
-  const projectId = await clientProjectId(user.id);
-  if (!projectId) return { tab, quote: null, epics: [], docs: [] };
-
-  if (tab === "devis") {
-    return {
-      tab,
-      quote: await prisma.quote.findUnique({
-        where: { projectId },
-        include: { lines: { orderBy: { order: "asc" } }, schedule: { orderBy: { order: "asc" } } },
-      }),
-      epics: [],
-      docs: [],
-    };
-  }
+  const projectId = await clientProjectId(user, project);
+  if (!projectId) return { tab, epics: [], docs: [] };
 
   if (tab === "features") {
-    return {
-      tab,
-      quote: null,
-      epics: await portalEpics(projectId),
-      docs: [],
-    };
+    return { tab, epics: await portalEpics(projectId), docs: [] };
   }
 
   return {
     tab,
-    quote: null,
     epics: [],
     docs: await prisma.cdcDocument.findMany({ where: { projectId }, orderBy: { order: "asc" } }),
   };
-}, { summary: "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Mon projet, un onglet à la fois : devis, fonctionnalités ou cahier des charges.", query: querySchema });
+}, { summary: "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Mon projet, un onglet à la fois : fonctionnalités ou cahier des charges.", query: querySchema });

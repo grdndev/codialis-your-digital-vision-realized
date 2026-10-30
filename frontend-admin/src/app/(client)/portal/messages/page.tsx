@@ -1,16 +1,16 @@
 import { apiGet } from "@/lib/api";
-import { requireClientProject } from "@/lib/client-project";
-import { fmtDateTime } from "@/lib/format";
+import { portalQuery, requireClientProject } from "@/lib/client-project";
+import { fmtOfficeDateTime } from "@/lib/format";
 import { ABSENCE_COPY } from "@/lib/absence";
 import { sendClientMessageAction } from "../actions";
 import type { PortalMessagesScreen } from "../types";
 
 export default async function PortalMessagesPage() {
-  // Le périmètre projet est déduit de la session côté API.
-  await requireClientProject();
+  // Le projet est validé par l'API contre l'entreprise du compte connecté.
+  const { project } = await requireClientProject();
 
   const { messages, pm, absence } = await apiGet<PortalMessagesScreen>(
-    "/api/admin/client/messages",
+    `/api/admin/client/messages?${portalQuery(project)}`,
     "/portal",
   );
 
@@ -20,7 +20,7 @@ export default async function PortalMessagesPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-xl font-semibold text-text">Échanges avec votre cheffe de projet</h1>
-        <p className="mt-1 text-sm text-muted">{pm?.name ?? "Votre cheffe de projet"} · seule interlocutrice sur votre projet</p>
+        <p className="mt-1 text-sm text-muted">{project.name} · {pm?.name ?? "votre cheffe de projet"}, seule interlocutrice sur votre projet</p>
       </div>
 
       {copy && absence?.mode !== "OUVERT" ? (
@@ -35,18 +35,20 @@ export default async function PortalMessagesPage() {
           <div key={m.id} className={`flex flex-col ${m.fromClient ? "items-end" : "items-start"}`}>
             <div className={`max-w-[70%] rounded-xl px-3 py-2 text-sm ${m.fromClient ? "bg-mint/10 text-text" : "bg-panel-2 text-text"}`}>
               {!m.fromClient ? <p className="text-xs font-medium text-mint">{m.authorLabel}</p> : null}
-              <p>{m.body}</p>
+              <p className="whitespace-pre-wrap">{m.body}</p>
             </div>
-            <p className="mt-0.5 text-[10px] text-muted">{fmtDateTime(m.createdAt)}</p>
+            <p className="mt-0.5 text-[10px] text-muted">{fmtOfficeDateTime(m.createdAt)}</p>
           </div>
         ))}
         {messages.length === 0 ? <p className="text-sm text-muted">Aucun message pour l’instant.</p> : null}
       </div>
 
-      <form action={sendClientMessageAction} className="flex gap-2">
-        <input
+      <form action={sendClientMessageAction} className="flex items-end gap-2">
+        <input type="hidden" name="projectId" value={project.id} />
+        <textarea
           name="body"
           required
+          rows={2}
           placeholder={copy && absence?.mode !== "OUVERT" ? `${copy.meta} — votre message sera lu à la reprise` : "Écrire un message…"}
           className="input flex-1"
         />

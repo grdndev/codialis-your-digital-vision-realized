@@ -1,12 +1,22 @@
-import { adminRoute } from "@/lib/admin-api";
-import { clientProjectId, portalEpics } from "@/lib/client-scope";
+import { z } from "zod";
+import { adminRoute, parseQuery } from "@/lib/admin-api";
+import { clientProjectId, portalEpics, portalOtherTickets, portalProjectParam } from "@/lib/client-scope";
 
 export const dynamic = "force-dynamic";
 
-// Portail client — écran « Avancement ».
-export const GET = adminRoute(["CLIENT"], async ({ user }) => {
-  const projectId = await clientProjectId(user.id);
-  if (!projectId) return { epics: [] };
+const querySchema = z.object({ project: portalProjectParam });
 
-  return { epics: await portalEpics(projectId) };
-}, { summary: "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Avancement : épics et leurs tickets, sans assigné ni temps." });
+// Portail client — écran « Avancement » : les épics et leurs tickets, puis les
+// tickets hors épic (CC-374), que l'avancement du projet compte aussi.
+export const GET = adminRoute(["CLIENT"], async ({ user }, request) => {
+  const query = parseQuery(querySchema, request);
+  const projectId = await clientProjectId(user, query.project);
+  if (!projectId) return { epics: [], others: [] };
+
+  const [epics, others] = await Promise.all([portalEpics(projectId), portalOtherTickets(projectId)]);
+  return { epics, others };
+}, {
+  summary:
+    "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Avancement : épics et leurs tickets, puis tickets hors épic (`others`), sans assigné, temps ni estimation.",
+  query: querySchema,
+});

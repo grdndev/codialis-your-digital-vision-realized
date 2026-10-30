@@ -180,6 +180,13 @@ const bodySchema = z.discriminatedUnion("action", [
     questionId: z.string().min(1),
     answer: z.string().min(1),
   }).describe("Enregistre la réponse du client."),
+  // Le portail client a un fil « Échanges » (CC-374) : l'agence y répond depuis
+  // la fiche projet, au nom de la personne connectée.
+  z.object({
+    action: z.literal("reply-client-message"),
+    projectId: z.string().min(1),
+    body: z.string().trim().min(1).max(10_000),
+  }).describe("Répond au client dans le fil « Échanges » de son portail, au nom de l'appelant. Réservé à PM et DIR."),
 ]);
 
 export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
@@ -198,7 +205,10 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
     body.action === "update-client" ||
     // Poser d'un coup les lots et les tickets d'un projet, c'est en dessiner la
     // structure : même main que la création.
-    body.action === "import-json"
+    body.action === "import-json" ||
+    // Parler au client au nom de l'agence relève de la chefferie, seule
+    // interlocutrice annoncée par le portail.
+    body.action === "reply-client-message"
   ) {
     if (user.role !== "DIR" && user.role !== "PM") {
       badRequest("Réservé à la direction et à la chefferie de projet");
@@ -520,10 +530,19 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
         data: { status: "REPONDU", answer: body.answer, answeredAt: new Date() },
       });
       return;
+
+    case "reply-client-message": {
+      const project = await prisma.project.findUnique({ where: { id: body.projectId }, select: { id: true } });
+      if (!project) badRequest("Projet introuvable");
+      await prisma.clientThreadMessage.create({
+        data: { projectId: project.id, fromClient: false, authorLabel: user.name, body: body.body },
+      });
+      return;
+    }
   }
 }, {
   summary:
-    "Clients, projets, épics, import JSON et questions au client. Création et modification d'un client ou d'un projet, phase, couverture et import JSON sont réservés à PM et DIR ; le travail d'un projet (tickets) s'écrit par /api/admin/tickets.",
+    "Clients, projets, épics, import JSON, questions au client et réponses au fil « Échanges » du portail. Création et modification d'un client ou d'un projet, phase, couverture, import JSON et réponse au client sont réservés à PM et DIR ; le travail d'un projet (tickets) s'écrit par /api/admin/tickets.",
   body: bodySchema,
 });
 

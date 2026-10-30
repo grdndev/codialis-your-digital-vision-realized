@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Popover } from "@/app/(app)/popover";
-import { STATUS_BADGE_CLASS, STATUS_LABEL, fmtDate, projectLabel } from "@/lib/format";
-import type { NotificationRow } from "@/lib/dto";
+import { STATUS_BADGE_CLASS, STATUS_LABEL, fmtDate, fmtOfficeDateTime, projectLabel } from "@/lib/format";
+import type { ClientMessageNotificationRow, NotificationRow } from "@/lib/dto";
 
 // La cloche de la barre du haut (CC-366) : les tickets dont l'échéance est
 // dépassée ou tombe dans la semaine. La règle vit dans l'API
@@ -14,9 +14,14 @@ import type { NotificationRow } from "@/lib/dto";
 // La barre du haut reste montée d'une page à l'autre : la liste se relit donc
 // à chaque changement d'adresse, et à chaque ouverture — un ticket passé En
 // revue sur la page courante en sort sans attendre la navigation suivante.
+//
+// La chefferie et la direction y voient aussi, en tête, les messages du portail
+// client restés sans réponse (CC-374) : ils mènent à l'onglet « Échanges
+// client » du projet, et disparaissent dès que quelqu'un y répond.
 
-// Le JSON transporte les dates en chaînes : `dueAt` n'est relu qu'à l'affichage.
+// Le JSON transporte les dates en chaînes : elles ne sont relues qu'à l'affichage.
 type Row = Omit<NotificationRow, "dueAt"> & { dueAt: string };
+type MessageRow = Omit<ClientMessageNotificationRow, "since"> & { since: string };
 
 function dueLabel(days: number): string {
   if (days < -1) return `En retard de ${-days} jours`;
@@ -29,11 +34,15 @@ function dueLabel(days: number): string {
 export function NotificationBell() {
   const pathname = usePathname();
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [messages, setMessages] = useState<MessageRow[]>([]);
 
   const refresh = useCallback(() => {
     fetch("/notifications", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`Erreur ${res.status}`))))
-      .then((data: { notifications: Row[] }) => setRows(data.notifications))
+      .then((data: { notifications: Row[]; clientMessages?: MessageRow[] }) => {
+        setRows(data.notifications);
+        setMessages(data.clientMessages ?? []);
+      })
       // Une cloche muette vaut mieux qu'une page en erreur : on garde la
       // dernière liste connue, elle se relira à la prochaine navigation.
       .catch(() => {});
@@ -45,7 +54,7 @@ export function NotificationBell() {
 
   const overdue = rows?.filter((r) => r.overdue) ?? [];
   const soon = rows?.filter((r) => !r.overdue) ?? [];
-  const count = rows?.length ?? 0;
+  const count = (rows?.length ?? 0) + messages.length;
 
   return (
     <Popover
@@ -73,7 +82,7 @@ export function NotificationBell() {
       <div className="absolute right-0 z-20 mt-2 flex max-h-[70vh] w-[24rem] flex-col overflow-hidden rounded-xl border border-border bg-panel text-xs shadow-2xl">
         <div className="border-b border-border px-4 py-3">
           <p className="text-sm font-semibold text-text">Notifications</p>
-          <p className="text-muted">Échéances dépassées ou dans les 7 jours</p>
+          <p className="text-muted">Échéances dépassées ou dans les 7 jours{messages.length ? ", messages client sans réponse" : ""}</p>
         </div>
         <div className="overflow-y-auto">
           {rows === null ? (
@@ -82,6 +91,7 @@ export function NotificationBell() {
             <p className="px-4 py-6 text-center text-muted">Aucune échéance à surveiller.</p>
           ) : (
             <>
+              <ClientMessages rows={messages} />
               <Group title="En retard" rows={overdue} />
               <Group title="Bientôt" rows={soon} />
             </>
@@ -89,6 +99,34 @@ export function NotificationBell() {
         </div>
       </div>
     </Popover>
+  );
+}
+
+function ClientMessages({ rows }: { rows: MessageRow[] }) {
+  if (!rows.length) return null;
+  return (
+    <section>
+      <p className="bg-panel-2 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+        Messages client · {rows.length}
+      </p>
+      <ul>
+        {rows.map((r) => (
+          <li key={r.project.id} className="border-t border-border first:border-t-0">
+            <Link href={`/projects/${r.project.id}?view=echanges`} className="block px-4 py-3 transition hover:bg-panel-2">
+              <span className="flex items-center justify-between gap-3">
+                <span className="truncate font-medium text-text">{projectLabel(r.project.client.name, r.project.name)}</span>
+                <span className="shrink-0 font-semibold text-amber">
+                  {r.count > 1 ? `${r.count} messages` : "1 message"} · depuis {fmtOfficeDateTime(new Date(r.since))}
+                </span>
+              </span>
+              <span className="mt-1 line-clamp-2 text-muted">
+                <span className="text-text">{r.author}</span> : {r.excerpt}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

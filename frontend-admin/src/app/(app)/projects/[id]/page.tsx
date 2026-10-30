@@ -3,17 +3,18 @@ import { redirect } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { ticketHref } from "@/lib/ticket-return";
-import { fmtHours, fmtEUR, fmtDate, daysFromNow, CLOSING_STATUSES, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel, coverageStatus } from "@/lib/format";
+import { fmtHours, fmtEUR, fmtDate, daysFromNow, CLOSING_STATUSES, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel, coverageStatus, fmtOfficeDateTime } from "@/lib/format";
 import {
   createEpicAction, createEpicTicketAction, deleteEpicAction, importProjectJsonAction, updateClientContactAction,
   updateEpicAction, updateProjectDescriptionAction,
   addClientQuestionAction, markQuestionAskedAction, answerClientQuestionAction,
   updateProjectAction, updateClientAction, updateProjectPhaseAction, updateProjectCoverageAction,
+  replyClientMessageAction,
 } from "../actions";
 import { bulkUpdateTicketsAction } from "../../tickets/actions";
 import { BulkSelection, SelectAll } from "../../bulk-selection";
 import type { ClientQuestionStatus, ProjectGroup, TaskStatus } from "@/lib/types";
-import type { ClientRef } from "@/lib/dto";
+import type { ClientRef, ClientThreadMessageRow } from "@/lib/dto";
 import type {
   ApiCredentialRow, ClientQuestionRow, ProjectDetail, ProjectDetailResponse, ProjectEpic, ProjectTicketRow,
 } from "../types";
@@ -66,11 +67,20 @@ export default async function ProjectDetailPage({
   const { id } = await params;
   const sp = await searchParams;
   const { view, info } = sp;
-  const activeView = view === "kanban" ? "kanban" : view === "fiche" ? "fiche" : "list";
+  // Un développeur consulte, il ne reconfigure pas le projet ni le client, et
+  // ne tient pas la relation avec lui : l'onglet « Échanges client » lui est
+  // fermé, comme l'API qui le remplit (CC-374).
+  const canEdit = user.role === "DIR" || user.role === "PM";
+  const activeView =
+    view === "kanban" ? "kanban" : view === "fiche" ? "fiche" : view === "echanges" && canEdit ? "echanges" : "list";
+  const ticketsView = activeView === "list" || activeView === "kanban";
 
-  // Les données de la fiche ne sont chargées que si son onglet est ouvert.
+  // Les données de la fiche et du fil client ne sont chargées que si leur
+  // onglet est ouvert.
   const result = await apiGet<ProjectDetailResponse>(
-    `/api/admin/projects/detail?id=${encodeURIComponent(id)}${activeView === "fiche" ? "&fiche=1" : ""}`,
+    `/api/admin/projects/detail?id=${encodeURIComponent(id)}${activeView === "fiche" ? "&fiche=1" : ""}${
+      activeView === "echanges" ? "&echanges=1" : ""
+    }`,
   );
 
   // « Projets » dans le menu rouvre le dernier projet consulté : s'il a été
@@ -86,9 +96,7 @@ export default async function ProjectDetailPage({
       )}`,
     );
   }
-  const { project, team, apis, questions, tickets, clients } = result;
-  // Un développeur consulte, il ne reconfigure pas le projet ni le client.
-  const canEdit = user.role === "DIR" || user.role === "PM";
+  const { project, team, apis, questions, tickets, clients, clientThreadWaiting, clientMessages, clientAccounts } = result;
 
   const statusFilter = listParam(sp.status);
   const assigneeFilter = listParam(sp.assignee);
@@ -211,8 +219,18 @@ export default async function ProjectDetailPage({
           >
             Fiche
           </Link>
+          {canEdit ? (
+            <Link
+              href={`/projects/${project.id}?view=echanges`}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 ${activeView === "echanges" ? "bg-mint/10 text-mint" : "text-muted"}`}
+            >
+              Échanges client
+              {/* Le dernier message vient du client : il attend une réponse. */}
+              {clientThreadWaiting ? <span className="h-2 w-2 rounded-full bg-amber" aria-label="Message en attente de réponse" /> : null}
+            </Link>
+          ) : null}
         </div>
-        {activeView !== "fiche" ? (
+        {ticketsView ? (
           <div className="flex items-center gap-2">
             <NewEpicDisclosure projectId={project.id} team={team} />
             <ImportJsonDisclosure projectId={project.id} team={team} />
@@ -230,7 +248,7 @@ export default async function ProjectDetailPage({
         ) : null}
       </div>
 
-      {activeView !== "fiche" ? (
+      {ticketsView ? (
         <TicketFilters
           statusFilter={statusFilter}
           assigneeFilter={assigneeFilter}
@@ -260,9 +278,59 @@ export default async function ProjectDetailPage({
           epicTitle={new Map(project.epics.map((e) => [e.id, e.title]))}
           retour={retour}
         />
+      ) : activeView === "echanges" ? (
+        <ClientThreadView projectId={project.id} clientName={project.client.name} messages={clientMessages} accounts={clientAccounts} />
       ) : (
         <FicheView project={project} deadline={deadline} apis={apis} questions={questions} clients={clients} canEdit={canEdit} />
       )}
+    </div>
+  );
+}
+
+// Onglet « Échanges client » (CC-374) : le fil du portail vu depuis l'agence.
+// Le client à gauche, l'agence à droite, comme une messagerie où l'on écrit
+// soi-même à droite. Sans compte client rattaché, personne ne lira la réponse :
+// l'onglet le dit.
+function ClientThreadView({
+  projectId,
+  clientName,
+  messages,
+  accounts,
+}: {
+  projectId: string;
+  clientName: string;
+  messages: ClientThreadMessageRow[];
+  accounts: number;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      {accounts === 0 ? (
+        <p className="rounded-lg border border-amber/30 bg-amber/5 px-4 py-2.5 text-sm text-text">
+          Aucun compte client n’est rattaché à {clientName} : personne ne lit ce fil côté client. Créez-en un dans
+          {" "}<Link href="/equipe" className="font-medium text-mint hover:underline">Comptes</Link> (rôle Client).
+        </p>
+      ) : null}
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-panel p-5">
+        {messages.map((m) => (
+          <div key={m.id} className={`flex flex-col ${m.fromClient ? "items-start" : "items-end"}`}>
+            <div className={`max-w-[70%] rounded-xl px-3 py-2 text-sm ${m.fromClient ? "bg-panel-2 text-text" : "bg-mint/10 text-text"}`}>
+              <p className={`text-xs font-medium ${m.fromClient ? "text-blue" : "text-mint"}`}>
+                {m.authorLabel}{m.auto ? " · réponse automatique" : ""}
+              </p>
+              <p className="whitespace-pre-wrap">{m.body}</p>
+            </div>
+            <p className="mt-0.5 text-[10px] text-muted">{fmtOfficeDateTime(m.createdAt)}</p>
+          </div>
+        ))}
+        {messages.length === 0 ? <p className="text-sm text-muted">Aucun message pour l’instant.</p> : null}
+      </div>
+      <form action={replyClientMessageAction} className="flex items-end gap-2">
+        <input type="hidden" name="projectId" value={projectId} />
+        <textarea name="body" required rows={3} placeholder={`Répondre à ${clientName}…`} className="input flex-1" />
+        <button type="submit" className="rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-bg">
+          Envoyer
+        </button>
+      </form>
     </div>
   );
 }

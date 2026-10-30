@@ -40,11 +40,12 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/parametres", label: "Paramètres", roles: ["DEV", "PM", "DIR"] },
 ];
 
+// « Rendez-vous » est retiré (CC-374) : aucun écran de l'agence ne pose de
+// rendez-vous et le lien Calendly n'a jamais été configuré, la page restait vide.
 export const CLIENT_NAV_ITEMS: { href: string; label: string }[] = [
   { href: "/portal", label: "Avancement" },
   { href: "/portal/bugs", label: "Signalements" },
   { href: "/portal/project", label: "Mon projet" },
-  { href: "/portal/rdv", label: "Rendez-vous" },
   { href: "/portal/messages", label: "Échanges" },
 ];
 

@@ -1,14 +1,20 @@
 import { z } from "zod";
-import { adminRoute, badRequest, parseBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, parseBody, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
-import { clientProjectId } from "@/lib/client-scope";
+import { clientProjectId, portalProjectParam } from "@/lib/client-scope";
 
 export const dynamic = "force-dynamic";
 
-// Portail client — écran « Échanges ».
+// Portail client — écran « Échanges ». L'agence lit et répond depuis la fiche
+// projet, onglet « Échanges client » (action reply-client-message de
+// /api/admin/projects) ; la cloche de la chefferie signale un message resté
+// sans réponse (CC-374).
 
-export const GET = adminRoute(["CLIENT"], async ({ user }) => {
-  const projectId = await clientProjectId(user.id);
+const querySchema = z.object({ project: portalProjectParam });
+
+export const GET = adminRoute(["CLIENT"], async ({ user }, request) => {
+  const query = parseQuery(querySchema, request);
+  const projectId = await clientProjectId(user, query.project);
   if (!projectId) return { messages: [], pm: null, absence: null };
 
   const [messages, pm, absence] = await Promise.all([
@@ -32,17 +38,25 @@ export const GET = adminRoute(["CLIENT"], async ({ user }) => {
         }
       : null,
   };
-}, { summary: "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Fil d'échanges entre le client et l'agence." });
+}, {
+  summary:
+    "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Fil d'échanges entre le client et l'agence.",
+  query: querySchema,
+});
 
-const sendSchema = z.object({ action: z.literal("send"), body: z.string().min(1) });
+const sendSchema = z.object({
+  action: z.literal("send"),
+  body: z.string().trim().min(1).max(10_000),
+  project: z.string().nullable().optional().describe("Projet du client ; absent ou étranger = le premier de ses projets"),
+});
 
 export const POST = adminRoute(["CLIENT"], async ({ user }, request) => {
-  const { body } = await parseBody(sendSchema, request);
+  const body = await parseBody(sendSchema, request);
 
-  const projectId = await clientProjectId(user.id);
-  if (!projectId) badRequest("Aucun projet affecté à ce compte");
+  const projectId = await clientProjectId(user, body.project);
+  if (!projectId) badRequest("Aucun projet rattaché à ce compte");
 
   await prisma.clientThreadMessage.create({
-    data: { projectId, fromClient: true, authorLabel: user.name, body },
+    data: { projectId, fromClient: true, authorLabel: user.name, body: body.body },
   });
 }, { summary: "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Envoie un message à l'agence.", body: sendSchema });

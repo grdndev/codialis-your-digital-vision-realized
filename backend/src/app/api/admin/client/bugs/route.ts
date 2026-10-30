@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { adminRoute, badRequest, parseBody } from "@/lib/admin-api";
+import { adminRoute, badRequest, parseBody, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
-import { clientProjectId } from "@/lib/client-scope";
+import { clientProjectId, portalProjectParam } from "@/lib/client-scope";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
 
 export const dynamic = "force-dynamic";
@@ -12,8 +12,11 @@ export const dynamic = "force-dynamic";
 // l'agence sur le projet ne lui est pas exposé, pas plus que les tickets
 // annulés (CC-372), même les siens.
 
-export const GET = adminRoute(["CLIENT"], async ({ user }) => {
-  const projectId = await clientProjectId(user.id);
+const querySchema = z.object({ project: portalProjectParam });
+
+export const GET = adminRoute(["CLIENT"], async ({ user }, request) => {
+  const query = parseQuery(querySchema, request);
+  const projectId = await clientProjectId(user, query.project);
   if (!projectId) return { tickets: [] };
 
   return {
@@ -22,7 +25,11 @@ export const GET = adminRoute(["CLIENT"], async ({ user }) => {
       orderBy: { createdAt: "desc" },
     }),
   };
-}, { summary: "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Signalements remontés par le client sur son projet." });
+}, {
+  summary:
+    "Portail client (compte CLIENT, session seulement : un compte client n'a pas de jeton d'API). Signalements remontés par le client sur son projet.",
+  query: querySchema,
+});
 
 const createSchema = z.object({
   action: z.literal("create-ticket"),
@@ -30,13 +37,14 @@ const createSchema = z.object({
   title: z.string().min(1),
   description: z.string(),
   severity: z.enum(["BLOQUANT", "MAJEUR", "MINEUR"]).nullable(),
+  project: z.string().nullable().optional().describe("Projet du client ; absent ou étranger = le premier de ses projets"),
 });
 
 export const POST = adminRoute(["CLIENT"], async ({ user }, request) => {
   const body = await parseBody(createSchema, request);
 
-  const projectId = await clientProjectId(user.id);
-  if (!projectId) badRequest("Aucun projet affecté à ce compte");
+  const projectId = await clientProjectId(user, body.project);
+  if (!projectId) badRequest("Aucun projet rattaché à ce compte");
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },

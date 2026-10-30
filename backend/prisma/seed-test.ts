@@ -1,8 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-// Jeu d'essai pour la vérification locale : un compte par rôle, un client, deux
-// projets, des épics et des tickets, dans un épic ou hors épic. Rien de tout cela ne part en
+// Jeu d'essai pour la vérification locale : un compte par rôle, deux clients
+// (le premier a deux projets, le second un), un compte client par client, des
+// épics et des tickets, dans un épic ou hors épic. Rien de tout cela ne part en
 // production — le script vise une base de test jetable, qu'il vide d'abord.
 //
 //   DATABASE_URL=... npx tsx prisma/seed-test.ts
@@ -30,9 +31,9 @@ async function main() {
   await prisma.user.deleteMany();
 
   const passwordHash = await bcrypt.hash("Test1234!", 10);
-  const mk = (email: string, name: string, initials: string, role: "DIR" | "PM" | "DEV") =>
+  const mk = (email: string, name: string, initials: string, role: "DIR" | "PM" | "DEV" | "CLIENT", clientId?: string) =>
     prisma.user.create({
-      data: { email, name, initials, role, passwordHash, mustChangePassword: false },
+      data: { email, name, initials, role, passwordHash, mustChangePassword: false, clientId },
     });
 
   const dir = await mk("dir@t.fr", "Diane Direction", "DD", "DIR");
@@ -41,6 +42,26 @@ async function main() {
   const dev2 = await mk("dev2@t.fr", "Denis Développeur", "DE", "DEV");
 
   const client = await prisma.client.create({ data: { name: "Client Test" } });
+  const other = await prisma.client.create({ data: { name: "Autre Client" } });
+  // Le portail client (CC-374) : un compte par client, rattaché par
+  // `clientId` comme le fait l'écran Comptes. Chacun ne doit voir que les
+  // projets de son entreprise.
+  await mk("client@t.fr", "Claire Cliente", "CC", "CLIENT", client.id);
+  await mk("client2@t.fr", "Alain Autre", "AA", "CLIENT", other.id);
+  await prisma.project.create({
+    data: {
+      clientId: other.id,
+      name: "Projet Gamma",
+      initials: "GAM",
+      description: "Projet d'un autre client",
+      group: "DEV",
+      phaseLabel: "",
+      hoursSold: 10,
+      hoursSpent: 0,
+      progressPct: 0,
+      openedAt: new Date(),
+    },
+  });
 
   const alpha = await prisma.project.create({
     data: {
@@ -123,7 +144,7 @@ async function main() {
     }
   }
 
-  console.log("Jeu d'essai prêt : dir@t.fr, pm@t.fr, dev@t.fr, dev2@t.fr — Test1234!");
+  console.log("Jeu d'essai prêt : dir@t.fr, pm@t.fr, dev@t.fr, dev2@t.fr, client@t.fr, client2@t.fr — Test1234!");
 }
 
 main()

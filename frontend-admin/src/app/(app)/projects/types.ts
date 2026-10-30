@@ -1,4 +1,4 @@
-import type { ClientRef, ProjectWithClient, TicketRow, UserRef } from "@/lib/dto";
+import type { ClientRef, ClientThreadMessageRow, ProjectWithClient, TicketRow, UserRef } from "@/lib/dto";
 import type { ClientQuestionStatus } from "@/lib/types";
 
 export type ProjectsScreen = {
@@ -72,6 +72,13 @@ export type ProjectDetailResponse =
       // Tout le travail du projet, dans un épic ou non, toutes vues confondues.
       tickets: ProjectTicketRow[];
       clients: ClientRef[];
+      // Fil « Échanges » du portail client (CC-374), pour PM et DIR seulement.
+      // `clientThreadWaiting` : le dernier message vient du client, il attend
+      // une réponse. Le fil et le nombre de comptes client ne sont chargés
+      // que sur l'onglet « Échanges client ».
+      clientThreadWaiting: boolean;
+      clientMessages: ClientThreadMessageRow[];
+      clientAccounts: number;
     };
 
 export type ProjectTicketRow = TicketRow & {

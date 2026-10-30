@@ -138,4 +138,30 @@ export type NotificationRow = {
   overdue: boolean;
 };
 
-export type NotificationsResponse = { notifications: NotificationRow[]; overdueCount: number };
+// Un fil « Échanges » du portail client qui attend une réponse (CC-374), pour
+// la chefferie et la direction. `since` : premier message resté sans réponse.
+export type ClientMessageNotificationRow = {
+  project: { id: string; name: string; client: { name: string } };
+  since: Date;
+  count: number;
+  author: string;
+  excerpt: string;
+};
+
+export type NotificationsResponse = {
+  notifications: NotificationRow[];
+  overdueCount: number;
+  clientMessages: ClientMessageNotificationRow[];
+};
+
+// Message du fil « Échanges » entre un client et l'agence (portail client,
+// onglet « Échanges client » de la fiche projet). `auto` : réponse automatique.
+export type ClientThreadMessageRow = {
+  id: string;
+  projectId: string;
+  fromClient: boolean;
+  authorLabel: string;
+  body: string;
+  auto: boolean;
+  createdAt: Date;
+};
