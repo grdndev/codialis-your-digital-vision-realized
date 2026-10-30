@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { adminRoute, badRequest, parseBody, parseQuery } from "@/lib/admin-api";
 import { prisma } from "@/lib/prisma";
+import { visibleProjectIds } from "@/lib/project-access";
 import { USER_IDENTITY } from "@/lib/user-identity";
+import type { CategoryVisibility, Role } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,50 @@ export const dynamic = "force-dynamic";
 
 const BASE_TABS = ["api", "url", "acc", "mock", "doc"];
 
+// Qui voit quelle catégorie libre (CC-368). La chefferie et la direction
+// voient tout. Un développeur ne voit que les catégories des projets où il a
+// du travail assigné (même règle que DEC-023), les communes à tous les projets
+// avec elles, et jamais celles marquées « Chef de projet seul » : c'est là que
+// l'équipe range ses identifiants, et la mention n'était appliquée nulle part.
+// La règle vaut pour la lecture COMME pour l'écriture : une catégorie qu'on ne
+// voit pas ne se modifie pas davantage par son identifiant.
+type Viewer = { id: string; role: Role };
+
+async function categoryVisible(
+  user: Viewer,
+  category: { projectId: string | null; visibility: CategoryVisibility },
+): Promise<boolean> {
+  if (user.role !== "DEV") return true;
+  if (category.visibility === "PM_ONLY") return false;
+  const ids = (await visibleProjectIds(user)) ?? [];
+  // Une catégorie commune s'affiche sur chacun de SES projets : il lui en faut
+  // au moins un.
+  return category.projectId === null ? ids.length > 0 : ids.includes(category.projectId);
+}
+
+// Une catégorie hors de portée répond comme une catégorie inexistante : le
+// refus ne doit pas confirmer qu'elle existe.
+async function visibleCategory(user: Viewer, categoryId: string) {
+  const category = await prisma.customCategory.findUnique({ where: { id: categoryId } });
+  if (!category || !(await categoryVisible(user, category))) badRequest("Catégorie introuvable");
+  return category;
+}
+
+// Là où l'on dépose ou déplace une catégorie, le refus s'explique : c'est le
+// choix de l'utilisateur qui est en cause, pas une référence périmée.
+async function checkCategoryTarget(
+  user: Viewer,
+  target: { projectId: string | null; visibility: CategoryVisibility },
+) {
+  if (user.role !== "DEV") return;
+  if (target.visibility === "PM_ONLY") {
+    badRequest("Une catégorie « Chef de projet seul » se crée par la chefferie ou la direction");
+  }
+  if (!(await categoryVisible(user, target))) {
+    badRequest("Aucun ticket ne vous est assigné sur ce projet : ses catégories ne vous sont pas ouvertes");
+  }
+}
+
 const querySchema = z.object({
   project: z.string().optional().describe("Identifiant du projet ; par défaut le premier non clos"),
   tab: z
@@ -22,7 +68,7 @@ const querySchema = z.object({
     .describe("Onglet : api, url, acc, mock, doc ou custom:<id de catégorie> ; par défaut api"),
 });
 
-export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
+export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
   const query = parseQuery(querySchema, request);
 
   // Toute l'équipe interne voit les projets non clôturés.
@@ -39,14 +85,33 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
       : projects[0]?.id;
 
   if (!activeProjectId) {
-    return { projects, activeProjectId: null, activeTab: "api", customCategories: [], team: [], panel: null };
+    return {
+      projects,
+      activeProjectId: null,
+      activeTab: "api",
+      categoriesOpen: false,
+      customCategories: [],
+      team: [],
+      panel: null,
+    };
   }
 
-  const customCategories = await prisma.customCategory.findMany({
-    where: { projectId: activeProjectId },
-    include: { rows: { orderBy: { order: "asc" } } },
-    orderBy: { createdAt: "asc" },
-  });
+  // Les catégories du projet, puis celles communes à tous les projets (DEC-081),
+  // dans la limite de ce que le compte a le droit de voir (DEC-082).
+  const devProjects = await visibleProjectIds(user);
+  const categoriesOpen = devProjects === null || devProjects.includes(activeProjectId);
+  const customCategories = categoriesOpen
+    ? (
+        await prisma.customCategory.findMany({
+          where: {
+            OR: [{ projectId: activeProjectId }, { projectId: null }],
+            ...(user.role === "DEV" ? { visibility: "TEAM" as const } : {}),
+          },
+          include: { rows: { orderBy: { order: "asc" } } },
+          orderBy: { createdAt: "asc" },
+        })
+      ).sort((a, b) => Number(a.projectId === null) - Number(b.projectId === null))
+    : [];
 
   const validTabs = [...BASE_TABS, ...customCategories.map((c) => `custom:${c.id}`)];
   const requestedTab = query.tab;
@@ -107,13 +172,14 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
     projects,
     activeProjectId,
     activeTab,
+    categoriesOpen,
     customCategories,
     team: team.map((t) => ({ id: t.id, name: t.name })),
     panel,
   };
 }, {
   summary:
-    "Ressources d'un projet non clos, un onglet à la fois : `panel` porte les données de l'onglet retenu (api = accès techniques, url, acc = comptes, mock = maquettes, doc = cahier des charges et docs techniques, custom:<id> = catégorie libre). Renvoie aussi les projets, les catégories libres et l'équipe.",
+    "Ressources d'un projet non clos, un onglet à la fois : `panel` porte les données de l'onglet retenu (api = accès techniques, url, acc = comptes, mock = maquettes, doc = cahier des charges et docs techniques, custom:<id> = catégorie libre). Renvoie aussi les projets, l'équipe et les catégories libres : celles du projet puis les communes à tous les projets (projectId null). Un développeur ne reçoit que les catégories « Équipe » des projets où un ticket lui est assigné (`categoriesOpen` faux sinon) ; la chefferie et la direction les reçoivent toutes.",
   query: querySchema,
 });
 
@@ -185,12 +251,12 @@ const bodySchema = z.discriminatedUnion("action", [
   }),
   z.object({
     action: z.literal("add-custom-category"),
-    projectId: z.string().min(1),
+    projectId: z.string().min(1).nullable().describe("null = catégorie commune à tous les projets"),
     name: z.string(),
-    visibility: z.enum(["TEAM", "PM_ONLY"]),
+    visibility: z.enum(["TEAM", "PM_ONLY"]).describe("PM_ONLY : chefferie et direction seules, refusé à un développeur"),
     format: z.enum(["TABLE", "FILES", "NOTES"]),
     columns: z.array(z.string()),
-  }),
+  }).describe("Un développeur ne crée une catégorie que sur un projet où un ticket lui est assigné"),
   z.object({
     action: z.literal("add-custom-category-row"),
     categoryId: z.string().min(1),
@@ -253,6 +319,12 @@ const bodySchema = z.discriminatedUnion("action", [
     name: z.string(),
     visibility: z.enum(["TEAM", "PM_ONLY"]),
     format: z.enum(["TABLE", "FILES", "NOTES"]),
+    projectId: z
+      .string()
+      .min(1)
+      .nullable()
+      .optional()
+      .describe("Déplace la catégorie : un projet, null = commune à tous les projets, absent = inchangé"),
   }),
   z.object({ action: z.literal("delete-custom-category"), categoryId: z.string().min(1) }),
   z.object({
@@ -360,6 +432,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       });
       return;
     case "add-custom-category":
+      await checkCategoryTarget(user, body);
       await prisma.customCategory.create({
         data: {
           projectId: body.projectId,
@@ -375,10 +448,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       return;
 
     case "add-custom-category-row": {
-      const category = await prisma.customCategory.findUnique({
-        where: { id: body.categoryId },
-      });
-      if (!category) badRequest("Catégorie introuvable");
+      const category = await visibleCategory(user, body.categoryId);
 
       // On tronque/complète aux colonnes réellement déclarées : une ligne ne
       // doit pas porter plus de valeurs que la catégorie n'a de colonnes.
@@ -447,15 +517,22 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       await prisma.techDoc.delete({ where: { id: body.docId } });
       return;
 
-    case "update-custom-category":
+    case "update-custom-category": {
+      const category = await visibleCategory(user, body.categoryId);
+      // Le projet de destination est vérifié comme à la création : déplacer
+      // une catégorie revient à la déposer ailleurs.
+      const projectId = body.projectId === undefined ? category.projectId : body.projectId;
+      await checkCategoryTarget(user, { projectId, visibility: body.visibility });
       // Les colonnes ne se modifient pas ici : elles décrivent la forme des
       // lignes déjà saisies, en changer le nombre les rendrait bancales.
       await prisma.customCategory.update({
         where: { id: body.categoryId },
-        data: { name: body.name, visibility: body.visibility, format: body.format },
+        data: { name: body.name, visibility: body.visibility, format: body.format, projectId },
       });
       return;
+    }
     case "delete-custom-category":
+      await visibleCategory(user, body.categoryId);
       await prisma.customCategory.delete({ where: { id: body.categoryId } });
       return;
 
@@ -464,7 +541,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
         where: { id: body.rowId },
         include: { category: true },
       });
-      if (!row) badRequest("Ligne introuvable");
+      if (!row || !(await categoryVisible(user, row.category))) badRequest("Ligne introuvable");
       const columns: string[] = JSON.parse(row.category.columns);
       await prisma.customCategoryRow.update({
         where: { id: body.rowId },
@@ -472,12 +549,18 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       });
       return;
     }
-    case "delete-custom-category-row":
+    case "delete-custom-category-row": {
+      const row = await prisma.customCategoryRow.findUnique({
+        where: { id: body.rowId },
+        include: { category: true },
+      });
+      if (!row || !(await categoryVisible(user, row.category))) badRequest("Ligne introuvable");
       await prisma.customCategoryRow.delete({ where: { id: body.rowId } });
       return;
+    }
   }
 }, {
   summary:
-    "Ressources d'un projet : accès techniques (api), URL, comptes, maquettes, documents de cahier des charges et techniques, catégories libres et leurs lignes. Une action add-*, update-*, delete-* par famille.",
+    "Ressources d'un projet : accès techniques (api), URL, comptes, maquettes, documents de cahier des charges et techniques, catégories libres et leurs lignes. Une action add-*, update-*, delete-* par famille. Une catégorie libre peut être commune à tous les projets (projectId null) ; un développeur n'agit que sur les catégories qu'il voit (voir GET).",
   body: bodySchema,
 });

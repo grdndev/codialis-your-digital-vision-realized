@@ -567,8 +567,10 @@ enum CategoryFormat {
 
 model CustomCategory {
   id         String             @id @default(cuid())
-  projectId  String
-  project    Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  // NULL = catégorie commune à TOUS les projets (CC-368) : un compte de
+  // l'agence (Brevo, hébergeur…) ne se recopie pas dans chaque projet.
+  projectId  String?
+  project    Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   name       String
   visibility CategoryVisibility
   format     CategoryFormat

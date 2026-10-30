@@ -16,6 +16,7 @@ import {
   addUrlAction, addAccountAction, addMockupAction,
   addCdcDocAction, addTechDocAction, addCustomCategoryAction, addCustomCategoryRowAction,
 } from "./actions";
+import { ProjectSelect } from "./project-select";
 import type { CustomCategoryRow, ResourcePanel, ResourcesScreen } from "./types";
 
 const MOCKUP_STATUSES: MockupStatus[] = ["BROUILLON", "A_VALIDER", "EN_INTEGRATION", "VALIDE"];
@@ -68,11 +69,19 @@ export default async function ResourcesPage({
   const query = new URLSearchParams();
   if (sp.project) query.set("project", sp.project);
   if (sp.tab) query.set("tab", sp.tab);
-  const { projects, activeProjectId, activeTab, customCategories, team, panel } =
+  const { projects, activeProjectId, activeTab, categoriesOpen, customCategories, team, panel } =
     await apiGet<ResourcesScreen>(`/api/admin/resources?${query}`);
 
   const project = projects.find((p) => p.id === activeProjectId);
-  const tabs = [...BASE_TABS, ...customCategories.map((c) => ({ id: `custom:${c.id}`, label: c.name }))];
+  const projectOptions = projects.map((p) => ({ id: p.id, label: projectLabel(p.client.name, p.name) }));
+  const tabs = [
+    ...BASE_TABS.map((t) => ({ ...t, shared: false })),
+    ...customCategories.map((c) => ({ id: `custom:${c.id}`, label: c.name, shared: c.projectId === null })),
+  ];
+  // Seules la chefferie et la direction voient — donc posent — « Chef de
+  // projet seul » : l'API refuse cette mention à un développeur.
+  const canRestrict = user.role !== "DEV";
+  const activeCategory = customCategories.find((c) => `custom:${c.id}` === activeTab);
 
   const filters: ResourceFilters = {
     q: (sp.q ?? "").trim().toLowerCase(),
@@ -119,20 +128,17 @@ export default async function ResourcesPage({
 
       {/* Un formulaire GET : chaque filtre s'écrit dans l'adresse, et les
           critères se combinent. Changer de projet garde l'onglet s'il est
-          commun à tous ; celui d'une catégorie propre au projet quitté ne le
-          serait pas, l'API retombe alors sur le premier. */}
+          commun à tous, catégories communes comprises ; celui d'une catégorie
+          propre au projet quitté ne le serait pas, l'API retombe alors sur le
+          premier. */}
       <form method="get" action="/resources" className="flex flex-wrap items-end gap-2 text-xs">
-        {!activeTab.startsWith("custom:") ? <input type="hidden" name="tab" value={activeTab} /> : null}
+        {!activeTab.startsWith("custom:") || activeCategory?.projectId === null ? (
+          <input type="hidden" name="tab" value={activeTab} />
+        ) : null}
         <input type="hidden" name="per" value={perPage} />
         <label className="flex flex-col gap-1 text-muted">
           Projet
-          <select name="project" defaultValue={activeProjectId ?? ""} className="input h-9 w-64 py-0 text-xs">
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {projectLabel(p.client.name, p.name)}
-              </option>
-            ))}
-          </select>
+          <ProjectSelect value={activeProjectId ?? ""} options={projectOptions} />
         </label>
         <label className="flex flex-col gap-1 text-muted">
           Recherche
@@ -192,11 +198,13 @@ export default async function ResourcesPage({
               <Link
                 key={t.id}
                 href={`/resources?project=${project.id}&tab=${t.id}`}
+                title={t.shared ? "Catégorie commune à tous les projets" : undefined}
                 className={`rounded-md px-3 py-1.5 ${
                   activeTab === t.id ? "bg-mint/10 text-mint" : t.id.startsWith("custom:") ? "text-blue" : "text-muted"
                 }`}
               >
                 {t.label}
+                {t.shared ? <span className="ml-1.5 text-[10px] uppercase tracking-wide opacity-60">tous projets</span> : null}
               </Link>
             ))}
           </div>
@@ -208,13 +216,25 @@ export default async function ResourcesPage({
             customCategories={customCategories}
             panel={panel}
             canUploadCdc={user.role === "PM"}
+            canRestrict={canRestrict}
+            projectOptions={projectOptions}
             editId={sp.edit}
             filters={filters}
             paging={{ page, page2, perPage }}
             pageHref={pageHref}
           />
 
-          <NewCategoryForm projectId={project.id} />
+          {categoriesOpen ? (
+            <NewCategoryForm
+              projectId={project.id}
+              projectName={projectLabel(project.client.name, project.name)}
+              canRestrict={canRestrict}
+            />
+          ) : (
+            <p className="text-xs text-muted">
+              Aucun ticket ne vous est assigné sur ce projet : ses catégories ne vous sont pas ouvertes.
+            </p>
+          )}
         </>
       )}
     </div>
@@ -228,6 +248,8 @@ async function ResourceTabContent({
   customCategories,
   panel,
   canUploadCdc,
+  canRestrict,
+  projectOptions,
   editId,
   filters,
   paging,
@@ -239,6 +261,8 @@ async function ResourceTabContent({
   customCategories: CustomCategoryRow[];
   panel: ResourcePanel | null;
   canUploadCdc: boolean;
+  canRestrict: boolean;
+  projectOptions: { id: string; label: string }[];
   editId?: string;
   filters: ResourceFilters;
   paging: { page: number; page2: number; perPage: number };
@@ -666,7 +690,10 @@ async function ResourceTabContent({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-sm font-semibold text-text">{category.name}</h3>
-            <p className="mt-0.5 text-xs text-muted">{category.visibility === "PM_ONLY" ? "visible chef de projet uniquement" : "visible équipe"}</p>
+            <p className="mt-0.5 text-xs text-muted">
+              {category.projectId === null ? "commune à tous les projets · " : ""}
+              {category.visibility === "PM_ONLY" ? "visible chef de projet uniquement" : "visible équipe"}
+            </p>
           </div>
           {/* Supprimer la catégorie emporte ses lignes : c'est la table
               entière qui disparaît, pas seulement son en-tête. */}
@@ -676,17 +703,38 @@ async function ResourceTabContent({
           />
         </div>
         {editCategorie ? (
-          <form action={updateCustomCategoryAction} className="mt-3 grid grid-cols-4 gap-2 border-t border-border pt-3">
+          // La clé suit ce qui est enregistré : après l'envoi, React remet le
+          // formulaire à zéro et les menus déjà montés réaffichaient l'ancienne
+          // valeur (TRAP-042), le projet compris quand on rend la catégorie
+          // commune sans quitter l'écran.
+          <form
+            key={JSON.stringify([category.name, category.visibility, category.format, category.projectId])}
+            action={updateCustomCategoryAction}
+            className="mt-3 grid grid-cols-4 gap-2 border-t border-border pt-3"
+          >
             <input type="hidden" name="categoryId" value={category.id} />
+            <input type="hidden" name="currentProjectId" value={projectId} />
             <input name="name" defaultValue={category.name} required className="input col-span-2" />
-            <select name="visibility" defaultValue={category.visibility} className="input">
-              <option value="TEAM">Équipe</option>
-              <option value="PM_ONLY">Chef de projet seul</option>
-            </select>
+            <VisibilitySelect canRestrict={canRestrict} defaultValue={category.visibility} />
             <select name="format" defaultValue={category.format} className="input">
               <option value="TABLE">Tableau</option>
               <option value="FILES">Liste de fichiers</option>
               <option value="NOTES">Notes libres</option>
+            </select>
+            {/* Déplacer la catégorie : vers un autre projet, ou la rendre
+                commune à tous (CC-368). */}
+            <select
+              name="projectId"
+              defaultValue={category.projectId ?? ""}
+              aria-label="Projet de la catégorie"
+              className="input col-span-2"
+            >
+              <option value="">Tous les projets</option>
+              {projectOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
             </select>
             <button type="submit" className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg">Enregistrer</button>
             <AnnulerLien href={`/resources?project=${projectId}&tab=${activeTab}`} />
@@ -799,16 +847,47 @@ function EmptyState() {
   return <p className="rounded-xl border border-border bg-panel px-5 py-6 text-sm text-muted">Ressources non renseignées sur ce projet.</p>;
 }
 
-function NewCategoryForm({ projectId }: { projectId: string }) {
+// Un développeur ne choisit pas « Chef de projet seul » : il ne verrait plus
+// la catégorie, et l'API le refuse. Il garde « Équipe », sans menu inutile.
+function VisibilitySelect({
+  canRestrict,
+  defaultValue = "TEAM",
+}: {
+  canRestrict: boolean;
+  defaultValue?: CustomCategoryRow["visibility"];
+}) {
+  if (!canRestrict) return <input type="hidden" name="visibility" value="TEAM" />;
+  return (
+    <select name="visibility" defaultValue={defaultValue} className="input">
+      <option value="TEAM">Équipe</option>
+      <option value="PM_ONLY">Chef de projet seul</option>
+    </select>
+  );
+}
+
+// La portée est choisie à la création, le projet affiché en toutes lettres :
+// une catégorie partait jusque-là, sans le dire, sur le projet ouvert.
+function NewCategoryForm({
+  projectId,
+  projectName,
+  canRestrict,
+}: {
+  projectId: string;
+  projectName: string;
+  canRestrict: boolean;
+}) {
   return (
     <details className="rounded-xl border border-border bg-panel p-4">
       <summary className="cursor-pointer text-sm font-medium text-blue">+ Catégorie</summary>
       <form action={addCustomCategoryAction} className="mt-3 grid grid-cols-4 gap-2">
-        <input type="hidden" name="projectId" value={projectId} />
         <input name="name" placeholder="Nom de la catégorie" required className="input col-span-2" />
-        <select name="visibility" className="input"><option value="TEAM">Équipe</option><option value="PM_ONLY">Chef de projet seul</option></select>
+        <select name="projectId" defaultValue={projectId} aria-label="Portée de la catégorie" className="input col-span-2">
+          <option value={projectId}>Ce projet seulement : {projectName}</option>
+          <option value="">Tous les projets</option>
+        </select>
+        <VisibilitySelect canRestrict={canRestrict} />
         <select name="format" className="input"><option value="TABLE">Tableau</option><option value="FILES">Liste de fichiers</option><option value="NOTES">Notes libres</option></select>
-        <input name="columns" placeholder="Colonnes séparées par une virgule" className="input col-span-3" />
+        <input name="columns" placeholder="Colonnes séparées par une virgule" className="input col-span-2" />
         <button type="submit" className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-bg">Créer</button>
       </form>
     </details>

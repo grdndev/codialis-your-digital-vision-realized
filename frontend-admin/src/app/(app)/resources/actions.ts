@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { apiPost } from "@/lib/api";
 import type { CategoryFormat, CategoryVisibility, MockupStatus } from "@/lib/types";
 
@@ -110,7 +111,8 @@ export async function addTechDocAction(formData: FormData) {
 export async function addCustomCategoryAction(formData: FormData) {
   await apiPost(RESOURCES, {
     action: "add-custom-category",
-    projectId: str(formData, "projectId"),
+    // Vide = « Tous les projets » : la catégorie est commune (CC-368).
+    projectId: str(formData, "projectId") || null,
     name: str(formData, "name"),
     visibility: (str(formData, "visibility") || "TEAM") as CategoryVisibility,
     format: (str(formData, "format") || "TABLE") as CategoryFormat,
@@ -225,14 +227,23 @@ export async function deleteTechDocAction(docId: string) {
 }
 
 export async function updateCustomCategoryAction(formData: FormData) {
+  const categoryId = str(formData, "categoryId");
+  const projectId = str(formData, "projectId") || null;
   await apiPost(RESOURCES, {
     action: "update-custom-category",
-    categoryId: str(formData, "categoryId"),
+    categoryId,
     name: str(formData, "name"),
     visibility: (str(formData, "visibility") || "TEAM") as CategoryVisibility,
     format: (str(formData, "format") || "TABLE") as CategoryFormat,
+    projectId,
   });
   revalidatePath("/resources");
+  // Déplacée vers un autre projet, la catégorie quitte celui qu'on regarde :
+  // on la suit, plutôt que de retomber sur le premier onglet sans elle. Rendue
+  // commune, elle reste visible ici.
+  if (projectId && projectId !== str(formData, "currentProjectId")) {
+    redirect(`/resources?project=${projectId}&tab=custom:${categoryId}`);
+  }
 }
 
 // Supprimer une catégorie emporte ses lignes : c'est la table entière qui

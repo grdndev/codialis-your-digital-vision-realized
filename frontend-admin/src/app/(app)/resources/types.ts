@@ -85,7 +85,8 @@ export type CustomCategoryRowRow = {
 
 export type CustomCategoryRow = {
   id: string;
-  projectId: string;
+  // null = catégorie commune à tous les projets (CC-368).
+  projectId: string | null;
   name: string;
   visibility: CategoryVisibility;
   format: CategoryFormat;
@@ -113,6 +114,10 @@ export type ResourcesScreen = {
   // Projet et onglet résolus par l'API. `null` quand l'utilisateur n'a aucun projet.
   activeProjectId: string | null;
   activeTab: string;
+  // Faux pour un développeur sans ticket assigné sur ce projet : l'API ne lui
+  // en montre pas les catégories, et ne le laisserait pas en créer.
+  categoriesOpen: boolean;
+  // Celles du projet d'abord, puis les communes à tous les projets.
   customCategories: CustomCategoryRow[];
   team: { id: string; name: string }[];
   panel: ResourcePanel | null;
