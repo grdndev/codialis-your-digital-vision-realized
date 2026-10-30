@@ -10,7 +10,7 @@
 // JSON de l'API, pas un paquet partagé.
 
 export type Role = "DIR" | "PM" | "DEV" | "CLIENT";
-export type ProjectGroup = "DEV" | "FIN" | "WAR" | "MAI" | "CLO";
+export type ProjectGroup = "DEV" | "WAR" | "MAI" | "CLO";
 export type TaskStatus = "A_FAIRE" | "EN_COURS" | "EN_REVUE" | "TERMINE";
 export type TicketType = "BUG" | "DEV";
 export type Severity = "BLOQUANT" | "MAJEUR" | "MINEUR";

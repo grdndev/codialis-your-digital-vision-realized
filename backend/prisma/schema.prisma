@@ -16,7 +16,6 @@ enum Role {
 
 enum ProjectGroup {
   DEV
-  FIN
   WAR
   MAI
   CLO

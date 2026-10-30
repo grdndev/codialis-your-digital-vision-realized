@@ -152,7 +152,7 @@ export default async function ProjectDetailPage({
               <label className="flex flex-col gap-1 text-[11px] text-muted">
                 Phase
                 <select name="group" defaultValue={project.group} className="input h-8 py-0 text-xs">
-                  {(["DEV", "FIN", "WAR", "MAI", "CLO"] as ProjectGroup[]).map((g) => (
+                  {(["DEV", "WAR", "MAI", "CLO"] as ProjectGroup[]).map((g) => (
                     <option key={g} value={g}>{GROUP_LABEL[g]}</option>
                   ))}
                 </select>
@@ -385,7 +385,7 @@ function FicheView({
                 <div className="grid grid-cols-2 gap-3">
                   <PField label="Phase">
                     <select name="group" defaultValue={project.group} className="input">
-                      {(["DEV", "FIN", "WAR", "MAI", "CLO"] as ProjectGroup[]).map((g) => (
+                      {(["DEV", "WAR", "MAI", "CLO"] as ProjectGroup[]).map((g) => (
                         <option key={g} value={g}>{GROUP_LABEL[g]}</option>
                       ))}
                     </select>

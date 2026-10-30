@@ -71,7 +71,6 @@ export function monthProgressFraction(): number {
 
 export const GROUP_LABEL: Record<ProjectGroup, string> = {
   DEV: "En développement",
-  FIN: "Terminé",
   WAR: "Sous garantie",
   MAI: "En maintenance",
   CLO: "Clôturé",
@@ -79,7 +78,6 @@ export const GROUP_LABEL: Record<ProjectGroup, string> = {
 
 export const GROUP_BADGE_CLASS: Record<ProjectGroup, string> = {
   DEV: "bg-mint/10 text-mint",
-  FIN: "bg-blue/10 text-blue",
   WAR: "bg-blue/10 text-blue",
   MAI: "bg-amber/10 text-amber",
   CLO: "bg-white/5 text-muted",

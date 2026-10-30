@@ -69,7 +69,7 @@ const bodySchema = z.discriminatedUnion("action", [
     action: z.literal("create-project"),
     clientId: z.string().min(1),
     name: z.string().min(1).max(200),
-    group: z.enum(["DEV", "FIN", "WAR", "MAI", "CLO"]),
+    group: z.enum(["DEV", "WAR", "MAI", "CLO"]),
     phaseLabel: z.string().max(200),
     hoursSold: z.number().min(0),
     soldAmount: z.number().min(0).nullable().describe("Montant vendu en euros ; s'il est donné, les heures vendues en découlent"),
@@ -130,7 +130,7 @@ const bodySchema = z.discriminatedUnion("action", [
     projectId: z.string().min(1),
     clientId: z.string().min(1),
     name: z.string().min(1).max(200),
-    group: z.enum(["DEV", "FIN", "WAR", "MAI", "CLO"]),
+    group: z.enum(["DEV", "WAR", "MAI", "CLO"]),
     phaseLabel: z.string().max(200),
     description: z.string(),
     hoursSold: z.number().min(0),
@@ -146,9 +146,9 @@ const bodySchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("update-project-phase"),
     projectId: z.string().min(1),
-    group: z.enum(["DEV", "FIN", "WAR", "MAI", "CLO"]),
+    group: z.enum(["DEV", "WAR", "MAI", "CLO"]),
     phaseLabel: z.string().max(200),
-  }).describe("Change la phase d'un projet (DEV, FIN, WAR garantie, MAI maintenance, CLO clos). Réservé à PM et DIR."),
+  }).describe("Change la phase d'un projet (DEV développement, WAR garantie, MAI maintenance, CLO clos). Réservé à PM et DIR."),
   // Garantie et maintenance (CC-351) : le dernier jour couvert de chacune,
   // indépendamment de la phase. `null` retire la couverture.
   z.object({

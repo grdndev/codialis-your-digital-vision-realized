@@ -9,7 +9,6 @@ import type { ProjectGroup } from "@/lib/types";
 const PHASES: { id: "all" | ProjectGroup; label: string }[] = [
   { id: "all", label: "Tous les projets" },
   { id: "DEV", label: "En développement" },
-  { id: "FIN", label: "Terminés" },
   { id: "WAR", label: "Sous garantie" },
   { id: "MAI", label: "En maintenance" },
   { id: "CLO", label: "Clôturés" },
@@ -61,7 +60,7 @@ export default async function ProjectsPage({
   const clientCount = clients.length;
 
   const counts: Record<string, number> = { all: allProjects.length };
-  for (const g of ["DEV", "FIN", "WAR", "MAI", "CLO"] as ProjectGroup[]) {
+  for (const g of ["DEV", "WAR", "MAI", "CLO"] as ProjectGroup[]) {
     counts[g] = allProjects.filter((p) => p.group === g).length;
   }
 
@@ -222,7 +221,7 @@ export default async function ProjectsPage({
             <div className="grid grid-cols-2 gap-3">
               <Field label="Phase">
                 <select name="group" defaultValue="DEV" className="input">
-                  {(["DEV", "FIN", "WAR", "MAI", "CLO"] as ProjectGroup[]).map((g) => (
+                  {(["DEV", "WAR", "MAI", "CLO"] as ProjectGroup[]).map((g) => (
                     <option key={g} value={g}>
                       {GROUP_LABEL[g]}
                     </option>
