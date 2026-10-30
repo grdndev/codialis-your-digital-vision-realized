@@ -294,6 +294,19 @@ export function fmtOfficeDateTime(date: Date): string {
   return OFFICE_DATE_TIME.format(date);
 }
 
+// Le jour seul, année comprise : un ticket repris d'Asana peut dater de
+// l'année précédente.
+const OFFICE_DATE = new Intl.DateTimeFormat("fr-FR", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: OFFICE_TIME_ZONE,
+});
+
+export function fmtOfficeDate(date: Date): string {
+  return OFFICE_DATE.format(date);
+}
+
 // Valeur d'un `<input type="datetime-local">` (« 2026-10-06T18:00 »), à l'heure
 // de bureau, et retour vers un instant.
 export function toOfficeInput(date: Date): string {

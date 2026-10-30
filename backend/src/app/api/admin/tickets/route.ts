@@ -26,6 +26,12 @@ export const dynamic = "force-dynamic";
 const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
 const SEVERITIES: Severity[] = ["BLOQUANT", "MAJEUR", "MINEUR"];
 
+// Ordres proposés par l'écran (CC-370). La gravité reste le défaut : on ouvre
+// l'écran pour voir ce qui presse. Les autres répondent à « qu'est-ce qui
+// vient d'arriver », « qu'est-ce qui traîne », « qu'est-ce qui a bougé »,
+// « qu'est-ce qui tombe bientôt ».
+const TICKET_SORTS = ["gravite", "recents", "anciens", "modifies", "echeance"] as const;
+
 // Chaque filtre accepte PLUSIEURS valeurs, séparées par des virgules : « les
 // bloquants et les majeurs », « ces deux projets ». Une seule valeur par
 // critère obligeait à repasser la liste autant de fois qu'on voulait de cas.
@@ -45,6 +51,12 @@ const querySchema = z.object({
     .string()
     .optional()
     .describe("Recherche dans la référence, le titre, la description et les étapes"),
+  sort: z
+    .enum(TICKET_SORTS)
+    .optional()
+    .describe(
+      "Ordre de la liste : `gravite` (défaut : gravité, puis du plus récent au plus ancien), `recents` (créés le plus récemment), `anciens` (créés le plus anciennement), `modifies` (modifiés le plus récemment), `echeance` (échéance la plus proche d'abord, sans échéance à la fin)",
+    ),
 });
 
 export const GET = adminRoute(
@@ -135,22 +147,35 @@ export const GET = adminRoute(
       }),
     ]);
 
-    // Tri par gravité fait ici et non en SQL : MySQL place les NULL en tête, et
-    // Prisma n'expose pas `nulls: "last"` sur ce connecteur. Les tickets sans
-    // gravité — les développements — doivent passer après les bugs, pas avant.
+    // Tris faits ici et non en SQL : MySQL place les NULL en tête, et Prisma
+    // n'expose pas `nulls: "last"` sur ce connecteur. Les tickets sans gravité
+    // — les développements — doivent passer après les bugs, et ceux sans
+    // échéance après les datés, pas avant. La requête rend déjà les tickets du
+    // plus récent au plus ancien, et le tri de JavaScript est stable : à
+    // égalité, c'est cet ordre qui départage.
     const RANK: Record<string, number> = { BLOQUANT: 0, MAJEUR: 1, MINEUR: 2 };
+    const sort = query.sort ?? "gravite";
     const ranked = [...tickets].sort((a, b) => {
-      const ra = a.severity ? RANK[a.severity] : 3;
-      const rb = b.severity ? RANK[b.severity] : 3;
-      if (ra !== rb) return ra - rb;
-      return b.createdAt.getTime() - a.createdAt.getTime();
+      switch (sort) {
+        case "gravite":
+          return (a.severity ? RANK[a.severity] : 3) - (b.severity ? RANK[b.severity] : 3);
+        case "recents":
+          return 0;
+        case "anciens":
+          return a.createdAt.getTime() - b.createdAt.getTime();
+        case "modifies":
+          return b.updatedAt.getTime() - a.updatedAt.getTime();
+        case "echeance":
+          if (!a.dueAt || !b.dueAt) return (a.dueAt ? 0 : 1) - (b.dueAt ? 0 : 1);
+          return a.dueAt.getTime() - b.dueAt.getTime();
+      }
     });
 
     return { projects, tickets: ranked, team };
   },
   {
     summary:
-      "Liste des tickets (écran Tickets), triée par gravité puis du plus récent au plus ancien. Renvoie `tickets` (avec projet, épic et assigné), `projects` (filtres de projet) et `team` (comptes à qui assigner). Sans filtre, TOUS les tickets de l'agence, clos compris : préciser `assignee` et `status`.",
+      "Liste des tickets (écran Tickets), triée par gravité puis du plus récent au plus ancien, ou selon `sort`. Renvoie `tickets` (avec projet, épic et assigné), `projects` (filtres de projet) et `team` (comptes à qui assigner). Sans filtre, TOUS les tickets de l'agence, clos compris : préciser `assignee` et `status`.",
     query: querySchema,
   },
 );

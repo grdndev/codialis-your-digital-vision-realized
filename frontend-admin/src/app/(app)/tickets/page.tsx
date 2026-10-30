@@ -2,7 +2,9 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
 import {
+  fmtDate,
   fmtHours,
+  fmtOfficeDate,
   STATUS_BADGE_CLASS,
   STATUS_LABEL,
   TICKET_TYPE_BADGE_CLASS,
@@ -17,7 +19,7 @@ import { bulkUpdateTicketsAction, setTicketStatusAction } from "./actions";
 import { BulkSelection, SelectAll } from "../bulk-selection";
 import { FilterLink, FilterRow } from "../list-controls";
 import { TicketExportPanel } from "./export-panel";
-import type { TicketsScreen } from "./types";
+import type { TicketListRow, TicketsScreen } from "./types";
 
 const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
 const FILTER_KEYS = ["project", "type", "severity", "status"] as const;
@@ -30,6 +32,19 @@ const DEFAULT_ASSIGNEE = "me";
 // L'API renvoie déjà la liste triée du plus grave au moins grave.
 const SEVERITIES: Severity[] = ["BLOQUANT", "MAJEUR", "MINEUR"];
 
+// Ordres de la liste (CC-370), appliqués par l'API. Un tri sur une date fait
+// paraître cette date en colonne : sans elle, on ne verrait pas pourquoi un
+// ticket passe devant un autre. Les instants (création, modification) se
+// lisent à l'heure de La Réunion, l'échéance est un jour posé à minuit UTC.
+const SORTS: { value: string; label: string; column?: { label: string; date: (t: TicketListRow) => string | null } }[] = [
+  { value: "gravite", label: "Gravité" },
+  { value: "recents", label: "Plus récents", column: { label: "Créé le", date: (t) => fmtOfficeDate(t.createdAt) } },
+  { value: "anciens", label: "Plus anciens", column: { label: "Créé le", date: (t) => fmtOfficeDate(t.createdAt) } },
+  { value: "modifies", label: "Modifiés récemment", column: { label: "Modifié le", date: (t) => fmtOfficeDate(t.updatedAt) } },
+  { value: "echeance", label: "Échéance", column: { label: "Échéance", date: (t) => fmtDate(t.dueAt) } },
+];
+const DEFAULT_SORT = SORTS[0];
+
 export default async function TicketsPage({
   searchParams,
 }: {
@@ -41,6 +56,7 @@ export default async function TicketsPage({
     assignee?: string;
     q?: string;
     view?: string;
+    sort?: string;
     f?: string;
   }>;
 }) {
@@ -64,6 +80,10 @@ export default async function TicketsPage({
   filters.set("assignee", assignee);
   const recherche = (sp.q ?? "").trim();
   if (recherche) filters.set("q", recherche);
+  // Une valeur inconnue (adresse retouchée, mémoire d'écran d'une autre
+  // version) retombe sur la gravité plutôt que de faire échouer l'appel.
+  const sort = SORTS.find((s) => s.value === sp.sort) ?? DEFAULT_SORT;
+  filters.set("sort", sort.value);
   const { projects, tickets, team } = await apiGet<TicketsScreen>(`/api/admin/tickets?${filters}`);
 
   const bugCount = tickets.filter((t) => t.type === "BUG").length;
@@ -78,7 +98,7 @@ export default async function TicketsPage({
     return (sp[key] ?? "").split(",").filter(Boolean);
   }
 
-  function buildHref(next: Partial<Record<FilterKey | "view" | "assignee" | "q", string | null>>) {
+  function buildHref(next: Partial<Record<FilterKey | "view" | "assignee" | "q" | "sort", string | null>>) {
     const params = new URLSearchParams();
     for (const key of FILTER_KEYS) {
       const value = key in next ? next[key] : (sp[key] ?? null);
@@ -91,6 +111,9 @@ export default async function TicketsPage({
     if (who && who !== DEFAULT_ASSIGNEE) params.set("assignee", who);
     const view = "view" in next ? next.view : (sp.view ?? null);
     if (view) params.set("view", view);
+    // Comme l'assigné : le tri par défaut ne s'écrit pas dans l'adresse.
+    const order = "sort" in next ? next.sort : sort.value;
+    if (order && order !== DEFAULT_SORT.value) params.set("sort", order);
     params.set("f", "1");
     return `/tickets?${params}`;
   }
@@ -142,6 +165,7 @@ export default async function TicketsPage({
           <input type="hidden" name="assignee" value={assignee} />
         ) : null}
         {sp.view ? <input type="hidden" name="view" value={sp.view} /> : null}
+        {sort !== DEFAULT_SORT ? <input type="hidden" name="sort" value={sort.value} /> : null}
         <input
           name="q"
           defaultValue={recherche}
@@ -234,6 +258,15 @@ export default async function TicketsPage({
               {STATUS_LABEL[s]}
             </FilterLink>
           ))}
+        </FilterRow>
+
+        {/* Un seul tri à la fois : cliquer un ordre remplace le précédent. */}
+        <FilterRow label="Tri">
+          {SORTS.map((s) => (
+            <FilterLink key={s.value} href={buildHref({ sort: s.value })} active={sort === s}>
+              {s.label}
+            </FilterLink>
+          ))}
           <span className="ml-auto whitespace-nowrap pl-4 text-muted">
             {tickets.length} ticket{tickets.length > 1 ? "s" : ""}
             {recherche ? ` pour « ${recherche} »` : ""}
@@ -290,6 +323,7 @@ export default async function TicketsPage({
                 <th className="px-4 py-3 font-medium">Gravité · nature</th>
                 <th className="px-4 py-3 font-medium">Assigné</th>
                 <th className="px-4 py-3 font-medium">Estimé</th>
+                {sort.column ? <th className="px-4 py-3 font-medium">{sort.column.label}</th> : null}
                 <th className="px-4 py-3 font-medium">Statut</th>
               </tr>
             </thead>
@@ -336,6 +370,9 @@ export default async function TicketsPage({
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted">{t.assignee?.name ?? "Non assigné"}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted">{fmtHours(t.estHours)}</td>
+                  {sort.column ? (
+                    <td className="whitespace-nowrap px-4 py-3 text-muted">{sort.column.date(t) ?? "—"}</td>
+                  ) : null}
                   <td className="whitespace-nowrap px-4 py-3">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[t.status]}`}>
                       {STATUS_LABEL[t.status]}
@@ -345,7 +382,7 @@ export default async function TicketsPage({
               ))}
               {tickets.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-muted">
+                  <td colSpan={sort.column ? 10 : 9} className="px-4 py-8 text-center text-sm text-muted">
                     Aucun ticket pour ces filtres.
                   </td>
                 </tr>
