@@ -220,6 +220,7 @@ function StopSession({
               <option value="A_FAIRE">{STATUS_LABEL.A_FAIRE}</option>
               <option value="EN_REVUE">{STATUS_LABEL.EN_REVUE}</option>
               {canClose ? <option value="TERMINE">{STATUS_LABEL.TERMINE}</option> : null}
+              {canClose ? <option value="ANNULE">{STATUS_LABEL.ANNULE}</option> : null}
             </select>
           </label>
         ) : (

@@ -23,7 +23,7 @@ const DAY_MS = 86_400_000;
 export type NotificationReason = "assignee" | "review";
 
 export type NotifiableTicket = {
-  status: "A_FAIRE" | "EN_COURS" | "EN_REVUE" | "TERMINE";
+  status: "A_FAIRE" | "EN_COURS" | "EN_REVUE" | "TERMINE" | "ANNULE";
   dueAt: Date | null;
   assigneeId: string | null;
   createdAt: Date;

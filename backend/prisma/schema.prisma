@@ -21,11 +21,15 @@ enum ProjectGroup {
   CLO
 }
 
+// ANNULE (CC-372) ne vaut que pour un ticket : abandonné, il garde sa trace
+// sans compter comme livré. Les tâches internes partagent l'énumération mais
+// ne le proposent pas (elles s'archivent ou se suppriment).
 enum TaskStatus {
   A_FAIRE
   EN_COURS
   EN_REVUE
   TERMINE
+  ANNULE
 }
 
 enum TicketType {

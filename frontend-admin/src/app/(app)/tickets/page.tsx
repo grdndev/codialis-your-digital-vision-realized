@@ -5,6 +5,7 @@ import {
   fmtDate,
   fmtHours,
   fmtOfficeDate,
+  CLOSING_STATUSES,
   STATUS_BADGE_CLASS,
   STATUS_LABEL,
   TICKET_TYPE_BADGE_CLASS,
@@ -21,7 +22,11 @@ import { FilterLink, FilterRow } from "../list-controls";
 import { TicketExportPanel } from "./export-panel";
 import type { TicketListRow, TicketsScreen } from "./types";
 
-const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
+const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE", "ANNULE"];
+// Les flèches du kanban suivent le travail d'un cran. « Annulé » (CC-372) est
+// hors de cet enchaînement : on y envoie un ticket depuis sa fiche ou en
+// masse, et sa flèche le rouvre en « À faire ».
+const FLOW: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
 const FILTER_KEYS = ["project", "type", "severity", "status"] as const;
 type FilterKey = (typeof FILTER_KEYS)[number];
 
@@ -88,7 +93,10 @@ export default async function TicketsPage({
 
   const bugCount = tickets.filter((t) => t.type === "BUG").length;
   const devCount = tickets.filter((t) => t.type === "DEV").length;
-  const remaining = tickets.reduce((s, t) => s + Math.max(0, t.estHours - t.spentHours), 0);
+  // Un ticket annulé ne laisse rien à faire (CC-372).
+  const remaining = tickets
+    .filter((t) => t.status !== "ANNULE")
+    .reduce((s, t) => s + Math.max(0, t.estHours - t.spentHours), 0);
 
   // Chaque critère retient plusieurs valeurs : cliquer une deuxième gravité
   // l'ajoute au lieu de remplacer la première, recliquer l'enlève. `f=1`
@@ -282,7 +290,7 @@ export default async function TicketsPage({
             <>
               <select name="bulkStatus" className="input h-8 w-auto py-0 text-xs">
                 <option value="">Statut inchangé</option>
-                {STATUSES.filter((s) => canClose || s !== "TERMINE").map((s) => (
+                {STATUSES.filter((s) => canClose || !CLOSING_STATUSES.includes(s)).map((s) => (
                   <option key={s} value={s}>
                     {STATUS_LABEL[s]}
                   </option>
@@ -304,7 +312,7 @@ export default async function TicketsPage({
                 Appliquer
               </button>
               {canClose ? null : (
-                <span className="text-muted">la clôture revient à la chefferie de projet</span>
+                <span className="text-muted">clôture et annulation reviennent à la chefferie de projet</span>
               )}
             </>
           }
@@ -392,7 +400,7 @@ export default async function TicketsPage({
         </div>
         </BulkSelection>
       ) : (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-5 gap-4">
           {STATUSES.map((s) => {
             const items = tickets.filter((t) => t.status === s);
             const hours = items.reduce((sum, t) => sum + t.estHours, 0);
@@ -406,7 +414,9 @@ export default async function TicketsPage({
                 </div>
                 <div className="flex flex-col gap-2 p-3">
                   {items.map((t) => {
-                    const col = STATUSES.indexOf(t.status);
+                    const col = FLOW.indexOf(t.status);
+                    const prev = t.status === "ANNULE" ? "A_FAIRE" : FLOW[col - 1];
+                    const next = col >= 0 ? FLOW[col + 1] : undefined;
                     return (
                       <div
                         key={t.id}
@@ -430,19 +440,19 @@ export default async function TicketsPage({
                         <div className="mt-2 flex items-center justify-between gap-2 border-t border-border pt-2">
                           <MoveButton
                             ticketId={t.id}
-                            to={STATUSES[col - 1]}
+                            to={prev}
                             label="‹"
-                            title={col > 0 ? `Vers « ${STATUS_LABEL[STATUSES[col - 1]]} »` : ""}
+                            title={prev ? `Vers « ${STATUS_LABEL[prev]} »` : ""}
                           />
                           <MoveButton
                             ticketId={t.id}
-                            to={canClose || STATUSES[col + 1] !== "TERMINE" ? STATUSES[col + 1] : undefined}
+                            to={canClose || next !== "TERMINE" ? next : undefined}
                             label="›"
                             title={
-                              !canClose && STATUSES[col + 1] === "TERMINE"
+                              !canClose && next === "TERMINE"
                                 ? "La clôture revient à la chefferie de projet ou à la direction"
-                                : col < STATUSES.length - 1
-                                  ? `Vers « ${STATUS_LABEL[STATUSES[col + 1]]} »`
+                                : next
+                                  ? `Vers « ${STATUS_LABEL[next]} »`
                                   : ""
                             }
                           />

@@ -16,7 +16,7 @@ accès, validité → **Créer un jeton**.
 
 - Le jeton (`cdl_…`) n'est affiché **qu'une fois** : copiez-le aussitôt.
 - Il agit **en votre nom, avec exactement vos droits** : un développeur ne clôt
-  pas un ticket (TERMINE), ne voit pas la facturation, etc. Si votre rôle
+  ni n'annule un ticket (TERMINE, ANNULE), ne voit pas la facturation, etc. Si votre rôle
   change, le jeton suit à l'instant.
 - **Lecture seule** : seules les lectures (GET) passent.
 - Validité : 30 jours, 90 jours (par défaut), 1 an ou sans expiration.
@@ -46,7 +46,7 @@ corrige le bug », « passe CC-365 en revue avec un commentaire de livraison »�
 |---|---|
 | `lister_tickets` | Mes tickets non clos par défaut ; filtres statut, type, projet, recherche |
 | `lire_ticket` | Tout le dossier : description, étapes, critères, commentaires, pièces jointes |
-| `changer_statut_ticket` | `EN_COURS` (démarre le chronomètre), `EN_REVUE` (livré) ; `TERMINE` = chefferie/direction |
+| `changer_statut_ticket` | `EN_COURS` (démarre le chronomètre), `EN_REVUE` (livré) ; `TERMINE` et `ANNULE` = chefferie/direction |
 | `commenter_ticket` | Commentaire à votre nom |
 | `catalogue` | Toutes les routes et actions de l'API, ou le détail d'une route |
 | `appel_api` | N'importe quelle route (GET, POST, DELETE), avec les droits du jeton |
@@ -106,7 +106,8 @@ curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/jso
 ```
 
 `TERMINE` revient à la chefferie ou à la direction : c'est à qui a demandé de
-constater que c'est bon.
+constater que c'est bon. `ANNULE` (ticket abandonné, hors avancement du projet)
+aussi.
 
 ### Autres exemples
 

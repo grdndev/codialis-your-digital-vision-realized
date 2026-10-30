@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { ticketHref } from "@/lib/ticket-return";
-import { fmtHours, fmtEUR, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel, coverageStatus } from "@/lib/format";
+import { fmtHours, fmtEUR, fmtDate, daysFromNow, CLOSING_STATUSES, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel, coverageStatus } from "@/lib/format";
 import {
   createEpicAction, createEpicTicketAction, deleteEpicAction, importProjectJsonAction, updateClientContactAction,
   updateEpicAction, updateProjectDescriptionAction,
@@ -23,7 +23,7 @@ import {
 import { TicketExportPanel } from "../../tickets/export-panel";
 import { Popover } from "../../popover";
 
-const TICKET_STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
+const TICKET_STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE", "ANNULE"];
 // Valeur d'adresse du filtre « Non assigné » : un identifiant de compte ne
 // peut pas la prendre.
 const UNASSIGNED = "none";
@@ -708,12 +708,12 @@ function ListView({
   const bulkBar = (
     <BulkBar
       team={team}
-      statuses={TICKET_STATUSES.filter((s) => canClose || s !== "TERMINE")}
-      note={canClose ? undefined : "la clôture revient à la chefferie de projet"}
+      statuses={TICKET_STATUSES.filter((s) => canClose || !CLOSING_STATUSES.includes(s))}
+      note={canClose ? undefined : "clôture et annulation reviennent à la chefferie de projet"}
     />
   );
   const loose = tickets.filter((t) => !t.epicId);
-  const looseOpen = loose.filter((t) => t.status !== "TERMINE").length;
+  const looseOpen = loose.filter((t) => !CLOSING_STATUSES.includes(t.status)).length;
 
   return (
     <div className="flex flex-col gap-3">
@@ -724,15 +724,17 @@ function ListView({
       ) : (
         epics.map((epic) => {
           // L'avancement et les heures de l'épic portent sur TOUS ses tickets ;
-          // les filtres ne réduisent que la liste affichée.
+          // les filtres ne réduisent que la liste affichée. Les annulés sortent
+          // de l'avancement, comme pour celui du projet (CC-372).
           const all = tickets.filter((t) => t.epicId === epic.id);
           const rows = shownTickets
             .filter((t) => t.epicId === epic.id)
             .sort((a, b) => refNumber(a.ref) - refNumber(b.ref));
           const spent = all.reduce((s, t) => s + t.spentHours, 0);
           const est = epic.estHours || all.reduce((s, t) => s + t.estHours, 0);
-          const done = all.filter((t) => t.status === "TERMINE").length;
-          const pct = all.length ? Math.round((done / all.length) * 100) : 0;
+          const counted = all.filter((t) => t.status !== "ANNULE");
+          const done = counted.filter((t) => t.status === "TERMINE").length;
+          const pct = counted.length ? Math.round((done / counted.length) * 100) : 0;
           return (
             <details key={epic.id} className="group rounded-xl border border-border bg-panel open:pb-2">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-3">
@@ -996,6 +998,7 @@ const KANBAN_COLUMNS: { status: TaskStatus; label: string }[] = [
   { status: "EN_COURS", label: "En cours" },
   { status: "EN_REVUE", label: "En revue" },
   { status: "TERMINE", label: "Terminé" },
+  { status: "ANNULE", label: "Annulé" },
 ];
 
 function KanbanView({
@@ -1008,7 +1011,7 @@ function KanbanView({
   retour: string;
 }) {
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-5 gap-4">
       {KANBAN_COLUMNS.map((col) => {
         const items = tickets.filter((t) => t.status === col.status);
         return (

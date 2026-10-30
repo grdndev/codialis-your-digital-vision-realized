@@ -2,7 +2,7 @@ import { STATUS_LABEL, projectLabel } from "@/lib/format";
 import type { TaskStatus } from "@/lib/types";
 import { Popover } from "../popover";
 
-const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
+const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE", "ANNULE"];
 
 // Bouton « Exporter » et ses paramètres (CC-353), partagés par l'écran Tickets
 // et la fiche projet. Un formulaire GET vers /tickets/export : la réponse est

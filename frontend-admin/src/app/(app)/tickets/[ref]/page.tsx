@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
 import { parseRetour, retourProjectId, ticketHref } from "@/lib/ticket-return";
-import { fmtHours, fmtDate, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel, authorName, authorInitials } from "@/lib/format";
+import { fmtHours, fmtDate, CLOSING_STATUSES, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel, authorName, authorInitials } from "@/lib/format";
 import {
   setTicketStatusAction,
   updateTicketAction,
@@ -28,8 +28,9 @@ const ACTION_LABEL: Record<string, string> = {
   EN_REVUE: "Clôturer",
 };
 
-// Toutes les colonnes sont atteignables, y compris en arrière.
-const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
+// Toutes les colonnes sont atteignables, y compris en arrière. « Annulé »
+// (CC-372) n'a pas d'étape suivante : on en sort en choisissant un statut.
+const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE", "ANNULE"];
 
 const NEXT: Record<string, TaskStatus | undefined> = {
   A_FAIRE: "EN_COURS",
@@ -45,8 +46,8 @@ export default async function TicketDetailPage({
   searchParams: Promise<{ info?: string; error?: string; retour?: string }>;
 }) {
   const user = await requireUser();
-  // Un développeur va jusqu'à « En revue » : la clôture appartient à la
-  // chefferie de projet et à la direction.
+  // Un développeur va jusqu'à « En revue » : la clôture et l'annulation
+  // appartiennent à la chefferie de projet et à la direction.
   const canClose = user.role !== "DEV";
   const { ref } = await params;
   const { info, error, retour: retourParam } = await searchParams;
@@ -354,7 +355,7 @@ export default async function TicketDetailPage({
             <p className="mt-1 text-xs text-muted">Changer de statut</p>
             <div className="flex flex-wrap gap-1.5">
               {STATUSES.filter((s) => s !== ticket.status)
-                .filter((s) => canClose || s !== "TERMINE")
+                .filter((s) => canClose || !CLOSING_STATUSES.includes(s))
                 .map((s) => (
                 <form key={s} action={setTicketStatusAction.bind(null, ticket.id, s, true, retour)}>
                   <button

@@ -73,6 +73,7 @@ const statuses = [
   ticket("EC", { status: "EN_COURS", dueAt: due("2026-10-29") }),
   ticket("ER", { status: "EN_REVUE", dueAt: due("2026-10-29") }),
   ticket("TE", { status: "TERMINE", dueAt: due("2026-10-29") }),
+  ticket("AN", { status: "ANNULE", dueAt: due("2026-10-29") }),
   ticket("AUTRE", { status: "A_FAIRE", dueAt: due("2026-10-29"), assigneeId: "dev2" }),
   ticket("PERSONNE", { status: "A_FAIRE", dueAt: due("2026-10-29"), assigneeId: null }),
   ticket("ER-AUTRE", { status: "EN_REVUE", dueAt: due("2026-10-29"), assigneeId: "dev2" }),

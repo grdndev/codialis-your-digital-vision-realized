@@ -88,6 +88,7 @@ export const STATUS_LABEL: Record<TaskStatus, string> = {
   EN_COURS: "En cours",
   EN_REVUE: "En revue",
   TERMINE: "Terminé",
+  ANNULE: "Annulé",
 };
 
 export const STATUS_BADGE_CLASS: Record<TaskStatus, string> = {
@@ -95,7 +96,13 @@ export const STATUS_BADGE_CLASS: Record<TaskStatus, string> = {
   EN_COURS: "bg-mint/10 text-mint",
   EN_REVUE: "bg-amber/10 text-amber",
   TERMINE: "bg-blue/10 text-blue",
+  ANNULE: "bg-white/5 text-muted line-through",
 };
+
+// Les statuts qui ferment un ticket : livré ou abandonné (CC-372). Un
+// développeur n'en pose aucun, l'API le refuse (voir ticket-status.ts du
+// backend) ; l'écran ne les lui propose donc pas.
+export const CLOSING_STATUSES: TaskStatus[] = ["TERMINE", "ANNULE"];
 
 export const SEVERITY_LABEL: Record<Severity, string> = {
   BLOQUANT: "Bloquant",

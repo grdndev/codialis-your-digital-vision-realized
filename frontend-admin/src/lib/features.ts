@@ -1,6 +1,9 @@
 import type { TaskStatus } from "@/lib/types";
 
+// ANNULE n'arrive jamais au portail (filtré par l'API, CC-372) : l'entrée
+// n'existe que pour que la table couvre tous les statuts.
 export const CLIENT_STATE_LABEL: Record<TaskStatus, string> = {
+  ANNULE: "Annulé",
   TERMINE: "Livré",
   EN_REVUE: "En test",
   EN_COURS: "En cours",
@@ -8,6 +11,7 @@ export const CLIENT_STATE_LABEL: Record<TaskStatus, string> = {
 };
 
 export const CLIENT_STATE_BADGE_CLASS: Record<TaskStatus, string> = {
+  ANNULE: "bg-white/5 text-muted",
   TERMINE: "bg-mint/10 text-mint",
   EN_REVUE: "bg-blue/10 text-blue",
   EN_COURS: "bg-blue/10 text-blue",

@@ -44,7 +44,7 @@ type Tool = {
   run: (args: Record<string, unknown>, authorization: string) => Promise<ToolResult>;
 };
 
-const STATUSES = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"] as const;
+const STATUSES = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE", "ANNULE"] as const;
 const REF = z.string().min(1).describe("Référence du ticket, ex. « CC-365 »");
 
 type TicketRow = {
@@ -88,7 +88,7 @@ const TOOLS: Tool[] = [
       status: z
         .array(z.enum(STATUSES))
         .default(["A_FAIRE", "EN_COURS", "EN_REVUE"])
-        .describe("Statuts retenus ; par défaut tout sauf TERMINE"),
+        .describe("Statuts retenus ; par défaut tout sauf TERMINE et ANNULE"),
       type: z.enum(["BUG", "DEV"]).optional(),
       projet: z.string().optional().describe("Filtre sur le nom du projet, son sigle ou le nom du client"),
       recherche: z.string().optional().describe("Dans la référence, le titre, la description, les étapes"),
@@ -175,7 +175,7 @@ const TOOLS: Tool[] = [
     name: "changer_statut_ticket",
     title: "Changer le statut d'un ticket",
     description:
-      "EN_COURS quand on commence (lance le chronomètre de l'assigné), EN_REVUE à la livraison. TERMINE est réservé à la chefferie et à la direction : un développeur s'arrête à EN_REVUE.",
+      "EN_COURS quand on commence (lance le chronomètre de l'assigné), EN_REVUE à la livraison. TERMINE (livré) et ANNULE (abandonné) sont réservés à la chefferie et à la direction : un développeur s'arrête à EN_REVUE.",
     input: z.object({ ref: REF, statut: z.enum(STATUSES) }),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
     async run(args, authorization) {

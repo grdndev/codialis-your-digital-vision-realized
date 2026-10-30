@@ -11,7 +11,7 @@
 
 export type Role = "DIR" | "PM" | "DEV" | "CLIENT";
 export type ProjectGroup = "DEV" | "WAR" | "MAI" | "CLO";
-export type TaskStatus = "A_FAIRE" | "EN_COURS" | "EN_REVUE" | "TERMINE";
+export type TaskStatus = "A_FAIRE" | "EN_COURS" | "EN_REVUE" | "TERMINE" | "ANNULE";
 export type TicketType = "BUG" | "DEV";
 export type Severity = "BLOQUANT" | "MAJEUR" | "MINEUR";
 export type DevNature = "FRONT" | "BACK" | "API" | "DESIGN";

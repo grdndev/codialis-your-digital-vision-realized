@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 // Portail client — écran « Signalements ».
 //
 // Seuls les tickets remontés par le client apparaissent : le travail interne de
-// l'agence sur le projet ne lui est pas exposé.
+// l'agence sur le projet ne lui est pas exposé, pas plus que les tickets
+// annulés (CC-372), même les siens.
 
 export const GET = adminRoute(["CLIENT"], async ({ user }) => {
   const projectId = await clientProjectId(user.id);
@@ -17,7 +18,7 @@ export const GET = adminRoute(["CLIENT"], async ({ user }) => {
 
   return {
     tickets: await prisma.ticket.findMany({
-      where: { projectId, clientReported: true },
+      where: { projectId, clientReported: true, status: { not: "ANNULE" } },
       orderBy: { createdAt: "desc" },
     }),
   };

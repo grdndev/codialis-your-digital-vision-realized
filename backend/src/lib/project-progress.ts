@@ -8,9 +8,12 @@ import { prisma } from "@/lib/prisma";
 // projet, dans un épic ou non (arbitrage du 14/10, CC-365). Un projet sans
 // ticket garde sa valeur : une liste vide n'est pas la preuve d'un avancement
 // nul, seulement de ce qui n'est pas suivi à ce niveau de détail.
+// Un ticket ANNULÉ sort du compte (CC-372) : abandonné, il n'est ni du travail
+// fait ni du travail qui reste. Un projet dont tous les tickets sont annulés
+// garde donc lui aussi sa valeur.
 export async function recomputeProjectProgress(projectId: string) {
   const tickets = await prisma.ticket.findMany({
-    where: { projectId },
+    where: { projectId, status: { not: "ANNULE" } },
     select: { status: true },
   });
   if (tickets.length === 0) return;

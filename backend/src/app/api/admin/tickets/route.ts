@@ -9,6 +9,7 @@ import { projectScope } from "@/lib/project-access";
 import { recomputeProjectProgress } from "@/lib/project-progress";
 import { closeSessions, openSession, refreshProjectSpent } from "@/lib/work-sessions";
 import { TICKET_ID_DESCRIPTION, withTicketIds } from "@/lib/ticket-ref";
+import { closureRefusal } from "@/lib/ticket-status";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export const dynamic = "force-dynamic";
 // trier son propre travail, et les projets où il n'en a aucun n'y ont pas leur
 // place. Le tri est fait ici, pas à l'affichage.
 
-const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"];
+const STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE", "ANNULE"];
 const SEVERITIES: Severity[] = ["BLOQUANT", "MAJEUR", "MINEUR"];
 
 // Ordres proposés par l'écran (CC-370). La gravité reste le défaut : on ouvre
@@ -39,7 +40,7 @@ const TICKET_SORTS = ["gravite", "recents", "anciens", "modifies", "echeance"] a
 const querySchema = z.object({
   project: commaList("Identifiants de projets"),
   type: commaList("BUG, DEV"),
-  status: commaList("A_FAIRE, EN_COURS, EN_REVUE, TERMINE"),
+  status: commaList("A_FAIRE, EN_COURS, EN_REVUE, TERMINE, ANNULE"),
   severity: commaList("BLOQUANT, MAJEUR, MINEUR"),
   assignee: z
     .string()
@@ -182,7 +183,7 @@ export const GET = adminRoute(
 
 
 const ticketId = z.string().min(1).describe(TICKET_ID_DESCRIPTION);
-const STATUS = z.enum(["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE"]);
+const STATUS = z.enum(["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMINE", "ANNULE"]);
 const DUE_AT = z.string().datetime().nullable();
 
 const bodySchema = z.discriminatedUnion("action", [
@@ -215,7 +216,7 @@ const bodySchema = z.discriminatedUnion("action", [
     ticketId,
     status: STATUS,
   }).describe(
-    "Change le statut. EN_COURS lance le chronomètre de l'assigné, tout autre statut l'arrête. TERMINE est réservé à PM et DIR : un développeur s'arrête à EN_REVUE.",
+    "Change le statut. EN_COURS lance le chronomètre de l'assigné, tout autre statut l'arrête. TERMINE (livré) et ANNULE (abandonné, hors avancement du projet) sont réservés à PM et DIR : un développeur s'arrête à EN_REVUE.",
   ),
   // Traitement en masse : trier vingt tickets un par un pour leur poser le
   // même statut ou le même assigné coûte vingt allers-retours. `null` sur un
@@ -293,12 +294,10 @@ async function applyTicketStatus(
   nextStatus: TaskStatus,
   actor: { id: string; role: Role },
 ): Promise<{ ok: true; ref: string; notice?: string }> {
-  // Clôturer, c'est constater que le travail est bon. Ce n'est pas à qui l'a
-  // fait de le dire : un développeur va jusqu'à « En revue », la chefferie de
-  // projet et la direction ferment.
-  if (nextStatus === "TERMINE" && actor.role === "DEV") {
-    badRequest("La clôture revient à la chefferie de projet ou à la direction.");
-  }
+  // Clôturer comme annuler reviennent à la chefferie de projet et à la
+  // direction (voir ticket-status.ts).
+  const refusal = closureRefusal(nextStatus, actor.role);
+  if (refusal) badRequest(refusal);
 
   if (nextStatus === ticket.status) return { ok: true, ref: ticket.ref };
 

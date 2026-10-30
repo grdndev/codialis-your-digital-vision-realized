@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { USER_IDENTITY } from "@/lib/user-identity";
 import { projectScope } from "@/lib/project-access";
 import { goalsFor } from "@/lib/goals";
+import { CLOSED_STATUSES } from "@/lib/ticket-status";
 import type { InternalTaskPriority, TaskStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -69,7 +70,7 @@ export const GET = adminRoute(["DIR", "PM", "DEV"], async ({ user }, request) =>
         orderBy: { lastActivityAt: "desc" },
       }),
       prisma.ticket.findMany({
-        where: { status: { not: "TERMINE" } },
+        where: { status: { notIn: CLOSED_STATUSES } },
         include: { project: true },
       }),
       prisma.client.count(),
@@ -131,6 +132,7 @@ const NEXT_STATUS: Record<TaskStatus, TaskStatus | null> = {
   EN_COURS: "EN_REVUE",
   EN_REVUE: "TERMINE",
   TERMINE: null,
+  ANNULE: null,
 };
 
 const priority = z.enum(["NORMALE", "HAUTE", "URGENTE"]);

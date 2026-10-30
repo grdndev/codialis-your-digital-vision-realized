@@ -5,6 +5,7 @@ import { USER_IDENTITY } from "@/lib/user-identity";
 import { refreshAfterTimeChange, liveSessionHours } from "@/lib/work-sessions";
 import { recomputeProjectProgress } from "@/lib/project-progress";
 import { TICKET_ID_DESCRIPTION, withTicketIds } from "@/lib/ticket-ref";
+import { CLOSED_STATUSES, closureRefusal } from "@/lib/ticket-status";
 import type { Prisma, Role, TaskStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +35,7 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async () => {
       orderBy: { name: "asc" },
     }),
     prisma.ticket.findMany({
-      where: { status: { not: "TERMINE" } },
+      where: { status: { notIn: CLOSED_STATUSES } },
       include: { project: { include: { client: true } } },
       orderBy: { title: "asc" },
     }),
@@ -103,9 +104,9 @@ const bodySchema = z.discriminatedUnion("action", [
     action: z.literal("stop-session"),
     sessionId: z.string().min(1),
     endedAt: z.string().datetime(),
-    status: z.enum(["A_FAIRE", "EN_REVUE", "TERMINE"]),
+    status: z.enum(["A_FAIRE", "EN_REVUE", "TERMINE", "ANNULE"]),
   }).describe(
-    "Arrête une session ouverte à une heure passée ; le ticket quitte EN_COURS pour `status` (TERMINE : PM et DIR).",
+    "Arrête une session ouverte à une heure passée ; le ticket quitte EN_COURS pour `status` (TERMINE et ANNULE : PM et DIR).",
   ),
   z.object({
     action: z.literal("add-entry"),
@@ -184,9 +185,8 @@ async function correctSession(user: { id: string; role: Role }, body: SessionCor
     // TRAP-041) se ferme sans toucher à son statut.
     const ticket = session.ticket;
     const leavesInProgress = ticket?.status === "EN_COURS";
-    if (leavesInProgress && body.status === "TERMINE" && user.role === "DEV") {
-      badRequest("La clôture revient à la chefferie de projet ou à la direction.");
-    }
+    const refusal = leavesInProgress ? closureRefusal(body.status, user.role) : null;
+    if (refusal) badRequest(refusal);
     const status: TaskStatus = body.status;
     await prisma.$transaction(async (tx) => {
       await tx.workSession.update({ where: { id: session.id }, data: { endedAt, ...corrected } });
