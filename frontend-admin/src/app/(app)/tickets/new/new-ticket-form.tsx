@@ -113,16 +113,23 @@ export function NewTicketForm({
         </Field>
       </div>
 
-      <Field label="Assigné">
-        <select name="assigneeId" className="w-full rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm text-text outline-none focus:border-mint">
-          <option value="">Non assigné</option>
-          {team.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name}
-            </option>
-          ))}
-        </select>
-      </Field>
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Assigné">
+          <select name="assigneeId" className="w-full rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm text-text outline-none focus:border-mint">
+            <option value="">Non assigné</option>
+            {team.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+        {/* Dès la création (CC-366) : c'est l'échéance qui fait sonner la
+            cloche, et elle ne se posait qu'en modifiant le ticket ensuite. */}
+        <Field label="Échéance">
+          <input name="dueAt" type="date" className="w-full rounded-lg border border-border bg-panel-2 px-3 py-2 text-sm text-text outline-none focus:border-mint" />
+        </Field>
+      </div>
 
       <button type="submit" className="mt-2 rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-bg">
         Créer le ticket

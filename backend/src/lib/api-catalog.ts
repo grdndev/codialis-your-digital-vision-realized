@@ -18,6 +18,7 @@ import * as dashboard from "@/app/api/admin/dashboard/route";
 import * as finance from "@/app/api/admin/finance/route";
 import * as maintenance from "@/app/api/admin/maintenance/route";
 import * as me from "@/app/api/admin/me/route";
+import * as notifications from "@/app/api/admin/notifications/route";
 import * as objectifs from "@/app/api/admin/objectifs/route";
 import * as pilotage from "@/app/api/admin/pilotage/route";
 import * as projects from "@/app/api/admin/projects/route";
@@ -57,6 +58,7 @@ type RouteModule = Partial<Record<Method, Handler>>;
 
 export const API_ROUTES: { path: string; module: RouteModule }[] = [
   { path: "/api/admin/me", module: me },
+  { path: "/api/admin/notifications", module: notifications },
   { path: "/api/admin/tickets", module: tickets },
   { path: "/api/admin/tickets/detail", module: ticketsDetail },
   { path: "/api/admin/tickets/new", module: ticketsNew },

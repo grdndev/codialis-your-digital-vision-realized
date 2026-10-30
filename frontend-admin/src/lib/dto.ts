@@ -121,3 +121,21 @@ export type InternalTaskRow = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+// GET /api/admin/notifications — la cloche de la barre du haut (CC-366).
+// `reason` : `assignee` = son propre ticket, À faire ou En cours ; `review` =
+// un ticket En revue de l'agence, pour la chefferie et la direction.
+// `days` : jours jusqu'à l'échéance, négatif = en retard.
+export type NotificationRow = {
+  ref: string;
+  title: string;
+  status: TaskStatus;
+  dueAt: Date;
+  assignee: UserRef | null;
+  project: { id: string; name: string; client: { name: string } };
+  reason: "assignee" | "review";
+  days: number;
+  overdue: boolean;
+};
+
+export type NotificationsResponse = { notifications: NotificationRow[]; overdueCount: number };

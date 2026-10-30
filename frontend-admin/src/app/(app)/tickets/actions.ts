@@ -27,6 +27,10 @@ export async function createTicketAction(formData: FormData) {
     estHours: parseNumber(formData.get("estHours")),
     // Vide = laisser l'API décider : un développeur se voit attribuer son ticket.
     assigneeId: String(formData.get("assigneeId") ?? "") || null,
+    // Un jour : 09:00 UTC, convention des dates-sans-heure de l'app.
+    dueAt: String(formData.get("dueAt") ?? "")
+      ? new Date(`${String(formData.get("dueAt"))}T09:00:00.000Z`).toISOString()
+      : null,
   });
 
   revalidatePath("/tickets");
