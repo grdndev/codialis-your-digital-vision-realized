@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
+import { parseRetour, retourProjectId, ticketHref } from "@/lib/ticket-return";
 import { fmtHours, fmtDate, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel, authorName, authorInitials } from "@/lib/format";
 import {
   setTicketStatusAction,
@@ -41,14 +42,14 @@ export default async function TicketDetailPage({
   searchParams,
 }: {
   params: Promise<{ ref: string }>;
-  searchParams: Promise<{ info?: string; error?: string }>;
+  searchParams: Promise<{ info?: string; error?: string; retour?: string }>;
 }) {
   const user = await requireUser();
   // Un développeur va jusqu'à « En revue » : la clôture appartient à la
   // chefferie de projet et à la direction.
   const canClose = user.role !== "DEV";
   const { ref } = await params;
-  const { info, error } = await searchParams;
+  const { info, error, retour: retourParam } = await searchParams;
 
   const { ticket, epics, team, projects, sessions = [] } = await apiGet<TicketDetailResponse>(
     `/api/admin/tickets/detail?ref=${encodeURIComponent(ref)}`,
@@ -59,10 +60,20 @@ export default async function TicketDetailPage({
     ticket.status === "EN_REVUE" && !canClose ? undefined : ACTION_LABEL[ticket.status];
   const stepList = ticket.steps.split("\n").filter(Boolean);
 
+  // Ouverte depuis une fiche projet, la fiche ticket y ramène, vue et filtres
+  // compris (CC-371) ; sinon vers l'écran Tickets, qui retrouve ses filtres.
+  // La liste des projets contient toujours celui du ticket (DEC-080), donc
+  // celui d'où l'on vient, sauf si le ticket a changé de projet entre-temps.
+  const retour = parseRetour(retourParam);
+  const retourProjet = retour ? (projects ?? []).find((p) => p.id === retourProjectId(retour)) : undefined;
+  const backLink = retour
+    ? { href: retour, label: retourProjet ? projectLabel(retourProjet.client.name, retourProjet.name) : "Projet" }
+    : { href: "/tickets", label: "Tickets" };
+
   return (
     <div className="flex flex-col gap-6">
-      <Link href="/tickets" className="text-sm text-muted hover:text-text">
-        ← Tickets
+      <Link href={backLink.href} className="text-sm text-muted hover:text-text">
+        ← {backLink.label}
       </Link>
 
       {info ? (
@@ -102,6 +113,7 @@ export default async function TicketDetailPage({
               </summary>
               <form action={updateTicketAction} className="mt-3 flex flex-col gap-3">
                 <input type="hidden" name="ticketId" value={ticket.id} />
+                {retour ? <input type="hidden" name="retour" value={retour} /> : null}
                 <div className="grid grid-cols-2 gap-3">
                   <EditField label="Projet" hint="déplacer le ticket">
                     <select name="projectId" defaultValue={ticket.project.id} className="input">
@@ -222,7 +234,7 @@ export default async function TicketDetailPage({
             viewer={user}
             inProgress={ticket.status === "EN_COURS"}
             canClose={canClose}
-            back={`/tickets/${ticket.ref}`}
+            back={ticketHref(ticket.ref, retour)}
             projectId={ticket.projectId}
           />
 
@@ -292,7 +304,7 @@ export default async function TicketDetailPage({
             files={
               <AttachmentList
                 pieces={ticket.attachments}
-                onRemove={removeTicketAttachmentAction.bind(null, ref)}
+                onRemove={removeTicketAttachmentAction.bind(null, ref, retour)}
               />
             }
           >
@@ -332,7 +344,7 @@ export default async function TicketDetailPage({
 
           <div className="flex flex-col gap-2 rounded-xl border border-border bg-panel p-5">
             {advanceLabel ? (
-              <form action={setTicketStatusAction.bind(null, ticket.id, NEXT[ticket.status]!, true)}>
+              <form action={setTicketStatusAction.bind(null, ticket.id, NEXT[ticket.status]!, true, retour)}>
                 <button type="submit" className="w-full rounded-lg bg-mint px-3 py-2 text-sm font-semibold text-bg">
                   {advanceLabel}
                 </button>
@@ -344,7 +356,7 @@ export default async function TicketDetailPage({
               {STATUSES.filter((s) => s !== ticket.status)
                 .filter((s) => canClose || s !== "TERMINE")
                 .map((s) => (
-                <form key={s} action={setTicketStatusAction.bind(null, ticket.id, s, true)}>
+                <form key={s} action={setTicketStatusAction.bind(null, ticket.id, s, true, retour)}>
                   <button
                     type="submit"
                     className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted transition hover:border-mint/40 hover:text-text"
@@ -369,7 +381,7 @@ export default async function TicketDetailPage({
                 Ses critères, commentaires et pièces jointes partent avec lui. Les heures
                 déjà saisies restent imputées au projet.
               </p>
-              <form action={deleteTicketAction.bind(null, ticket.id)} className="mt-2">
+              <form action={deleteTicketAction.bind(null, ticket.id, retour)} className="mt-2">
                 <button
                   type="submit"
                   className="w-full rounded-lg border border-red/40 px-3 py-2 text-xs font-medium text-red transition hover:bg-red/10"

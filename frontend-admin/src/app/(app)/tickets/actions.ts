@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { parseMultiline, parseNumber } from "@/lib/format";
 import { redirect } from "next/navigation";
 import { ApiError, apiDelete, apiPost, apiUpload } from "@/lib/api";
+import { parseRetour, ticketHref } from "@/lib/ticket-return";
 import type { DevNature, Severity, TaskStatus, TicketType } from "@/lib/types";
 
 const TICKETS = "/api/admin/tickets";
@@ -58,10 +59,15 @@ export async function createTicketAction(formData: FormData) {
 // serveur, il n'y a pas d'état client pour le porter. Depuis le kanban on ne
 // redirige pas — le geste est un glisser-déposer entre colonnes, pas une
 // navigation.
+//
+// `retour` (CC-371) : la fiche rechargée garde son lien vers la fiche projet
+// d'où on l'a ouverte. Il vient du navigateur, il est donc revalidé ici comme
+// sur la page.
 export async function setTicketStatusAction(
   ticketId: string,
   status: TaskStatus,
   showNotice = false,
+  retour: string | null = null,
 ) {
   const { ref, notice } = await apiPost<{ ref: string; notice?: string }>(TICKETS, {
     action: "set-status",
@@ -71,7 +77,7 @@ export async function setTicketStatusAction(
   revalidatePath(`/tickets/${ref}`);
   revalidatePath("/tickets");
   revalidatePath("/time");
-  if (showNotice && notice) redirect(`/tickets/${ref}?info=${encodeURIComponent(notice)}`);
+  if (showNotice && notice) redirect(ticketHref(ref, parseRetour(retour), { info: notice }));
 }
 
 // Traitement en masse. Le formulaire porte une case par ticket, plus le statut
@@ -137,10 +143,11 @@ export async function updateTicketAction(formData: FormData) {
   revalidatePath(`/tickets/${ref}`);
   revalidatePath("/tickets");
   // Un changement de projet renumérote le ticket : on suit la nouvelle
-  // référence, l'adresse de l'ancienne ne répond plus.
+  // référence, l'adresse de l'ancienne ne répond plus. Le retour reste celui
+  // de l'écran d'où l'on vient, même si le ticket l'a quitté.
   if (previousRef && previousRef !== ref) {
     revalidatePath(`/tickets/${previousRef}`);
-    redirect(`/tickets/${ref}`);
+    redirect(ticketHref(ref, parseRetour(formData.get("retour"))));
   }
 }
 
@@ -149,11 +156,12 @@ export async function toggleTicketCriterionAction(criterionId: string, ref: stri
   revalidatePath(`/tickets/${ref}`);
 }
 
-export async function deleteTicketAction(ticketId: string) {
+export async function deleteTicketAction(ticketId: string, retour: string | null = null) {
   await apiPost(TICKETS, { action: "delete", ticketId });
   revalidatePath("/tickets");
-  // La fiche n'existe plus : on repart sur la liste.
-  redirect("/tickets");
+  // La fiche n'existe plus : on repart sur l'écran d'où on l'avait ouverte
+  // (CC-371), la liste des tickets à défaut.
+  redirect(parseRetour(retour) ?? "/tickets");
 }
 
 export async function addTicketCriterionAction(formData: FormData) {
@@ -230,11 +238,11 @@ export async function uploadTicketAttachmentAction(
   return { error: null };
 }
 
-export async function removeTicketAttachmentAction(ref: string, attachmentId: string) {
+export async function removeTicketAttachmentAction(ref: string, retour: string | null, attachmentId: string) {
   try {
     await apiDelete(`/api/admin/attachments?attachmentId=${encodeURIComponent(attachmentId)}`);
   } catch (err) {
-    if (err instanceof ApiError) redirect(`/tickets/${ref}?error=${encodeURIComponent(err.message)}`);
+    if (err instanceof ApiError) redirect(ticketHref(ref, parseRetour(retour), { error: err.message }));
     throw err;
   }
   revalidatePath(`/tickets/${ref}`);

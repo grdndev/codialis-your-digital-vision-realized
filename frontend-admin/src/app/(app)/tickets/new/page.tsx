@@ -2,6 +2,7 @@ import Link from "next/link";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { projectLabel } from "@/lib/format";
+import { ticketHref } from "@/lib/ticket-return";
 import { NewTicketForm } from "./new-ticket-form";
 import type { NewTicketScreen } from "../types";
 
@@ -42,7 +43,11 @@ export default async function NewTicketPage({
       {cree ? (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-mint/30 bg-mint/5 px-4 py-2.5 text-sm">
           <span className="text-text">Ticket {cree} créé.</span>
-          <Link href={`/tickets/${cree}`} className="font-medium text-mint hover:brightness-110">
+          {/* Il ramène au projet d'où l'on vient, comme ceux de sa fiche (CC-371). */}
+          <Link
+            href={ticketHref(cree, projetSource ? `/projects/${projetSource.id}` : null)}
+            className="font-medium text-mint hover:brightness-110"
+          >
             Voir le ticket
           </Link>
           <span className="text-muted">— le formulaire ci-dessous est prêt pour le suivant.</span>

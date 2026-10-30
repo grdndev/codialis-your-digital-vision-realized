@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
+import { ticketHref } from "@/lib/ticket-return";
 import { fmtHours, fmtEUR, fmtDate, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel, coverageStatus } from "@/lib/format";
 import {
   createEpicAction, createEpicTicketAction, deleteEpicAction, importProjectJsonAction, updateClientContactAction,
@@ -115,6 +116,8 @@ export default async function ProjectDetailPage({
   }
   const filterHref = (next: Partial<Record<"status" | "assignee", string | null>>) =>
     projectHref({ ...next, page: null });
+  // L'écran tel qu'il est affiché : un ticket ouvert d'ici y ramène (CC-371).
+  const retour = projectHref({});
 
   const deadline = project.group === "CLO"
     ? project.closedAt ? `clôturé ${fmtDate(project.closedAt)}` : "—"
@@ -249,9 +252,14 @@ export default async function ProjectDetailPage({
           loosePage={paginate(shownTickets.filter((t) => !t.epicId), page, perPage)}
           perPage={perPage}
           pageHref={(p, per) => projectHref({ page: p > 1 ? String(p) : null, per: String(per) })}
+          retour={retour}
         />
       ) : activeView === "kanban" ? (
-        <KanbanView tickets={shownTickets} epicTitle={new Map(project.epics.map((e) => [e.id, e.title]))} />
+        <KanbanView
+          tickets={shownTickets}
+          epicTitle={new Map(project.epics.map((e) => [e.id, e.title]))}
+          retour={retour}
+        />
       ) : (
         <FicheView project={project} deadline={deadline} apis={apis} questions={questions} clients={clients} canEdit={canEdit} />
       )}
@@ -679,6 +687,7 @@ function ListView({
   loosePage,
   perPage,
   pageHref,
+  retour,
 }: {
   epics: ProjectEpic[];
   projectId: string;
@@ -694,6 +703,7 @@ function ListView({
   loosePage: { rows: ProjectTicketRow[]; page: number; pageCount: number; total: number };
   perPage: number;
   pageHref: (page: number, perPage: number) => string;
+  retour: string;
 }) {
   const bulkBar = (
     <BulkBar
@@ -816,7 +826,7 @@ function ListView({
                 {rows.length > 0 ? (
                   <BulkSelection action={bulkUpdateTicketsAction} field="ticketIds" bar={bulkBar}>
                     <input type="hidden" name="projectId" value={projectId} />
-                    <TicketTable rows={rows} />
+                    <TicketTable rows={rows} retour={retour} />
                   </BulkSelection>
                 ) : (
                   <p className="py-1 text-sm text-muted">
@@ -854,7 +864,7 @@ function ListView({
           >
             <input type="hidden" name="projectId" value={projectId} />
             <div className="px-5">
-              <TicketTable rows={loosePage.rows} />
+              <TicketTable rows={loosePage.rows} retour={retour} />
             </div>
           </BulkSelection>
         )}
@@ -876,7 +886,7 @@ function ListView({
 
 // Une ligne par ticket, avec sa case de sélection : la même table sert aux
 // épics et au bloc « hors épic ».
-function TicketTable({ rows }: { rows: ProjectTicketRow[] }) {
+function TicketTable({ rows, retour }: { rows: ProjectTicketRow[]; retour: string }) {
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
@@ -906,7 +916,7 @@ function TicketTable({ rows }: { rows: ProjectTicketRow[] }) {
               />
             </td>
             <td className="whitespace-nowrap py-2 pr-4">
-              <Link href={`/tickets/${t.ref}`} className="font-medium text-text hover:text-mint">
+              <Link href={ticketHref(t.ref, retour)} className="font-medium text-text hover:text-mint">
                 {t.ref}
               </Link>
             </td>
@@ -916,7 +926,7 @@ function TicketTable({ rows }: { rows: ProjectTicketRow[] }) {
               </span>
             </td>
             <td className="py-2 pr-4">
-              <Link href={`/tickets/${t.ref}`} className="text-text hover:text-mint">
+              <Link href={ticketHref(t.ref, retour)} className="text-text hover:text-mint">
                 {t.title}
               </Link>
             </td>
@@ -988,7 +998,15 @@ const KANBAN_COLUMNS: { status: TaskStatus; label: string }[] = [
   { status: "TERMINE", label: "Terminé" },
 ];
 
-function KanbanView({ tickets, epicTitle }: { tickets: ProjectTicketRow[]; epicTitle: Map<string, string> }) {
+function KanbanView({
+  tickets,
+  epicTitle,
+  retour,
+}: {
+  tickets: ProjectTicketRow[];
+  epicTitle: Map<string, string>;
+  retour: string;
+}) {
   return (
     <div className="grid grid-cols-4 gap-4">
       {KANBAN_COLUMNS.map((col) => {
@@ -1003,7 +1021,7 @@ function KanbanView({ tickets, epicTitle }: { tickets: ProjectTicketRow[]; epicT
               {items.map((t) => (
                 <Link
                   key={t.id}
-                  href={`/tickets/${t.ref}`}
+                  href={ticketHref(t.ref, retour)}
                   className="rounded-lg border border-border bg-panel-2 p-3 text-sm transition hover:border-mint/40"
                 >
                   <div className="flex items-center justify-between gap-2">

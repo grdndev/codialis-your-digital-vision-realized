@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { fromOfficeInput, parseNumber } from "@/lib/format";
 import { ApiError, apiPost } from "@/lib/api";
+import { withParam } from "@/lib/ticket-return";
 
 export async function addTimeEntryAction(formData: FormData) {
   const label = String(formData.get("label") ?? "").trim();
@@ -80,22 +81,24 @@ export async function deleteTimeEntryAction(entryId: string) {
 }
 
 // Correction après coup d'une session de temps mesuré, depuis la fiche d'un
-// ticket (`back`). Les heures saisies sont celles du bureau, à
-// La Réunion. Les droits (propriétaire du temps ou chefferie) et les contrôles
-// de dates appartiennent au backend : son refus revient lisible sur la fiche.
+// ticket (`back`, avec son éventuel `?retour=`, CC-371). Les heures saisies
+// sont celles du bureau, à La Réunion. Les droits (propriétaire du temps ou
+// chefferie) et les contrôles de dates appartiennent au backend : son refus
+// revient lisible sur la fiche.
 async function correctSession(back: string, projectId: string, body: Record<string, unknown>) {
   try {
     await apiPost("/api/admin/time", body);
   } catch (err) {
-    if (err instanceof ApiError) redirect(`${back}?error=${encodeURIComponent(err.message)}`);
+    if (err instanceof ApiError) redirect(withParam(back, "error", err.message));
     throw err;
   }
-  revalidatePath(back);
+  // `revalidatePath` attend un chemin, pas une adresse avec sa query.
+  revalidatePath(back.split("?")[0]);
   await repercuter(projectId);
 }
 
 function invalid(back: string, message: string): never {
-  redirect(`${back}?error=${encodeURIComponent(message)}`);
+  redirect(withParam(back, "error", message));
 }
 
 export async function correctSessionDatesAction(
