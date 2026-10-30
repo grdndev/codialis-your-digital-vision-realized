@@ -71,7 +71,7 @@ type TicketDetail = TicketRow & {
   creator: { name: string } | null;
   criteria: { id: string; label: string; done: boolean }[];
   comments: { author: { name: string } | null; createdAt: string; body: string }[];
-  attachments: { id: string; filename: string; url: string | null }[];
+  attachments: { id: string; filename: string; url: string | null; createdAt: string; uploadedBy: { name: string } | null }[];
 };
 
 const TOOLS: Tool[] = [
@@ -167,7 +167,14 @@ const TOOLS: Tool[] = [
           le: c.createdAt,
           texte: c.body,
         })),
-        piecesJointes: t.attachments.map((a) => ({ id: a.id, fichier: a.filename, url: a.url })),
+        piecesJointes: t.attachments.map((a) => ({
+          id: a.id,
+          fichier: a.filename,
+          url: a.url,
+          // Les pièces d'avant CC-373 n'ont pas d'auteur connu.
+          par: a.uploadedBy?.name ?? null,
+          le: a.createdAt,
+        })),
       });
     },
   },

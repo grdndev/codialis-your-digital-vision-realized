@@ -2,13 +2,8 @@
 
 import { useRef, useState } from "react";
 import type { ReactNode } from "react";
-import {
-  ACCEPT_ATTRIBUTE,
-  ACCEPTED_EXTENSIONS,
-  DOCUMENT_EXTENSIONS,
-  MAX_ATTACHMENT_BYTES,
-  extensionOf,
-} from "@/lib/attachments";
+import { ACCEPT_ATTRIBUTE, attachmentRefusal, withCaptureName } from "@/lib/attachments";
+import { DropOverlay, useFileDrop } from "../../file-drop";
 
 // Section « Commentaires » de la fiche ticket. Les pièces jointes y vivent
 // aussi : un bouton « Joindre », et surtout le collage (Ctrl+V d'une capture
@@ -21,28 +16,6 @@ import {
 // peut pas l'être : les évènements du presse-papiers et du glisser-déposer.
 
 type Upload = { key: number; name: string; error: string | null };
-
-// Une capture collée s'appelle « image.png » : le nom ne dirait rien dans la
-// liste. On la date, à l'heure de la personne qui colle.
-function named(file: File): File {
-  if (file.name && !/^image\.\w+$/i.test(file.name)) return file;
-  const ext = extensionOf(file.name) || file.type.split("/")[1] || "png";
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}h${pad(now.getMinutes())}m${pad(now.getSeconds())}`;
-  return new File([file], `capture-${stamp}.${ext}`, { type: file.type });
-}
-
-// Le stockage refuse de toute façon ; vérifier ici évite d'envoyer 20 Mo pour
-// rien et répond tout de suite.
-function refusal(file: File): string | null {
-  if (file.size === 0) return "le fichier est vide";
-  if (file.size > MAX_ATTACHMENT_BYTES) return "fichier trop lourd (25 Mo maximum)";
-  if (!ACCEPTED_EXTENSIONS.includes(extensionOf(file.name))) {
-    return `type refusé (acceptés : images, ${DOCUMENT_EXTENSIONS.join(", ")})`;
-  }
-  return null;
-}
 
 export function CommentsPanel({
   upload,
@@ -63,15 +36,12 @@ export function CommentsPanel({
   const picker = useRef<HTMLInputElement>(null);
   const nextKey = useRef(0);
   const [uploads, setUploads] = useState<Upload[]>([]);
-  // Compteur et non booléen : chaque élément survolé émet son entrée et sa
-  // sortie, un booléen clignoterait d'un enfant à l'autre.
-  const [dragDepth, setDragDepth] = useState(0);
 
   async function send(list: File[]) {
     for (const raw of list) {
-      const file = named(raw);
+      const file = withCaptureName(raw);
       const key = nextKey.current++;
-      const refused = refusal(file);
+      const refused = attachmentRefusal(file);
       setUploads((u) => [...u, { key, name: file.name, error: refused }]);
       if (refused) continue;
       const formData = new FormData();
@@ -86,34 +56,11 @@ export function CommentsPanel({
     }
   }
 
-  const hasFiles = (event: React.DragEvent) => event.dataTransfer.types.includes("Files");
+  const drop = useFileDrop((files) => void send(files));
 
   return (
-    <div
-      className="relative rounded-xl border border-border bg-panel p-5"
-      onDragEnter={(event) => {
-        if (!hasFiles(event)) return;
-        event.preventDefault();
-        setDragDepth((d) => d + 1);
-      }}
-      onDragOver={(event) => {
-        if (hasFiles(event)) event.preventDefault();
-      }}
-      onDragLeave={(event) => {
-        if (hasFiles(event)) setDragDepth((d) => Math.max(0, d - 1));
-      }}
-      onDrop={(event) => {
-        if (!hasFiles(event)) return;
-        event.preventDefault();
-        setDragDepth(0);
-        void send([...event.dataTransfer.files]);
-      }}
-    >
-      {dragDepth > 0 ? (
-        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-dashed border-mint bg-bg/80 text-sm font-medium text-mint">
-          Déposez pour joindre au ticket
-        </div>
-      ) : null}
+    <div className="relative rounded-xl border border-border bg-panel p-5" {...drop.handlers}>
+      {drop.dragging ? <DropOverlay label="Déposez pour joindre au ticket" /> : null}
 
       <h2 className="text-sm font-semibold text-text">Commentaires</h2>
 

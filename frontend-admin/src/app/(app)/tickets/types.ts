@@ -42,8 +42,14 @@ export type TicketAttachmentRow = {
   fileId: string | null;
   url: string | null;
   meta: string;
+  // NULL sur les pièces d'avant CC-373, et si le compte a été supprimé.
+  uploadedById: string | null;
   createdAt: Date;
 };
+
+// Sur la fiche, la pièce paraît aussi dans le fil des commentaires, au nom de
+// qui l'a jointe (CC-373).
+export type TicketDetailAttachmentRow = TicketAttachmentRow & { uploadedBy: UserRef | null };
 
 type DetailClient = ClientRef & { contactName: string | null };
 
@@ -54,7 +60,7 @@ export type TicketDetail = TicketRow & {
   creator: UserRef | null;
   criteria: TicketCriterionRow[];
   comments: TicketCommentRow[];
-  attachments: TicketAttachmentRow[];
+  attachments: TicketDetailAttachmentRow[];
 };
 
 // Null sur une référence inconnue — ou sur un ticket hors du périmètre du rôle,

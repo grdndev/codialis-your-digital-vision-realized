@@ -103,11 +103,12 @@ model User {
   clientId String?
   client   Client? @relation(fields: [clientId], references: [id])
 
-  assignments     ProjectAssignment[]
-  leadEpics       Epic[]              @relation("EpicLead")
-  assignedTickets Ticket[]            @relation("TicketAssignee")
-  createdTickets  Ticket[]            @relation("TicketCreator")
-  ticketComments  TicketComment[]
+  assignments       ProjectAssignment[]
+  leadEpics         Epic[]              @relation("EpicLead")
+  assignedTickets   Ticket[]            @relation("TicketAssignee")
+  createdTickets    Ticket[]            @relation("TicketCreator")
+  ticketComments    TicketComment[]
+  ticketAttachments TicketAttachment[]
 
   dealNotes             DealNote[]
   invoiceComments       InvoiceComment[]
@@ -338,6 +339,13 @@ model TicketAttachment {
   driveFileId String?
   mimeType    String  @default("")
   sizeBytes   Int     @default(0)
+
+  // Qui l'a jointe : la pièce s'affiche aussi dans le fil des commentaires, au
+  // moment où elle a été déposée (CC-373). NULL sur les pièces d'avant, et
+  // quand le compte est supprimé : la pièce lui survit, comme un commentaire
+  // (DEC-032).
+  uploadedById String?
+  uploadedBy   User?   @relation(fields: [uploadedById], references: [id])
 
   createdAt DateTime @default(now())
 }

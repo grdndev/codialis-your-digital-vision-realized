@@ -24,3 +24,25 @@ export function extensionOf(name: string): string {
 export function isImageUrl(url: string): boolean {
   return (IMAGE_EXTENSIONS as readonly string[]).includes(extensionOf(url));
 }
+
+// Une capture collée s'appelle « image.png » : le nom ne dirait rien dans la
+// liste. On la date, à l'heure de la personne qui colle.
+export function withCaptureName(file: File): File {
+  if (file.name && !/^image\.\w+$/i.test(file.name)) return file;
+  const ext = extensionOf(file.name) || file.type.split("/")[1] || "png";
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}h${pad(now.getMinutes())}m${pad(now.getSeconds())}`;
+  return new File([file], `capture-${stamp}.${ext}`, { type: file.type });
+}
+
+// Le stockage refuse de toute façon ; vérifier ici évite d'envoyer 20 Mo pour
+// rien et répond tout de suite.
+export function attachmentRefusal(file: File): string | null {
+  if (file.size === 0) return "le fichier est vide";
+  if (file.size > MAX_ATTACHMENT_BYTES) return "fichier trop lourd (25 Mo maximum)";
+  if (!ACCEPTED_EXTENSIONS.includes(extensionOf(file.name))) {
+    return `type refusé (acceptés : images, ${DOCUMENT_EXTENSIONS.join(", ")})`;
+  }
+  return null;
+}

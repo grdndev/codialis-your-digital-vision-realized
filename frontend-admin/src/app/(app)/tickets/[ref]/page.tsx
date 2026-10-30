@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
 import { parseRetour, retourProjectId, ticketHref } from "@/lib/ticket-return";
-import { fmtHours, fmtDate, CLOSING_STATUSES, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel, authorName, authorInitials } from "@/lib/format";
+import { fmtHours, fmtDate, CLOSING_STATUSES, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel } from "@/lib/format";
 import {
   setTicketStatusAction,
   updateTicketAction,
@@ -18,6 +18,7 @@ import {
 } from "../actions";
 import { AttachmentList } from "../../attachments";
 import { CommentsPanel } from "./comments-panel";
+import { Thread } from "./thread";
 import { MeasuredTime } from "../../measured-time";
 import type { TicketDetailResponse } from "../types";
 import type { TaskStatus } from "@/lib/types";
@@ -295,6 +296,7 @@ export default async function TicketDetailPage({
           </div>
 
           {/* Les pièces jointes vivent dans les commentaires : listées en tête,
+              et dans le fil au moment où elles ont été jointes (CC-373) ;
               jointes par le bouton, le collage d'une capture ou le
               glisser-déposer d'un fichier. */}
           <CommentsPanel
@@ -309,20 +311,7 @@ export default async function TicketDetailPage({
               />
             }
           >
-            {ticket.comments.map((c) => (
-              <div key={c.id} className="flex gap-3">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-mint/15 text-xs font-medium text-mint">
-                  {authorInitials(c.author)}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted">
-                    <span className="font-medium text-text">{authorName(c.author)}</span> · {fmtDate(c.createdAt)}
-                  </p>
-                  <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-text">{c.body}</p>
-                </div>
-              </div>
-            ))}
-            {ticket.comments.length === 0 ? <p className="text-sm text-muted">Aucun commentaire pour l’instant.</p> : null}
+            <Thread comments={ticket.comments} attachments={ticket.attachments} />
           </CommentsPanel>
         </div>
 

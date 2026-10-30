@@ -9,11 +9,11 @@ import type { NewTicketScreen } from "../types";
 export default async function NewTicketPage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string; cree?: string }>;
+  searchParams: Promise<{ project?: string; cree?: string; error?: string }>;
 }) {
   const user = await requireUser();
   // Venu de la fiche d'un projet, le sélecteur s'ouvre déjà sur celui-ci.
-  const { project, cree } = await searchParams;
+  const { project, cree, error } = await searchParams;
   // L'API écarte les projets clôturés ; on lui nomme celui d'où l'on vient
   // pour qu'elle le garde même clôturé (sa fiche propose « + Nouveau ticket »).
   const query = new URLSearchParams(project ? { project } : {});
@@ -52,6 +52,12 @@ export default async function NewTicketPage({
           </Link>
           <span className="text-muted">— le formulaire ci-dessous est prêt pour le suivant.</span>
         </div>
+      ) : null}
+
+      {/* Un fichier joint à la création qui n'a pas pu partir (CC-373) : le
+          ticket existe, on dit lequel manque. */}
+      {error ? (
+        <p className="rounded-lg border border-red/30 bg-red/5 px-4 py-2.5 text-sm text-text">{error}</p>
       ) : null}
 
       <NewTicketForm

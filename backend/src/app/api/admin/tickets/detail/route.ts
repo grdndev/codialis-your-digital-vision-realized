@@ -33,7 +33,12 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
       creator: USER_IDENTITY,
       criteria: { orderBy: { order: "asc" } },
       comments: { include: { author: USER_IDENTITY }, orderBy: { createdAt: "asc" } },
-      attachments: true,
+      // Dans l'ordre où elles ont été jointes (CC-373) : la liste en tête des
+      // commentaires comme le fil, où chacune paraît au moment de son dépôt.
+      attachments: {
+        include: { uploadedBy: USER_IDENTITY },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      },
     },
   });
   if (!ticket) return { ticket: null };

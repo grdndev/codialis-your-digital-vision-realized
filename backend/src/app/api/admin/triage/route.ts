@@ -34,7 +34,7 @@ export const GET = adminRoute(["PM", "DIR"], async (_ctx, request) => {
         include: {
           project: { include: { client: true } },
           assignee: USER_IDENTITY,
-          attachments: true,
+          attachments: { orderBy: [{ createdAt: "asc" }, { id: "asc" }] },
           triageReplies: { orderBy: { createdAt: "asc" } },
         },
       })

@@ -9,11 +9,16 @@ import type { DevNature, Severity, TaskStatus, TicketType } from "@/lib/types";
 
 const TICKETS = "/api/admin/tickets";
 
-export async function createTicketAction(formData: FormData) {
+// Création d'un ticket. Elle ne redirige pas : le formulaire a peut-être des
+// fichiers à joindre (CC-373), qu'il envoie un par un au ticket qui vient
+// d'exister, puis il va lui-même à la destination rendue ici. Un par un et non
+// avec le formulaire : une action serveur est limitée à 25 Mo en tout, trois
+// photos de téléphone y suffiraient.
+export async function createTicketAction(formData: FormData): Promise<{ ref: string; destination: string } | null> {
   const type = String(formData.get("type") ?? "BUG") as TicketType;
   const title = String(formData.get("title") ?? "").trim();
   const projectId = String(formData.get("projectId") ?? "");
-  if (!title || !projectId) return;
+  if (!title || !projectId) return null;
 
   const { ref } = await apiPost<{ ref: string }>(TICKETS, {
     action: "create",
@@ -44,9 +49,12 @@ export async function createTicketAction(formData: FormData) {
   const depuisProjet = String(formData.get("fromProject") ?? "");
   if (depuisProjet) {
     revalidatePath(`/projects/${depuisProjet}`);
-    redirect(`/tickets/new?project=${encodeURIComponent(depuisProjet)}&cree=${encodeURIComponent(ref)}`);
+    return {
+      ref,
+      destination: `/tickets/new?project=${encodeURIComponent(depuisProjet)}&cree=${encodeURIComponent(ref)}`,
+    };
   }
-  redirect(`/tickets/${ref}`);
+  return { ref, destination: `/tickets/${ref}` };
 }
 
 // Déplacement vers une colonne précise, depuis le kanban comme depuis la fiche.
@@ -215,6 +223,8 @@ export async function addTicketCommentAction(formData: FormData) {
 // Appelée par la section Commentaires (bouton, collage, glisser-déposer), un
 // fichier à la fois : le refus revient en valeur, pour s'afficher à côté du
 // fichier concerné sans recharger la page ni perdre le commentaire en cours.
+// Le formulaire de création s'en sert aussi, juste après avoir créé le ticket
+// (CC-373) ; il n'a alors que la référence, que l'API accepte comme `id`.
 export async function uploadTicketAttachmentAction(
   ticketId: string,
   ref: string,

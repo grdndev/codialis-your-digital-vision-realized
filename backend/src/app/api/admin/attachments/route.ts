@@ -47,7 +47,7 @@ function libelleTaille(octets: number): string {
   return `${(octets / (1000 * 1000)).toFixed(1).replace(".", ",")} Mo`;
 }
 
-export const POST = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
+export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) => {
   if (!filesConfigured()) badRequest("Le stockage de fichiers n'est pas configuré");
 
   const cible = parseQuery(cibleSchema, request, "Destination ou nom de fichier manquant");
@@ -78,7 +78,9 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async (_ctx, request) => {
     badRequest(err instanceof Error ? err.message : "Le stockage du fichier a échoué");
   }
 
-  const donnees = { filename, fileId, meta: libelleTaille(contenu.byteLength) };
+  // L'auteur fait apparaître la pièce dans le fil des commentaires, à son nom
+  // (CC-373) ; un jeton d'API joint au nom de son propriétaire.
+  const donnees = { filename, fileId, meta: libelleTaille(contenu.byteLength), uploadedById: user.id };
   try {
     const cree = await prisma.ticketAttachment.create({ data: { ticketId: id, ...donnees } });
     return { id: cree.id, fileId, filename, meta: donnees.meta, url: urlPublique(fileId) };
