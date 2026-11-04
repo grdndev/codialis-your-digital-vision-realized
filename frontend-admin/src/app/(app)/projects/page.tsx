@@ -56,7 +56,7 @@ function relativeActivity(d: Date) {
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ phase?: string; client?: string; error?: string }>;
+  searchParams: Promise<{ phase?: string; client?: string; error?: string; supprime?: string }>;
 }) {
   // CC-317 : la liste s'ouvre aux développeurs. Créer un client ou un projet
   // reste à la direction et à la chefferie — les deux formulaires disparaissent
@@ -100,6 +100,13 @@ export default async function ProjectsPage({
       {sp.client ? (
         <p className="rounded-xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm text-mint">
           Client créé. Vous pouvez maintenant lui ouvrir un projet.
+        </p>
+      ) : null}
+      {/* Après une suppression (CC-375) : la fiche n'existe plus, c'est ici
+          qu'on atterrit, et il faut voir que c'est fait. */}
+      {sp.supprime ? (
+        <p className="rounded-xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm text-mint">
+          Projet « {sp.supprime} » supprimé.
         </p>
       ) : null}
 

@@ -124,6 +124,26 @@ export async function bulkUpdateTicketsAction(formData: FormData) {
   }
 }
 
+// Suppression en masse (CC-375), depuis le même bandeau : la chefferie et la
+// direction seules la voient, l'API refuse les autres. Les cases cochées sont
+// celles du formulaire de masse, envoyé ici par le bouton de confirmation.
+export async function bulkDeleteTicketsAction(formData: FormData) {
+  const ticketIds = formData.getAll("ticketIds").map(String).filter(Boolean);
+  if (!ticketIds.length) return;
+
+  await apiPost(TICKETS, { action: "bulk-delete", ticketIds });
+
+  revalidatePath("/tickets");
+  revalidatePath("/time");
+  revalidatePath("/dashboard");
+  revalidatePath("/projects");
+  const projectId = String(formData.get("projectId") ?? "");
+  if (projectId) {
+    revalidatePath(`/projects/${projectId}`);
+    revalidatePath("/portal");
+  }
+}
+
 export async function updateTicketAction(formData: FormData) {
   const ticketId = String(formData.get("ticketId") ?? "");
   const title = String(formData.get("title") ?? "").trim();

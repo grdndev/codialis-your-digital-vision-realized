@@ -5,6 +5,7 @@ import { visibleProjectIds } from "@/lib/project-access";
 import { maxSuffix, withUniqueRef } from "@/lib/refs";
 import { soldHoursFor } from "@/lib/agency-rates";
 import { recomputeProjectProgress } from "@/lib/project-progress";
+import { deleteProject } from "@/lib/deletion";
 
 export const dynamic = "force-dynamic";
 
@@ -157,6 +158,17 @@ const bodySchema = z.discriminatedUnion("action", [
     warrantyEndsAt: z.string().datetime().nullable().describe("Dernier jour couvert (minuit UTC) ; null = aucune"),
     maintenanceEndsAt: z.string().datetime().nullable().describe("Dernier jour couvert (minuit UTC) ; null = aucune"),
   }).describe("Fin de garantie et fin de maintenance d'un projet. Réservé à PM et DIR."),
+  // Un projet ouvert par erreur, en double, ou abandonné avant d'avoir rien
+  // donné ne pouvait que se clôturer : il restait dans toutes les listes
+  // (CC-375). Le nom retapé est la confirmation, ici et non seulement à
+  // l'écran : un script ou un agent qui supprime doit savoir CE qu'il supprime.
+  z.object({
+    action: z.literal("delete-project"),
+    projectId: z.string().min(1),
+    name: z.string().describe("Nom du projet, retapé pour confirmer"),
+  }).describe(
+    "Supprime un projet et tout son contenu : tickets (critères, commentaires, pièces jointes, temps mesuré), épics, ressources, échanges client. Saisies de temps, affaires du CRM et objectifs restent, sans projet. Refusé tant que le projet a des factures. Réservé à PM et DIR.",
+  ),
   z.object({
     action: z.literal("update-client"),
     clientId: z.string().min(1),
@@ -202,6 +214,8 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
     body.action === "update-project-phase" ||
     // Ce qui est couvert après livraison relève du contrat avec le client.
     body.action === "update-project-coverage" ||
+    // Supprimer défait ce que la création a ouvert : même main.
+    body.action === "delete-project" ||
     body.action === "update-client" ||
     // Poser d'un coup les lots et les tickets d'un projet, c'est en dessiner la
     // structure : même main que la création.
@@ -493,6 +507,28 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
       return;
     }
 
+    case "delete-project": {
+      const project = await prisma.project.findUnique({
+        where: { id: body.projectId },
+        select: { id: true, name: true, _count: { select: { invoices: true } } },
+      });
+      if (!project) badRequest("Projet introuvable");
+      if (body.name.trim() !== project.name.trim()) {
+        badRequest("Le nom saisi ne correspond pas à celui du projet");
+      }
+      // Les factures partiraient en cascade, payées comprises, et sortiraient
+      // de l'encaissé sans que personne l'ait décidé facture par facture. Les
+      // supprimer reste possible, une à une, dans Facturation (DEC-047).
+      const invoices = project._count.invoices;
+      if (invoices > 0) {
+        badRequest(
+          `Ce projet a ${invoices} facture${invoices > 1 ? "s" : ""} : supprimez-l${invoices > 1 ? "es" : "a"} d'abord dans « Rentabilité & temps », bloc Factures.`,
+        );
+      }
+      await deleteProject(project.id);
+      return { ok: true, name: project.name };
+    }
+
     case "update-client": {
       const name = body.name.trim();
       const duplicate = await prisma.client.findFirst({
@@ -542,7 +578,7 @@ export const POST = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =
   }
 }, {
   summary:
-    "Clients, projets, épics, import JSON, questions au client et réponses au fil « Échanges » du portail. Création et modification d'un client ou d'un projet, phase, couverture, import JSON et réponse au client sont réservés à PM et DIR ; le travail d'un projet (tickets) s'écrit par /api/admin/tickets.",
+    "Clients, projets, épics, import JSON, questions au client et réponses au fil « Échanges » du portail. Création et modification d'un client ou d'un projet, suppression d'un projet, phase, couverture, import JSON et réponse au client sont réservés à PM et DIR ; le travail d'un projet (tickets) s'écrit par /api/admin/tickets.",
   body: bodySchema,
 });
 

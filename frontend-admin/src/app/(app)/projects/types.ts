@@ -79,6 +79,9 @@ export type ProjectDetailResponse =
       clientThreadWaiting: boolean;
       clientMessages: ClientThreadMessageRow[];
       clientAccounts: number;
+      // Onglet Fiche, PM et DIR : de quoi confirmer une suppression du projet
+      // (CC-375). Ses factures la bloquent. `null` ailleurs.
+      deletion: { invoices: number; measuredHours: number } | null;
     };
 
 export type ProjectTicketRow = TicketRow & {

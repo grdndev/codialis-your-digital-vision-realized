@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { Popover } from "./popover";
 
 // Sélection de lignes pour le traitement en masse : tickets de l'écran Tickets
 // et de la fiche projet, ceux d'un épic comme ceux hors épic (CC-358).
@@ -20,6 +21,7 @@ type Field = keyof typeof NOUNS;
 
 export function BulkSelection({
   action,
+  deleteAction,
   field,
   bar,
   className = "flex flex-col gap-3",
@@ -27,6 +29,10 @@ export function BulkSelection({
   children,
 }: {
   action: (formData: FormData) => void | Promise<void>;
+  // « Supprimer les tickets » (CC-375), passé seulement à la chefferie et à la
+  // direction : la même sélection, envoyée à une autre action après
+  // confirmation.
+  deleteAction?: (formData: FormData) => void | Promise<void>;
   field: Field;
   bar: ReactNode;
   className?: string;
@@ -57,6 +63,33 @@ export function BulkSelection({
             {count} {count > 1 ? many : one} {count > 1 ? chosenMany : chosen}
           </span>
           {bar}
+          {/* Le bouton de confirmation envoie le MÊME formulaire, cases
+              cochées comprises, à l'action de suppression (`formAction`) :
+              pas de second formulaire à tenir en phase avec le premier. */}
+          {deleteAction ? (
+            <Popover
+              className="relative ml-auto"
+              summary={`Supprimer les ${many}`}
+              summaryClassName="cursor-pointer list-none rounded-lg border border-red/40 px-3 py-1.5 font-medium text-red transition hover:bg-red/10"
+            >
+              <div className="absolute right-0 z-10 mt-2 flex w-72 flex-col gap-2 rounded-xl border border-border bg-panel p-3 shadow-2xl">
+                <p className="text-text">
+                  Supprimer {count} {count > 1 ? many : one} ?
+                </p>
+                <p className="text-muted">
+                  Critères, commentaires, pièces jointes et temps mesuré partent avec{" "}
+                  {count > 1 ? "eux" : "lui"}. Les saisies de temps restent au projet. C’est définitif.
+                </p>
+                <button
+                  type="submit"
+                  formAction={deleteAction}
+                  className="rounded-lg bg-red/90 px-3 py-1.5 font-semibold text-bg hover:bg-red"
+                >
+                  Confirmer la suppression
+                </button>
+              </div>
+            </Popover>
+          ) : null}
         </div>
       ) : null}
       {children}

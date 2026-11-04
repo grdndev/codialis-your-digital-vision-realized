@@ -86,6 +86,16 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
     echanges ? prisma.user.count({ where: { role: "CLIENT", clientId: project.clientId } }) : 0,
   ]);
 
+  // La confirmation de suppression (CC-375), dans l'onglet Fiche, dit ce qui
+  // part : le temps mesuré des tickets, et les factures qui la bloquent.
+  const deletion =
+    fiche && clientDesk
+      ? await Promise.all([
+          prisma.invoice.count({ where: { projectId: id } }),
+          prisma.workSession.aggregate({ where: { ticket: { projectId: id } }, _sum: { hours: true } }),
+        ]).then(([invoices, measured]) => ({ invoices, measuredHours: measured._sum.hours ?? 0 }))
+      : null;
+
   return {
     access: "ok" as const,
     project,
@@ -97,9 +107,10 @@ export const GET = adminRoute(["DEV", "PM", "DIR"], async ({ user }, request) =>
     clientThreadWaiting: lastClientMessage?.fromClient ?? false,
     clientMessages,
     clientAccounts,
+    deletion,
   };
 }, {
   summary:
-    "Fiche projet : `project` (client, épics), tous ses `tickets`, équipe assignable, clients. `access` vaut `not-found`, `forbidden` (DEV sans ticket assigné sur ce projet) ou `ok`. Avec `fiche=1` : accès techniques (`apis`) et questions au client. Pour PM et DIR : `clientThreadWaiting` (le dernier message du fil vient du client) et, avec `echanges=1`, le fil (`clientMessages`) et le nombre de comptes client (`clientAccounts`).",
+    "Fiche projet : `project` (client, épics), tous ses `tickets`, équipe assignable, clients. `access` vaut `not-found`, `forbidden` (DEV sans ticket assigné sur ce projet) ou `ok`. Avec `fiche=1` : accès techniques (`apis`) et questions au client. Pour PM et DIR : `clientThreadWaiting` (le dernier message du fil vient du client) et, avec `echanges=1`, le fil (`clientMessages`) et le nombre de comptes client (`clientAccounts`) ; avec `fiche=1`, `deletion` (factures du projet, heures mesurées sur ses tickets) pour confirmer une suppression.",
   query: querySchema,
 });

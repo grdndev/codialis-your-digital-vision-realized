@@ -16,7 +16,7 @@ import {
   projectLabel,
 } from "@/lib/format";
 import type { Severity, TaskStatus } from "@/lib/types";
-import { bulkUpdateTicketsAction, setTicketStatusAction } from "./actions";
+import { bulkDeleteTicketsAction, bulkUpdateTicketsAction, setTicketStatusAction } from "./actions";
 import { BulkSelection, SelectAll } from "../bulk-selection";
 import { FilterLink, FilterRow } from "../list-controls";
 import { TicketExportPanel } from "./export-panel";
@@ -285,6 +285,8 @@ export default async function TicketsPage({
       {view === "table" ? (
         <BulkSelection
           action={bulkUpdateTicketsAction}
+          // Supprimer en masse revient à la chefferie, comme clôturer (CC-375).
+          deleteAction={canClose ? bulkDeleteTicketsAction : undefined}
           field="ticketIds"
           bar={
             <>

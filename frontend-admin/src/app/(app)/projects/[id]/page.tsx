@@ -9,9 +9,9 @@ import {
   updateEpicAction, updateProjectDescriptionAction,
   addClientQuestionAction, markQuestionAskedAction, answerClientQuestionAction,
   updateProjectAction, updateClientAction, updateProjectPhaseAction, updateProjectCoverageAction,
-  replyClientMessageAction,
+  replyClientMessageAction, deleteProjectAction,
 } from "../actions";
-import { bulkUpdateTicketsAction } from "../../tickets/actions";
+import { bulkDeleteTicketsAction, bulkUpdateTicketsAction } from "../../tickets/actions";
 import { BulkSelection, SelectAll } from "../../bulk-selection";
 import type { ClientQuestionStatus, ProjectGroup, TaskStatus } from "@/lib/types";
 import type { ClientRef, ClientThreadMessageRow } from "@/lib/dto";
@@ -96,7 +96,7 @@ export default async function ProjectDetailPage({
       )}`,
     );
   }
-  const { project, team, apis, questions, tickets, clients, clientThreadWaiting, clientMessages, clientAccounts } = result;
+  const { project, team, apis, questions, tickets, clients, clientThreadWaiting, clientMessages, clientAccounts, deletion } = result;
 
   const statusFilter = listParam(sp.status);
   const assigneeFilter = listParam(sp.assignee);
@@ -281,7 +281,16 @@ export default async function ProjectDetailPage({
       ) : activeView === "echanges" ? (
         <ClientThreadView projectId={project.id} clientName={project.client.name} messages={clientMessages} accounts={clientAccounts} />
       ) : (
-        <FicheView project={project} deadline={deadline} apis={apis} questions={questions} clients={clients} canEdit={canEdit} />
+        <FicheView
+          project={project}
+          deadline={deadline}
+          apis={apis}
+          questions={questions}
+          clients={clients}
+          canEdit={canEdit}
+          ticketCount={tickets.length}
+          deletion={deletion}
+        />
       )}
     </div>
   );
@@ -401,6 +410,8 @@ function FicheView({
   questions,
   clients,
   canEdit,
+  ticketCount,
+  deletion,
 }: {
   project: ProjectDetail;
   deadline: string;
@@ -408,6 +419,8 @@ function FicheView({
   questions: ClientQuestionRow[];
   clients: ClientRef[];
   canEdit: boolean;
+  ticketCount: number;
+  deletion: { invoices: number; measuredHours: number } | null;
 }) {
   const day = (d: Date | null) => (d ? new Date(d).toISOString().slice(0, 10) : "");
 
@@ -596,6 +609,10 @@ function FicheView({
             )}
           </div>
         </div>
+
+        {canEdit && deletion ? (
+          <DeleteProject project={project} ticketCount={ticketCount} deletion={deletion} />
+        ) : null}
       </div>
 
       <div className="rounded-xl border border-border bg-panel p-5">
@@ -616,6 +633,68 @@ function FicheView({
           </form>
         </details>
       </div>
+    </div>
+  );
+}
+
+// Suppression du projet (CC-375), en bas de la fiche : c'est le geste le plus
+// rare et le plus lourd de l'écran. Des factures la bloquent — elles
+// partiraient avec lui, payées comprises. Sinon la confirmation dit ce qui part
+// et demande de retaper le nom, que l'API compare elle-même.
+function DeleteProject({
+  project,
+  ticketCount,
+  deletion,
+}: {
+  project: ProjectDetail;
+  ticketCount: number;
+  deletion: { invoices: number; measuredHours: number };
+}) {
+  const epics = project.epics.length;
+  return (
+    <div className="rounded-xl border border-red/30 bg-panel p-5">
+      <h2 className="text-sm font-semibold text-text">Supprimer le projet</h2>
+      {deletion.invoices > 0 ? (
+        <p className="mt-1 text-xs text-muted">
+          Ce projet a {deletion.invoices} facture{deletion.invoices > 1 ? "s" : ""} : supprimez-l
+          {deletion.invoices > 1 ? "es" : "a"} d’abord dans{" "}
+          <Link href="/finance" className="font-medium text-mint hover:underline">
+            Rentabilité &amp; temps
+          </Link>
+          , bloc Factures. Pour un projet terminé, la phase « Clôturé » suffit.
+        </p>
+      ) : (
+        <>
+          <p className="mt-1 text-xs text-muted">
+            Pour un projet terminé, la phase « Clôturé » suffit : la suppression efface son travail.
+          </p>
+          <Popover
+            className="relative mt-3"
+            summary="Supprimer le projet…"
+            summaryClassName="inline-block cursor-pointer list-none rounded-lg border border-red/40 px-3 py-1.5 text-xs font-medium text-red transition hover:bg-red/10"
+          >
+            <form
+              action={deleteProjectAction.bind(null, project.id)}
+              className="absolute left-0 z-10 mt-2 flex w-80 flex-col gap-2 rounded-xl border border-border bg-panel p-3 text-xs shadow-2xl"
+            >
+              <p className="text-text">Supprimer {projectLabel(project.client.name, project.name)} ?</p>
+              <p className="text-muted">
+                Partent avec lui : {ticketCount} ticket{ticketCount > 1 ? "s" : ""} (critères, commentaires, pièces
+                jointes), {epics} épic{epics > 1 ? "s" : ""}, {fmtHours(deletion.measuredHours)} de temps mesuré,
+                ses ressources et ses échanges avec le client. Les saisies de temps restent, sans projet.
+              </p>
+              <p className="text-amber">C’est définitif.</p>
+              <label className="flex flex-col gap-1 text-muted">
+                Retapez « {project.name} » pour confirmer
+                <input name="name" required autoComplete="off" className="input" />
+              </label>
+              <button type="submit" className="rounded-lg bg-red/90 px-3 py-1.5 font-semibold text-bg hover:bg-red">
+                Supprimer définitivement
+              </button>
+            </form>
+          </Popover>
+        </>
+      )}
     </div>
   );
 }
@@ -780,6 +859,8 @@ function ListView({
       note={canClose ? undefined : "clôture et annulation reviennent à la chefferie de projet"}
     />
   );
+  // Supprimer en masse revient à la chefferie, comme clôturer (CC-375).
+  const bulkDelete = canClose ? bulkDeleteTicketsAction : undefined;
   const loose = tickets.filter((t) => !t.epicId);
   const looseOpen = loose.filter((t) => !CLOSING_STATUSES.includes(t.status)).length;
 
@@ -894,7 +975,7 @@ function ListView({
                     l'épic où l'on coche, pas en haut d'une page qu'on a
                     quittée. Même action que l'écran Tickets (CC-358). */}
                 {rows.length > 0 ? (
-                  <BulkSelection action={bulkUpdateTicketsAction} field="ticketIds" bar={bulkBar}>
+                  <BulkSelection action={bulkUpdateTicketsAction} deleteAction={bulkDelete} field="ticketIds" bar={bulkBar}>
                     <input type="hidden" name="projectId" value={projectId} />
                     <TicketTable rows={rows} retour={retour} />
                   </BulkSelection>
@@ -927,6 +1008,7 @@ function ListView({
           // Il porte sur la page affichée, filtres compris.
           <BulkSelection
             action={bulkUpdateTicketsAction}
+            deleteAction={bulkDelete}
             field="ticketIds"
             className="flex flex-col"
             barClassName="mx-5 mt-3"

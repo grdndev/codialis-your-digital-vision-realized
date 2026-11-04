@@ -1,12 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { parseMultiline, parseNumber } from "@/lib/format";
 import { redirect } from "next/navigation";
 import { ApiError, apiPost } from "@/lib/api";
 import type { TicketType } from "@/lib/types";
 
 const PROJECTS = "/api/admin/projects";
+// Posé par proxy.ts à chaque visite d'une fiche projet.
+const LAST_PROJECT_COOKIE = "codialis_dernier_projet";
 
 // Les erreurs métier de l'ouverture d'un client ou d'un projet remontent dans
 // l'URL : « ce client existe déjà » doit se lire à l'écran, pas se perdre.
@@ -154,6 +157,34 @@ export async function updateProjectCoverageAction(formData: FormData) {
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);
   revalidatePath("/maintenance");
+}
+
+// Suppression d'un projet (CC-375). Le nom retapé part tel quel : c'est l'API
+// qui le compare, et qui refuse un projet portant encore des factures. Le refus
+// s'affiche sur l'onglet Fiche, d'où l'on vient.
+export async function deleteProjectAction(projectId: string, formData: FormData) {
+  let name: string;
+  try {
+    ({ name } = await apiPost<{ name: string }>(PROJECTS, {
+      action: "delete-project",
+      projectId,
+      name: String(formData.get("name") ?? ""),
+    }));
+  } catch (err) {
+    if (!(err instanceof ApiError)) throw err;
+    redirect(`/projects/${projectId}?view=fiche&info=${encodeURIComponent(err.message)}`);
+  }
+
+  // « Projets » dans le menu rouvre le dernier projet consulté : c'était
+  // celui-ci, on l'oublie plutôt que de rebondir sur une adresse morte.
+  const store = await cookies();
+  if (store.get(LAST_PROJECT_COOKIE)?.value === projectId) store.delete(LAST_PROJECT_COOKIE);
+
+  revalidatePath("/projects");
+  revalidatePath("/tickets");
+  revalidatePath("/dashboard");
+  revalidatePath("/time");
+  redirect(`/projects?liste=1&supprime=${encodeURIComponent(name)}`);
 }
 
 export async function updateClientAction(formData: FormData) {

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { adminRoute, badRequest, commaList, parseBody, parseQuery } from "@/lib/admin-api";
-import { reprendreFichiersJoints } from "@/lib/files";
+import { deleteTickets } from "@/lib/deletion";
 import { prisma } from "@/lib/prisma";
 import { USER_IDENTITY } from "@/lib/user-identity";
 import type { Prisma, Role, Severity, TaskStatus, TicketType } from "@prisma/client";
@@ -270,6 +270,15 @@ const bodySchema = z.discriminatedUnion("action", [
   ),
   z.object({ action: z.literal("delete"), ticketId }).describe(
     "Supprime un ticket, ses critères, commentaires et pièces jointes ; ses saisies de temps restent au projet.",
+  ),
+  // Faire le ménage dans un projet (doublons, import raté) ticket par ticket
+  // coûtait une fiche par ticket. Réservé à la chefferie et à la direction :
+  // d'un clic, c'est tout le travail d'un épic qui peut partir (CC-375).
+  z.object({
+    action: z.literal("bulk-delete"),
+    ticketIds: z.array(z.string().min(1)).min(1).max(200).describe("Identifiants ou références"),
+  }).describe(
+    "Supprime plusieurs tickets (200 au plus), comme `delete` pour chacun. Réservé à PM et DIR.",
   ),
   z.object({
     action: z.literal("add-comment"),
@@ -571,33 +580,19 @@ export const POST = adminRoute(
       }
 
       case "delete": {
-        // Critères, commentaires et pièces jointes tombent en cascade (schéma).
-        // Les saisies de temps, elles, ne tombent PAS : `TimeEntry.ticketId` est
-        // une relation facultative, les heures déjà passées restent au projet.
-        // Elles perdent seulement leur rattachement au ticket, ce qui est juste
-        // — le travail a bien eu lieu.
-        const ticket = await prisma.ticket.findUnique({
-          where: { id: body.ticketId },
-          select: { ref: true, projectId: true },
-        });
+        // Ce qui part avec lui et ce qui reste : voir lib/deletion.ts.
+        const [ticket] = await deleteTickets([body.ticketId]);
         if (!ticket) badRequest("Ticket introuvable");
-        await prisma.timeEntry.updateMany({
-          where: { ticketId: body.ticketId },
-          data: { ticketId: null },
-        });
-        const pieces = await prisma.ticketAttachment.findMany({
-          where: { ticketId: body.ticketId },
-          select: { fileId: true },
-        });
-        await prisma.ticket.delete({ where: { id: body.ticketId } });
-        // Après la base : la cascade a emporté les lignes, à nous de reprendre
-        // les fichiers qu'elles désignaient.
-        await reprendreFichiersJoints(pieces.map((p) => p.fileId));
-        // Ses sessions sont parties avec lui : le projet perd ce temps mesuré
-        // et ce ticket de son avancement.
-        await recomputeProjectProgress(ticket.projectId);
-        await prisma.$transaction((tx) => refreshProjectSpent(tx, ticket.projectId));
         return { ok: true, ref: ticket.ref };
+      }
+
+      case "bulk-delete": {
+        if (user.role !== "PM" && user.role !== "DIR") {
+          badRequest("Supprimer des tickets en masse est réservé à la direction et à la chefferie de projet");
+        }
+        const deleted = await deleteTickets(body.ticketIds);
+        if (!deleted.length) badRequest("Aucun ticket sélectionné");
+        return { ok: true, count: deleted.length, refs: deleted.map((t) => t.ref) };
       }
 
       case "add-criterion": {
