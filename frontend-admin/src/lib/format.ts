@@ -261,6 +261,13 @@ export function parseMultiline(value: unknown): string {
     .trim();
 }
 
+// Ni casse ni accents : « reseau » trouve « Réseau ». C'est ce que fait déjà
+// la recherche de l'écran Tickets, par la collation de la base ; les
+// recherches faites dans la page (fiche projet, choix d'un client) s'y alignent.
+export function foldText(value: string): string {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
 // Garantie ou maintenance d'un projet (CC-351). La date est le DERNIER jour
 // couvert : le compte à rebours arrondi au jour supérieur le garde « couvert »
 // jusqu'au soir de ce jour-là, et « échu » dès le lendemain.

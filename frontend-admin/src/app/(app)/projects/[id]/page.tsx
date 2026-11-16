@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { ticketHref } from "@/lib/ticket-return";
-import { fmtHours, fmtEUR, fmtDate, daysFromNow, CLOSING_STATUSES, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel, coverageStatus, fmtOfficeDateTime } from "@/lib/format";
+import { fmtHours, fmtEUR, fmtDate, daysFromNow, CLOSING_STATUSES, GROUP_BADGE_CLASS, GROUP_LABEL, STATUS_BADGE_CLASS, STATUS_LABEL, TICKET_TYPE_BADGE_CLASS, TICKET_TYPE_LABEL, SEVERITY_LABEL, DEV_NATURE_LABEL, projectLabel, coverageStatus, fmtOfficeDateTime, foldText } from "@/lib/format";
 import {
   createEpicAction, createEpicTicketAction, deleteEpicAction, importProjectJsonAction, updateClientContactAction,
   updateEpicAction, updateProjectDescriptionAction,
@@ -34,12 +34,6 @@ type ProjectQuery = {
 };
 type ProjectQueryKey = Exclude<keyof ProjectQuery, "info">;
 type TicketFilterKey = "status" | "assignee" | "q";
-
-// Ni casse ni accents : « reseau » trouve « Réseau ». C'est ce que fait déjà
-// la recherche de l'écran Tickets, par la collation de la base.
-function foldText(value: string) {
-  return value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-}
 
 // Les tickets d'un projet se filtrent par statut et par assigné, chaque critère
 // acceptant plusieurs valeurs, et se cherchent par un texte ; tout se croise.

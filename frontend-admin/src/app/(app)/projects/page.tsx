@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
 import { createClientAction, createProjectAction } from "./actions";
+import { ClientNameField, type ExistingClient } from "./client-name-field";
+import { SearchSelect } from "../search-select";
 import type { ProjectsScreen } from "./types";
 import { fmtHours, daysFromNow, GROUP_BADGE_CLASS, GROUP_LABEL, projectLabel, coverageStatus } from "@/lib/format";
 import type { ProjectGroup } from "@/lib/types";
@@ -80,6 +82,14 @@ export default async function ProjectsPage({
   }
 
   const filtered = active === "all" ? allProjects : allProjects.filter((p) => p.group === active);
+
+  // Les clients avec leurs projets, pour reconnaître un doublon à la création
+  // (CC-377). Seuls la direction et la chefferie créent : elles reçoivent tous
+  // les projets, la liste est donc complète.
+  const existingClients: ExistingClient[] = clients.map((c) => ({
+    ...c,
+    projects: allProjects.filter((p) => p.client.id === c.id).map((p) => ({ id: p.id, name: p.name })),
+  }));
 
   return (
     <div className="flex flex-col gap-6">
@@ -198,7 +208,7 @@ export default async function ProjectsPage({
           </p>
           <form action={createClientAction} className="mt-4 flex flex-col gap-3">
             <Field label="Nom du client">
-              <input name="name" required className="input" />
+              <ClientNameField clients={existingClients} />
             </Field>
             <Field label="Contact" hint="facultatif">
               <input name="contactName" className="input" />
@@ -235,13 +245,15 @@ export default async function ProjectsPage({
           <form action={createProjectAction} className="mt-4 flex flex-col gap-3">
             <div className="grid grid-cols-2 gap-3">
               <Field label="Client">
-                <select name="clientId" required className="input" disabled={clients.length === 0}>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                <SearchSelect
+                  name="clientId"
+                  options={clients.map((c) => ({ value: c.id, label: c.name }))}
+                  required
+                  disabled={clients.length === 0}
+                  placeholder="Rechercher un client…"
+                  emptyText="Aucun client ne correspond."
+                  requiredMessage="Choisissez un client dans la liste."
+                />
               </Field>
               <Field label="Nom du projet">
                 <input name="name" required className="input" />
