@@ -29,18 +29,31 @@ const TICKET_STATUSES: TaskStatus[] = ["A_FAIRE", "EN_COURS", "EN_REVUE", "TERMI
 // peut pas la prendre.
 const UNASSIGNED = "none";
 
-type ProjectQuery = { view?: string; info?: string; status?: string; assignee?: string; page?: string; per?: string };
+type ProjectQuery = {
+  view?: string; info?: string; status?: string; assignee?: string; q?: string; page?: string; per?: string;
+};
 type ProjectQueryKey = Exclude<keyof ProjectQuery, "info">;
+type TicketFilterKey = "status" | "assignee" | "q";
+
+// Ni casse ni accents : « reseau » trouve « Réseau ». C'est ce que fait déjà
+// la recherche de l'écran Tickets, par la collation de la base.
+function foldText(value: string) {
+  return value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
 
 // Les tickets d'un projet se filtrent par statut et par assigné, chaque critère
-// acceptant plusieurs valeurs ; les deux se croisent. Un projet en porte
-// facilement une centaine, et les retrouver à l'œil devenait impossible
-// (CC-346, CC-353).
-function filterProjectTickets(tickets: ProjectTicketRow[], status: string[], assignee: string[]) {
+// acceptant plusieurs valeurs, et se cherchent par un texte ; tout se croise.
+// Un projet en porte facilement une centaine, et les retrouver à l'œil
+// devenait impossible (CC-346, CC-353, CC-376). La recherche porte sur les
+// mêmes champs que celle de l'écran Tickets : la fiche reçoit déjà tous les
+// tickets du projet, elle se fait donc ici, sans repasser par l'API.
+function filterProjectTickets(tickets: ProjectTicketRow[], status: string[], assignee: string[], recherche: string) {
+  const needle = foldText(recherche);
   return tickets.filter(
     (t) =>
       (!status.length || status.includes(t.status)) &&
-      (!assignee.length || assignee.includes(t.assigneeId ?? UNASSIGNED)),
+      (!assignee.length || assignee.includes(t.assigneeId ?? UNASSIGNED)) &&
+      (!needle || [t.ref, t.title, t.description, t.steps].some((field) => foldText(field).includes(needle))),
   );
 }
 
@@ -100,7 +113,8 @@ export default async function ProjectDetailPage({
 
   const statusFilter = listParam(sp.status);
   const assigneeFilter = listParam(sp.assignee);
-  const shownTickets = filterProjectTickets(tickets, statusFilter, assigneeFilter);
+  const recherche = (sp.q ?? "").trim();
+  const shownTickets = filterProjectTickets(tickets, statusFilter, assigneeFilter, recherche);
   // La pagination ne porte que sur les tickets hors épic : ceux d'un épic
   // s'affichent tous sous leur épic.
   const { page, perPage } = parsePaging(sp.page, sp.per);
@@ -113,6 +127,7 @@ export default async function ProjectDetailPage({
       view: activeView === "list" ? null : activeView,
       status: sp.status ?? null,
       assignee: sp.assignee ?? null,
+      q: recherche || null,
       page: sp.page ?? null,
       per: sp.per ?? null,
       ...next,
@@ -122,9 +137,11 @@ export default async function ProjectDetailPage({
     const qs = query.toString();
     return `/projects/${project.id}${qs ? `?${qs}` : ""}`;
   }
-  const filterHref = (next: Partial<Record<"status" | "assignee", string | null>>) =>
+  const filterHref = (next: Partial<Record<TicketFilterKey, string | null>>) =>
     projectHref({ ...next, page: null });
-  // L'écran tel qu'il est affiché : un ticket ouvert d'ici y ramène (CC-371).
+  // L'écran tel qu'il est affiché, recherche comprise : un ticket ouvert d'ici
+  // y ramène (CC-371). Elle n'est pas retenue d'une visite à l'autre pour
+  // autant, comme sur l'écran Tickets (DEC-021).
   const retour = projectHref({});
 
   const deadline = project.group === "CLO"
@@ -249,9 +266,19 @@ export default async function ProjectDetailPage({
       </div>
 
       {ticketsView ? (
+        <TicketSearch
+          action={`/projects/${project.id}`}
+          recherche={recherche}
+          kept={{ view: activeView === "list" ? undefined : activeView, status: sp.status, assignee: sp.assignee, per: sp.per }}
+          clearHref={filterHref({ q: null })}
+        />
+      ) : null}
+
+      {ticketsView ? (
         <TicketFilters
           statusFilter={statusFilter}
           assigneeFilter={assigneeFilter}
+          searching={recherche !== ""}
           assignees={ticketAssignees(tickets)}
           shown={shownTickets.length}
           total={tickets.length}
@@ -267,6 +294,7 @@ export default async function ProjectDetailPage({
           canClose={user.role !== "DEV"}
           tickets={tickets}
           shownTickets={shownTickets}
+          searching={recherche !== ""}
           loosePage={paginate(shownTickets.filter((t) => !t.epicId), page, perPage)}
           perPage={perPage}
           pageHref={(p, per) => projectHref({ page: p > 1 ? String(p) : null, per: String(per) })}
@@ -344,11 +372,59 @@ function ClientThreadView({
   );
 }
 
+// Recherche dans les tickets du projet (CC-376), sur les mêmes champs que
+// l'écran Tickets. Formulaire GET : le texte passe dans l'adresse comme les
+// filtres, et les champs cachés reconduisent vue, filtres et taille de page,
+// sans quoi chercher les remettrait à zéro. La page, elle, repart de la
+// première.
+function TicketSearch({
+  action,
+  recherche,
+  kept,
+  clearHref,
+}: {
+  action: string;
+  recherche: string;
+  kept: Partial<Record<"view" | "status" | "assignee" | "per", string>>;
+  clearHref: string;
+}) {
+  return (
+    <form method="get" action={action} className="flex flex-wrap items-center gap-2">
+      {Object.entries(kept).map(([key, value]) =>
+        value ? <input key={key} type="hidden" name={key} value={value} /> : null,
+      )}
+      {/* `key` : le champ se remonte quand la recherche change par un lien
+          (« Effacer », « Réinitialiser les filtres »), sans quoi il garderait
+          le texte tapé alors que la liste ne le filtre plus. */}
+      <input
+        key={recherche}
+        name="q"
+        defaultValue={recherche}
+        placeholder="Rechercher un ticket : référence, titre, mot de la description…"
+        className="input min-w-[260px] flex-1"
+        aria-label="Rechercher dans les tickets du projet"
+      />
+      <button
+        type="submit"
+        className="rounded-lg bg-mint px-4 py-2 text-xs font-semibold text-bg transition hover:brightness-110"
+      >
+        Rechercher
+      </button>
+      {recherche ? (
+        <Link href={clearHref} className="text-xs text-muted hover:text-text">
+          Effacer
+        </Link>
+      ) : null}
+    </form>
+  );
+}
+
 // Les filtres s'appliquent à tous les tickets des vues Liste et Kanban, ceux
 // des épics comme ceux qui n'en ont pas.
 function TicketFilters({
   statusFilter,
   assigneeFilter,
+  searching,
   assignees,
   shown,
   total,
@@ -356,12 +432,13 @@ function TicketFilters({
 }: {
   statusFilter: string[];
   assigneeFilter: string[];
+  searching: boolean;
   assignees: { id: string; name: string }[];
   shown: number;
   total: number;
-  filterHref: (next: Partial<Record<"status" | "assignee", string | null>>) => string;
+  filterHref: (next: Partial<Record<TicketFilterKey, string | null>>) => string;
 }) {
-  const filtered = statusFilter.length > 0 || assigneeFilter.length > 0;
+  const filtered = statusFilter.length > 0 || assigneeFilter.length > 0 || searching;
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
       <span className="font-medium text-muted">Tickets</span>
@@ -394,7 +471,7 @@ function TicketFilters({
       <span className="ml-auto flex items-center gap-3 text-muted">
         {filtered ? `${shown} ticket${shown > 1 ? "s" : ""} sur ${total}` : `${total} ticket${total > 1 ? "s" : ""}`}
         {filtered ? (
-          <Link href={filterHref({ status: null, assignee: null })} className="font-medium text-mint hover:underline">
+          <Link href={filterHref({ status: null, assignee: null, q: null })} className="font-medium text-mint hover:underline">
             Réinitialiser les filtres
           </Link>
         ) : null}
@@ -831,6 +908,7 @@ function ListView({
   canClose,
   tickets,
   shownTickets,
+  searching,
   loosePage,
   perPage,
   pageHref,
@@ -847,6 +925,7 @@ function ListView({
   // tickets hors épic, filtres appliqués.
   tickets: ProjectTicketRow[];
   shownTickets: ProjectTicketRow[];
+  searching: boolean;
   loosePage: { rows: ProjectTicketRow[]; page: number; pageCount: number; total: number };
   perPage: number;
   pageHref: (page: number, perPage: number) => string;
@@ -884,8 +963,17 @@ function ListView({
           const counted = all.filter((t) => t.status !== "ANNULE");
           const done = counted.filter((t) => t.status === "TERMINE").length;
           const pct = counted.length ? Math.round((done / counted.length) * 100) : 0;
+          // Pendant une recherche (CC-376), un épic sans résultat s'efface et
+          // un épic qui en a s'ouvre : les épics sont repliés par défaut, et
+          // un résultat caché dedans ne se verrait pas. Les filtres de statut
+          // et d'assigné, eux, laissent les épics à leur place.
+          if (searching && rows.length === 0) return null;
           return (
-            <details key={epic.id} className="group rounded-xl border border-border bg-panel open:pb-2">
+            <details
+              key={epic.id}
+              open={searching}
+              className="group rounded-xl border border-border bg-panel open:pb-2"
+            >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-3">
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="text-muted transition group-open:rotate-90">▶</span>
